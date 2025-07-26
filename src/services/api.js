@@ -30,7 +30,10 @@ const apiRequest = async (endpoint, options = {}) => {
 
     return await response.json();
   } catch (error) {
-    console.error("API Request Error:", error);
+    // Log error for development, could be replaced with proper error handling
+    if (import.meta.env.DEV) {
+      console.error("API Request Error:", error);
+    }
     throw error;
   }
 };

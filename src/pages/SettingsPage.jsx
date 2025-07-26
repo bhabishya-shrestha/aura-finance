@@ -55,7 +55,10 @@ const SettingsPage = () => {
       )
     ) {
       // TODO: Implement data clearing
-      console.log("Clearing all data...");
+      // Log for development purposes only
+      if (import.meta.env.DEV) {
+        console.log("Clearing all data...");
+      }
     }
   };
 

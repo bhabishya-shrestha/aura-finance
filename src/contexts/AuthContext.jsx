@@ -121,7 +121,10 @@ export const AuthProvider = ({ children }) => {
             dispatch({ type: AUTH_ACTIONS.LOGOUT });
           }
         } catch (error) {
-          console.error("Failed to load user:", error);
+          // Log error for development, could be replaced with proper error handling
+          if (import.meta.env.DEV) {
+            console.error("Failed to load user:", error);
+          }
           tokenManager.removeToken();
           dispatch({
             type: AUTH_ACTIONS.LOAD_USER_FAILURE,
@@ -139,11 +142,17 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (credentials) => {
     try {
-      console.log("🔐 Attempting login with:", credentials.email);
+      // Log for development purposes only
+      if (import.meta.env.DEV) {
+        console.log("🔐 Attempting login with:", credentials.email);
+      }
       dispatch({ type: AUTH_ACTIONS.LOGIN_START });
       const response = await localAuthService.login(credentials);
 
-      console.log("🔐 Login response:", response);
+      // Log for development purposes only
+      if (import.meta.env.DEV) {
+        console.log("🔐 Login response:", response);
+      }
 
       if (response.success) {
         tokenManager.setToken(response.data.token);
@@ -154,18 +163,27 @@ export const AuthProvider = ({ children }) => {
             token: response.data.token,
           },
         });
-        console.log("✅ Login successful");
+        // Log for development purposes only
+        if (import.meta.env.DEV) {
+          console.log("✅ Login successful");
+        }
         return { success: true };
       } else {
         dispatch({
           type: AUTH_ACTIONS.LOGIN_FAILURE,
           payload: response.error || "Login failed",
         });
-        console.log("❌ Login failed:", response.error);
+        // Log for development purposes only
+        if (import.meta.env.DEV) {
+          console.log("❌ Login failed:", response.error);
+        }
         return { success: false, error: response.error };
       }
     } catch (error) {
-      console.error("💥 Login error:", error);
+      // Log error for development, could be replaced with proper error handling
+      if (import.meta.env.DEV) {
+        console.error("💥 Login error:", error);
+      }
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: error.message || "Login failed",
@@ -177,11 +195,17 @@ export const AuthProvider = ({ children }) => {
   // Register function
   const register = async (userData) => {
     try {
-      console.log("📝 Attempting registration with:", userData.email);
+      // Log for development purposes only
+      if (import.meta.env.DEV) {
+        console.log("📝 Attempting registration with:", userData.email);
+      }
       dispatch({ type: AUTH_ACTIONS.REGISTER_START });
       const response = await localAuthService.register(userData);
 
-      console.log("📝 Registration response:", response);
+      // Log for development purposes only
+      if (import.meta.env.DEV) {
+        console.log("📝 Registration response:", response);
+      }
 
       if (response.success) {
         tokenManager.setToken(response.data.token);
@@ -192,18 +216,27 @@ export const AuthProvider = ({ children }) => {
             token: response.data.token,
           },
         });
-        console.log("✅ Registration successful");
+        // Log for development purposes only
+        if (import.meta.env.DEV) {
+          console.log("✅ Registration successful");
+        }
         return { success: true };
       } else {
         dispatch({
           type: AUTH_ACTIONS.REGISTER_FAILURE,
           payload: response.error || "Registration failed",
         });
-        console.log("❌ Registration failed:", response.error);
+        // Log for development purposes only
+        if (import.meta.env.DEV) {
+          console.log("❌ Registration failed:", response.error);
+        }
         return { success: false, error: response.error };
       }
     } catch (error) {
-      console.error("💥 Registration error:", error);
+      // Log error for development, could be replaced with proper error handling
+      if (import.meta.env.DEV) {
+        console.error("💥 Registration error:", error);
+      }
       dispatch({
         type: AUTH_ACTIONS.REGISTER_FAILURE,
         payload: error.message || "Registration failed",

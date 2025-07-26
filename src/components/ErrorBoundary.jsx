@@ -2,13 +2,13 @@ import React from "react";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 
 class ErrorBoundary extends React.Component {
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null, errorInfo: null };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
   }
 
   componentDidCatch(error, errorInfo) {

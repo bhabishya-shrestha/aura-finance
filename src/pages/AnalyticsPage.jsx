@@ -212,7 +212,7 @@ const AnalyticsPage = () => {
               >
                 {spendingByCategory.map((entry, index) => (
                   <Cell
-                    key={`cell-${index}`}
+                    key={`cell-${entry.category}-${index}`}
                     fill={COLORS[index % COLORS.length]}
                   />
                 ))}
