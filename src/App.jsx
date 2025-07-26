@@ -7,7 +7,10 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import SettingsPage from "./pages/SettingsPage";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
+import ErrorBoundary from "./components/ErrorBoundary";
+import LoadingSpinner from "./components/LoadingSpinner";
 import { initializeDatabase } from "./database";
+import useStore from "./store";
 
 // Main App Content Component
 const AppContent = () => {
@@ -15,19 +18,26 @@ const AppContent = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { isAuthenticated, isLoading, isInitialized } = useAuth();
 
+  const { loadTransactions, loadAccounts } = useStore();
+
   useEffect(() => {
     // Initialize database for local storage fallback
     initializeDatabase();
-  }, []);
+
+    // Load data from local database
+    loadTransactions();
+    loadAccounts();
+  }, [loadTransactions, loadAccounts]);
 
   // Show loading screen while checking authentication
   if (!isInitialized || isLoading) {
     return (
-      <div className="min-h-screen bg-dark-charcoal flex items-center justify-center">
-        <div className="text-center">
-          <div className="loading-spinner mx-auto mb-4"></div>
-          <p className="text-muted-gray">Loading Aura Finance...</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <LoadingSpinner
+          size="xl"
+          text="Loading Aura Finance..."
+          showText={true}
+        />
       </div>
     );
   }
@@ -58,7 +68,7 @@ const AppContent = () => {
   };
 
   return (
-    <div className="flex h-screen bg-dark-charcoal">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Sidebar */}
       <Sidebar
         onPageChange={setCurrentPage}
@@ -68,12 +78,14 @@ const AppContent = () => {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:ml-0">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <Header onMenuToggle={toggleMobileSidebar} showMenuButton={true} />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto">{renderPage()}</main>
+        <main className="flex-1 overflow-auto">
+          <div className="w-full h-full">{renderPage()}</div>
+        </main>
       </div>
     </div>
   );
@@ -82,9 +94,11 @@ const AppContent = () => {
 // Main App Component with Auth Provider
 const App = () => {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
 

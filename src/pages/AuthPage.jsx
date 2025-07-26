@@ -33,14 +33,14 @@ const AuthPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-dark-charcoal flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
       {/* Background Effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-apple-blue/20 to-apple-purple/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-3xl animate-pulse" />
         <div
-          className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-apple-green/20 to-apple-orange/20 rounded-full blur-3xl animate-pulse"
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-green-500/10 to-orange-500/10 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "1s" }}
-        ></div>
+        />
       </div>
 
       <div
@@ -51,16 +51,20 @@ const AuthPage = () => {
           {/* Header */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-apple-blue to-apple-purple rounded-apple-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-3xl font-bold text-gradient">Aura Finance</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Aura Finance
+              </h1>
             </div>
-            <h2 className="text-4xl font-bold text-soft-white leading-tight">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white leading-tight">
               Take Control of Your
-              <span className="text-gradient block">Financial Future</span>
+              <span className="text-blue-600 dark:text-blue-400 block">
+                Financial Future
+              </span>
             </h2>
-            <p className="text-lg text-muted-gray leading-relaxed">
+            <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
               A modern, secure, and beautiful way to manage your personal
               finances. Track expenses, analyze spending patterns, and achieve
               your financial goals.
@@ -75,14 +79,14 @@ const AuthPage = () => {
                 className="flex items-start gap-4 animate-slide-up"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="w-12 h-12 bg-apple-glass-200/50 rounded-apple-lg flex items-center justify-center flex-shrink-0">
-                  <feature.icon className="w-6 h-6 text-apple-blue" />
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <feature.icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-soft-white mb-1">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
                     {feature.title}
                   </h3>
-                  <p className="text-muted-gray leading-relaxed">
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
@@ -132,16 +136,15 @@ const AuthPage = () => {
 
             {/* Auth Forms */}
             <div className="relative">
-              <div
-                className={`transition-all duration-500 ease-in-out ${isLogin ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 absolute inset-0"}`}
-              >
-                <LoginForm onSwitchToRegister={() => setIsLogin(false)} />
-              </div>
-              <div
-                className={`transition-all duration-500 ease-in-out ${!isLogin ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 absolute inset-0"}`}
-              >
-                <RegisterForm onSwitchToLogin={() => setIsLogin(true)} />
-              </div>
+              {isLogin ? (
+                <div className="transition-all duration-500 ease-in-out">
+                  <LoginForm onSwitchToRegister={() => setIsLogin(false)} />
+                </div>
+              ) : (
+                <div className="transition-all duration-500 ease-in-out">
+                  <RegisterForm onSwitchToLogin={() => setIsLogin(true)} />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -149,9 +152,7 @@ const AuthPage = () => {
 
       {/* Footer */}
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 text-center">
-        <p className="text-xs text-muted-gray">
-          © 2024 Aura Finance. Built with modern web technologies.
-        </p>
+        <p className="text-xs text-muted-gray">© 2024 Aura Finance</p>
       </div>
     </div>
   );

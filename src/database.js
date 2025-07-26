@@ -4,9 +4,11 @@ import Dexie from "dexie";
 const db = new Dexie("AuraFinanceDB");
 
 // Define database schema
-db.version(1).stores({
-  transactions: "++id, date, description, amount, category, accountId",
-  accounts: "++id, name, type, balance",
+db.version(2).stores({
+  users: "++id, email, name, passwordHash, createdAt, updatedAt",
+  sessions: "++id, userId, token, expiresAt, createdAt",
+  transactions: "++id, date, description, amount, category, accountId, userId",
+  accounts: "++id, name, type, balance, userId",
 });
 
 // Initialize with some sample data for demonstration
@@ -16,14 +18,24 @@ export const initializeDatabase = async () => {
     const transactionCount = await db.transactions.count();
 
     if (transactionCount === 0) {
-      // Add sample accounts
+      // Add sample accounts (will be associated with user when they register)
       await db.accounts.bulkAdd([
-        { name: "Bank of America Checking", type: "checking", balance: 0 },
-        { name: "Bank of America Credit Card", type: "credit", balance: 0 },
-        { name: "Savings Account", type: "savings", balance: 0 },
+        {
+          name: "Bank of America Checking",
+          type: "checking",
+          balance: 0,
+          userId: null,
+        },
+        {
+          name: "Bank of America Credit Card",
+          type: "credit",
+          balance: 0,
+          userId: null,
+        },
+        { name: "Savings Account", type: "savings", balance: 0, userId: null },
       ]);
 
-      // Add sample transactions
+      // Add sample transactions (will be associated with user when they register)
       await db.transactions.bulkAdd([
         {
           date: new Date("2024-01-15"),
@@ -31,6 +43,7 @@ export const initializeDatabase = async () => {
           amount: -85.5,
           category: "Groceries",
           accountId: 1,
+          userId: null,
         },
         {
           date: new Date("2024-01-14"),
@@ -38,6 +51,7 @@ export const initializeDatabase = async () => {
           amount: -45.0,
           category: "Transport",
           accountId: 1,
+          userId: null,
         },
         {
           date: new Date("2024-01-13"),
@@ -45,6 +59,7 @@ export const initializeDatabase = async () => {
           amount: 2500.0,
           category: "Income",
           accountId: 1,
+          userId: null,
         },
       ]);
     }

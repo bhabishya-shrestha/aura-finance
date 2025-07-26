@@ -107,10 +107,10 @@ describe("NetWorth", () => {
   it("applies correct CSS classes for styling", () => {
     render(<NetWorth />);
 
-    // Find the main container div with the card-glass-hover class
+    // Find the main container div with the fidelity-card-hover class
     const container = screen
       .getByText("Net Worth")
-      .closest(".card-glass-hover");
+      .closest(".fidelity-card-hover");
     expect(container).toBeInTheDocument();
   });
 });

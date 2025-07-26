@@ -14,13 +14,13 @@ const Accounts = () => {
   const getAccountIcon = (type) => {
     switch (type) {
       case "credit":
-        return <CreditCard className="w-5 h-5" />;
+        return <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />;
       case "checking":
-        return <Wallet className="w-5 h-5" />;
+        return <Wallet className="w-4 h-4 sm:w-5 sm:h-5" />;
       case "savings":
-        return <PiggyBank className="w-5 h-5" />;
+        return <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5" />;
       default:
-        return <Wallet className="w-5 h-5" />;
+        return <Wallet className="w-4 h-4 sm:w-5 sm:h-5" />;
     }
   };
 
@@ -66,34 +66,36 @@ const Accounts = () => {
 
   return (
     <>
-      <div className="glass-card p-6">
-        <h2 className="text-xl font-semibold text-soft-white mb-4">Accounts</h2>
+      <div className="glass-card-hover p-4 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-semibold text-primary mb-4">
+          Accounts
+        </h2>
 
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {accounts.map((account) => {
             const balance = getAccountBalance(account.id);
             return (
               <div
                 key={account.id}
-                className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"
+                className="flex items-center justify-between p-2 sm:p-3 apple-glass-light rounded-apple-lg border border-apple-glass-200/30 backdrop-blur-apple-sm transition-all duration-200 hover:bg-apple-glass-200/40"
               >
-                <div className="flex items-center gap-3">
-                  <div className="text-teal">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <div className="icon-primary flex-shrink-0">
                     {getAccountIcon(account.type)}
                   </div>
-                  <div>
-                    <p className="text-soft-white font-medium">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-primary font-medium truncate text-sm sm:text-base">
                       {account.name}
                     </p>
-                    <p className="text-muted-gray text-sm capitalize">
+                    <p className="text-muted text-xs sm:text-sm capitalize truncate">
                       {account.type}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                   <div className="text-right">
-                    <p className="text-soft-white font-semibold">
+                    <p className="text-primary font-semibold text-sm sm:text-base">
                       {formatCurrency(balance)}
                     </p>
                   </div>
@@ -102,9 +104,9 @@ const Accounts = () => {
                     onClick={() =>
                       handleDeleteAccount(account.id, account.name)
                     }
-                    className="p-1.5 hover:bg-red-500/20 rounded transition-colors text-muted-gray hover:text-red-400"
+                    className="p-1 sm:p-1.5 hover:bg-apple-red/20 rounded-apple transition-all duration-200 icon-muted hover:icon-error backdrop-blur-apple-sm"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                   </button>
                 </div>
               </div>
@@ -112,12 +114,12 @@ const Accounts = () => {
           })}
         </div>
 
-        <div className="mt-4 pt-4 border-t border-white/10">
+        <div className="mt-4 pt-3 sm:pt-4 border-t border-apple-glass-300/30">
           <button
             onClick={() => setShowAddModal(true)}
-            className="w-full py-2 px-4 bg-white/10 hover:bg-white/20 transition-colors rounded-lg text-soft-white text-sm flex items-center justify-center gap-2"
+            className="w-full py-2 px-3 sm:px-4 bg-apple-glass-200/40 hover:bg-apple-glass-300/50 transition-all duration-200 rounded-apple-lg text-primary text-sm flex items-center justify-center gap-2 backdrop-blur-apple-sm"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
             Add Account
           </button>
         </div>
@@ -125,23 +127,23 @@ const Accounts = () => {
 
       {/* Add Account Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="glass-modal w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-soft-white">
+        <div className="modal-backdrop">
+          <div className="modal-content">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h3 className="text-lg sm:text-xl font-semibold text-primary">
                 Add New Account
               </h3>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="text-muted-gray hover:text-soft-white transition-colors"
+                className="icon-muted hover:icon-white transition-all duration-200"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-muted-gray mb-2">
+                <label className="block text-sm font-medium text-muted mb-1 sm:mb-2">
                   Account Name
                 </label>
                 <input
@@ -151,12 +153,12 @@ const Accounts = () => {
                     setNewAccount({ ...newAccount, name: e.target.value })
                   }
                   placeholder="e.g., Chase Checking"
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
+                  className="input-glass w-full text-sm sm:text-base"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted-gray mb-2">
+                <label className="block text-sm font-medium text-muted mb-1 sm:mb-2">
                   Account Type
                 </label>
                 <select
@@ -164,7 +166,7 @@ const Accounts = () => {
                   onChange={(e) =>
                     setNewAccount({ ...newAccount, type: e.target.value })
                   }
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
+                  className="input-glass w-full text-sm sm:text-base"
                 >
                   <option value="checking">Checking</option>
                   <option value="savings">Savings</option>
@@ -173,7 +175,7 @@ const Accounts = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted-gray mb-2">
+                <label className="block text-sm font-medium text-muted mb-1 sm:mb-2">
                   Initial Balance
                 </label>
                 <input
@@ -184,21 +186,21 @@ const Accounts = () => {
                     setNewAccount({ ...newAccount, balance: e.target.value })
                   }
                   placeholder="0.00"
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
+                  className="input-glass w-full text-sm sm:text-base"
                 />
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="flex-1 py-2 px-4 bg-white/10 hover:bg-white/20 transition-colors rounded-lg text-soft-white"
+                className="flex-1 btn-glass-outlined text-sm sm:text-base"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddAccount}
-                className="flex-1 py-2 px-4 bg-gradient-to-r from-teal to-purple hover:from-teal/90 hover:to-purple/90 transition-all rounded-lg text-white font-medium"
+                className="flex-1 btn-glass-primary text-sm sm:text-base"
               >
                 Add Account
               </button>

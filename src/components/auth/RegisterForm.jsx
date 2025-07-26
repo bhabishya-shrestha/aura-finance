@@ -94,7 +94,7 @@ const RegisterForm = ({ onSwitchToLogin }) => {
 
   const getPasswordStrength = () => {
     if (!formData.password)
-      return { strength: 0, color: "text-muted-gray", text: "" };
+      return { strength: 0, color: "text-muted", text: "" };
 
     let strength = 0;
     if (formData.password.length >= 6) strength++;
@@ -105,13 +105,13 @@ const RegisterForm = ({ onSwitchToLogin }) => {
     if (/(?=.*[!@#$%^&*])/.test(formData.password)) strength++;
 
     const strengthMap = {
-      0: { color: "text-muted-gray", text: "" },
-      1: { color: "text-apple-red", text: "Very Weak" },
-      2: { color: "text-apple-orange", text: "Weak" },
-      3: { color: "text-apple-yellow", text: "Fair" },
-      4: { color: "text-apple-green", text: "Good" },
-      5: { color: "text-apple-green", text: "Strong" },
-      6: { color: "text-apple-green", text: "Very Strong" },
+      0: { color: "text-muted", text: "" },
+      1: { color: "text-error", text: "Very Weak" },
+      2: { color: "text-warning", text: "Weak" },
+      3: { color: "text-warning", text: "Fair" },
+      4: { color: "text-success", text: "Good" },
+      5: { color: "text-success", text: "Strong" },
+      6: { color: "text-success", text: "Very Strong" },
     };
 
     return { strength, ...strengthMap[strength] };
@@ -120,44 +120,44 @@ const RegisterForm = ({ onSwitchToLogin }) => {
   const passwordStrength = getPasswordStrength();
 
   return (
-    <div className="w-full max-w-md mx-auto animate-fade-in">
-      <div className="card-glass">
+    <div className="w-full max-w-md mx-auto animate-apple-fade">
+      <div className="apple-glass-heavy rounded-apple-xl p-4 sm:p-6 lg:p-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gradient mb-2">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-gradient mb-2">
             Create Account
           </h2>
-          <p className="text-muted-gray">
+          <p className="text-muted text-sm sm:text-base">
             Join Aura Finance to start managing your finances
           </p>
         </div>
 
         {/* Error Display */}
         {error && (
-          <div className="mb-6 p-4 rounded-apple-lg bg-apple-red/10 border border-apple-red/20 text-apple-red animate-slide-up">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-apple-lg bg-apple-red/10 border border-apple-red/20 text-apple-red animate-apple-slide backdrop-blur-apple-sm">
             <p className="text-sm font-medium">{error}</p>
           </div>
         )}
 
         {/* Registration Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {/* Name Field */}
           <div>
             <label
               htmlFor="name"
-              className="block text-sm font-medium text-soft-white mb-2"
+              className="block text-sm font-medium text-primary mb-1 sm:mb-2"
             >
               Full Name
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-gray" />
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 icon-muted" />
               <input
                 type="text"
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className={`input-glass w-full pl-10 ${errors.name ? "ring-2 ring-apple-red/50" : ""}`}
+                className={`input-glass w-full pl-10 text-sm sm:text-base ${errors.name ? "ring-2 ring-apple-red/50" : ""}`}
                 placeholder="Enter your full name"
                 disabled={isLoading}
                 autoComplete="name"
@@ -167,7 +167,7 @@ const RegisterForm = ({ onSwitchToLogin }) => {
             {errors.name && (
               <p
                 id="name-error"
-                className="mt-1 text-sm text-apple-red animate-slide-up"
+                className="mt-1 text-xs sm:text-sm text-apple-red animate-apple-slide"
               >
                 {errors.name}
               </p>
@@ -178,19 +178,19 @@ const RegisterForm = ({ onSwitchToLogin }) => {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-soft-white mb-2"
+              className="block text-sm font-medium text-primary mb-1 sm:mb-2"
             >
               Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-gray" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 icon-muted" />
               <input
                 type="email"
                 id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={`input-glass w-full pl-10 ${errors.email ? "ring-2 ring-apple-red/50" : ""}`}
+                className={`input-glass w-full pl-10 text-sm sm:text-base ${errors.email ? "ring-2 ring-apple-red/50" : ""}`}
                 placeholder="Enter your email"
                 disabled={isLoading}
                 autoComplete="email"
@@ -200,7 +200,7 @@ const RegisterForm = ({ onSwitchToLogin }) => {
             {errors.email && (
               <p
                 id="email-error"
-                className="mt-1 text-sm text-apple-red animate-slide-up"
+                className="mt-1 text-xs sm:text-sm text-apple-red animate-apple-slide"
               >
                 {errors.email}
               </p>
@@ -211,19 +211,19 @@ const RegisterForm = ({ onSwitchToLogin }) => {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-soft-white mb-2"
+              className="block text-sm font-medium text-primary mb-1 sm:mb-2"
             >
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-gray" />
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 icon-muted" />
               <input
                 type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                className={`input-glass w-full pl-10 pr-10 ${errors.password ? "ring-2 ring-apple-red/50" : ""}`}
+                className={`input-glass w-full pl-10 pr-10 text-sm sm:text-base ${errors.password ? "ring-2 ring-apple-red/50" : ""}`}
                 placeholder="Create a strong password"
                 disabled={isLoading}
                 autoComplete="new-password"
@@ -234,14 +234,14 @@ const RegisterForm = ({ onSwitchToLogin }) => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-gray hover:text-soft-white transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 icon-muted hover:icon-white transition-all duration-200"
                 disabled={isLoading}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
-                  <EyeOff className="w-5 h-5" />
+                  <EyeOff className="w-4 h-4" />
                 ) : (
-                  <Eye className="w-5 h-5" />
+                  <Eye className="w-4 h-4" />
                 )}
               </button>
             </div>
@@ -266,7 +266,7 @@ const RegisterForm = ({ onSwitchToLogin }) => {
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted-gray">
+                <p className="text-xs text-muted">
                   Use at least 6 characters with uppercase, lowercase, and
                   numbers
                 </p>
@@ -276,7 +276,7 @@ const RegisterForm = ({ onSwitchToLogin }) => {
             {errors.password && (
               <p
                 id="password-error"
-                className="mt-1 text-sm text-apple-red animate-slide-up"
+                className="mt-1 text-xs sm:text-sm text-apple-red animate-apple-slide"
               >
                 {errors.password}
               </p>
@@ -287,19 +287,19 @@ const RegisterForm = ({ onSwitchToLogin }) => {
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-soft-white mb-2"
+              className="block text-sm font-medium text-primary mb-1 sm:mb-2"
             >
               Confirm Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-gray" />
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 icon-muted" />
               <input
                 type={showConfirmPassword ? "text" : "password"}
                 id="confirmPassword"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
-                className={`input-glass w-full pl-10 pr-10 ${errors.confirmPassword ? "ring-2 ring-apple-red/50" : ""}`}
+                className={`input-glass w-full pl-10 pr-10 text-sm sm:text-base ${errors.confirmPassword ? "ring-2 ring-apple-red/50" : ""}`}
                 placeholder="Confirm your password"
                 disabled={isLoading}
                 autoComplete="new-password"
@@ -310,23 +310,23 @@ const RegisterForm = ({ onSwitchToLogin }) => {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-gray hover:text-soft-white transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 icon-muted hover:icon-white transition-all duration-200"
                 disabled={isLoading}
                 aria-label={
                   showConfirmPassword ? "Hide password" : "Show password"
                 }
               >
                 {showConfirmPassword ? (
-                  <EyeOff className="w-5 h-5" />
+                  <EyeOff className="w-4 h-4" />
                 ) : (
-                  <Eye className="w-5 h-5" />
+                  <Eye className="w-4 h-4" />
                 )}
               </button>
             </div>
             {errors.confirmPassword && (
               <p
                 id="confirm-password-error"
-                className="mt-1 text-sm text-apple-red animate-slide-up"
+                className="mt-1 text-xs sm:text-sm text-apple-red animate-apple-slide"
               >
                 {errors.confirmPassword}
               </p>
@@ -337,11 +337,11 @@ const RegisterForm = ({ onSwitchToLogin }) => {
           <button
             type="submit"
             disabled={isLoading}
-            className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-glass-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                 Creating Account...
               </>
             ) : (
@@ -351,13 +351,13 @@ const RegisterForm = ({ onSwitchToLogin }) => {
         </form>
 
         {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className="text-muted-gray text-sm">
+        <div className="mt-6 sm:mt-8 text-center">
+          <p className="text-muted text-xs sm:text-sm">
             Already have an account?{" "}
             <button
               type="button"
               onClick={onSwitchToLogin}
-              className="text-apple-blue hover:text-apple-blue/80 font-medium transition-colors"
+              className="text-apple-blue hover:text-apple-blue/80 font-medium transition-all duration-200"
               disabled={isLoading}
             >
               Sign in here

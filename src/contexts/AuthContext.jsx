@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
-import { authAPI } from "../services/api";
+import { localAuthService, tokenManager } from "../services/localAuth";
 
 // Action types
 const AUTH_ACTIONS = {
@@ -19,7 +19,7 @@ const AUTH_ACTIONS = {
 // Initial state
 const initialState = {
   user: null,
-  token: localStorage.getItem("authToken"),
+  token: tokenManager.getToken(),
   isAuthenticated: false,
   isLoading: false,
   error: null,
@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }) => {
       if (state.token && !state.isInitialized) {
         try {
           dispatch({ type: AUTH_ACTIONS.LOAD_USER_START });
-          const response = await authAPI.getCurrentUser();
+          const response = await localAuthService.getCurrentUser(state.token);
 
           if (response.success) {
             dispatch({
@@ -117,12 +117,12 @@ export const AuthProvider = ({ children }) => {
             });
           } else {
             // Token is invalid, clear it
-            authAPI.logout();
+            tokenManager.removeToken();
             dispatch({ type: AUTH_ACTIONS.LOGOUT });
           }
         } catch (error) {
           console.error("Failed to load user:", error);
-          authAPI.logout();
+          tokenManager.removeToken();
           dispatch({
             type: AUTH_ACTIONS.LOAD_USER_FAILURE,
             payload: error.message,
@@ -139,10 +139,14 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (credentials) => {
     try {
+      console.log("🔐 Attempting login with:", credentials.email);
       dispatch({ type: AUTH_ACTIONS.LOGIN_START });
-      const response = await authAPI.login(credentials);
+      const response = await localAuthService.login(credentials);
+
+      console.log("🔐 Login response:", response);
 
       if (response.success) {
+        tokenManager.setToken(response.data.token);
         dispatch({
           type: AUTH_ACTIONS.LOGIN_SUCCESS,
           payload: {
@@ -150,15 +154,18 @@ export const AuthProvider = ({ children }) => {
             token: response.data.token,
           },
         });
+        console.log("✅ Login successful");
         return { success: true };
       } else {
         dispatch({
           type: AUTH_ACTIONS.LOGIN_FAILURE,
           payload: response.error || "Login failed",
         });
+        console.log("❌ Login failed:", response.error);
         return { success: false, error: response.error };
       }
     } catch (error) {
+      console.error("💥 Login error:", error);
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: error.message || "Login failed",
@@ -170,10 +177,14 @@ export const AuthProvider = ({ children }) => {
   // Register function
   const register = async (userData) => {
     try {
+      console.log("📝 Attempting registration with:", userData.email);
       dispatch({ type: AUTH_ACTIONS.REGISTER_START });
-      const response = await authAPI.register(userData);
+      const response = await localAuthService.register(userData);
+
+      console.log("📝 Registration response:", response);
 
       if (response.success) {
+        tokenManager.setToken(response.data.token);
         dispatch({
           type: AUTH_ACTIONS.REGISTER_SUCCESS,
           payload: {
@@ -181,15 +192,18 @@ export const AuthProvider = ({ children }) => {
             token: response.data.token,
           },
         });
+        console.log("✅ Registration successful");
         return { success: true };
       } else {
         dispatch({
           type: AUTH_ACTIONS.REGISTER_FAILURE,
           payload: response.error || "Registration failed",
         });
+        console.log("❌ Registration failed:", response.error);
         return { success: false, error: response.error };
       }
     } catch (error) {
+      console.error("💥 Registration error:", error);
       dispatch({
         type: AUTH_ACTIONS.REGISTER_FAILURE,
         payload: error.message || "Registration failed",
@@ -199,8 +213,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Logout function
-  const logout = () => {
-    authAPI.logout();
+  const logout = async () => {
+    await localAuthService.logout(state.token);
+    tokenManager.removeToken();
     dispatch({ type: AUTH_ACTIONS.LOGOUT });
   };
 
