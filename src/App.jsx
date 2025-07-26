@@ -6,11 +6,13 @@ import AccountsPage from "./pages/AccountsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import SettingsPage from "./pages/SettingsPage";
 import Sidebar from "./components/Sidebar";
+import Header from "./components/Header";
 import { initializeDatabase } from "./database";
 
 // Main App Content Component
 const AppContent = () => {
   const [currentPage, setCurrentPage] = useState("dashboard");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { isAuthenticated, isLoading, isInitialized } = useAuth();
 
   useEffect(() => {
@@ -51,10 +53,28 @@ const AppContent = () => {
     }
   };
 
+  const toggleMobileSidebar = () => {
+    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+  };
+
   return (
     <div className="flex h-screen bg-dark-charcoal">
-      <Sidebar onPageChange={setCurrentPage} currentPage={currentPage} />
-      <main className="flex-1 overflow-auto">{renderPage()}</main>
+      {/* Sidebar */}
+      <Sidebar
+        onPageChange={setCurrentPage}
+        currentPage={currentPage}
+        isMobileOpen={isMobileSidebarOpen}
+        onMobileToggle={toggleMobileSidebar}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col lg:ml-0">
+        {/* Header */}
+        <Header onMenuToggle={toggleMobileSidebar} showMenuButton={true} />
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-auto">{renderPage()}</main>
+      </div>
     </div>
   );
 };
