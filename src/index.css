@@ -1,0 +1,37 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: "Inter", sans-serif;
+    background: linear-gradient(135deg, #17181c 0%, #1a1b1f 100%);
+    min-height: 100vh;
+    color: #f0f0f0;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-glass-white backdrop-blur-glass border border-white/20 shadow-glass rounded-xl;
+  }
+
+  .glass-modal {
+    @apply bg-glass-white backdrop-blur-glass border border-white/20 shadow-glass rounded-2xl;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-teal to-purple bg-clip-text text-transparent;
+  }
+
+  .gradient-border {
+    @apply border border-transparent bg-gradient-to-r from-teal to-purple bg-clip-border;
+  }
+}
