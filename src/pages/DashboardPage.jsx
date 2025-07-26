@@ -68,14 +68,14 @@ const DashboardPage = () => {
             <div className="text-center p-4 bg-white/5 rounded-lg">
               <div className="text-2xl font-bold text-teal mb-2">$2,450</div>
               <div className="text-muted-gray text-sm">
-                This Month's Spending
+                This Month&apos;s Spending
               </div>
             </div>
             <div className="text-center p-4 bg-white/5 rounded-lg">
               <div className="text-2xl font-bold text-green-400 mb-2">
                 $8,200
               </div>
-              <div className="text-muted-gray text-sm">This Month's Income</div>
+              <div className="text-muted-gray text-sm">This Month&apos;s Income</div>
             </div>
             <div className="text-center p-4 bg-white/5 rounded-lg">
               <div className="text-2xl font-bold text-purple-400 mb-2">
