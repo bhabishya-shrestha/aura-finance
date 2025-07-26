@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import db from "./database";
+import { tokenManager } from "./services/localAuth";
 
 const useStore = create((set, get) => ({
   // State
@@ -8,6 +9,7 @@ const useStore = create((set, get) => ({
   isLoading: false,
   isModalOpen: false,
   parsedTransactions: [],
+  currentUser: null,
 
   // Actions
   setLoading: (loading) => set({ isLoading: loading }),
@@ -21,10 +23,28 @@ const useStore = create((set, get) => ({
   loadTransactions: async () => {
     try {
       set({ isLoading: true });
-      const transactions = await db.transactions
-        .orderBy("date")
-        .reverse()
-        .toArray();
+      const token = tokenManager.getToken();
+      let transactions = [];
+
+      if (token) {
+        // Get user ID from token
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const userId = payload.userId;
+
+        transactions = await db.transactions
+          .where("userId")
+          .equals(userId)
+          .orderBy("date")
+          .reverse()
+          .toArray();
+      } else {
+        // Fallback to all transactions for demo
+        transactions = await db.transactions
+          .orderBy("date")
+          .reverse()
+          .toArray();
+      }
+
       set({ transactions });
     } catch (error) {
       console.error("Error loading transactions:", error);
@@ -36,7 +56,20 @@ const useStore = create((set, get) => ({
   // Load accounts from database
   loadAccounts: async () => {
     try {
-      const accounts = await db.accounts.toArray();
+      const token = tokenManager.getToken();
+      let accounts = [];
+
+      if (token) {
+        // Get user ID from token
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const userId = payload.userId;
+
+        accounts = await db.accounts.where("userId").equals(userId).toArray();
+      } else {
+        // Fallback to all accounts for demo
+        accounts = await db.accounts.toArray();
+      }
+
       set({ accounts });
     } catch (error) {
       console.error("Error loading accounts:", error);
@@ -47,7 +80,25 @@ const useStore = create((set, get) => ({
   addTransactions: async (transactions) => {
     try {
       set({ isLoading: true });
-      await db.transactions.bulkAdd(transactions);
+      const token = tokenManager.getToken();
+      let userId = null;
+
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          userId = payload.userId;
+        } catch (error) {
+          console.error("Error parsing token:", error);
+        }
+      }
+
+      // Add userId to transactions
+      const transactionsWithUser = transactions.map((transaction) => ({
+        ...transaction,
+        userId: userId || transaction.userId || null,
+      }));
+
+      await db.transactions.bulkAdd(transactionsWithUser);
       // Reload transactions to update the UI
       await get().loadTransactions();
       set({ isModalOpen: false, parsedTransactions: [] });
@@ -90,7 +141,24 @@ const useStore = create((set, get) => ({
   addAccount: async (accountData) => {
     try {
       set({ isLoading: true });
-      await db.accounts.add(accountData);
+      const token = tokenManager.getToken();
+      let userId = null;
+
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          userId = payload.userId;
+        } catch (error) {
+          console.error("Error parsing token:", error);
+        }
+      }
+
+      const accountWithUser = {
+        ...accountData,
+        userId: userId || accountData.userId || null,
+      };
+
+      await db.accounts.add(accountWithUser);
       // Reload accounts to update the UI
       await get().loadAccounts();
     } catch (error) {

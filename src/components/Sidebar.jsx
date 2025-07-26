@@ -80,55 +80,57 @@ const Sidebar = ({
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-apple-dark-500/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-apple-dark-500/50 backdrop-blur-apple-xl z-40 lg:hidden"
           onClick={onMobileToggle}
         />
       )}
 
       {/* Sidebar */}
       <div
-        className={`nav-glass h-screen transition-all duration-300 ease-in-out fixed lg:relative z-50 ${
-          isCollapsed ? "w-20" : "w-64"
+        className={`fidelity-nav h-screen transition-all duration-300 ease-in-out fixed lg:relative z-50 ${
+          isCollapsed ? "w-16 lg:w-20" : "w-64"
         } ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
-        <div className="p-4 h-full flex flex-col">
+        <div className="p-3 sm:p-4 h-full flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             {!isCollapsed && (
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-apple-blue to-apple-purple rounded-apple-lg flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-apple-blue to-apple-purple rounded-apple-lg flex items-center justify-center shadow-apple-elevation-2 flex-shrink-0">
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 icon-white" />
                 </div>
-                <h2 className="text-xl font-bold text-gradient">Aura</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-gradient truncate">
+                  Aura
+                </h2>
               </div>
             )}
             <button
               onClick={toggleCollapse}
-              className="p-2 hover:bg-apple-glass-200/60 rounded-apple-lg transition-all duration-200 group"
+              className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 group flex-shrink-0"
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {isCollapsed ? (
-                <ChevronRight className="w-4 h-4 text-muted-gray group-hover:text-soft-white transition-colors" />
+                <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-all duration-200" />
               ) : (
-                <ChevronLeft className="w-4 h-4 text-muted-gray group-hover:text-soft-white transition-colors" />
+                <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-all duration-200" />
               )}
             </button>
           </div>
 
           {/* User Info */}
           {user && !isCollapsed && (
-            <div className="mb-6 p-3 apple-glass-light rounded-apple-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-apple-blue to-apple-purple rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
+            <div className="mb-4 sm:mb-6 p-2 sm:p-3 fidelity-card">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+                  <span className="text-xs sm:text-sm font-medium text-white">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-soft-white truncate">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
                     {user.name}
                   </p>
-                  <p className="text-xs text-muted-gray truncate">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                     {user.email}
                   </p>
                 </div>
@@ -142,23 +144,29 @@ const Sidebar = ({
               <button
                 key={item.id}
                 onClick={() => handleMenuClick(item.id)}
-                className={`w-full flex items-center gap-3 p-3 rounded-apple-lg transition-all duration-200 group relative ${
-                  currentPage === item.id ? "nav-item active" : "nav-item"
+                className={`w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg transition-all duration-200 group relative ${
+                  currentPage === item.id
+                    ? "fidelity-nav-item active"
+                    : "fidelity-nav-item"
                 } ${isCollapsed ? "justify-center" : ""}`}
                 title={isCollapsed ? item.label : item.description}
               >
                 <item.icon
-                  className={`w-5 h-5 transition-transform ${
-                    isCollapsed ? "" : "group-hover:scale-110"
-                  }`}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-200 ${
+                    currentPage === item.id
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                  } ${isCollapsed ? "" : "group-hover:scale-110"}`}
                 />
                 {!isCollapsed && (
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium text-sm sm:text-base truncate">
+                    {item.label}
+                  </span>
                 )}
 
                 {/* Active indicator */}
                 {currentPage === item.id && (
-                  <div className="absolute right-2 w-2 h-2 bg-apple-blue rounded-full" />
+                  <div className="absolute right-2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full shadow-sm" />
                 )}
               </button>
             ))}
@@ -166,13 +174,15 @@ const Sidebar = ({
 
           {/* Footer */}
           <div
-            className={`mt-auto pt-4 border-t border-apple-glass-300/30 ${isCollapsed ? "text-center" : ""}`}
+            className={`mt-auto pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700 ${isCollapsed ? "text-center" : ""}`}
           >
             {!isCollapsed && (
-              <div className="text-xs text-muted-gray mb-2">Version 0.1.0</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                Version 0.1.0
+              </div>
             )}
             <div
-              className={`text-xs text-muted-gray ${isCollapsed ? "text-center" : ""}`}
+              className={`text-xs text-gray-500 dark:text-gray-400 ${isCollapsed ? "text-center" : ""}`}
             >
               {isCollapsed ? "Aura" : "Aura Finance"}
             </div>

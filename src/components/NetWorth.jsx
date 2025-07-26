@@ -21,9 +21,10 @@ const NetWorth = () => {
 
     if (netWorth !== 0) {
       setIsAnimating(true);
-      setTimeout(() => setIsAnimating(false), 1000);
+      const timer = setTimeout(() => setIsAnimating(false), 1000);
+      return () => clearTimeout(timer);
     }
-  }, [getNetWorth()]);
+  }, [getNetWorth, netWorth]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("en-US", {
@@ -40,30 +41,39 @@ const NetWorth = () => {
     previousNetWorth !== 0 ? (change / Math.abs(previousNetWorth)) * 100 : 0;
 
   const getChangeColor = () => {
-    if (change === 0) return "text-muted-gray";
-    return change > 0 ? "text-apple-green" : "text-apple-red";
+    if (change === 0) return "text-muted";
+    return change > 0 ? "text-success" : "text-error";
   };
 
   const getChangeIcon = () => {
     if (change === 0) return null;
     return change > 0 ? (
-      <ArrowUpRight className="w-4 h-4" />
+      <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" />
     ) : (
-      <ArrowDownRight className="w-4 h-4" />
+      <ArrowDownRight className="w-3 h-3 sm:w-4 sm:h-4" />
     );
   };
 
   return (
-    <div className="card-glass-hover group">
+    <div
+      className="fidelity-card-hover group relative overflow-hidden"
+      role="region"
+      aria-label="Net Worth Summary"
+    >
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-apple-green to-apple-blue rounded-apple-lg flex items-center justify-center">
-            <DollarSign className="w-5 h-5 text-white" />
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
+            <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-soft-white">Net Worth</h2>
-            <p className="text-xs text-muted-gray">
+          <div className="min-w-0">
+            <h2
+              className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate"
+              id="net-worth-title"
+            >
+              Net Worth
+            </h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
               Total assets minus liabilities
             </p>
           </div>
@@ -71,16 +81,16 @@ const NetWorth = () => {
 
         {/* Trend Icon */}
         <div
-          className={`p-2 rounded-apple-lg ${isPositive ? "bg-apple-green/10" : "bg-apple-red/10"}`}
+          className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${isPositive ? "bg-green-100 dark:bg-green-900/20" : "bg-red-100 dark:bg-red-900/20"}`}
         >
           {isPositive ? (
             <TrendingUp
-              className={`w-5 h-5 ${isPositive ? "text-apple-green" : "text-apple-red"}`}
+              className={`w-4 h-4 sm:w-5 sm:h-5 ${isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
               data-testid="trend-icon"
             />
           ) : (
             <TrendingDown
-              className={`w-5 h-5 ${isPositive ? "text-apple-green" : "text-apple-red"}`}
+              className={`w-4 h-4 sm:w-5 sm:h-5 ${isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
               data-testid="trend-icon"
             />
           )}
@@ -88,9 +98,11 @@ const NetWorth = () => {
       </div>
 
       {/* Net Worth Amount */}
-      <div className="mb-4">
+      <div className="mb-3 sm:mb-4">
         <div
-          className={`text-3xl font-bold text-gradient transition-all duration-500 ${isAnimating ? "scale-105" : "scale-100"}`}
+          className={`text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-all duration-500 ${isAnimating ? "scale-105" : "scale-100"}`}
+          aria-labelledby="net-worth-title"
+          role="text"
         >
           {formatCurrency(netWorth)}
         </div>
@@ -98,7 +110,7 @@ const NetWorth = () => {
         {/* Change Indicator */}
         {change !== 0 && (
           <div
-            className={`flex items-center gap-1 mt-2 text-sm font-medium ${getChangeColor()}`}
+            className={`flex items-center gap-1 mt-2 text-xs sm:text-sm font-medium ${getChangeColor()}`}
           >
             {getChangeIcon()}
             <span>
@@ -106,7 +118,7 @@ const NetWorth = () => {
               {formatCurrency(change)}
             </span>
             {changePercentage !== 0 && (
-              <span className="text-muted-gray">
+              <span className="text-muted">
                 ({change > 0 ? "+" : ""}
                 {changePercentage.toFixed(1)}%)
               </span>
@@ -116,18 +128,22 @@ const NetWorth = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-apple-glass-300/30">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700">
         <div className="text-center">
-          <div className="text-lg font-semibold text-soft-white">
+          <div className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
             {transactions.length}
           </div>
-          <div className="text-xs text-muted-gray">Transactions</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            Transactions
+          </div>
         </div>
         <div className="text-center">
-          <div className="text-lg font-semibold text-soft-white">
+          <div className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
             {accounts.length}
           </div>
-          <div className="text-xs text-muted-gray">Accounts</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            Accounts
+          </div>
         </div>
       </div>
 

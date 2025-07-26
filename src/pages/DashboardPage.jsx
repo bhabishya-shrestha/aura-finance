@@ -1,9 +1,9 @@
 import React from "react";
-import Header from "../components/Header";
 import NetWorth from "../components/NetWorth";
 import Accounts from "../components/Accounts";
 import RecentTransactions from "../components/RecentTransactions";
 import AddTransaction from "../components/AddTransaction";
+import StatementImporter from "../components/StatementImporter";
 import useStore from "../store";
 
 const DashboardPage = () => {
@@ -14,17 +14,26 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="flex-1 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <Header />
-        <div className="flex gap-3">
+    <div className="w-full h-full p-4 sm:p-6 overflow-x-hidden">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gradient mb-2">
+            Dashboard
+          </h1>
+          <p className="text-muted text-sm sm:text-base">
+            Welcome back! Here&apos;s your financial overview.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <AddTransaction />
           <button
             onClick={handleImportClick}
-            className="glass-card px-6 py-3 flex items-center gap-2 hover:bg-white/20 transition-all duration-200 group"
+            className="btn-glass-primary px-4 sm:px-6 py-3 flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200 group text-sm sm:text-base"
           >
             <svg
-              className="w-5 h-5 group-hover:scale-110 transition-transform"
+              className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -41,7 +50,8 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
         {/* Net Worth Card */}
         <div className="lg:col-span-1">
           <NetWorth />
@@ -59,33 +69,40 @@ const DashboardPage = () => {
       </div>
 
       {/* Analytics Preview */}
-      <div className="mt-8">
-        <div className="glass-card p-6">
-          <h2 className="text-xl font-semibold text-soft-white mb-4">
+      <div className="mb-6">
+        <div className="glass-card-hover p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold text-primary mb-4">
             Quick Analytics
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-white/5 rounded-lg">
-              <div className="text-2xl font-bold text-teal mb-2">$2,450</div>
-              <div className="text-muted-gray text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="text-center p-4 apple-glass-light rounded-apple-lg">
+              <div className="text-xl sm:text-2xl font-bold text-success mb-2">
+                $2,450
+              </div>
+              <div className="text-muted text-xs sm:text-sm">
                 This Month&apos;s Spending
               </div>
             </div>
-            <div className="text-center p-4 bg-white/5 rounded-lg">
-              <div className="text-2xl font-bold text-green-400 mb-2">
+            <div className="text-center p-4 apple-glass-light rounded-apple-lg">
+              <div className="text-xl sm:text-2xl font-bold text-success mb-2">
                 $8,200
               </div>
-              <div className="text-muted-gray text-sm">This Month&apos;s Income</div>
+              <div className="text-muted text-xs sm:text-sm">
+                This Month&apos;s Income
+              </div>
             </div>
-            <div className="text-center p-4 bg-white/5 rounded-lg">
-              <div className="text-2xl font-bold text-purple-400 mb-2">
+            <div className="text-center p-4 apple-glass-light rounded-apple-lg sm:col-span-2 lg:col-span-1">
+              <div className="text-xl sm:text-2xl font-bold text-success mb-2">
                 $5,750
               </div>
-              <div className="text-muted-gray text-sm">Net Savings</div>
+              <div className="text-muted text-xs sm:text-sm">Net Savings</div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Statement Importer Modal */}
+      <StatementImporter />
     </div>
   );
 };
