@@ -1,37 +1,234 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Apple's Glass Design System */
 @layer base {
   * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+    @apply border-border;
   }
 
   body {
-    font-family: "Inter", sans-serif;
-    background: linear-gradient(135deg, #17181c 0%, #1a1b1f 100%);
+    @apply bg-dark-charcoal text-soft-white font-inter;
+    background: linear-gradient(135deg, #17181c 0%, #1a1b1f 50%, #1e1f23 100%);
     min-height: 100vh;
-    color: #f0f0f0;
+    overflow-x: hidden;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-apple-dark-100 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-apple-glass-300 rounded-full;
+    transition: background-color 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-apple-glass-400;
+  }
+
+  /* Selection styles */
+  ::selection {
+    @apply bg-apple-blue/20 text-soft-white;
+  }
+
+  /* Focus styles for accessibility */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-apple-blue/50 ring-offset-2 ring-offset-dark-charcoal;
   }
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-glass-white backdrop-blur-glass border border-white/20 shadow-glass rounded-xl;
+  /* Apple Glass Card Component */
+  .apple-glass {
+    @apply bg-apple-glass-200/80 backdrop-blur-apple border border-apple-glass-300/50 shadow-apple-glass;
+    backdrop-filter: blur(25px) saturate(180%);
   }
 
-  .glass-modal {
-    @apply bg-glass-white backdrop-blur-glass border border-white/20 shadow-glass rounded-2xl;
+  .apple-glass-heavy {
+    @apply bg-apple-glass-300/90 backdrop-blur-glass-heavy border border-apple-glass-400/60 shadow-apple-glass;
+    backdrop-filter: blur(30px) saturate(200%);
   }
 
-  .gradient-text {
-    @apply bg-gradient-to-r from-teal to-purple bg-clip-text text-transparent;
+  .apple-glass-light {
+    @apply bg-apple-glass-100/60 backdrop-blur-glass border border-apple-glass-200/40 shadow-apple-glass-light;
+    backdrop-filter: blur(20px) saturate(160%);
   }
 
-  .gradient-border {
-    @apply border border-transparent bg-gradient-to-r from-teal to-purple bg-clip-border;
+  /* Interactive Glass Elements */
+  .apple-glass-interactive {
+    @apply apple-glass transition-all duration-300 ease-out;
+  }
+
+  .apple-glass-interactive:hover {
+    @apply bg-apple-glass-300/90 border-apple-glass-400/70 shadow-apple-elevation-2 transform scale-[1.02];
+  }
+
+  .apple-glass-interactive:active {
+    @apply transform scale-[0.98] shadow-apple-elevation;
+  }
+
+  /* Button Components */
+  .btn-primary {
+    @apply bg-gradient-to-r from-apple-blue to-apple-purple text-white font-semibold px-6 py-3 rounded-apple-lg shadow-apple-elevation-2 transition-all duration-300 ease-out;
+  }
+
+  .btn-primary:hover {
+    @apply shadow-apple-elevation-3 transform translate-y-[-1px];
+  }
+
+  .btn-primary:active {
+    @apply transform translate-y-0 shadow-apple-elevation-2;
+  }
+
+  .btn-secondary {
+    @apply apple-glass-interactive text-soft-white font-medium px-6 py-3 rounded-apple-lg;
+  }
+
+  .btn-ghost {
+    @apply text-muted-gray hover:text-soft-white hover:bg-apple-glass-100/40 px-4 py-2 rounded-apple transition-all duration-200;
+  }
+
+  /* Input Components */
+  .input-glass {
+    @apply apple-glass-light text-soft-white placeholder-muted-gray px-4 py-3 rounded-apple border-0 focus:ring-2 focus:ring-apple-blue/50 focus:bg-apple-glass-200/80 transition-all duration-200;
+  }
+
+  .input-glass:focus {
+    @apply outline-none;
+  }
+
+  /* Card Components */
+  .card-glass {
+    @apply apple-glass rounded-apple-xl p-6 transition-all duration-300 ease-out;
+  }
+
+  .card-glass-hover {
+    @apply card-glass hover:apple-glass-heavy hover:transform hover:scale-[1.02] hover:shadow-apple-elevation-3;
+  }
+
+  /* Navigation Components */
+  .nav-glass {
+    @apply apple-glass-heavy rounded-apple-xl p-4 transition-all duration-300;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-apple-lg transition-all duration-200 text-muted-gray hover:text-soft-white hover:bg-apple-glass-200/60;
+  }
+
+  .nav-item.active {
+    @apply bg-gradient-to-r from-apple-blue/20 to-apple-purple/20 text-soft-white border border-apple-glass-400/50;
+  }
+
+  /* Modal Components */
+  .modal-backdrop {
+    @apply fixed inset-0 bg-apple-dark-500/50 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+  }
+
+  .modal-content {
+    @apply apple-glass-heavy rounded-apple-2xl p-8 max-w-md w-full mx-4 animate-scale-in;
+  }
+
+  /* Loading Components */
+  .loading-spinner {
+    @apply w-6 h-6 border-2 border-apple-glass-300 border-t-apple-blue rounded-full animate-spin;
+  }
+
+  .loading-dots {
+    @apply flex space-x-1;
+  }
+
+  .loading-dots > div {
+    @apply w-2 h-2 bg-apple-blue rounded-full animate-pulse;
+    animation-delay: calc(var(--i) * 0.2s);
+  }
+
+  /* Typography */
+  .text-gradient {
+    @apply bg-gradient-to-r from-apple-blue to-apple-purple bg-clip-text text-transparent;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px rgba(0, 122, 255, 0.5);
+  }
+
+  /* Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  /* Utility Classes */
+  .glass-border {
+    @apply border border-apple-glass-300/50;
+  }
+
+  .glass-border-heavy {
+    @apply border border-apple-glass-400/60;
+  }
+
+  .glass-shadow {
+    @apply shadow-apple-glass;
+  }
+
+  .glass-shadow-light {
+    @apply shadow-apple-glass-light;
+  }
+
+  /* Responsive Design */
+  .container-glass {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .apple-glass {
+      @apply bg-apple-glass-200/80;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .apple-glass {
+      @apply bg-apple-glass-400/90 border-apple-glass-600/80;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Custom utilities */
+  .backdrop-blur-apple {
+    backdrop-filter: blur(25px) saturate(180%);
+  }
+
+  .backdrop-blur-glass-heavy {
+    backdrop-filter: blur(30px) saturate(200%);
+  }
+
+  .backdrop-blur-glass {
+    backdrop-filter: blur(20px) saturate(160%);
   }
 }
