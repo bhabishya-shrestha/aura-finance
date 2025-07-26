@@ -9,7 +9,7 @@ import {
 import useStore from "../store";
 
 const NetWorth = () => {
-  const { getNetWorth } = useStore();
+  const { getNetWorth, transactions, accounts } = useStore();
   const [netWorth, setNetWorth] = useState(0);
   const [previousNetWorth, setPreviousNetWorth] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -76,10 +76,12 @@ const NetWorth = () => {
           {isPositive ? (
             <TrendingUp
               className={`w-5 h-5 ${isPositive ? "text-apple-green" : "text-apple-red"}`}
+              data-testid="trend-icon"
             />
           ) : (
             <TrendingDown
               className={`w-5 h-5 ${isPositive ? "text-apple-green" : "text-apple-red"}`}
+              data-testid="trend-icon"
             />
           )}
         </div>
@@ -117,13 +119,13 @@ const NetWorth = () => {
       <div className="grid grid-cols-2 gap-4 pt-4 border-t border-apple-glass-300/30">
         <div className="text-center">
           <div className="text-lg font-semibold text-soft-white">
-            {useStore.getState().transactions.length}
+            {transactions.length}
           </div>
           <div className="text-xs text-muted-gray">Transactions</div>
         </div>
         <div className="text-center">
           <div className="text-lg font-semibold text-soft-white">
-            {useStore.getState().accounts.length}
+            {accounts.length}
           </div>
           <div className="text-xs text-muted-gray">Accounts</div>
         </div>
