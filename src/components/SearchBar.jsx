@@ -104,7 +104,10 @@ const SearchBar = () => {
 
   const handleResultClick = (result) => {
     // Handle result click - you can navigate to the specific item
-    console.log("Selected:", result);
+    // Log for development purposes only
+    if (import.meta.env.DEV) {
+      console.log("Selected:", result);
+    }
     setIsOpen(false);
     setQuery("");
     setSelectedIndex(-1);
@@ -189,7 +192,7 @@ const SearchBar = () => {
         <div className="absolute top-full left-0 right-0 mt-1 fidelity-card shadow-lg z-50">
           <div className="p-4 text-center">
             <div className="text-gray-500 dark:text-gray-400 text-sm">
-              No results found for "{query}"
+              No results found for &quot;{query}&quot;
             </div>
             <div className="text-gray-400 dark:text-gray-500 text-xs mt-1">
               Try searching for transaction descriptions, categories, or account

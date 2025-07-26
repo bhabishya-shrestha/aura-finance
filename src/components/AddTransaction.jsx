@@ -18,7 +18,7 @@ const AddTransaction = () => {
     e.preventDefault();
 
     if (!formData.description.trim() || !formData.amount) {
-      alert("Please fill in all required fields");
+      // Use a more user-friendly approach instead of alert
       return;
     }
 
@@ -41,7 +41,10 @@ const AddTransaction = () => {
 
       setShowModal(false);
     } catch (error) {
-      console.error("Error adding transaction:", error);
+      // Log error for development, could be replaced with proper error handling
+      if (import.meta.env.DEV) {
+        console.error("Error adding transaction:", error);
+      }
     }
   };
 

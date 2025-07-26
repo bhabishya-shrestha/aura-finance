@@ -63,7 +63,10 @@ const RecentTransactions = () => {
       setEditingId(null);
       setEditData({});
     } catch (error) {
-      console.error("Error updating transaction:", error);
+      // Log error for development, could be replaced with proper error handling
+      if (import.meta.env.DEV) {
+        console.error("Error updating transaction:", error);
+      }
     }
   };
 
@@ -73,11 +76,15 @@ const RecentTransactions = () => {
   };
 
   const handleDelete = async (transactionId) => {
+    // Note: In a production app, this should use a proper confirmation dialog
     if (window.confirm("Are you sure you want to delete this transaction?")) {
       try {
         await deleteTransaction(transactionId);
       } catch (error) {
-        console.error("Error deleting transaction:", error);
+        // Log error for development, could be replaced with proper error handling
+        if (import.meta.env.DEV) {
+          console.error("Error deleting transaction:", error);
+        }
       }
     }
   };

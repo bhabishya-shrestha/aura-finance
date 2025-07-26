@@ -32,7 +32,10 @@ export const localAuthService = {
   // Register a new user
   register: async (userData) => {
     try {
-      console.log("🔧 Registering user:", userData.email);
+      // Log for development purposes only
+      if (import.meta.env.DEV) {
+        console.log("🔧 Registering user:", userData.email);
+      }
 
       // Check if user already exists
       const existingUser = await db.users
@@ -56,7 +59,10 @@ export const localAuthService = {
         updatedAt: new Date(),
       });
 
-      console.log("🔧 User created with ID:", user);
+      // Log for development purposes only
+      if (import.meta.env.DEV) {
+        console.log("🔧 User created with ID:", user);
+      }
 
       // Generate session token
       const token = generateToken({
@@ -66,7 +72,10 @@ export const localAuthService = {
         type: "local",
       });
 
-      console.log("🔧 Token generated:", token.substring(0, 50) + "...");
+      // Log for development purposes only
+      if (import.meta.env.DEV) {
+        console.log("🔧 Token generated:", token.substring(0, 50) + "...");
+      }
 
       // Store session
       await db.sessions.add({

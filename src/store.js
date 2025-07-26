@@ -47,7 +47,10 @@ const useStore = create((set, get) => ({
 
       set({ transactions });
     } catch (error) {
-      console.error("Error loading transactions:", error);
+      // Log error for development, could be replaced with proper error handling
+      if (import.meta.env.DEV) {
+        console.error("Error loading transactions:", error);
+      }
     } finally {
       set({ isLoading: false });
     }
@@ -72,7 +75,10 @@ const useStore = create((set, get) => ({
 
       set({ accounts });
     } catch (error) {
-      console.error("Error loading accounts:", error);
+      // Log error for development, could be replaced with proper error handling
+      if (import.meta.env.DEV) {
+        console.error("Error loading accounts:", error);
+      }
     }
   },
 
@@ -88,7 +94,10 @@ const useStore = create((set, get) => ({
           const payload = JSON.parse(atob(token.split(".")[1]));
           userId = payload.userId;
         } catch (error) {
-          console.error("Error parsing token:", error);
+          // Log error for development, could be replaced with proper error handling
+          if (import.meta.env.DEV) {
+            console.error("Error parsing token:", error);
+          }
         }
       }
 
@@ -103,7 +112,10 @@ const useStore = create((set, get) => ({
       await get().loadTransactions();
       set({ isModalOpen: false, parsedTransactions: [] });
     } catch (error) {
-      console.error("Error adding transactions:", error);
+      // Log error for development, could be replaced with proper error handling
+      if (import.meta.env.DEV) {
+        console.error("Error adding transactions:", error);
+      }
     } finally {
       set({ isLoading: false });
     }
@@ -117,7 +129,10 @@ const useStore = create((set, get) => ({
       // Reload transactions to update the UI
       await get().loadTransactions();
     } catch (error) {
-      console.error("Error deleting transaction:", error);
+      // Log error for development, could be replaced with proper error handling
+      if (import.meta.env.DEV) {
+        console.error("Error deleting transaction:", error);
+      }
     } finally {
       set({ isLoading: false });
     }
@@ -131,7 +146,10 @@ const useStore = create((set, get) => ({
       // Reload transactions to update the UI
       await get().loadTransactions();
     } catch (error) {
-      console.error("Error updating transaction:", error);
+      // Log error for development, could be replaced with proper error handling
+      if (import.meta.env.DEV) {
+        console.error("Error updating transaction:", error);
+      }
     } finally {
       set({ isLoading: false });
     }

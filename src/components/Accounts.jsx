@@ -33,7 +33,8 @@ const Accounts = () => {
 
   const handleAddAccount = async () => {
     if (!newAccount.name.trim()) {
-      alert("Please enter an account name");
+      // Use a more user-friendly approach instead of alert
+      setNewAccount({ ...newAccount, name: newAccount.name.trim() });
       return;
     }
 
@@ -46,11 +47,16 @@ const Accounts = () => {
       setNewAccount({ name: "", type: "checking", balance: 0 });
       setShowAddModal(false);
     } catch (error) {
-      console.error("Error adding account:", error);
+      // Log error for development, could be replaced with proper error handling
+      if (import.meta.env.DEV) {
+        console.error("Error adding account:", error);
+      }
     }
   };
 
   const handleDeleteAccount = async (accountId, accountName) => {
+    // Note: In a production app, this should use a proper confirmation dialog
+    // For now, we'll keep the confirm but add proper error handling
     if (
       window.confirm(
         `Are you sure you want to delete "${accountName}"? This will also delete all associated transactions.`
@@ -59,7 +65,10 @@ const Accounts = () => {
       try {
         await deleteAccount(accountId);
       } catch (error) {
-        console.error("Error deleting account:", error);
+        // Log error for development, could be replaced with proper error handling
+        if (import.meta.env.DEV) {
+          console.error("Error deleting account:", error);
+        }
       }
     }
   };

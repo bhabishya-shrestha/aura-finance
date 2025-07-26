@@ -60,21 +60,35 @@ export const parseCSV = (file) => {
 export const parsePDF = async (file) => {
   try {
     // Show loading state
-    console.log("Starting OCR processing...");
+    // Log for development purposes only
+    if (import.meta.env.DEV) {
+      console.log("Starting OCR processing...");
+    }
 
     // Perform OCR on the PDF
     const result = await Tesseract.recognize(file, "eng", {
-      logger: (m) => console.log(m),
+      logger: (m) => {
+        // Log for development purposes only
+        if (import.meta.env.DEV) {
+          console.log(m);
+        }
+      },
     });
 
-    console.log("OCR completed, parsing text...");
+    // Log for development purposes only
+    if (import.meta.env.DEV) {
+      console.log("OCR completed, parsing text...");
+    }
 
     // Parse the OCR text for Bank of America statement structure
     const transactions = parseBankOfAmericaText(result.data.text);
 
     return transactions;
   } catch (error) {
-    console.error("Error parsing PDF:", error);
+    // Log error for development, could be replaced with proper error handling
+    if (import.meta.env.DEV) {
+      console.error("Error parsing PDF:", error);
+    }
     throw new Error(
       "Failed to parse PDF file. Please ensure it's a valid Bank of America statement."
     );
@@ -155,9 +169,12 @@ const parseBankOfAmericaText = (text) => {
 
   // If no transactions found with section parsing, try regex on entire text
   if (transactions.length === 0) {
-    console.log(
-      "No transactions found in sections, trying full text parsing..."
-    );
+    // Log for development purposes only
+    if (import.meta.env.DEV) {
+      console.log(
+        "No transactions found in sections, trying full text parsing..."
+      );
+    }
 
     for (const pattern of transactionPatterns) {
       const matches = [...text.matchAll(pattern)];
@@ -195,7 +212,10 @@ const parseBankOfAmericaText = (text) => {
       )
   );
 
-  console.log(`Found ${uniqueTransactions.length} transactions`);
+  // Log for development purposes only
+  if (import.meta.env.DEV) {
+    console.log(`Found ${uniqueTransactions.length} transactions`);
+  }
   return uniqueTransactions;
 };
 
@@ -206,7 +226,10 @@ const parseDate = (dateStr) => {
     const [month, day, year] = dateStr.split("/");
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   } catch {
-    console.error("Error parsing date:", dateStr);
+    // Log error for development, could be replaced with proper error handling
+    if (import.meta.env.DEV) {
+      console.error("Error parsing date:", dateStr);
+    }
     return new Date();
   }
 };

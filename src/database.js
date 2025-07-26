@@ -64,7 +64,10 @@ export const initializeDatabase = async () => {
       ]);
     }
   } catch (error) {
-    console.error("Error initializing database:", error);
+    // Log error for development, could be replaced with proper error handling
+    if (import.meta.env.DEV) {
+      console.error("Error initializing database:", error);
+    }
   }
 };
 
