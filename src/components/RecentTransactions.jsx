@@ -30,15 +30,15 @@ const RecentTransactions = () => {
 
   const getCategoryColor = (category) => {
     const colors = {
-      Groceries: "text-green-400",
-      Restaurants: "text-orange-400",
-      Transport: "text-blue-400",
-      Shopping: "text-purple-400",
-      Income: "text-green-500",
-      Utilities: "text-yellow-400",
-      Entertainment: "text-pink-400",
-      Healthcare: "text-red-400",
-      Other: "text-gray-400",
+      Groceries: "text-success",
+      Restaurants: "text-warning",
+      Transport: "icon-primary",
+      Shopping: "icon-secondary",
+      Income: "text-success",
+      Utilities: "text-warning",
+      Entertainment: "icon-secondary",
+      Healthcare: "text-error",
+      Other: "text-muted",
     };
     return colors[category] || colors["Other"];
   };
@@ -83,30 +83,32 @@ const RecentTransactions = () => {
   };
 
   return (
-    <div className="glass-card p-6">
-      <h2 className="text-xl font-semibold text-soft-white mb-4">
+    <div className="glass-card-hover p-4 sm:p-6">
+      <h2 className="text-lg sm:text-xl font-semibold text-primary mb-4">
         Recent Transactions
       </h2>
 
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {recentTransactions.length === 0 ? (
-          <div className="text-center py-8 text-muted-gray">
-            <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>No transactions yet</p>
-            <p className="text-sm">Import a statement to get started</p>
+          <div className="text-center py-6 sm:py-8 text-muted">
+            <DollarSign className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-3 opacity-50" />
+            <p className="text-sm sm:text-base">No transactions yet</p>
+            <p className="text-xs sm:text-sm">
+              Import a statement to get started
+            </p>
           </div>
         ) : (
           recentTransactions.map((transaction) => (
             <div
               key={transaction.id}
-              className="p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors"
+              className="p-2 sm:p-3 apple-glass-light rounded-apple-lg border border-apple-glass-200/30 hover:bg-apple-glass-200/40 transition-all duration-200 backdrop-blur-apple-sm"
             >
               {editingId === transaction.id ? (
                 // Edit Mode
                 <div className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                     <div>
-                      <label className="text-xs text-muted-gray uppercase tracking-wide">
+                      <label className="text-xs text-muted uppercase tracking-wide">
                         Date
                       </label>
                       <input
@@ -115,12 +117,12 @@ const RecentTransactions = () => {
                         onChange={(e) =>
                           setEditData({ ...editData, date: e.target.value })
                         }
-                        className="w-full mt-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal text-sm"
+                        className="input-glass w-full mt-1 text-xs sm:text-sm"
                       />
                     </div>
 
-                    <div className="md:col-span-2">
-                      <label className="text-xs text-muted-gray uppercase tracking-wide">
+                    <div className="sm:col-span-2">
+                      <label className="text-xs text-muted uppercase tracking-wide">
                         Description
                       </label>
                       <input
@@ -132,12 +134,12 @@ const RecentTransactions = () => {
                             description: e.target.value,
                           })
                         }
-                        className="w-full mt-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal text-sm"
+                        className="input-glass w-full mt-1 text-xs sm:text-sm"
                       />
                     </div>
 
                     <div>
-                      <label className="text-xs text-muted-gray uppercase tracking-wide">
+                      <label className="text-xs text-muted uppercase tracking-wide">
                         Amount
                       </label>
                       <input
@@ -147,14 +149,14 @@ const RecentTransactions = () => {
                         onChange={(e) =>
                           setEditData({ ...editData, amount: e.target.value })
                         }
-                        className="w-full mt-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal text-sm"
+                        className="input-glass w-full mt-1 text-xs sm:text-sm"
                       />
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <label className="text-xs text-muted-gray uppercase tracking-wide">
+                      <label className="text-xs text-muted uppercase tracking-wide">
                         Category
                       </label>
                       <select
@@ -162,7 +164,7 @@ const RecentTransactions = () => {
                         onChange={(e) =>
                           setEditData({ ...editData, category: e.target.value })
                         }
-                        className="w-full mt-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal text-sm"
+                        className="input-glass w-full mt-1 text-xs sm:text-sm"
                       >
                         {CATEGORIES.map((category) => (
                           <option key={category} value={category}>
@@ -172,18 +174,18 @@ const RecentTransactions = () => {
                       </select>
                     </div>
 
-                    <div className="flex gap-2 ml-4">
+                    <div className="flex gap-1 sm:gap-2 ml-2 sm:ml-4">
                       <button
                         onClick={() => handleSave(transaction.id)}
-                        className="p-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 rounded-lg text-green-400 transition-colors"
+                        className="p-1.5 sm:p-2 bg-apple-green/20 hover:bg-apple-green/30 border border-apple-green/30 rounded-apple-lg icon-success transition-all duration-200 backdrop-blur-apple-sm"
                       >
-                        <Save className="w-4 h-4" />
+                        <Save className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>
                       <button
                         onClick={handleCancel}
-                        className="p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-muted-gray transition-colors"
+                        className="p-1.5 sm:p-2 bg-apple-glass-200/40 hover:bg-apple-glass-300/50 border border-apple-glass-300/30 rounded-apple-lg icon-muted transition-all duration-200 backdrop-blur-apple-sm"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>
                     </div>
                   </div>
@@ -191,18 +193,18 @@ const RecentTransactions = () => {
               ) : (
                 // View Mode
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="flex items-center gap-2 text-muted-gray text-sm">
-                      <Calendar className="w-4 h-4" />
+                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                    <div className="flex items-center gap-1 sm:gap-2 text-muted text-xs sm:text-sm flex-shrink-0">
+                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                       {formatDate(transaction.date)}
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="text-soft-white font-medium truncate">
+                      <p className="text-primary font-medium truncate text-sm sm:text-base">
                         {transaction.description}
                       </p>
                       <p
-                        className={`text-sm ${getCategoryColor(
+                        className={`text-xs sm:text-sm ${getCategoryColor(
                           transaction.category
                         )}`}
                       >
@@ -211,13 +213,13 @@ const RecentTransactions = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                     <div className="text-right">
                       <p
-                        className={`font-semibold ${
+                        className={`font-semibold text-sm sm:text-base ${
                           transaction.amount >= 0
-                            ? "text-green-400"
-                            : "text-red-400"
+                            ? "text-success"
+                            : "text-error"
                         }`}
                       >
                         {transaction.amount >= 0 ? "+" : ""}
@@ -228,15 +230,15 @@ const RecentTransactions = () => {
                     <div className="flex gap-1">
                       <button
                         onClick={() => handleEdit(transaction)}
-                        className="p-1.5 hover:bg-white/10 rounded transition-colors text-muted-gray hover:text-soft-white"
+                        className="p-1 sm:p-1.5 hover:bg-apple-glass-200/40 rounded-apple transition-all duration-200 icon-muted hover:icon-white backdrop-blur-apple-sm"
                       >
-                        <Edit3 className="w-4 h-4" />
+                        <Edit3 className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(transaction.id)}
-                        className="p-1.5 hover:bg-red-500/20 rounded transition-colors text-muted-gray hover:text-red-400"
+                        className="p-1 sm:p-1.5 hover:bg-apple-red/20 rounded-apple transition-all duration-200 icon-muted hover:icon-error backdrop-blur-apple-sm"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>
                     </div>
                   </div>
@@ -248,8 +250,8 @@ const RecentTransactions = () => {
       </div>
 
       {recentTransactions.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-white/10">
-          <button className="w-full py-2 px-4 bg-white/10 hover:bg-white/20 transition-colors rounded-lg text-soft-white text-sm">
+        <div className="mt-4 pt-3 sm:pt-4 border-t border-apple-glass-300/30">
+          <button className="w-full py-2 px-3 sm:px-4 bg-apple-glass-200/40 hover:bg-apple-glass-300/50 transition-all duration-200 rounded-apple-lg text-primary text-sm backdrop-blur-apple-sm">
             View All Transactions
           </button>
         </div>

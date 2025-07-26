@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
@@ -5,33 +6,307 @@
 
 @layer base {
   * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+    @apply border-gray-200;
+  }
+
+  html {
+    @apply scroll-smooth;
   }
 
   body {
-    font-family: "Inter", sans-serif;
-    background: linear-gradient(135deg, #17181c 0%, #1a1b1f 100%);
-    min-height: 100vh;
-    color: #f0f0f0;
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-sans antialiased;
+    font-feature-settings: "kern" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+    transition: background-color 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-500;
+  }
+
+  /* Selection styles */
+  ::selection {
+    @apply bg-blue-500/20 text-blue-900 dark:text-blue-100;
+  }
+
+  /* Focus styles for accessibility */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    *:focus-visible {
+      @apply ring-4 ring-blue-500;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-glass-white backdrop-blur-glass border border-white/20 shadow-glass rounded-xl;
+  /* Fidelity Design System Components */
+
+  /* Card Components */
+  .fidelity-card {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm;
   }
 
-  .glass-modal {
-    @apply bg-glass-white backdrop-blur-glass border border-white/20 shadow-glass rounded-2xl;
+  .fidelity-card-hover {
+    @apply fidelity-card hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200;
   }
 
-  .gradient-text {
-    @apply bg-gradient-to-r from-teal to-purple bg-clip-text text-transparent;
+  .fidelity-card-elevated {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md;
   }
 
-  .gradient-border {
-    @apply border border-transparent bg-gradient-to-r from-teal to-purple bg-clip-border;
+  /* Navigation */
+  .fidelity-nav {
+    @apply bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700;
+  }
+
+  /* Input Components */
+  .fidelity-input {
+    @apply w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200;
+  }
+
+  .fidelity-input-error {
+    @apply fidelity-input border-red-500 focus:ring-red-500 focus:border-red-500;
+  }
+
+  .fidelity-input-disabled {
+    @apply fidelity-input opacity-50 cursor-not-allowed;
+  }
+
+  /* Button Components */
+  .fidelity-btn {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .fidelity-btn-primary {
+    @apply fidelity-btn bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-sm hover:shadow-md;
+  }
+
+  .fidelity-btn-secondary {
+    @apply fidelity-btn bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500 shadow-sm hover:shadow-md;
+  }
+
+  .fidelity-btn-outlined {
+    @apply fidelity-btn border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:ring-blue-500;
+  }
+
+  .fidelity-btn-text {
+    @apply fidelity-btn text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:ring-blue-500;
+  }
+
+  .fidelity-btn-success {
+    @apply fidelity-btn bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-sm hover:shadow-md;
+  }
+
+  .fidelity-btn-danger {
+    @apply fidelity-btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-sm hover:shadow-md;
+  }
+
+  /* Navigation Items */
+  .fidelity-nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800;
+  }
+
+  .fidelity-nav-item.active {
+    @apply bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600;
+  }
+
+  /* Modal Components */
+  .fidelity-modal-backdrop {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+  }
+
+  .fidelity-modal-content {
+    @apply fidelity-card-elevated p-6 max-w-md w-full mx-4 animate-in fade-in-0 zoom-in-95 duration-200;
+  }
+
+  /* Loading Components */
+  .fidelity-loading-spinner {
+    @apply w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin;
+  }
+
+  /* Typography */
+  .fidelity-text-display {
+    @apply text-3xl font-bold text-gray-900 dark:text-white;
+  }
+
+  .fidelity-text-heading {
+    @apply text-xl font-semibold text-gray-900 dark:text-white;
+  }
+
+  .fidelity-text-title {
+    @apply text-lg font-medium text-gray-900 dark:text-white;
+  }
+
+  .fidelity-text-body {
+    @apply text-base text-gray-700 dark:text-gray-300;
+  }
+
+  .fidelity-text-caption {
+    @apply text-sm text-gray-500 dark:text-gray-400;
+  }
+
+  /* Status Colors */
+  .fidelity-text-success {
+    @apply text-green-600 dark:text-green-400;
+  }
+
+  .fidelity-text-warning {
+    @apply text-yellow-600 dark:text-yellow-400;
+  }
+
+  .fidelity-text-error {
+    @apply text-red-600 dark:text-red-400;
+  }
+
+  .fidelity-text-info {
+    @apply text-blue-600 dark:text-blue-400;
+  }
+
+  /* Icons */
+  .fidelity-icon-primary {
+    @apply text-blue-600 dark:text-blue-400;
+  }
+
+  .fidelity-icon-secondary {
+    @apply text-gray-600 dark:text-gray-400;
+  }
+
+  .fidelity-icon-success {
+    @apply text-green-600 dark:text-green-400;
+  }
+
+  .fidelity-icon-warning {
+    @apply text-yellow-600 dark:text-yellow-400;
+  }
+
+  .fidelity-icon-error {
+    @apply text-red-600 dark:text-red-400;
+  }
+
+  /* Table Components */
+  .fidelity-table {
+    @apply w-full border-collapse;
+  }
+
+  .fidelity-table th {
+    @apply px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800;
+  }
+
+  .fidelity-table td {
+    @apply px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700;
+  }
+
+  .fidelity-table tbody tr:hover {
+    @apply bg-gray-50 dark:bg-gray-800;
+  }
+
+  /* Alert Components */
+  .fidelity-alert {
+    @apply p-4 rounded-lg border;
+  }
+
+  .fidelity-alert-info {
+    @apply fidelity-alert bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200;
+  }
+
+  .fidelity-alert-success {
+    @apply fidelity-alert bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200;
+  }
+
+  .fidelity-alert-warning {
+    @apply fidelity-alert bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200;
+  }
+
+  .fidelity-alert-error {
+    @apply fidelity-alert bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200;
+  }
+
+  /* Badge Components */
+  .fidelity-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .fidelity-badge-primary {
+    @apply fidelity-badge bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200;
+  }
+
+  .fidelity-badge-success {
+    @apply fidelity-badge bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200;
+  }
+
+  .fidelity-badge-warning {
+    @apply fidelity-badge bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200;
+  }
+
+  .fidelity-badge-error {
+    @apply fidelity-badge bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200;
+  }
+
+  /* Avatar Components */
+  .fidelity-avatar {
+    @apply w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium;
+  }
+
+  .fidelity-avatar-primary {
+    @apply fidelity-avatar bg-blue-600 text-white;
+  }
+
+  .fidelity-avatar-secondary {
+    @apply fidelity-avatar bg-gray-600 text-white;
+  }
+
+  /* Divider */
+  .fidelity-divider {
+    @apply border-t border-gray-200 dark:border-gray-700;
+  }
+
+  .fidelity-divider-vertical {
+    @apply border-l border-gray-200 dark:border-gray-700;
+  }
+
+  /* Container */
+  .fidelity-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Animations */
+  .fidelity-fade-in {
+    @apply animate-in fade-in-0 duration-200;
+  }
+
+  .fidelity-slide-in {
+    @apply animate-in slide-in-from-bottom-4 duration-200;
+  }
+
+  .fidelity-scale-in {
+    @apply animate-in zoom-in-95 duration-200;
   }
 }

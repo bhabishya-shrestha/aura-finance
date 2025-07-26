@@ -1,186 +1,177 @@
 import React, { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus, X, DollarSign, Calendar, FileText, Tag } from "lucide-react";
 import useStore from "../store";
 import { CATEGORIES } from "../utils/statementParser";
 
 const AddTransaction = () => {
-  const { accounts, addTransactions } = useStore();
+  const { addTransaction } = useStore();
   const [showModal, setShowModal] = useState(false);
-  const [transaction, setTransaction] = useState({
+  const [formData, setFormData] = useState({
     description: "",
     amount: "",
     category: "Other",
     date: new Date().toISOString().split("T")[0],
-    accountId: accounts[0]?.id || 1,
+    accountId: "",
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!transaction.description.trim()) {
-      alert("Please enter a description");
-      return;
-    }
-
-    if (!transaction.amount || parseFloat(transaction.amount) === 0) {
-      alert("Please enter a valid amount");
+    if (!formData.description.trim() || !formData.amount) {
+      alert("Please fill in all required fields");
       return;
     }
 
     try {
-      await addTransactions([
-        {
-          ...transaction,
-          description: transaction.description.trim(),
-          amount: parseFloat(transaction.amount),
-          date: new Date(transaction.date),
-          selected: true,
-        },
-      ]);
+      await addTransaction({
+        ...formData,
+        description: formData.description.trim(),
+        amount: parseFloat(formData.amount),
+        date: new Date(formData.date),
+      });
 
       // Reset form
-      setTransaction({
+      setFormData({
         description: "",
         amount: "",
         category: "Other",
         date: new Date().toISOString().split("T")[0],
-        accountId: accounts[0]?.id || 1,
+        accountId: "",
       });
+
       setShowModal(false);
     } catch (error) {
       console.error("Error adding transaction:", error);
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   return (
     <>
+      {/* Trigger Button */}
       <button
         onClick={() => setShowModal(true)}
-        className="glass-card px-4 py-2 flex items-center gap-2 hover:bg-white/20 transition-all duration-200 group"
+        className="btn-glass-primary px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200 group text-sm sm:text-base"
       >
-        <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+        <Plus className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-all duration-200" />
         <span className="font-medium">Add Transaction</span>
       </button>
 
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="glass-modal w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-soft-white">
-                Add Transaction
+        <div className="modal-backdrop">
+          <div className="modal-content">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h3 className="text-lg sm:text-xl font-semibold text-primary">
+                Add New Transaction
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-muted-gray hover:text-soft-white transition-colors"
+                className="icon-muted hover:icon-white transition-all duration-200"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+              {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-muted-gray mb-2">
+                <label className="block text-sm font-medium text-muted mb-1 sm:mb-2">
                   Description
                 </label>
-                <input
-                  type="text"
-                  value={transaction.description}
-                  onChange={(e) =>
-                    setTransaction({
-                      ...transaction,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder="e.g., Grocery shopping"
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
-                  required
-                />
+                <div className="relative">
+                  <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 icon-muted" />
+                  <input
+                    type="text"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Enter transaction description"
+                    className="input-glass w-full pl-10 text-sm sm:text-base"
+                    required
+                  />
+                </div>
               </div>
 
+              {/* Amount */}
               <div>
-                <label className="block text-sm font-medium text-muted-gray mb-2">
+                <label className="block text-sm font-medium text-muted mb-1 sm:mb-2">
                   Amount
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={transaction.amount}
-                  onChange={(e) =>
-                    setTransaction({ ...transaction, amount: e.target.value })
-                  }
-                  placeholder="0.00"
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
-                  required
-                />
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 icon-muted" />
+                  <input
+                    type="number"
+                    name="amount"
+                    value={formData.amount}
+                    onChange={handleInputChange}
+                    placeholder="0.00"
+                    step="0.01"
+                    className="input-glass w-full pl-10 text-sm sm:text-base"
+                    required
+                  />
+                </div>
               </div>
 
+              {/* Category */}
               <div>
-                <label className="block text-sm font-medium text-muted-gray mb-2">
+                <label className="block text-sm font-medium text-muted mb-1 sm:mb-2">
                   Category
                 </label>
-                <select
-                  value={transaction.category}
-                  onChange={(e) =>
-                    setTransaction({ ...transaction, category: e.target.value })
-                  }
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
-                >
-                  {CATEGORIES.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 icon-muted" />
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    className="input-glass w-full pl-10 text-sm sm:text-base"
+                  >
+                    {CATEGORIES.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
+              {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-muted-gray mb-2">
+                <label className="block text-sm font-medium text-muted mb-1 sm:mb-2">
                   Date
                 </label>
-                <input
-                  type="date"
-                  value={transaction.date}
-                  onChange={(e) =>
-                    setTransaction({ ...transaction, date: e.target.value })
-                  }
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
-                  required
-                />
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 icon-muted" />
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleInputChange}
+                    className="input-glass w-full pl-10 text-sm sm:text-base"
+                    required
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-muted-gray mb-2">
-                  Account
-                </label>
-                <select
-                  value={transaction.accountId}
-                  onChange={(e) =>
-                    setTransaction({
-                      ...transaction,
-                      accountId: parseInt(e.target.value),
-                    })
-                  }
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
-                >
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex gap-3 mt-6">
+              {/* Action Buttons */}
+              <div className="flex gap-2 sm:gap-3 pt-2 sm:pt-4">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 py-2 px-4 bg-white/10 hover:bg-white/20 transition-colors rounded-lg text-soft-white"
+                  className="flex-1 btn-glass-outlined text-sm sm:text-base"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 px-4 bg-gradient-to-r from-teal to-purple hover:from-teal/90 hover:to-purple/90 transition-all rounded-lg text-white font-medium"
+                  className="flex-1 btn-glass-primary text-sm sm:text-base"
                 >
                   Add Transaction
                 </button>

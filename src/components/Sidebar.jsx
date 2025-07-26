@@ -9,91 +9,187 @@ import {
   Home,
   TrendingUp,
   FileText,
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
-const Sidebar = ({ onPageChange, currentPage }) => {
+const Sidebar = ({
+  onPageChange,
+  currentPage,
+  isMobileOpen,
+  onMobileToggle,
+}) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { user } = useAuth();
 
   const menuItems = [
-    { id: "dashboard", icon: Home, label: "Dashboard" },
-    { id: "accounts", icon: Wallet, label: "Accounts" },
-    { id: "analytics", icon: BarChart3, label: "Analytics" },
-    { id: "transactions", icon: FileText, label: "Transactions" },
-    { id: "reports", icon: TrendingUp, label: "Reports" },
-    { id: "settings", icon: Settings, label: "Settings" },
+    {
+      id: "dashboard",
+      icon: Home,
+      label: "Dashboard",
+      description: "Overview of your finances",
+    },
+    {
+      id: "accounts",
+      icon: Wallet,
+      label: "Accounts",
+      description: "Manage your accounts",
+    },
+    {
+      id: "analytics",
+      icon: BarChart3,
+      label: "Analytics",
+      description: "Financial insights",
+    },
+    {
+      id: "transactions",
+      icon: FileText,
+      label: "Transactions",
+      description: "View all transactions",
+    },
+    {
+      id: "reports",
+      icon: TrendingUp,
+      label: "Reports",
+      description: "Generate reports",
+    },
+    {
+      id: "settings",
+      icon: Settings,
+      label: "Settings",
+      description: "App preferences",
+    },
   ];
 
   const handleMenuClick = (pageId) => {
     onPageChange(pageId);
+    // Close mobile sidebar after navigation
+    if (isMobileOpen) {
+      onMobileToggle();
+    }
+  };
+
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
   };
 
   return (
-    <div
-      className={`glass-card h-screen transition-all duration-300 ease-in-out ${
-        isCollapsed ? "w-20" : "w-64"
-      }`}
-    >
-      <div className="p-4 h-full flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          {!isCollapsed && (
-            <h2 className="text-xl font-bold gradient-text">Aura</h2>
-          )}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className={`p-2 hover:bg-white/10 rounded-lg transition-all duration-200 ${
-              isCollapsed ? "mx-auto" : ""
-            }`}
-            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isCollapsed ? (
-              <Menu className="w-5 h-5" />
-            ) : (
-              <X className="w-5 h-5" />
-            )}
-          </button>
-        </div>
+    <>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-apple-dark-500/50 backdrop-blur-apple-xl z-40 lg:hidden"
+          onClick={onMobileToggle}
+        />
+      )}
 
-        {/* Navigation */}
-        <nav className="flex-1 space-y-2">
-          {menuItems.map((item) => (
+      {/* Sidebar */}
+      <div
+        className={`fidelity-nav h-screen transition-all duration-300 ease-in-out fixed lg:relative z-50 ${
+          isCollapsed ? "w-16 lg:w-20" : "w-64"
+        } ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+      >
+        <div className="p-3 sm:p-4 h-full flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            {!isCollapsed && (
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-apple-blue to-apple-purple rounded-apple-lg flex items-center justify-center shadow-apple-elevation-2 flex-shrink-0">
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 icon-white" />
+                </div>
+                <h2 className="text-lg sm:text-xl font-bold text-gradient truncate">
+                  Aura
+                </h2>
+              </div>
+            )}
             <button
-              key={item.id}
-              onClick={() => handleMenuClick(item.id)}
-              className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 group ${
-                currentPage === item.id
-                  ? "bg-gradient-to-r from-teal to-purple text-white shadow-lg"
-                  : "text-muted-gray hover:text-soft-white hover:bg-white/10"
-              } ${isCollapsed ? "justify-center" : ""}`}
-              title={isCollapsed ? item.label : ""}
+              onClick={toggleCollapse}
+              className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 group flex-shrink-0"
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <item.icon
-                className={`w-5 h-5 transition-transform ${
-                  isCollapsed ? "" : "group-hover:scale-110"
-                }`}
-              />
-              {!isCollapsed && (
-                <span className="font-medium">{item.label}</span>
+              {isCollapsed ? (
+                <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-all duration-200" />
+              ) : (
+                <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-all duration-200" />
               )}
             </button>
-          ))}
-        </nav>
+          </div>
 
-        {/* Footer */}
-        <div
-          className={`mt-auto pt-4 border-t border-white/10 ${isCollapsed ? "text-center" : ""}`}
-        >
-          {!isCollapsed && (
-            <div className="text-xs text-muted-gray mb-2">Version 0.1.0</div>
+          {/* User Info */}
+          {user && !isCollapsed && (
+            <div className="mb-4 sm:mb-6 p-2 sm:p-3 fidelity-card">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+                  <span className="text-xs sm:text-sm font-medium text-white">
+                    {user.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {user.name}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {user.email}
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
+
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1">
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleMenuClick(item.id)}
+                className={`w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg transition-all duration-200 group relative ${
+                  currentPage === item.id
+                    ? "fidelity-nav-item active"
+                    : "fidelity-nav-item"
+                } ${isCollapsed ? "justify-center" : ""}`}
+                title={isCollapsed ? item.label : item.description}
+              >
+                <item.icon
+                  className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-200 ${
+                    currentPage === item.id
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                  } ${isCollapsed ? "" : "group-hover:scale-110"}`}
+                />
+                {!isCollapsed && (
+                  <span className="font-medium text-sm sm:text-base truncate">
+                    {item.label}
+                  </span>
+                )}
+
+                {/* Active indicator */}
+                {currentPage === item.id && (
+                  <div className="absolute right-2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full shadow-sm" />
+                )}
+              </button>
+            ))}
+          </nav>
+
+          {/* Footer */}
           <div
-            className={`text-xs text-muted-gray ${isCollapsed ? "text-center" : ""}`}
+            className={`mt-auto pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700 ${isCollapsed ? "text-center" : ""}`}
           >
-            {isCollapsed ? "Aura" : "Aura Finance"}
+            {!isCollapsed && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                Version 0.1.0
+              </div>
+            )}
+            <div
+              className={`text-xs text-gray-500 dark:text-gray-400 ${isCollapsed ? "text-center" : ""}`}
+            >
+              {isCollapsed ? "Aura" : "Aura Finance"}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
