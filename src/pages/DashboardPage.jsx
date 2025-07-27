@@ -56,23 +56,23 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="w-full h-full p-4 sm:p-6 overflow-x-hidden">
+    <div className="w-full h-full p-4 sm:p-6 iphone15pro:p-3 overflow-x-hidden">
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 iphone15pro:mb-4">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gradient mb-2">
+          <h1 className="text-2xl sm:text-3xl iphone15pro:text-xl font-bold text-gradient mb-2">
             Dashboard
           </h1>
-          <p className="text-muted text-sm sm:text-base">
+          <p className="text-muted text-sm sm:text-base iphone15pro:text-sm">
             Welcome back! Here&apos;s your financial overview.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto iphone15pro:flex-row iphone15pro:gap-2">
           <AddTransaction />
           <button
             onClick={handleImportClick}
-            className="btn-glass-primary px-4 sm:px-6 py-3 flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200 group text-sm sm:text-base"
+            className="btn-glass-primary px-4 sm:px-6 py-3 flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200 group text-sm sm:text-base iphone15pro:text-xs iphone15pro:px-3 iphone15pro:py-2"
           >
             <svg
               className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform"
@@ -87,13 +87,16 @@ const DashboardPage = () => {
                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
               />
             </svg>
-            <span className="font-medium">Import Statement</span>
+            <span className="font-medium iphone15pro:hidden">
+              Import Statement
+            </span>
+            <span className="font-medium iphone15pro:block">Import</span>
           </button>
         </div>
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 iphone15pro:gap-3 iphone15pro:mb-4">
         {/* Net Worth Card */}
         <div className="lg:col-span-1">
           <NetWorth />

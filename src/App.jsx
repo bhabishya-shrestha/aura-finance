@@ -16,6 +16,7 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import SettingsPage from "./pages/SettingsPage";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
+import MobileNav from "./components/MobileNav";
 import ErrorBoundary from "./components/ErrorBoundary";
 import LoadingSpinner from "./components/LoadingSpinner";
 import { initializeDatabase } from "./database";
@@ -65,21 +66,25 @@ const AppLayout = () => {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar
-        onPageChange={setCurrentPage}
-        currentPage={currentPage}
-        isMobileOpen={isMobileSidebarOpen}
-        onMobileToggle={toggleMobileSidebar}
-      />
+      {/* Sidebar - Hidden on mobile */}
+      <div className="iphone15pro:hidden">
+        <Sidebar
+          onPageChange={setCurrentPage}
+          currentPage={currentPage}
+          isMobileOpen={isMobileSidebarOpen}
+          onMobileToggle={toggleMobileSidebar}
+        />
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <Header onMenuToggle={toggleMobileSidebar} showMenuButton={true} />
+        {/* Header - Hidden on mobile */}
+        <div className="iphone15pro:hidden">
+          <Header onMenuToggle={toggleMobileSidebar} showMenuButton={true} />
+        </div>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto iphone15pro:pb-20">
           <div className="w-full h-full">
             {currentPage === "dashboard" && <DashboardPage />}
             {currentPage === "accounts" && <AccountsPage />}
@@ -87,6 +92,9 @@ const AppLayout = () => {
             {currentPage === "settings" && <SettingsPage />}
           </div>
         </main>
+
+        {/* Mobile Navigation - Only visible on iPhone 15 Pro */}
+        <MobileNav onPageChange={setCurrentPage} currentPage={currentPage} />
       </div>
     </div>
   );
