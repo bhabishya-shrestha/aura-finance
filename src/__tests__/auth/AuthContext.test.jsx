@@ -312,9 +312,6 @@ describe("AuthContext", () => {
       await waitFor(() => {
         expect(mockSignInWithOAuth).toHaveBeenCalledWith({
           provider: "github",
-          options: {
-            redirectTo: expect.stringContaining("/auth/callback"),
-          },
         });
       });
     });
