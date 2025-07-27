@@ -281,11 +281,10 @@ export const AuthProvider = ({ children }) => {
       console.log(`🔐 Attempting OAuth login with: ${provider}`);
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
 
+      // Let Supabase handle the redirect automatically
+      // The OAuth providers are already configured with the correct Supabase callback URL
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
       });
 
       if (error) {

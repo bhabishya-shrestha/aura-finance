@@ -14,10 +14,16 @@ const AuthCallbackPage = () => {
         setStatus("loading");
         setMessage("Processing authentication...");
 
-        // Get the current URL parameters
+        // Get the current URL parameters and hash
         const urlParams = new URLSearchParams(window.location.search);
-        const error = urlParams.get("error");
-        const errorDescription = urlParams.get("error_description");
+        const hashParams = new URLSearchParams(
+          window.location.hash.substring(1)
+        );
+
+        const error = urlParams.get("error") || hashParams.get("error");
+        const errorDescription =
+          urlParams.get("error_description") ||
+          hashParams.get("error_description");
 
         // Check for OAuth errors
         if (error) {
@@ -27,7 +33,46 @@ const AuthCallbackPage = () => {
           return;
         }
 
-        // Handle the OAuth callback
+        // Check if we have tokens in the hash
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+
+        console.log("Access token present:", !!accessToken);
+        console.log("Refresh token present:", !!refreshToken);
+
+        if (accessToken && refreshToken) {
+          console.log("Found tokens in URL hash, setting session...");
+
+          // Set the session manually with the tokens from the hash
+          const { data: setSessionData, error: setSessionError } =
+            await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+          if (setSessionError) {
+            console.error("Error setting session:", setSessionError);
+            setStatus("error");
+            setMessage("Failed to establish session. Please try again.");
+            return;
+          }
+
+          if (setSessionData.session) {
+            console.log(
+              "Session established successfully:",
+              setSessionData.session.user.email
+            );
+            setStatus("success");
+            setMessage("Authentication successful! Redirecting...");
+
+            setTimeout(() => {
+              navigate("/dashboard", { replace: true });
+            }, 1500);
+            return;
+          }
+        }
+
+        // Fallback: try to get existing session
         const { data, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
@@ -42,37 +87,12 @@ const AuthCallbackPage = () => {
           setStatus("success");
           setMessage("Authentication successful! Redirecting...");
 
-          // Redirect to dashboard after a short delay
           setTimeout(() => {
             navigate("/dashboard", { replace: true });
           }, 1500);
         } else {
-          // Try to get the session from the URL hash
-          const { data: hashData, error: hashError } =
-            await supabase.auth.getSession();
-
-          if (hashError) {
-            console.error("Hash session error:", hashError);
-            setStatus("error");
-            setMessage("No session found. Please try logging in again.");
-            return;
-          }
-
-          if (hashData.session) {
-            console.log(
-              "Authentication successful from hash:",
-              hashData.session.user.email
-            );
-            setStatus("success");
-            setMessage("Authentication successful! Redirecting...");
-
-            setTimeout(() => {
-              navigate("/dashboard", { replace: true });
-            }, 1500);
-          } else {
-            setStatus("error");
-            setMessage("No session found. Please try logging in again.");
-          }
+          setStatus("error");
+          setMessage("No session found. Please try logging in again.");
         }
       } catch (error) {
         console.error("Unexpected error during auth callback:", error);
