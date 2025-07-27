@@ -75,8 +75,8 @@ const Accounts = () => {
 
   return (
     <>
-      <div className="glass-card-hover p-4 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-semibold text-primary mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition-shadow">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">
           Accounts
         </h2>
 
@@ -86,17 +86,17 @@ const Accounts = () => {
             return (
               <div
                 key={account.id}
-                className="flex items-center justify-between p-2 sm:p-3 apple-glass-light rounded-apple-lg border border-apple-glass-200/30 backdrop-blur-apple-sm transition-all duration-200 hover:bg-apple-glass-200/40"
+                className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-600"
               >
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                  <div className="icon-primary flex-shrink-0">
+                  <div className="text-blue-600 dark:text-blue-400 flex-shrink-0">
                     {getAccountIcon(account.type)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-primary font-medium truncate text-sm sm:text-base">
+                    <p className="text-gray-900 dark:text-white font-medium truncate text-sm sm:text-base">
                       {account.name}
                     </p>
-                    <p className="text-muted text-xs sm:text-sm capitalize truncate">
+                    <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm capitalize truncate">
                       {account.type}
                     </p>
                   </div>

@@ -61,7 +61,7 @@ const AddTransaction = () => {
       {/* Trigger Button */}
       <button
         onClick={() => setShowModal(true)}
-        className="btn-glass-primary px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200 group text-sm sm:text-base"
+        className="px-3 sm:px-4 py-2 sm:py-3 bg-blue-600 text-white rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 hover:scale-105 transition-all duration-200 group text-sm sm:text-base shadow-sm"
       >
         <Plus className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-all duration-200" />
         <span className="font-medium">Add Transaction</span>
@@ -69,15 +69,15 @@ const AddTransaction = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full mx-4 p-6">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
-              <h3 className="text-lg sm:text-xl font-semibold text-primary">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
                 Add New Transaction
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="icon-muted hover:icon-white transition-all duration-200"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-200"
               >
                 <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
@@ -86,18 +86,18 @@ const AddTransaction = () => {
             <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-muted mb-1 sm:mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
                   Description
                 </label>
                 <div className="relative">
-                  <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 icon-muted" />
+                  <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
                   <input
                     type="text"
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
                     placeholder="Enter transaction description"
-                    className="input-glass w-full pl-10 text-sm sm:text-base"
+                    className="w-full pl-10 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     required
                   />
                 </div>
