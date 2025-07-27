@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
-import { localAuthService, tokenManager } from "../services/localAuth";
+import { supabase, auth } from "../lib/supabase";
 
 // Action types
 const AUTH_ACTIONS = {
+  AUTH_STATE_CHANGED: "AUTH_STATE_CHANGED",
   LOGIN_START: "LOGIN_START",
   LOGIN_SUCCESS: "LOGIN_SUCCESS",
   LOGIN_FAILURE: "LOGIN_FAILURE",
@@ -14,14 +15,15 @@ const AUTH_ACTIONS = {
   LOAD_USER_SUCCESS: "LOAD_USER_SUCCESS",
   LOAD_USER_FAILURE: "LOAD_USER_FAILURE",
   CLEAR_ERROR: "CLEAR_ERROR",
+  SET_LOADING: "SET_LOADING",
 };
 
 // Initial state
 const initialState = {
   user: null,
-  token: tokenManager.getToken(),
+  session: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true,
   error: null,
   isInitialized: false,
 };
@@ -29,9 +31,19 @@ const initialState = {
 // Reducer function
 const authReducer = (state, action) => {
   switch (action.type) {
+    case AUTH_ACTIONS.AUTH_STATE_CHANGED:
+      return {
+        ...state,
+        user: action.payload.user,
+        session: action.payload.session,
+        isAuthenticated: !!action.payload.user,
+        isLoading: false,
+        isInitialized: true,
+        error: null,
+      };
+
     case AUTH_ACTIONS.LOGIN_START:
     case AUTH_ACTIONS.REGISTER_START:
-    case AUTH_ACTIONS.LOAD_USER_START:
       return {
         ...state,
         isLoading: true,
@@ -43,7 +55,7 @@ const authReducer = (state, action) => {
       return {
         ...state,
         user: action.payload.user,
-        token: action.payload.token,
+        session: action.payload.session,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -54,6 +66,7 @@ const authReducer = (state, action) => {
       return {
         ...state,
         user: action.payload.user,
+        session: action.payload.session,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -66,7 +79,7 @@ const authReducer = (state, action) => {
       return {
         ...state,
         user: null,
-        token: null,
+        session: null,
         isAuthenticated: false,
         isLoading: false,
         error: action.payload,
@@ -77,7 +90,7 @@ const authReducer = (state, action) => {
       return {
         ...state,
         user: null,
-        token: null,
+        session: null,
         isAuthenticated: false,
         isLoading: false,
         error: null,
@@ -88,6 +101,12 @@ const authReducer = (state, action) => {
       return {
         ...state,
         error: null,
+      };
+
+    case AUTH_ACTIONS.SET_LOADING:
+      return {
+        ...state,
+        isLoading: action.payload,
       };
 
     default:
@@ -102,94 +121,108 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Load user on mount if token exists
+  // Initialize auth state on mount
   useEffect(() => {
-    const loadUser = async () => {
-      if (state.token && !state.isInitialized) {
-        try {
-          dispatch({ type: AUTH_ACTIONS.LOAD_USER_START });
-          const response = await localAuthService.getCurrentUser(state.token);
+    const initializeAuth = async () => {
+      try {
+        dispatch({ type: AUTH_ACTIONS.LOAD_USER_START });
 
-          if (response.success) {
-            dispatch({
-              type: AUTH_ACTIONS.LOAD_USER_SUCCESS,
-              payload: { user: response.data.user },
-            });
-          } else {
-            // Token is invalid, clear it
-            tokenManager.removeToken();
-            dispatch({ type: AUTH_ACTIONS.LOGOUT });
-          }
-        } catch (error) {
-          // Error handling - in production, this would use a proper error notification system
-          if (import.meta.env.DEV) {
-            // eslint-disable-next-line no-console
-            console.error("Failed to load user:", error);
-          }
-          tokenManager.removeToken();
+        // Get initial session
+        const {
+          data: { session },
+          error,
+        } = await auth.getSession();
+
+        if (error) {
+          console.error("Error getting session:", error);
           dispatch({
             type: AUTH_ACTIONS.LOAD_USER_FAILURE,
             payload: error.message,
           });
+          return;
         }
-      } else if (!state.token) {
-        dispatch({ type: AUTH_ACTIONS.LOAD_USER_FAILURE, payload: null });
+
+        if (session?.user) {
+          dispatch({
+            type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+            payload: {
+              user: session.user,
+              session: session,
+            },
+          });
+        } else {
+          dispatch({
+            type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+            payload: {
+              user: null,
+              session: null,
+            },
+          });
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        dispatch({
+          type: AUTH_ACTIONS.LOAD_USER_FAILURE,
+          payload: error.message,
+        });
       }
     };
 
-    loadUser();
-  }, [state.token, state.isInitialized]);
+    initializeAuth();
 
-  // Login function
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.email);
+
+      dispatch({
+        type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+        payload: {
+          user: session?.user || null,
+          session: session || null,
+        },
+      });
+    });
+
+    // Cleanup subscription
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, []);
+
+  // Login with email/password
   const login = async (credentials) => {
     try {
-      // Log for development purposes only
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.log("🔐 Attempting login with:", credentials.email);
-      }
+      console.log("🔐 Attempting login with:", credentials.email);
       dispatch({ type: AUTH_ACTIONS.LOGIN_START });
-      const response = await localAuthService.login(credentials);
 
-      // Log for development purposes only
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.log("🔐 Login response:", response);
-      }
+      const { data, error } = await auth.signIn(
+        credentials.email,
+        credentials.password
+      );
 
-      if (response.success) {
-        tokenManager.setToken(response.data.token);
-        dispatch({
-          type: AUTH_ACTIONS.LOGIN_SUCCESS,
-          payload: {
-            user: response.data.user,
-            token: response.data.token,
-          },
-        });
-        // Log for development purposes only
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.log("✅ Login successful");
-        }
-        return { success: true };
-      } else {
+      if (error) {
+        console.error("❌ Login failed:", error);
         dispatch({
           type: AUTH_ACTIONS.LOGIN_FAILURE,
-          payload: response.error || "Login failed",
+          payload: error.message,
         });
-        // Log for development purposes only
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.log("❌ Login failed:", response.error);
-        }
-        return { success: false, error: response.error };
+        return { success: false, error: error.message };
       }
+
+      console.log("✅ Login successful");
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_SUCCESS,
+        payload: {
+          user: data.user,
+          session: data.session,
+        },
+      });
+
+      return { success: true };
     } catch (error) {
-      // Error handling - in production, this would use a proper error notification system
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.error("💥 Login error:", error);
-      }
+      console.error("💥 Login error:", error);
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: error.message || "Login failed",
@@ -198,56 +231,42 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register function
+  // Register with email/password
   const register = async (userData) => {
     try {
-      // Log for development purposes only
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.log("📝 Attempting registration with:", userData.email);
-      }
+      console.log("📝 Attempting registration with:", userData.email);
       dispatch({ type: AUTH_ACTIONS.REGISTER_START });
-      const response = await localAuthService.register(userData);
 
-      // Log for development purposes only
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.log("📝 Registration response:", response);
-      }
-
-      if (response.success) {
-        tokenManager.setToken(response.data.token);
-        dispatch({
-          type: AUTH_ACTIONS.REGISTER_SUCCESS,
-          payload: {
-            user: response.data.user,
-            token: response.data.token,
-          },
-        });
-        // Log for development purposes only
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.log("✅ Registration successful");
+      const { data, error } = await auth.signUp(
+        userData.email,
+        userData.password,
+        {
+          name: userData.name,
+          email: userData.email,
         }
-        return { success: true };
-      } else {
+      );
+
+      if (error) {
+        console.error("❌ Registration failed:", error);
         dispatch({
           type: AUTH_ACTIONS.REGISTER_FAILURE,
-          payload: response.error || "Registration failed",
+          payload: error.message,
         });
-        // Log for development purposes only
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.log("❌ Registration failed:", response.error);
-        }
-        return { success: false, error: response.error };
+        return { success: false, error: error.message };
       }
+
+      console.log("✅ Registration successful");
+      dispatch({
+        type: AUTH_ACTIONS.REGISTER_SUCCESS,
+        payload: {
+          user: data.user,
+          session: data.session,
+        },
+      });
+
+      return { success: true };
     } catch (error) {
-      // Error handling - in production, this would use a proper error notification system
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.error("💥 Registration error:", error);
-      }
+      console.error("💥 Registration error:", error);
       dispatch({
         type: AUTH_ACTIONS.REGISTER_FAILURE,
         payload: error.message || "Registration failed",
@@ -256,14 +275,61 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout function
-  const logout = async () => {
-    await localAuthService.logout(state.token);
-    tokenManager.removeToken();
-    dispatch({ type: AUTH_ACTIONS.LOGOUT });
+  // OAuth login
+  const loginWithOAuth = async (provider) => {
+    try {
+      console.log(`🔐 Attempting OAuth login with: ${provider}`);
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        console.error("❌ OAuth login failed:", error);
+        dispatch({
+          type: AUTH_ACTIONS.LOGIN_FAILURE,
+          payload: error.message,
+        });
+        return { success: false, error: error.message };
+      }
+
+      console.log("✅ OAuth login initiated");
+      return { success: true, data };
+    } catch (error) {
+      console.error("💥 OAuth login error:", error);
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_FAILURE,
+        payload: error.message || "OAuth login failed",
+      });
+      return { success: false, error: error.message };
+    }
   };
 
-  // Clear error function
+  // Logout
+  const logout = async () => {
+    try {
+      console.log("🚪 Logging out...");
+      const { error } = await auth.signOut();
+
+      if (error) {
+        console.error("❌ Logout failed:", error);
+        return { success: false, error: error.message };
+      }
+
+      console.log("✅ Logout successful");
+      dispatch({ type: AUTH_ACTIONS.LOGOUT });
+      return { success: true };
+    } catch (error) {
+      console.error("💥 Logout error:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Clear error
   const clearError = () => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
   };
@@ -273,6 +339,7 @@ export const AuthProvider = ({ children }) => {
     ...state,
     login,
     register,
+    loginWithOAuth,
     logout,
     clearError,
   };

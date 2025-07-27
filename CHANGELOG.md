@@ -20,7 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Initial Release**: Complete personal finance dashboard
-- **Authentication**: Supabase Auth with email/password
+- **Authentication**: Supabase Auth with email/password and OAuth 2.0
+- **OAuth Providers**: GitHub and Google OAuth integration
+- **Session Persistence**: Automatic session management and persistence
 - **Database**: PostgreSQL with Row Level Security (RLS)
 - **User Management**: Secure user isolation and data protection
 - **Account Management**: Multiple account types (checking, savings, credit, investment)
@@ -31,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Responsive Design**: Mobile-first design with dark mode
 - **Real-time Sync**: Automatic data synchronization across devices
 - **Security**: Comprehensive RLS policies and secure authentication
+- **Routing**: React Router with protected routes and OAuth callbacks
 
 ### Technical Features
 
