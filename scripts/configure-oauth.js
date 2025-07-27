@@ -19,14 +19,14 @@ const OAUTH_CONFIG = {
   github: {
     enabled: true,
     client_id: "Ov23li8zpmYssgU3keWU",
-    client_secret: "67cc050b599504904508fbbccde50deefe0ffdf3",
+    client_secret: "[REDACTED - Use your actual GitHub OAuth client secret]",
     redirect_uri: "https://aura-finance-tool.vercel.app/auth/callback",
   },
   google: {
     enabled: true,
     client_id:
       "46476095284-2j4nd4ekehs5lhgkeah66b16u044istr.apps.googleusercontent.com",
-    client_secret: "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",
+    client_secret: "[REDACTED - Use your actual Google OAuth client secret]",
     redirect_uri: "https://aura-finance-tool.vercel.app/auth/callback",
   },
 };
