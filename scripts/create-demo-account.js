@@ -36,8 +36,8 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 const DEMO_ACCOUNT = {
-  email: "test@gmail.com",
-  password: "demo123",
+  email: process.env.DEMO_EMAIL || "test@gmail.com",
+  password: process.env.DEMO_PASSWORD || "demo123",
   name: "Demo User",
   metadata: {
     is_demo_account: true,

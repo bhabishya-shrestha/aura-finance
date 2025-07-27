@@ -104,3 +104,6 @@ temp/
 # Local development files
 .local/
 .vercel
+
+# GitGuardian cache
+.cache_ggshield

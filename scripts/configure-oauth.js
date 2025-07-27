@@ -25,8 +25,11 @@ const OAUTH_CONFIG = {
   google: {
     enabled: true,
     client_id:
-      "46476095284-2j4nd4ekehs5lhgkeah66b16u044istr.apps.googleusercontent.com",
-    client_secret: "[REDACTED - Use your actual Google OAuth client secret]",
+      process.env.GOOGLE_CLIENT_ID ||
+      "[REDACTED - Set GOOGLE_CLIENT_ID env var]",
+    client_secret:
+      process.env.GOOGLE_CLIENT_SECRET ||
+      "[REDACTED - Set GOOGLE_CLIENT_SECRET env var]",
     redirect_uri: "https://aura-finance-tool.vercel.app/auth/callback",
   },
 };
