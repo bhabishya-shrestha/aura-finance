@@ -101,6 +101,24 @@ This is a personal project exploring modern web development and entrepreneurship
 6. **Open your browser**
    Navigate to `http://localhost:5173`
 
+### 🎯 Demo Account
+
+**Try the app instantly with our demo account:**
+
+- **Email**: `test@gmail.com`
+- **Password**: `demo`
+- **Demo URL**: https://aura-finance-tool.vercel.app/auth
+
+**Setup demo account locally:**
+
+```bash
+# Create demo account with sample data
+npm run demo:setup
+
+# Show demo credentials
+npm run demo:info
+```
+
 ## 🚀 Deployment
 
 ### Quick Deploy
