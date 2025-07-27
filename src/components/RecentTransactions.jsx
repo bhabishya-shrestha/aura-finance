@@ -63,8 +63,9 @@ const RecentTransactions = () => {
       setEditingId(null);
       setEditData({});
     } catch (error) {
-      // Log error for development, could be replaced with proper error handling
+      // Error handling - in production, this would use a proper error notification system
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.error("Error updating transaction:", error);
       }
     }
@@ -82,7 +83,7 @@ const RecentTransactions = () => {
       try {
         await deleteTransaction(transactionId);
       } catch (error) {
-        // Log error for development, could be replaced with proper error handling
+        // Error handling - in production, this would use a proper error notification system
         if (import.meta.env.DEV) {
           // eslint-disable-next-line no-console
           console.error("Error deleting transaction:", error);
