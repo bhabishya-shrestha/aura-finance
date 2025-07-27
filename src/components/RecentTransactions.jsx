@@ -77,12 +77,14 @@ const RecentTransactions = () => {
 
   const handleDelete = async (transactionId) => {
     // Note: In a production app, this should use a proper confirmation dialog
+    // eslint-disable-next-line no-alert
     if (window.confirm("Are you sure you want to delete this transaction?")) {
       try {
         await deleteTransaction(transactionId);
       } catch (error) {
         // Log error for development, could be replaced with proper error handling
         if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
           console.error("Error deleting transaction:", error);
         }
       }

@@ -51,6 +51,7 @@ export const SettingsProvider = ({ children }) => {
         return { ...defaultSettings, ...parsed };
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error loading settings:", error);
     }
     return defaultSettings;
@@ -63,6 +64,7 @@ export const SettingsProvider = ({ children }) => {
     try {
       localStorage.setItem("aura-settings", JSON.stringify(settings));
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error saving settings:", error);
     }
   }, [settings]);

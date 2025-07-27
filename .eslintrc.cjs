@@ -10,7 +10,7 @@ module.exports = {
     "plugin:react/jsx-runtime",
     "plugin:react-hooks/recommended",
   ],
-  ignorePatterns: ["dist", ".eslintrc.cjs"],
+  ignorePatterns: ["dist", ".eslintrc.cjs", "backend/**/*"],
   parserOptions: {
     ecmaVersion: "latest",
     sourceType: "module",
@@ -56,4 +56,25 @@ module.exports = {
     "no-new-func": "error",
     "no-script-url": "error",
   },
+  overrides: [
+    {
+      files: ["backend/**/*.js"],
+      env: {
+        node: true,
+        es2020: true,
+      },
+      extends: ["eslint:recommended"],
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "commonjs",
+      },
+      rules: {
+        "no-console": "off",
+        "no-unused-vars": [
+          "error",
+          { varsIgnorePattern: "^[A-Z_]", argsIgnorePattern: "^_" },
+        ],
+      },
+    },
+  ],
 };

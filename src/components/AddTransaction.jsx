@@ -43,6 +43,7 @@ const AddTransaction = () => {
     } catch (error) {
       // Log error for development, could be replaced with proper error handling
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.error("Error adding transaction:", error);
       }
     }

@@ -47,8 +47,9 @@ const Accounts = () => {
       setNewAccount({ name: "", type: "checking", balance: 0 });
       setShowAddModal(false);
     } catch (error) {
-      // Log error for development, could be replaced with proper error handling
+      // Error handling - in production, this would use a proper error notification system
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.error("Error adding account:", error);
       }
     }
@@ -58,6 +59,7 @@ const Accounts = () => {
     // Note: In a production app, this should use a proper confirmation dialog
     // For now, we'll keep the confirm but add proper error handling
     if (
+      // eslint-disable-next-line no-alert
       window.confirm(
         `Are you sure you want to delete "${accountName}"? This will also delete all associated transactions.`
       )
@@ -65,8 +67,9 @@ const Accounts = () => {
       try {
         await deleteAccount(accountId);
       } catch (error) {
-        // Log error for development, could be replaced with proper error handling
+        // Error handling - in production, this would use a proper error notification system
         if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
           console.error("Error deleting account:", error);
         }
       }
