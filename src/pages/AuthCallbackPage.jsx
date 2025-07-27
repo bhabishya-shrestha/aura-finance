@@ -14,11 +14,24 @@ const AuthCallbackPage = () => {
         setStatus("loading");
         setMessage("Processing authentication...");
 
-        // Handle the OAuth callback
-        const { data, error } = await supabase.auth.getSession();
+        // Get the current URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get("error");
+        const errorDescription = urlParams.get("error_description");
 
+        // Check for OAuth errors
         if (error) {
-          console.error("Auth callback error:", error);
+          console.error("OAuth error:", error, errorDescription);
+          setStatus("error");
+          setMessage(`Authentication failed: ${errorDescription || error}`);
+          return;
+        }
+
+        // Handle the OAuth callback
+        const { data, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error("Auth callback error:", sessionError);
           setStatus("error");
           setMessage("Authentication failed. Please try again.");
           return;
@@ -34,8 +47,32 @@ const AuthCallbackPage = () => {
             navigate("/dashboard", { replace: true });
           }, 1500);
         } else {
-          setStatus("error");
-          setMessage("No session found. Please try logging in again.");
+          // Try to get the session from the URL hash
+          const { data: hashData, error: hashError } =
+            await supabase.auth.getSession();
+
+          if (hashError) {
+            console.error("Hash session error:", hashError);
+            setStatus("error");
+            setMessage("No session found. Please try logging in again.");
+            return;
+          }
+
+          if (hashData.session) {
+            console.log(
+              "Authentication successful from hash:",
+              hashData.session.user.email
+            );
+            setStatus("success");
+            setMessage("Authentication successful! Redirecting...");
+
+            setTimeout(() => {
+              navigate("/dashboard", { replace: true });
+            }, 1500);
+          } else {
+            setStatus("error");
+            setMessage("No session found. Please try logging in again.");
+          }
         }
       } catch (error) {
         console.error("Unexpected error during auth callback:", error);

@@ -1,17 +1,43 @@
-import React from "react";
-import NetWorth from "../components/NetWorth";
-import Accounts from "../components/Accounts";
-import RecentTransactions from "../components/RecentTransactions";
-import AddTransaction from "../components/AddTransaction";
-import StatementImporter from "../components/StatementImporter";
-import useStore from "../store";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
 
 const DashboardPage = () => {
-  const { setModalOpen } = useStore();
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const [error, setError] = useState(null);
 
-  const handleImportClick = () => {
-    setModalOpen(true);
-  };
+  useEffect(() => {
+    console.log("DashboardPage mounted");
+    console.log("Auth state:", { user, isAuthenticated, isLoading });
+  }, [user, isAuthenticated, isLoading]);
+
+  // Show loading state while auth is initializing
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if there is one
+  if (error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error: {error}</p>
+          <button
+            onClick={() => setError(null)}
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full p-4 sm:p-6 overflow-x-hidden">
@@ -24,85 +50,49 @@ const DashboardPage = () => {
           <p className="text-muted text-sm sm:text-base">
             Welcome back! Here&apos;s your financial overview.
           </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <AddTransaction />
-          <button
-            onClick={handleImportClick}
-            className="btn-glass-primary px-4 sm:px-6 py-3 flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200 group text-sm sm:text-base"
-          >
-            <svg
-              className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-              />
-            </svg>
-            <span className="font-medium">Import Statement</span>
-          </button>
+          {user && (
+            <p className="text-sm text-gray-500">Logged in as: {user.email}</p>
+          )}
         </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-        {/* Net Worth Card */}
-        <div className="lg:col-span-1">
-          <NetWorth />
-        </div>
-
-        {/* Accounts Card */}
-        <div className="lg:col-span-1">
-          <Accounts />
-        </div>
-
-        {/* Recent Transactions Card */}
-        <div className="lg:col-span-1">
-          <RecentTransactions />
-        </div>
-      </div>
-
-      {/* Analytics Preview */}
-      <div className="mb-6">
-        <div className="glass-card-hover p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-semibold text-primary mb-4">
-            Quick Analytics
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            <div className="text-center p-4 apple-glass-light rounded-apple-lg">
-              <div className="text-xl sm:text-2xl font-bold text-success mb-2">
-                $2,450
-              </div>
-              <div className="text-muted text-xs sm:text-sm">
-                This Month&apos;s Spending
-              </div>
-            </div>
-            <div className="text-center p-4 apple-glass-light rounded-apple-lg">
-              <div className="text-xl sm:text-2xl font-bold text-success mb-2">
-                $8,200
-              </div>
-              <div className="text-muted text-xs sm:text-sm">
-                This Month&apos;s Income
-              </div>
-            </div>
-            <div className="text-center p-4 apple-glass-light rounded-apple-lg sm:col-span-2 lg:col-span-1">
-              <div className="text-xl sm:text-2xl font-bold text-success mb-2">
-                $5,750
-              </div>
-              <div className="text-muted text-xs sm:text-sm">Net Savings</div>
-            </div>
-          </div>
+      {/* Simple Content */}
+      <div className="glass-card-hover p-6">
+        <h2 className="text-lg font-semibold text-primary mb-4">
+          Authentication Status
+        </h2>
+        <div className="space-y-2">
+          <p>
+            <strong>Authenticated:</strong> {isAuthenticated ? "Yes" : "No"}
+          </p>
+          <p>
+            <strong>Loading:</strong> {isLoading ? "Yes" : "No"}
+          </p>
+          <p>
+            <strong>User Email:</strong> {user?.email || "None"}
+          </p>
         </div>
       </div>
 
-      {/* Statement Importer Modal */}
-      <StatementImporter />
+      {/* Test Components Button */}
+      <div className="mt-6">
+        <button
+          onClick={() => {
+            try {
+              // Test if we can import and use the store
+              import("../store").then(() => {
+                console.log("Store imported successfully");
+              });
+            } catch (err) {
+              console.error("Error importing store:", err);
+              setError(err.message);
+            }
+          }}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Test Store Import
+        </button>
+      </div>
     </div>
   );
 };

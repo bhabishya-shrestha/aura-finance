@@ -123,12 +123,20 @@ const Sidebar = ({
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
                   <span className="text-xs sm:text-sm font-medium text-white">
-                    {user.name.charAt(0).toUpperCase()}
+                    {(
+                      user.user_metadata?.full_name ||
+                      user.email?.split("@")[0] ||
+                      "U"
+                    )
+                      .charAt(0)
+                      .toUpperCase()}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {user.name}
+                    {user.user_metadata?.full_name ||
+                      user.email?.split("@")[0] ||
+                      "User"}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                     {user.email}

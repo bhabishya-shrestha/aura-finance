@@ -18,7 +18,11 @@
     "version:major": "npm version major",
     "release": "npm run build && npm run test && git add . && git commit -m \"Release v$(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
     "demo:setup": "node scripts/create-demo-account.js",
-    "demo:info": "echo \"Demo Account: test@gmail.com / demo123\" && echo \"Demo URL: https://aura-finance-tool.vercel.app/auth\""
+    "demo:info": "echo \"Demo Account: test@gmail.com / demo123\" && echo \"Demo URL: https://aura-finance-tool.vercel.app/auth\"",
+    "oauth:setup": "node scripts/setup-oauth.js",
+    "oauth:setup-env": "node scripts/setup-oauth-env.js",
+    "oauth:configure": "node scripts/configure-oauth.js",
+    "oauth:verify": "node scripts/verify-oauth.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.52.1",

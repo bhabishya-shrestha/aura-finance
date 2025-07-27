@@ -76,7 +76,9 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="hidden sm:block text-right min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {user.name}
+                  {user.user_metadata?.full_name ||
+                    user.email?.split("@")[0] ||
+                    "User"}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {user.email}
@@ -87,7 +89,13 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
                   className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium hover:scale-105 transition-all duration-200 shadow-sm flex-shrink-0"
                   aria-label="User menu"
                 >
-                  {user.name.charAt(0).toUpperCase()}
+                  {(
+                    user.user_metadata?.full_name ||
+                    user.email?.split("@")[0] ||
+                    "U"
+                  )
+                    .charAt(0)
+                    .toUpperCase()}
                 </button>
 
                 {/* Dropdown Menu */}
