@@ -1,10 +1,12 @@
 import React from "react";
-import { Sparkles, Bell, Menu } from "lucide-react";
+import { Sparkles, Bell, Menu, Sun, Moon, Monitor } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import SearchBar from "./SearchBar";
 
 const Header = ({ onMenuToggle, showMenuButton = false }) => {
   const { user, logout } = useAuth();
+  const { toggleTheme, currentTheme } = useTheme();
 
   const handleLogout = () => {
     logout();
@@ -47,6 +49,19 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
 
         {/* Right Section - User Menu */}
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+            aria-label={`Switch to ${currentTheme === "dark" ? "light" : "dark"} mode`}
+          >
+            {currentTheme === "dark" ? (
+              <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400" />
+            ) : (
+              <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400" />
+            )}
+          </button>
+
           {/* Notifications */}
           <button
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 relative"

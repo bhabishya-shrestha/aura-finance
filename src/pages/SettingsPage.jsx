@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Settings,
   User,
@@ -12,53 +12,69 @@ import {
   EyeOff,
   Bell,
   Globe,
+  Sun,
+  Moon,
+  Monitor,
+  Save,
+  RotateCcw,
+  Check,
+  AlertCircle,
 } from "lucide-react";
 import useStore from "../store";
+import { useSettings } from "../contexts/SettingsContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 const SettingsPage = () => {
   const { transactions, accounts } = useStore();
+  const {
+    settings,
+    updateSetting,
+    resetSettings,
+    exportSettings,
+    importSettings,
+    formatCurrency,
+  } = useSettings();
+  const { setTheme, currentTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("general");
   const [showPassword, setShowPassword] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  const fileInputRef = useRef(null);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    setSaveMessage("Settings saved successfully!");
+
+    // Simulate save delay
+    setTimeout(() => {
+      setIsSaving(false);
+      setTimeout(() => setSaveMessage(""), 3000);
+    }, 1000);
   };
 
-  const exportData = () => {
-    const data = {
-      transactions,
-      accounts,
-      exportDate: new Date().toISOString(),
-      version: "0.1.0",
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `aura-finance-backup-${new Date().toISOString().split("T")[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleImportSettings = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      try {
+        await importSettings(file);
+        setSaveMessage("Settings imported successfully!");
+        setTimeout(() => setSaveMessage(""), 3000);
+      } catch (error) {
+        setSaveMessage("Error importing settings: " + error.message);
+        setTimeout(() => setSaveMessage(""), 5000);
+      }
+    }
   };
 
-  const clearAllData = () => {
+  const handleResetSettings = () => {
     if (
       window.confirm(
-        "Are you sure you want to clear all data? This action cannot be undone."
+        "Are you sure you want to reset all settings to default? This action cannot be undone."
       )
     ) {
-      // TODO: Implement data clearing
-      // Log for development purposes only
-      if (import.meta.env.DEV) {
-        console.log("Clearing all data...");
-      }
+      resetSettings();
+      setSaveMessage("Settings reset to default!");
+      setTimeout(() => setSaveMessage(""), 3000);
     }
   };
 
@@ -72,19 +88,39 @@ const SettingsPage = () => {
   ];
 
   return (
-    <div className="flex-1 p-6">
+    <div className="flex-1 p-6 bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold gradient-text">Settings</h1>
-        <p className="text-muted-gray mt-1">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Settings
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
           Manage your preferences and account settings
         </p>
       </div>
 
+      {/* Save Message */}
+      {saveMessage && (
+        <div
+          className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${
+            saveMessage.includes("Error")
+              ? "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800"
+              : "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800"
+          }`}
+        >
+          {saveMessage.includes("Error") ? (
+            <AlertCircle className="w-5 h-5" />
+          ) : (
+            <Check className="w-5 h-5" />
+          )}
+          {saveMessage}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="glass-card p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
             <nav className="space-y-2">
               {tabs.map((tab) => (
                 <button
@@ -92,8 +128,8 @@ const SettingsPage = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
                     activeTab === tab.id
-                      ? "bg-gradient-to-r from-teal to-purple text-white shadow-lg"
-                      : "text-muted-gray hover:text-soft-white hover:bg-white/10"
+                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600"
+                      : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
                 >
                   <tab.icon className="w-5 h-5" />
@@ -106,20 +142,36 @@ const SettingsPage = () => {
 
         {/* Content */}
         <div className="lg:col-span-3">
-          <div className="glass-card p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             {/* General Settings */}
             {activeTab === "general" && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-soft-white mb-4">
-                  General Settings
-                </h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    General Settings
+                  </h2>
+                  <button
+                    onClick={handleSaveSettings}
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  >
+                    <Save className="w-4 h-4" />
+                    {isSaving ? "Saving..." : "Save"}
+                  </button>
+                </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-muted-gray mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Default Currency
                     </label>
-                    <select className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal">
+                    <select
+                      value={settings.currency}
+                      onChange={(e) =>
+                        updateSetting("currency", e.target.value)
+                      }
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
                       <option value="USD">USD - US Dollar</option>
                       <option value="EUR">EUR - Euro</option>
                       <option value="GBP">GBP - British Pound</option>
@@ -128,10 +180,16 @@ const SettingsPage = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-muted-gray mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Date Format
                     </label>
-                    <select className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal">
+                    <select
+                      value={settings.dateFormat}
+                      onChange={(e) =>
+                        updateSetting("dateFormat", e.target.value)
+                      }
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
                       <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                       <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                       <option value="YYYY-MM-DD">YYYY-MM-DD</option>
@@ -139,10 +197,16 @@ const SettingsPage = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-muted-gray mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Language
                     </label>
-                    <select className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal">
+                    <select
+                      value={settings.language}
+                      onChange={(e) =>
+                        updateSetting("language", e.target.value)
+                      }
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
                       <option value="en">English</option>
                       <option value="es">Español</option>
                       <option value="fr">Français</option>
@@ -156,38 +220,50 @@ const SettingsPage = () => {
             {/* Profile Settings */}
             {activeTab === "profile" && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-soft-white mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Profile Settings
                 </h2>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-muted-gray mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Full Name
                     </label>
                     <input
                       type="text"
+                      value={settings.fullName}
+                      onChange={(e) =>
+                        updateSetting("fullName", e.target.value)
+                      }
                       placeholder="Enter your full name"
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-muted-gray mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Email Address
                     </label>
                     <input
                       type="email"
+                      value={settings.email}
+                      onChange={(e) => updateSetting("email", e.target.value)}
                       placeholder="Enter your email"
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-muted-gray mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Time Zone
                     </label>
-                    <select className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal">
+                    <select
+                      value={settings.timezone}
+                      onChange={(e) =>
+                        updateSetting("timezone", e.target.value)
+                      }
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
                       <option value="UTC-8">Pacific Time (UTC-8)</option>
                       <option value="UTC-5">Eastern Time (UTC-5)</option>
                       <option value="UTC+0">UTC</option>
@@ -203,24 +279,24 @@ const SettingsPage = () => {
             {/* Security Settings */}
             {activeTab === "security" && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-soft-white mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Security Settings
                 </h2>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-muted-gray mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Current Password
                     </label>
                     <div className="relative">
                       <input
                         type={showPassword ? "text" : "password"}
                         placeholder="Enter current password"
-                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal pr-10"
+                        className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
                       />
                       <button
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-gray hover:text-soft-white"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                       >
                         {showPassword ? (
                           <EyeOff className="w-4 h-4" />
@@ -232,24 +308,24 @@ const SettingsPage = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-muted-gray mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       New Password
                     </label>
                     <input
                       type="password"
                       placeholder="Enter new password"
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-muted-gray mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Confirm New Password
                     </label>
                     <input
                       type="password"
                       placeholder="Confirm new password"
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                 </div>
@@ -259,20 +335,20 @@ const SettingsPage = () => {
             {/* Data Management */}
             {activeTab === "data" && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-soft-white mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Data Management
                 </h2>
 
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-white/5 rounded-lg">
+                    <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <div className="flex items-center gap-3 mb-2">
-                        <Database className="w-5 h-5 text-teal" />
-                        <span className="font-medium text-soft-white">
+                        <Database className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        <span className="font-medium text-gray-900 dark:text-white">
                           Data Statistics
                         </span>
                       </div>
-                      <div className="space-y-1 text-sm text-muted-gray">
+                      <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                         <div>Transactions: {transactions.length}</div>
                         <div>Accounts: {accounts.length}</div>
                         <div>
@@ -284,14 +360,14 @@ const SettingsPage = () => {
                       </div>
                     </div>
 
-                    <div className="p-4 bg-white/5 rounded-lg">
+                    <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <div className="flex items-center gap-3 mb-2">
-                        <Globe className="w-5 h-5 text-purple-400" />
-                        <span className="font-medium text-soft-white">
+                        <Globe className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <span className="font-medium text-gray-900 dark:text-white">
                           Storage
                         </span>
                       </div>
-                      <div className="space-y-1 text-sm text-muted-gray">
+                      <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                         <div>Local Storage: IndexedDB</div>
                         <div>Data Privacy: 100% Local</div>
                         <div>Backup: Manual Export</div>
@@ -299,28 +375,39 @@ const SettingsPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 flex-wrap">
                     <button
-                      onClick={exportData}
-                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal to-purple hover:from-teal/90 hover:to-purple/90 transition-all rounded-lg text-white font-medium"
+                      onClick={exportSettings}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg text-white font-medium"
                     >
                       <Download className="w-4 h-4" />
-                      Export Data
-                    </button>
-
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 transition-colors rounded-lg text-soft-white font-medium">
-                      <Upload className="w-4 h-4" />
-                      Import Data
+                      Export Settings
                     </button>
 
                     <button
-                      onClick={clearAllData}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 transition-colors rounded-lg text-red-400 font-medium"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 transition-colors rounded-lg text-white font-medium"
                     >
-                      <Trash2 className="w-4 h-4" />
-                      Clear All Data
+                      <Upload className="w-4 h-4" />
+                      Import Settings
+                    </button>
+
+                    <button
+                      onClick={handleResetSettings}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 transition-colors rounded-lg text-white font-medium"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Reset Settings
                     </button>
                   </div>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportSettings}
+                    className="hidden"
+                  />
                 </div>
               </div>
             )}
@@ -328,40 +415,87 @@ const SettingsPage = () => {
             {/* Appearance Settings */}
             {activeTab === "appearance" && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-soft-white mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Appearance Settings
                 </h2>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-muted-gray mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Theme
                     </label>
-                    <select className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal">
-                      <option value="dark">Dark Theme</option>
-                      <option value="light">Light Theme</option>
-                      <option value="auto">Auto (System)</option>
-                    </select>
+                    <div className="grid grid-cols-3 gap-3">
+                      <button
+                        onClick={() => setTheme("light")}
+                        className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                          currentTheme === "light"
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                            : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+                        }`}
+                      >
+                        <Sun className="w-5 h-5" />
+                        <span className="text-sm font-medium">Light</span>
+                      </button>
+
+                      <button
+                        onClick={() => setTheme("dark")}
+                        className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                          currentTheme === "dark"
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                            : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+                        }`}
+                      >
+                        <Moon className="w-5 h-5" />
+                        <span className="text-sm font-medium">Dark</span>
+                      </button>
+
+                      <button
+                        onClick={() => setTheme("auto")}
+                        className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                          settings.theme === "auto"
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                            : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+                        }`}
+                      >
+                        <Monitor className="w-5 h-5" />
+                        <span className="text-sm font-medium">Auto</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-muted-gray mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Glassmorphism Intensity
                     </label>
                     <input
                       type="range"
                       min="0"
                       max="100"
-                      defaultValue="50"
+                      value={settings.glassmorphismIntensity}
+                      onChange={(e) =>
+                        updateSetting(
+                          "glassmorphismIntensity",
+                          parseInt(e.target.value)
+                        )
+                      }
                       className="w-full"
                     />
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      {settings.glassmorphismIntensity}%
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-muted-gray mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Animation Speed
                     </label>
-                    <select className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal">
+                    <select
+                      value={settings.animationSpeed}
+                      onChange={(e) =>
+                        updateSetting("animationSpeed", e.target.value)
+                      }
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
                       <option value="fast">Fast</option>
                       <option value="normal">Normal</option>
                       <option value="slow">Slow</option>
@@ -374,53 +508,65 @@ const SettingsPage = () => {
             {/* Notifications Settings */}
             {activeTab === "notifications" && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-soft-white mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Notification Settings
                 </h2>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div>
-                      <div className="font-medium text-soft-white">
+                      <div className="font-medium text-gray-900 dark:text-white">
                         Email Notifications
                       </div>
-                      <div className="text-sm text-muted-gray">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
                         Receive updates via email
                       </div>
                     </div>
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-teal bg-white/10 border-white/20 rounded focus:ring-teal"
+                      checked={settings.emailNotifications}
+                      onChange={(e) =>
+                        updateSetting("emailNotifications", e.target.checked)
+                      }
+                      className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div>
-                      <div className="font-medium text-soft-white">
+                      <div className="font-medium text-gray-900 dark:text-white">
                         Weekly Reports
                       </div>
-                      <div className="text-sm text-muted-gray">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
                         Get weekly spending summaries
                       </div>
                     </div>
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-teal bg-white/10 border-white/20 rounded focus:ring-teal"
+                      checked={settings.weeklyReports}
+                      onChange={(e) =>
+                        updateSetting("weeklyReports", e.target.checked)
+                      }
+                      className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div>
-                      <div className="font-medium text-soft-white">
+                      <div className="font-medium text-gray-900 dark:text-white">
                         Budget Alerts
                       </div>
-                      <div className="text-sm text-muted-gray">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
                         Get notified when approaching budget limits
                       </div>
                     </div>
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-teal bg-white/10 border-white/20 rounded focus:ring-teal"
+                      checked={settings.budgetAlerts}
+                      onChange={(e) =>
+                        updateSetting("budgetAlerts", e.target.checked)
+                      }
+                      className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
                   </div>
                 </div>

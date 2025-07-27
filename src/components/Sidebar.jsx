@@ -80,14 +80,14 @@ const Sidebar = ({
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-apple-dark-500/50 backdrop-blur-apple-xl z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
           onClick={onMobileToggle}
         />
       )}
 
       {/* Sidebar */}
       <div
-        className={`fidelity-nav h-screen transition-all duration-300 ease-in-out fixed lg:relative z-50 ${
+        className={`bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-screen transition-all duration-300 ease-in-out fixed lg:relative z-50 ${
           isCollapsed ? "w-16 lg:w-20" : "w-64"
         } ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
@@ -96,10 +96,10 @@ const Sidebar = ({
           <div className="flex items-center justify-between mb-6">
             {!isCollapsed && (
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-apple-blue to-apple-purple rounded-apple-lg flex items-center justify-center shadow-apple-elevation-2 flex-shrink-0">
-                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 icon-white" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                 </div>
-                <h2 className="text-lg sm:text-xl font-bold text-gradient truncate">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
                   Aura
                 </h2>
               </div>
@@ -119,7 +119,7 @@ const Sidebar = ({
 
           {/* User Info */}
           {user && !isCollapsed && (
-            <div className="mb-4 sm:mb-6 p-2 sm:p-3 fidelity-card">
+            <div className="mb-4 sm:mb-6 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
                   <span className="text-xs sm:text-sm font-medium text-white">
@@ -146,8 +146,8 @@ const Sidebar = ({
                 onClick={() => handleMenuClick(item.id)}
                 className={`w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg transition-all duration-200 group relative ${
                   currentPage === item.id
-                    ? "fidelity-nav-item active"
-                    : "fidelity-nav-item"
+                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600"
+                    : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                 } ${isCollapsed ? "justify-center" : ""}`}
                 title={isCollapsed ? item.label : item.description}
               >

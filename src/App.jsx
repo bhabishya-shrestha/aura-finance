@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { SettingsProvider } from "./contexts/SettingsContext";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import AccountsPage from "./pages/AccountsPage";
@@ -91,13 +93,17 @@ const AppContent = () => {
   );
 };
 
-// Main App Component with Auth Provider
+// Main App Component with Providers
 const App = () => {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
+      <ThemeProvider>
+        <SettingsProvider>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </SettingsProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 };
