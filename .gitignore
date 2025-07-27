@@ -103,3 +103,4 @@ temp/
 
 # Local development files
 .local/
+.vercel

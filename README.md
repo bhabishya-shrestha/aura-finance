@@ -1,64 +1,60 @@
 # Aura Finance - Personal Finance Dashboard
 
-A sophisticated, local-first personal finance dashboard built with React, featuring a beautiful Apple-inspired glassmorphism design and advanced financial analytics capabilities.
+A modern personal finance dashboard built with React and Supabase, designed to help you track expenses, manage accounts, and achieve your financial goals.
 
-## 🏆 Professional Quality Standards
+## 🎯 Project Overview
 
-This project follows enterprise-level development practices:
+This is a personal project exploring modern web development and entrepreneurship. It demonstrates:
 
-- **Code Quality**: Comprehensive ESLint rules, TypeScript-ready structure
-- **Testing**: Full test coverage with Vitest and React Testing Library
-- **Accessibility**: WCAG 2.1 AA compliant with proper ARIA labels
-- **Performance**: Optimized rendering, efficient state management
-- **Security**: Local-first architecture, no data transmission
-- **Error Handling**: Professional error boundaries and graceful degradation
-- **SEO**: Complete meta tags and semantic HTML structure
+- **Full-stack development** with React and Supabase
+- **Modern UI/UX** with responsive design and dark mode
+- **Real-time data synchronization** across devices
+- **Secure authentication** and data protection
+- **Professional deployment** practices
 
 ## ✨ Features
 
-## ✨ Features
+### 🎨 Design & User Experience
 
-### 🎨 Design & UI
+- **Modern Interface**: Clean, responsive design that works on all devices
+- **Dark Mode**: Sophisticated dark theme with proper contrast ratios
+- **Responsive Design**: Optimized for desktop, tablet, and mobile
+- **Smooth Animations**: Subtle transitions and micro-interactions
+- **Professional Typography**: Clear hierarchy and readable fonts
 
-- **Apple Glass Morphism**: Beautiful frosted glass effect with backdrop blur
-- **Material Design 3**: Modern design system with proper color contrast
-- **Responsive Design**: Works seamlessly on desktop and mobile devices
-- **Dark Theme**: Sophisticated dark charcoal background with proper contrast
-- **Professional Typography**: Advanced font scaling and text hierarchy
-- **Smooth Animations**: Apple-inspired micro-interactions and transitions
+### ☁️ Cloud Architecture
 
-### 💾 Local-First Architecture
-
-- **Zero Server Costs**: All data stored locally in your browser
-- **Privacy-First**: Your financial data never leaves your device
-- **IndexedDB Storage**: Robust local database using Dexie.js
-- **Offline Capable**: Works completely offline once loaded
+- **Zero Cost Deployment**: Free tier hosting on Vercel + Supabase
+- **Real-time Sync**: Automatic data synchronization across devices
+- **Secure Authentication**: Built-in user management with Supabase Auth
+- **Scalable Database**: PostgreSQL with Row Level Security
+- **Global CDN**: Fast loading times worldwide
 
 ### 📊 Core Functionality
 
 - **Net Worth Tracking**: Real-time calculation from all transactions
-- **Account Management**: Multiple account types (checking, credit, savings)
-- **Recent Transactions**: View and manage your latest transactions
-- **Transaction Categories**: Automatic categorization with manual override
+- **Account Management**: Multiple account types (checking, savings, credit)
+- **Transaction History**: View and manage your financial records
+- **Category Management**: Organize transactions with custom categories
+- **Multi-user Support**: Secure user isolation with RLS
 
-### 📄 Statement Import
+### 📄 Data Import
 
 - **CSV Support**: Import transaction data from CSV files
-- **PDF OCR**: Advanced Bank of America statement parsing
-- **Smart Parsing**: Optimized regex patterns for BoA statement structure
+- **PDF Processing**: OCR support for bank statements
+- **Smart Parsing**: Optimized for common bank statement formats
 - **Batch Import**: Review and edit transactions before importing
-- **Duplicate Detection**: Automatically removes duplicate transactions
+- **Duplicate Detection**: Automatically identifies duplicate entries
 
 ### 🔧 Technology Stack
 
-- **React 18**: Modern React with Hooks
-- **Vite**: Fast build tool and development server
-- **Tailwind CSS**: Utility-first CSS framework
-- **Dexie.js**: IndexedDB wrapper for local storage
-- **Zustand**: Lightweight state management
-- **Lucide React**: Beautiful icon library
-- **Papa Parse**: CSV parsing library
-- **Tesseract.js**: OCR for PDF processing
+- **Frontend**: React 18 with Vite
+- **Styling**: Tailwind CSS for utility-first styling
+- **Database**: PostgreSQL on Supabase
+- **Authentication**: Supabase Auth
+- **State Management**: Zustand for lightweight state
+- **Icons**: Lucide React for consistent iconography
+- **Data Processing**: Papa Parse for CSV, Tesseract.js for OCR
 
 ## 🚀 Getting Started
 
@@ -66,6 +62,7 @@ This project follows enterprise-level development practices:
 
 - Node.js 16+
 - npm or yarn
+- Supabase account (free)
 
 ### Installation
 
@@ -73,7 +70,7 @@ This project follows enterprise-level development practices:
 
    ```bash
    git clone <repository-url>
-   cd budget-networth-tracker
+   cd aura-finance
    ```
 
 2. **Install dependencies**
@@ -82,102 +79,140 @@ This project follows enterprise-level development practices:
    npm install
    ```
 
-3. **Start the development server**
+3. **Set up Supabase**
+   - Create a project at [https://app.supabase.com](https://app.supabase.com)
+   - Get your project URL and anon key
+   - Create a `.env` file with your credentials
+
+4. **Deploy database schema**
+
+   ```bash
+   supabase login
+   supabase link --project-ref your_project_ref
+   supabase db push
+   ```
+
+5. **Start the development server**
 
    ```bash
    npm run dev
    ```
 
-4. **Open your browser**
+6. **Open your browser**
    Navigate to `http://localhost:5173`
 
+## 🚀 Deployment
+
+### Quick Deploy
+
+```bash
+./scripts/deploy.sh
+```
+
+### Manual Deploy
+
+```bash
+npm run build
+vercel --prod
+```
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
+
+## 📦 Version Management
+
+### Current Version
+
+- **Version**: 1.0.0
+- **Status**: Production Release
+- **Release Date**: 2025-07-27
+
+### Version Commands
+
+```bash
+# Show current version
+./scripts/version.sh version
+
+# Release new version
+./scripts/version.sh release patch  # 1.0.0 → 1.0.1
+./scripts/version.sh release minor  # 1.0.0 → 1.1.0
+./scripts/version.sh release major  # 1.0.0 → 2.0.0
+
+# Run tests
+./scripts/version.sh test
+
+# Build project
+./scripts/version.sh build
+
+# Deploy to production
+./scripts/version.sh deploy
+```
+
+### Semantic Versioning
+
+- **MAJOR**: Breaking changes (1.0.0 → 2.0.0)
+- **MINOR**: New features, backward compatible (1.0.0 → 1.1.0)
+- **PATCH**: Bug fixes, backward compatible (1.0.0 → 1.0.1)
+
+See [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
+
 ## 📖 Usage
+
+### Getting Started
+
+1. **Sign up** for an account
+2. **Add your accounts** (checking, savings, credit cards)
+3. **Import transactions** from your bank statements
+4. **Track your net worth** and financial progress
 
 ### Importing Statements
 
 1. **Click "Import Statement"** in the header
 2. **Upload your file**:
    - **CSV**: Standard format with Date, Description, Amount columns
-   - **PDF**: Bank of America credit card or bank statements
-3. **Review transactions**: Edit dates, descriptions, amounts, and categories
-4. **Select transactions**: Choose which transactions to import
-5. **Import**: Click "Import Transactions" to save to your local database
+   - **PDF**: Bank statements (OCR processing)
+3. **Review and edit** transactions before importing
+4. **Confirm import** to add to your database
 
-### Managing Transactions
+## 🧪 Development
 
-- **View recent transactions** on the dashboard
-- **Track net worth** in real-time
-- **Monitor accounts** and their balances
-- **Categorize spending** for better insights
+### Running Tests
 
-### Bank of America Statement Parsing
-
-The application is specifically optimized for Bank of America statements and can parse:
-
-- **Purchases and Adjustments** section
-- **Payments and Other Credits** section
-- **Transaction dates** in MM/DD/YYYY format
-- **Amounts** with proper sign detection
-- **Descriptions** with automatic categorization
-
-## 🏗️ Project Structure
-
-```
-src/
-├── components/          # React components
-│   ├── Header.jsx      # Main header with import button
-│   ├── Sidebar.jsx     # Collapsible navigation sidebar
-│   ├── Dashboard.jsx   # Main dashboard layout
-│   ├── NetWorth.jsx    # Net worth display card
-│   ├── Accounts.jsx    # Account management
-│   ├── RecentTransactions.jsx  # Transaction list
-│   └── StatementImporter.jsx   # Import modal
-├── utils/
-│   └── statementParser.js      # CSV/PDF parsing logic
-├── database.js         # Dexie.js database setup
-├── store.js           # Zustand state management
-├── App.jsx            # Main app component
-└── index.css          # Tailwind and custom styles
+```bash
+npm test
 ```
 
-## 🎯 Future Features
+### Code Quality
 
-- **Charts & Analytics**: Spending patterns and trends
-- **Budget Planning**: Set and track budget goals
-- **Export Functionality**: Export data to CSV/PDF
-- **Multiple Banks**: Support for other bank statements
-- **Data Backup**: Export/import database backups
-- **Advanced Categorization**: Machine learning for better categorization
+```bash
+npm run lint
+npm run format
+```
 
-## 🔒 Privacy & Security
+### Building for Production
 
-- **100% Local**: No data sent to external servers
-- **Browser Storage**: All data stored in IndexedDB
-- **No Analytics**: No tracking or analytics scripts
-- **Open Source**: Transparent code for security review
+```bash
+npm run build
+```
 
-## 🛠️ Development
+## 📈 Future Roadmap
 
-### Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-
-### Customization
-
-- **Colors**: Modify `tailwind.config.js` for custom color schemes
-- **Styling**: Update `src/index.css` for custom glassmorphism effects
-- **Parsing**: Extend `src/utils/statementParser.js` for additional banks
-
-## 📝 License
-
-This project is open source and available under the MIT License.
+- **Advanced Analytics**: Spending patterns and budget insights
+- **Goal Tracking**: Set and monitor financial goals
+- **Export Features**: Generate reports and exports
+- **Mobile App**: Native mobile application
+- **API Integration**: Connect with banking APIs
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+This is a personal project for learning and exploration. Feel free to fork and experiment with your own ideas!
 
----
+## 📄 License
 
-**Aura Finance** - Your personal finance data, your control, your privacy.
+This project is open source and available under the [MIT License](LICENSE).
+
+## 🙏 Acknowledgments
+
+- Built with [React](https://reactjs.org/)
+- Database powered by [Supabase](https://supabase.com/)
+- Deployed on [Vercel](https://vercel.com/)
+- Icons from [Lucide](https://lucide.dev/)

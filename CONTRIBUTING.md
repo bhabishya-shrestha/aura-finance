@@ -85,7 +85,7 @@ chore: maintenance tasks
 ### CSS/Styling
 
 - Use Tailwind CSS utility classes
-- Follow the glassmorphism design system
+- Follow the modern design system with clean, responsive layouts
 - Maintain responsive design principles
 - Use CSS custom properties for theming
 

@@ -27,8 +27,7 @@ const AuthPage = () => {
     {
       icon: Sparkles,
       title: "Beautiful Design",
-      description:
-        "Modern interface inspired by Apple&apos;s latest design language",
+      description: "Modern interface with clean, responsive design",
     },
   ];
 
@@ -94,19 +93,19 @@ const AuthPage = () => {
             ))}
           </div>
 
-          {/* Stats */}
+          {/* Features Highlight */}
           <div className="grid grid-cols-3 gap-4 pt-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-gradient">10K+</div>
-              <div className="text-sm text-muted-gray">Active Users</div>
+              <div className="text-2xl font-bold text-gradient">Secure</div>
+              <div className="text-sm text-muted-gray">Data Protection</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gradient">$2M+</div>
-              <div className="text-sm text-muted-gray">Tracked Assets</div>
+              <div className="text-2xl font-bold text-gradient">Fast</div>
+              <div className="text-sm text-muted-gray">Real-time Sync</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gradient">99.9%</div>
-              <div className="text-sm text-muted-gray">Uptime</div>
+              <div className="text-2xl font-bold text-gradient">Free</div>
+              <div className="text-sm text-muted-gray">No Hidden Costs</div>
             </div>
           </div>
         </div>
