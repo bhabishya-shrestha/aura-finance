@@ -37,7 +37,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 
 const DEMO_ACCOUNT = {
   email: "test@gmail.com",
-  password: "demo",
+  password: "demo123",
   name: "Demo User",
   metadata: {
     is_demo_account: true,

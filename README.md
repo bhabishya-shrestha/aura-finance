@@ -106,7 +106,7 @@ This is a personal project exploring modern web development and entrepreneurship
 **Try the app instantly with our demo account:**
 
 - **Email**: `test@gmail.com`
-- **Password**: `demo`
+- **Password**: `demo123`
 - **Demo URL**: https://aura-finance-tool.vercel.app/auth
 
 **Setup demo account locally:**

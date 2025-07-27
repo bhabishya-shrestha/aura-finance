@@ -99,7 +99,7 @@ npm test -- --watch
 ### Demo Credentials
 
 - **Email**: `test@gmail.com`
-- **Password**: `demo`
+- **Password**: `demo123`
 - **Demo URL**: https://aura-finance-tool.vercel.app/auth
 
 ### Demo Data
