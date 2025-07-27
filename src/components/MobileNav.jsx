@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Home,
   Wallet,
@@ -6,11 +6,14 @@ import {
   FileText,
   TrendingUp,
   Settings,
+  LogOut,
+  User,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 const MobileNav = ({ onPageChange, currentPage }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const menuItems = [
     {
@@ -49,23 +52,57 @@ const MobileNav = ({ onPageChange, currentPage }) => {
     onPageChange(pageId);
   };
 
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-50 iphone15pro:block hidden">
+    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-50 lg:hidden">
       <div className="flex items-center justify-between px-2 py-2">
-        {/* User Avatar */}
+        {/* User Avatar with Menu */}
         {user && (
-          <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-sm">
-              <span className="text-sm font-medium text-white">
-                {(
-                  user.user_metadata?.full_name ||
-                  user.email?.split("@")[0] ||
-                  "U"
-                )
-                  .charAt(0)
-                  .toUpperCase()}
-              </span>
-            </div>
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+            >
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                <span className="text-sm font-medium text-white">
+                  {(
+                    user.user_metadata?.full_name ||
+                    user.email?.split("@")[0] ||
+                    "U"
+                  )
+                    .charAt(0)
+                    .toUpperCase()}
+                </span>
+              </div>
+            </button>
+
+            {/* User Dropdown Menu */}
+            {showUserMenu && (
+              <div className="absolute bottom-full left-0 mb-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                <div className="p-2">
+                  <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {user.user_metadata?.full_name ||
+                        user.email?.split("@")[0] ||
+                        "User"}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {user.email}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

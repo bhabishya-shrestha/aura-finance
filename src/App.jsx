@@ -13,6 +13,8 @@ import AuthCallbackPage from "./pages/AuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
 import AccountsPage from "./pages/AccountsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import TransactionsPage from "./pages/TransactionsPage";
+import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
@@ -67,7 +69,7 @@ const AppLayout = () => {
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Sidebar - Hidden on mobile */}
-      <div className="iphone15pro:hidden">
+      <div className="hidden lg:block">
         <Sidebar
           onPageChange={setCurrentPage}
           currentPage={currentPage}
@@ -79,21 +81,23 @@ const AppLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header - Hidden on mobile */}
-        <div className="iphone15pro:hidden">
+        <div className="hidden lg:block">
           <Header onMenuToggle={toggleMobileSidebar} showMenuButton={true} />
         </div>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto iphone15pro:pb-20">
+        <main className="flex-1 overflow-auto lg:pb-0 pb-20">
           <div className="w-full h-full">
             {currentPage === "dashboard" && <DashboardPage />}
             {currentPage === "accounts" && <AccountsPage />}
             {currentPage === "analytics" && <AnalyticsPage />}
+            {currentPage === "transactions" && <TransactionsPage />}
+            {currentPage === "reports" && <ReportsPage />}
             {currentPage === "settings" && <SettingsPage />}
           </div>
         </main>
 
-        {/* Mobile Navigation - Only visible on iPhone 15 Pro */}
+        {/* Mobile Navigation - Visible on mobile */}
         <MobileNav onPageChange={setCurrentPage} currentPage={currentPage} />
       </div>
     </div>
