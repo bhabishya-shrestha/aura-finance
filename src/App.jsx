@@ -64,7 +64,7 @@ const AppLayout = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden iphone15pro:flex-col">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Sidebar */}
       <Sidebar
         onPageChange={setCurrentPage}
@@ -74,13 +74,13 @@ const AppLayout = () => {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 iphone15pro:min-h-0">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <Header onMenuToggle={toggleMobileSidebar} showMenuButton={true} />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto iphone15pro:overflow-y-auto iphone15pro:pb-safe">
-          <div className="w-full h-full iphone15pro:min-h-0">
+        <main className="flex-1 overflow-auto">
+          <div className="w-full h-full">
             {currentPage === "dashboard" && <DashboardPage />}
             {currentPage === "accounts" && <AccountsPage />}
             {currentPage === "analytics" && <AnalyticsPage />}
