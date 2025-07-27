@@ -62,6 +62,7 @@ export const parsePDF = async (file) => {
     // Show loading state
     // Log for development purposes only
     if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
       console.log("Starting OCR processing...");
     }
 
@@ -70,6 +71,7 @@ export const parsePDF = async (file) => {
       logger: (m) => {
         // Log for development purposes only
         if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
           console.log(m);
         }
       },
@@ -77,6 +79,7 @@ export const parsePDF = async (file) => {
 
     // Log for development purposes only
     if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
       console.log("OCR completed, parsing text...");
     }
 
@@ -85,8 +88,9 @@ export const parsePDF = async (file) => {
 
     return transactions;
   } catch (error) {
-    // Log error for development, could be replaced with proper error handling
+    // Error handling - in production, this would use a proper error notification system
     if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
       console.error("Error parsing PDF:", error);
     }
     throw new Error(
@@ -171,6 +175,7 @@ const parseBankOfAmericaText = (text) => {
   if (transactions.length === 0) {
     // Log for development purposes only
     if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
       console.log(
         "No transactions found in sections, trying full text parsing..."
       );
@@ -214,6 +219,7 @@ const parseBankOfAmericaText = (text) => {
 
   // Log for development purposes only
   if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
     console.log(`Found ${uniqueTransactions.length} transactions`);
   }
   return uniqueTransactions;
@@ -226,8 +232,9 @@ const parseDate = (dateStr) => {
     const [month, day, year] = dateStr.split("/");
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   } catch {
-    // Log error for development, could be replaced with proper error handling
+    // Error handling - in production, this would use a proper error notification system
     if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
       console.error("Error parsing date:", dateStr);
     }
     return new Date();

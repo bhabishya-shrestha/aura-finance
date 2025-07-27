@@ -121,8 +121,9 @@ export const AuthProvider = ({ children }) => {
             dispatch({ type: AUTH_ACTIONS.LOGOUT });
           }
         } catch (error) {
-          // Log error for development, could be replaced with proper error handling
+          // Error handling - in production, this would use a proper error notification system
           if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
             console.error("Failed to load user:", error);
           }
           tokenManager.removeToken();
@@ -144,6 +145,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // Log for development purposes only
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.log("🔐 Attempting login with:", credentials.email);
       }
       dispatch({ type: AUTH_ACTIONS.LOGIN_START });
@@ -151,6 +153,7 @@ export const AuthProvider = ({ children }) => {
 
       // Log for development purposes only
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.log("🔐 Login response:", response);
       }
 
@@ -165,6 +168,7 @@ export const AuthProvider = ({ children }) => {
         });
         // Log for development purposes only
         if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
           console.log("✅ Login successful");
         }
         return { success: true };
@@ -175,13 +179,15 @@ export const AuthProvider = ({ children }) => {
         });
         // Log for development purposes only
         if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
           console.log("❌ Login failed:", response.error);
         }
         return { success: false, error: response.error };
       }
     } catch (error) {
-      // Log error for development, could be replaced with proper error handling
+      // Error handling - in production, this would use a proper error notification system
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.error("💥 Login error:", error);
       }
       dispatch({
@@ -197,6 +203,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // Log for development purposes only
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.log("📝 Attempting registration with:", userData.email);
       }
       dispatch({ type: AUTH_ACTIONS.REGISTER_START });
@@ -204,6 +211,7 @@ export const AuthProvider = ({ children }) => {
 
       // Log for development purposes only
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.log("📝 Registration response:", response);
       }
 
@@ -218,6 +226,7 @@ export const AuthProvider = ({ children }) => {
         });
         // Log for development purposes only
         if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
           console.log("✅ Registration successful");
         }
         return { success: true };
@@ -228,13 +237,15 @@ export const AuthProvider = ({ children }) => {
         });
         // Log for development purposes only
         if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
           console.log("❌ Registration failed:", response.error);
         }
         return { success: false, error: response.error };
       }
     } catch (error) {
-      // Log error for development, could be replaced with proper error handling
+      // Error handling - in production, this would use a proper error notification system
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.error("💥 Registration error:", error);
       }
       dispatch({

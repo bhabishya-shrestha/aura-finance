@@ -106,6 +106,7 @@ const SearchBar = () => {
     // Handle result click - you can navigate to the specific item
     // Log for development purposes only
     if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
       console.log("Selected:", result);
     }
     setIsOpen(false);

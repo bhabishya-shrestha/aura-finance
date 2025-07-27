@@ -30,15 +30,15 @@ const RecentTransactions = () => {
 
   const getCategoryColor = (category) => {
     const colors = {
-      Groceries: "text-success",
-      Restaurants: "text-warning",
-      Transport: "icon-primary",
-      Shopping: "icon-secondary",
-      Income: "text-success",
-      Utilities: "text-warning",
-      Entertainment: "icon-secondary",
-      Healthcare: "text-error",
-      Other: "text-muted",
+      Groceries: "text-green-600 dark:text-green-400",
+      Restaurants: "text-yellow-600 dark:text-yellow-400",
+      Transport: "text-blue-600 dark:text-blue-400",
+      Shopping: "text-purple-600 dark:text-purple-400",
+      Income: "text-green-600 dark:text-green-400",
+      Utilities: "text-orange-600 dark:text-orange-400",
+      Entertainment: "text-pink-600 dark:text-pink-400",
+      Healthcare: "text-red-600 dark:text-red-400",
+      Other: "text-gray-500 dark:text-gray-400",
     };
     return colors[category] || colors["Other"];
   };
@@ -63,8 +63,9 @@ const RecentTransactions = () => {
       setEditingId(null);
       setEditData({});
     } catch (error) {
-      // Log error for development, could be replaced with proper error handling
+      // Error handling - in production, this would use a proper error notification system
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.error("Error updating transaction:", error);
       }
     }
@@ -77,12 +78,14 @@ const RecentTransactions = () => {
 
   const handleDelete = async (transactionId) => {
     // Note: In a production app, this should use a proper confirmation dialog
+    // eslint-disable-next-line no-alert
     if (window.confirm("Are you sure you want to delete this transaction?")) {
       try {
         await deleteTransaction(transactionId);
       } catch (error) {
-        // Log error for development, could be replaced with proper error handling
+        // Error handling - in production, this would use a proper error notification system
         if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
           console.error("Error deleting transaction:", error);
         }
       }
@@ -90,14 +93,14 @@ const RecentTransactions = () => {
   };
 
   return (
-    <div className="glass-card-hover p-4 sm:p-6">
-      <h2 className="text-lg sm:text-xl font-semibold text-primary mb-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition-shadow">
+      <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">
         Recent Transactions
       </h2>
 
       <div className="space-y-2 sm:space-y-3">
         {recentTransactions.length === 0 ? (
-          <div className="text-center py-6 sm:py-8 text-muted">
+          <div className="text-center py-6 sm:py-8 text-gray-500 dark:text-gray-400">
             <DollarSign className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-3 opacity-50" />
             <p className="text-sm sm:text-base">No transactions yet</p>
             <p className="text-xs sm:text-sm">

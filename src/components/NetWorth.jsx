@@ -41,8 +41,10 @@ const NetWorth = () => {
     previousNetWorth !== 0 ? (change / Math.abs(previousNetWorth)) * 100 : 0;
 
   const getChangeColor = () => {
-    if (change === 0) return "text-muted";
-    return change > 0 ? "text-success" : "text-error";
+    if (change === 0) return "text-gray-500 dark:text-gray-400";
+    return change > 0
+      ? "text-green-600 dark:text-green-400"
+      : "text-red-600 dark:text-red-400";
   };
 
   const getChangeIcon = () => {
@@ -56,7 +58,7 @@ const NetWorth = () => {
 
   return (
     <div
-      className="fidelity-card-hover group relative overflow-hidden"
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow group relative overflow-hidden"
       role="region"
       aria-label="Net Worth Summary"
     >

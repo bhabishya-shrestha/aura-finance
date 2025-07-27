@@ -47,8 +47,9 @@ const useStore = create((set, get) => ({
 
       set({ transactions });
     } catch (error) {
-      // Log error for development, could be replaced with proper error handling
+      // Error handling - in production, this would use a proper error notification system
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.error("Error loading transactions:", error);
       }
     } finally {
@@ -75,8 +76,9 @@ const useStore = create((set, get) => ({
 
       set({ accounts });
     } catch (error) {
-      // Log error for development, could be replaced with proper error handling
+      // Error handling - in production, this would use a proper error notification system
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.error("Error loading accounts:", error);
       }
     }
@@ -94,8 +96,9 @@ const useStore = create((set, get) => ({
           const payload = JSON.parse(atob(token.split(".")[1]));
           userId = payload.userId;
         } catch (error) {
-          // Log error for development, could be replaced with proper error handling
+          // Error handling - in production, this would use a proper error notification system
           if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
             console.error("Error parsing token:", error);
           }
         }
@@ -112,8 +115,9 @@ const useStore = create((set, get) => ({
       await get().loadTransactions();
       set({ isModalOpen: false, parsedTransactions: [] });
     } catch (error) {
-      // Log error for development, could be replaced with proper error handling
+      // Error handling - in production, this would use a proper error notification system
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.error("Error adding transactions:", error);
       }
     } finally {
@@ -129,8 +133,9 @@ const useStore = create((set, get) => ({
       // Reload transactions to update the UI
       await get().loadTransactions();
     } catch (error) {
-      // Log error for development, could be replaced with proper error handling
+      // Error handling - in production, this would use a proper error notification system
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.error("Error deleting transaction:", error);
       }
     } finally {
@@ -146,8 +151,9 @@ const useStore = create((set, get) => ({
       // Reload transactions to update the UI
       await get().loadTransactions();
     } catch (error) {
-      // Log error for development, could be replaced with proper error handling
+      // Error handling - in production, this would use a proper error notification system
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.error("Error updating transaction:", error);
       }
     } finally {
@@ -167,6 +173,7 @@ const useStore = create((set, get) => ({
           const payload = JSON.parse(atob(token.split(".")[1]));
           userId = payload.userId;
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error("Error parsing token:", error);
         }
       }
@@ -180,6 +187,7 @@ const useStore = create((set, get) => ({
       // Reload accounts to update the UI
       await get().loadAccounts();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error adding account:", error);
     } finally {
       set({ isLoading: false });
@@ -198,6 +206,7 @@ const useStore = create((set, get) => ({
       await get().loadTransactions();
       await get().loadAccounts();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error deleting account:", error);
     } finally {
       set({ isLoading: false });
