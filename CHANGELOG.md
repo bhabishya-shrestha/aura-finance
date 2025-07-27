@@ -15,6 +15,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Goal setting and monitoring
 - Performance optimizations
 
+## [1.0.1] - 2025-01-01
+
+### Added
+
+- **OAuth Authentication**: Complete GitHub and Google OAuth integration
+- **OAuth Setup Scripts**: Automated OAuth configuration scripts
+- **Mobile Optimization**: iPhone 15 Pro and responsive mobile layouts
+- **User Interface Fixes**: Proper Supabase user object handling
+
+### Fixed
+
+- **Authentication Flow**: Fixed user.name references in Header and Sidebar components
+- **OAuth Callback**: Improved error handling in AuthCallbackPage
+- **Mobile Responsiveness**: Enhanced mobile layout and touch interactions
+- **User Display**: Safe fallbacks for user display names from OAuth providers
+
+### Technical Improvements
+
+- **OAuth Scripts**: Added configure-oauth.js, setup-oauth.js, verify-oauth.js
+- **Error Handling**: Better error messages and fallback states
+- **Mobile UX**: Optimized for iPhone 15 Pro and modern mobile devices
+- **Code Quality**: Improved component safety and error boundaries
+
 ## [1.0.0] - 2025-07-27
 
 ### Added

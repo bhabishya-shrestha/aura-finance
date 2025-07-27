@@ -3,6 +3,23 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   darkMode: "class", // Enable class-based dark mode
   theme: {
+    screens: {
+      // iPhone 15 Pro specific breakpoints
+      iphone15pro: "393px", // iPhone 15 Pro width
+      "iphone15pro-max": "430px", // iPhone 15 Pro Max width
+      "iphone-se": "375px", // iPhone SE width
+      iphone: "390px", // General iPhone width
+      ipad: "768px", // iPad width
+      "ipad-pro": "1024px", // iPad Pro width
+
+      // Standard breakpoints
+      xs: "475px",
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1536px",
+    },
     extend: {
       colors: {
         // Enhanced Material Design 3 Color System with Proper Contrast
