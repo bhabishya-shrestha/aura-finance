@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Calendar, DollarSign, Edit3, Trash2, Save, X } from "lucide-react";
+import {
+  Calendar,
+  DollarSign,
+  Edit3,
+  Trash2,
+  Save,
+  X,
+  Tag,
+} from "lucide-react";
 import useStore from "../store";
 import { CATEGORIES } from "../utils/statementParser";
 
@@ -98,7 +106,7 @@ const RecentTransactions = () => {
         Recent Transactions
       </h2>
 
-      <div className="space-y-2 sm:space-y-3">
+      <div className="space-y-3">
         {recentTransactions.length === 0 ? (
           <div className="text-center py-6 sm:py-8 text-gray-500 dark:text-gray-400">
             <DollarSign className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-3 opacity-50" />
@@ -111,12 +119,12 @@ const RecentTransactions = () => {
           recentTransactions.map((transaction) => (
             <div
               key={transaction.id}
-              className="p-2 sm:p-3 apple-glass-light rounded-apple-lg border border-apple-glass-200/30 hover:bg-apple-glass-200/40 transition-all duration-200 backdrop-blur-apple-sm"
+              className="p-3 sm:p-4 apple-glass-light rounded-apple-lg border border-apple-glass-200/30 hover:bg-apple-glass-200/40 transition-all duration-200 backdrop-blur-apple-sm"
             >
               {editingId === transaction.id ? (
                 // Edit Mode
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs text-muted uppercase tracking-wide">
                         Date
@@ -127,27 +135,9 @@ const RecentTransactions = () => {
                         onChange={(e) =>
                           setEditData({ ...editData, date: e.target.value })
                         }
-                        className="input-glass w-full mt-1 text-xs sm:text-sm"
+                        className="input-glass w-full mt-1 text-sm"
                       />
                     </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="text-xs text-muted uppercase tracking-wide">
-                        Description
-                      </label>
-                      <input
-                        type="text"
-                        value={editData.description}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            description: e.target.value,
-                          })
-                        }
-                        className="input-glass w-full mt-1 text-xs sm:text-sm"
-                      />
-                    </div>
-
                     <div>
                       <label className="text-xs text-muted uppercase tracking-wide">
                         Amount
@@ -159,9 +149,26 @@ const RecentTransactions = () => {
                         onChange={(e) =>
                           setEditData({ ...editData, amount: e.target.value })
                         }
-                        className="input-glass w-full mt-1 text-xs sm:text-sm"
+                        className="input-glass w-full mt-1 text-sm"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted uppercase tracking-wide">
+                      Description
+                    </label>
+                    <input
+                      type="text"
+                      value={editData.description}
+                      onChange={(e) =>
+                        setEditData({
+                          ...editData,
+                          description: e.target.value,
+                        })
+                      }
+                      className="input-glass w-full mt-1 text-sm"
+                    />
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -174,7 +181,7 @@ const RecentTransactions = () => {
                         onChange={(e) =>
                           setEditData({ ...editData, category: e.target.value })
                         }
-                        className="input-glass w-full mt-1 text-xs sm:text-sm"
+                        className="input-glass w-full mt-1 text-sm"
                       >
                         {CATEGORIES.map((category) => (
                           <option key={category} value={category}>
@@ -184,46 +191,50 @@ const RecentTransactions = () => {
                       </select>
                     </div>
 
-                    <div className="flex gap-1 sm:gap-2 ml-2 sm:ml-4">
+                    <div className="flex gap-2 ml-4">
                       <button
                         onClick={() => handleSave(transaction.id)}
-                        className="p-1.5 sm:p-2 bg-apple-green/20 hover:bg-apple-green/30 border border-apple-green/30 rounded-apple-lg icon-success transition-all duration-200 backdrop-blur-apple-sm"
+                        className="p-2 bg-apple-green/20 hover:bg-apple-green/30 border border-apple-green/30 rounded-apple-lg icon-success transition-all duration-200 backdrop-blur-apple-sm"
                       >
-                        <Save className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <Save className="w-4 h-4" />
                       </button>
                       <button
                         onClick={handleCancel}
-                        className="p-1.5 sm:p-2 bg-apple-glass-200/40 hover:bg-apple-glass-300/50 border border-apple-glass-300/30 rounded-apple-lg icon-muted transition-all duration-200 backdrop-blur-apple-sm"
+                        className="p-2 bg-apple-glass-200/40 hover:bg-apple-glass-300/50 border border-apple-glass-300/30 rounded-apple-lg icon-muted transition-all duration-200 backdrop-blur-apple-sm"
                       >
-                        <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
                 </div>
               ) : (
-                // View Mode
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                    <div className="flex items-center gap-1 sm:gap-2 text-muted text-xs sm:text-sm flex-shrink-0">
-                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                      {formatDate(transaction.date)}
+                // View Mode - Cleaner Layout
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    {/* Main transaction info */}
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-2 text-muted text-xs">
+                        <Calendar className="w-3 h-3" />
+                        {formatDate(transaction.date)}
+                      </div>
+                      <div className="flex items-center gap-1 text-muted text-xs">
+                        <Tag className="w-3 h-3" />
+                        <span
+                          className={getCategoryColor(transaction.category)}
+                        >
+                          {transaction.category}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <p className="text-primary font-medium truncate text-sm sm:text-base">
-                        {transaction.description}
-                      </p>
-                      <p
-                        className={`text-xs sm:text-sm ${getCategoryColor(
-                          transaction.category
-                        )}`}
-                      >
-                        {transaction.category}
-                      </p>
-                    </div>
+                    {/* Description */}
+                    <p className="text-primary font-medium text-sm sm:text-base truncate">
+                      {transaction.description}
+                    </p>
                   </div>
 
-                  <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                  {/* Amount and Actions */}
+                  <div className="flex items-center gap-2 ml-4">
                     <div className="text-right">
                       <p
                         className={`font-semibold text-sm sm:text-base ${
@@ -240,13 +251,13 @@ const RecentTransactions = () => {
                     <div className="flex gap-1">
                       <button
                         onClick={() => handleEdit(transaction)}
-                        className="p-1 sm:p-1.5 hover:bg-apple-glass-200/40 rounded-apple transition-all duration-200 icon-muted hover:icon-white backdrop-blur-apple-sm"
+                        className="p-1.5 hover:bg-apple-glass-200/40 rounded-apple transition-all duration-200 icon-muted hover:icon-white backdrop-blur-apple-sm"
                       >
                         <Edit3 className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(transaction.id)}
-                        className="p-1 sm:p-1.5 hover:bg-apple-red/20 rounded-apple transition-all duration-200 icon-muted hover:icon-error backdrop-blur-apple-sm"
+                        className="p-1.5 hover:bg-apple-red/20 rounded-apple transition-all duration-200 icon-muted hover:icon-error backdrop-blur-apple-sm"
                       >
                         <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>

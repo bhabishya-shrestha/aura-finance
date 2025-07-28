@@ -287,22 +287,32 @@ const TransactionsPage = () => {
                 className="grid grid-cols-1 lg:grid-cols-12 gap-4 px-4 sm:px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
               >
                 {/* Mobile Layout */}
-                <div className="lg:hidden space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {getTransactionIcon(transaction.type)}
-                      <div>
-                        <h3 className="font-medium text-gray-900 dark:text-white">
-                          {transaction.description || "Untitled Transaction"}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="lg:hidden space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        {getTransactionIcon(transaction.type)}
+                        <div className="flex items-center gap-2 text-muted text-xs">
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(transaction.date)}
+                        </div>
+                      </div>
+                      <h3 className="font-medium text-gray-900 dark:text-white mb-1">
+                        {transaction.description || "Untitled Transaction"}
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                           {transaction.category?.name || "Uncategorized"}
-                        </p>
+                        </span>
+                        <span>•</span>
+                        <span>
+                          {transaction.account?.name || "Unknown Account"}
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right ml-4">
                       <p
-                        className={`font-medium ${
+                        className={`font-medium text-sm ${
                           transaction.type === "income"
                             ? "text-green-600"
                             : "text-red-600"
@@ -311,16 +321,7 @@ const TransactionsPage = () => {
                         {transaction.type === "income" ? "+" : "-"}
                         {formatCurrency(Math.abs(transaction.amount))}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatDate(transaction.date)}
-                      </p>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                    <span>
-                      {transaction.account?.name || "Unknown Account"}
-                    </span>
-                    <span className="capitalize">{transaction.type}</span>
                   </div>
                 </div>
 
