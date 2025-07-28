@@ -4,7 +4,7 @@ A modern personal finance dashboard built with React and Supabase, designed to h
 
 ## 🎯 Project Overview
 
-This is a personal project exploring modern web development and entrepreneurship. It demonstrates:
+This is a personal project exploring modern web development. I am trying to improve on the following skills:
 
 - **Full-stack development** with React and Supabase
 - **Modern UI/UX** with responsive design and dark mode
