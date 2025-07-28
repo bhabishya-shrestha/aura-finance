@@ -5,6 +5,16 @@
 
 set -e  # Exit on any error
 
+# Load environment variables if .env exists
+if [ -f ".env" ]; then
+    export $(grep -v '^#' .env | xargs)
+fi
+
+# Load project-specific environment if exists
+if [ -f ".github-env" ]; then
+    source .github-env
+fi
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'

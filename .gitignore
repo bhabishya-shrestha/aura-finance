@@ -18,6 +18,10 @@ build/
 .env.test.local
 .env.production.local
 
+# GitHub credentials and configuration
+.git-credentials
+.github-env
+
 # IDE and editor files
 .vscode/
 .idea/
