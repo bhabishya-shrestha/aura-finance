@@ -13,7 +13,7 @@ const mockGetSession = vi.hoisted(() => vi.fn());
 const mockOnAuthStateChange = vi.hoisted(() =>
   vi.fn(() => ({
     data: { subscription: { unsubscribe: vi.fn() } },
-  }))
+  })),
 );
 const mockSignInWithOAuth = vi.hoisted(() => vi.fn());
 
@@ -106,7 +106,7 @@ describe("AuthContext", () => {
       render(
         <TestWrapper>
           <TestComponent />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -129,12 +129,12 @@ describe("AuthContext", () => {
       render(
         <TestWrapper>
           <TestComponent />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
         expect(screen.getByTestId("user")).toHaveTextContent(
-          "test@example.com"
+          "test@example.com",
         );
         expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
       });
@@ -159,7 +159,7 @@ describe("AuthContext", () => {
       render(
         <TestWrapper>
           <TestComponent />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -171,7 +171,7 @@ describe("AuthContext", () => {
       await waitFor(() => {
         expect(mockSignInWithPassword).toHaveBeenCalledWith(
           "test@example.com",
-          "password"
+          "password",
         );
       });
     });
@@ -190,7 +190,7 @@ describe("AuthContext", () => {
       render(
         <TestWrapper>
           <TestComponent />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -201,7 +201,7 @@ describe("AuthContext", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("error")).toHaveTextContent(
-          "Invalid credentials"
+          "Invalid credentials",
         );
       });
     });
@@ -225,7 +225,7 @@ describe("AuthContext", () => {
       render(
         <TestWrapper>
           <TestComponent />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -241,7 +241,7 @@ describe("AuthContext", () => {
           {
             name: "Test User",
             email: "test@example.com",
-          }
+          },
         );
       });
     });
@@ -260,7 +260,7 @@ describe("AuthContext", () => {
       render(
         <TestWrapper>
           <TestComponent />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -271,7 +271,7 @@ describe("AuthContext", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("error")).toHaveTextContent(
-          "Email already exists"
+          "Email already exists",
         );
       });
     });
@@ -292,7 +292,7 @@ describe("AuthContext", () => {
       render(
         <TestWrapper>
           <TestComponent />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -322,7 +322,7 @@ describe("AuthContext", () => {
       render(
         <TestWrapper>
           <TestComponent />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -333,7 +333,7 @@ describe("AuthContext", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("error")).toHaveTextContent(
-          "OAuth provider not configured"
+          "OAuth provider not configured",
         );
       });
     });
@@ -353,7 +353,7 @@ describe("AuthContext", () => {
       render(
         <TestWrapper>
           <TestComponent />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -380,7 +380,7 @@ describe("AuthContext", () => {
       render(
         <TestWrapper>
           <TestComponent />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -411,7 +411,7 @@ describe("AuthContext", () => {
       render(
         <TestWrapper>
           <TestComponent />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -424,7 +424,7 @@ describe("AuthContext", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("user")).toHaveTextContent(
-          "test@example.com"
+          "test@example.com",
         );
         expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
       });

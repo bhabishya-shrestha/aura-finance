@@ -77,7 +77,7 @@ function removeUnusedImports(content, filePath) {
   content = content.replace(/import\s*{\s*}\s*from\s*['"][^'"]*['"];?\n?/g, "");
   content = content.replace(
     /import\s*{\s*,\s*}\s*from\s*['"][^'"]*['"];?\n?/g,
-    ""
+    "",
   );
 
   return content;

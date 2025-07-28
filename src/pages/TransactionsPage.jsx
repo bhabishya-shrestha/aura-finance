@@ -39,18 +39,18 @@ const TransactionsPage = () => {
             .includes(searchTerm.toLowerCase()) ||
           transaction.account?.name
             ?.toLowerCase()
-            .includes(searchTerm.toLowerCase())
+            .includes(searchTerm.toLowerCase()),
       );
     }
 
     // Apply type filter
     if (selectedFilter === "income") {
       filtered = filtered.filter(
-        (transaction) => transaction.type === "income"
+        (transaction) => transaction.type === "income",
       );
     } else if (selectedFilter === "expense") {
       filtered = filtered.filter(
-        (transaction) => transaction.type === "expense"
+        (transaction) => transaction.type === "expense",
       );
     }
 
@@ -389,7 +389,7 @@ const TransactionsPage = () => {
               {formatCurrency(
                 filteredTransactions
                   .filter((t) => t.type === "income")
-                  .reduce((sum, t) => sum + t.amount, 0)
+                  .reduce((sum, t) => sum + t.amount, 0),
               )}
             </p>
           </div>
@@ -405,7 +405,7 @@ const TransactionsPage = () => {
               {formatCurrency(
                 filteredTransactions
                   .filter((t) => t.type === "expense")
-                  .reduce((sum, t) => sum + Math.abs(t.amount), 0)
+                  .reduce((sum, t) => sum + Math.abs(t.amount), 0),
               )}
             </p>
           </div>
@@ -425,7 +425,7 @@ const TransactionsPage = () => {
               }`}
             >
               {formatCurrency(
-                filteredTransactions.reduce((sum, t) => sum + t.amount, 0)
+                filteredTransactions.reduce((sum, t) => sum + t.amount, 0),
               )}
             </p>
           </div>

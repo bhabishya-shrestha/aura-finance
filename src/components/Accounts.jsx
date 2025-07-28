@@ -59,7 +59,7 @@ const Accounts = () => {
     // For now, we'll keep the confirm but add proper error handling
     if (
       window.confirm(
-        `Are you sure you want to delete "${accountName}"? This will also delete all associated transactions.`
+        `Are you sure you want to delete "${accountName}"? This will also delete all associated transactions.`,
       )
     ) {
       try {

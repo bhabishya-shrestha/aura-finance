@@ -218,7 +218,7 @@ const useStore = create((set, get) => ({
     const { transactions } = get();
     return transactions.reduce(
       (total, transaction) => total + transaction.amount,
-      0
+      0,
     );
   },
 

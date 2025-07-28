@@ -176,7 +176,7 @@ export const AuthProvider = ({ children }) => {
 
       const { data, error } = await supabase.auth.signIn(
         credentials.email,
-        credentials.password
+        credentials.password,
       );
 
       if (error) {
@@ -216,7 +216,7 @@ export const AuthProvider = ({ children }) => {
         {
           name: userData.name,
           email: userData.email,
-        }
+        },
       );
 
       if (error) {

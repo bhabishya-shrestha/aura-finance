@@ -12,7 +12,7 @@ const plaidServicePath = path.join(
   "..",
   "src",
   "services",
-  "plaidService.js"
+  "plaidService.js",
 );
 
 // Read the file

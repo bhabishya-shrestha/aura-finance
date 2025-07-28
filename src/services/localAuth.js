@@ -6,7 +6,7 @@ const generateToken = (payload) => {
   const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
   const payloadEncoded = btoa(JSON.stringify(payload));
   const signature = btoa(
-    JSON.stringify({ timestamp: Date.now(), nonce: uuidv4() })
+    JSON.stringify({ timestamp: Date.now(), nonce: uuidv4() }),
   );
   return `${header}.${payloadEncoded}.${signature}`;
 };
@@ -127,7 +127,7 @@ export const localAuthService = {
       // Verify password
       const isValidPassword = await verifyPassword(
         credentials.password,
-        user.passwordHash
+        user.passwordHash,
       );
       if (!isValidPassword) {
         throw new Error("Invalid email or password");

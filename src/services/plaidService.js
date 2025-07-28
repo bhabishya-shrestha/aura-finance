@@ -255,7 +255,7 @@ export const plaidService = {
 
       const response = await plaidAPI.makeRequestWithRetry(
         "/accounts/balance/get",
-        data
+        data,
       );
       return response.accounts;
     } catch (error) {
@@ -291,7 +291,7 @@ export const plaidService = {
 
       const response = await plaidAPI.makeRequestWithRetry(
         "/transactions/get",
-        data
+        data,
       );
 
       return {
@@ -314,7 +314,7 @@ export const plaidService = {
         {
           institution_id: institutionId,
           country_codes: ["US"],
-        }
+        },
       );
 
       return response.institution;
@@ -521,7 +521,7 @@ export const plaidUsageTracker = {
       const endDate = new Date(
         new Date(startDate).getFullYear(),
         new Date(startDate).getMonth() + 1,
-        0
+        0,
       ).toISOString();
 
       const { data, error } = await supabase
@@ -549,7 +549,7 @@ export const plaidUsageTracker = {
         transactionsRemaining: Math.max(
           0,
           PLAID_CONFIG.freeTierLimits.maxTransactionsPerMonth -
-            totalTransactions
+            totalTransactions,
         ),
         isWithinLimits:
           totalTransactions <

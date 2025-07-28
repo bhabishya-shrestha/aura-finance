@@ -53,7 +53,7 @@ const ConnectedAccounts = () => {
       const limits = await plaidUsageTracker.checkFreeTierLimits(user.id);
       if (!limits.isWithinLimits) {
         setError(
-          "Monthly transaction limit reached. Please wait until next month."
+          "Monthly transaction limit reached. Please wait until next month.",
         );
         return;
       }
@@ -68,14 +68,14 @@ const ConnectedAccounts = () => {
         accessToken,
         startDate,
         endDate,
-        { count: 100 }
+        { count: 100 },
       );
 
       if (transactionsResponse.transactions.length > 0) {
         await plaidDatabase.storeTransactions(
           user.id,
           itemId,
-          transactionsResponse.transactions
+          transactionsResponse.transactions,
         );
       }
 

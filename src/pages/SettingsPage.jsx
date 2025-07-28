@@ -68,7 +68,7 @@ const SettingsPage = () => {
   const handleResetSettings = () => {
     if (
       window.confirm(
-        "Are you sure you want to reset all settings to default? This action cannot be undone."
+        "Are you sure you want to reset all settings to default? This action cannot be undone.",
       )
     ) {
       resetSettings();
@@ -353,7 +353,7 @@ const SettingsPage = () => {
                         <div>
                           Total Net Worth:{" "}
                           {formatCurrency(
-                            transactions.reduce((sum, t) => sum + t.amount, 0)
+                            transactions.reduce((sum, t) => sum + t.amount, 0),
                           )}
                         </div>
                       </div>
@@ -474,7 +474,7 @@ const SettingsPage = () => {
                       onChange={(e) =>
                         updateSetting(
                           "glassmorphismIntensity",
-                          parseInt(e.target.value)
+                          parseInt(e.target.value),
                         )
                       }
                       className="w-full"

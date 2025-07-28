@@ -62,7 +62,7 @@ const validatePDFFile = (file) => {
   const maxSize = 10 * 1024 * 1024; // 10MB
   if (file.size > maxSize) {
     throw new Error(
-      "PDF file is too large. Please upload a file smaller than 10MB."
+      "PDF file is too large. Please upload a file smaller than 10MB.",
     );
   }
 
@@ -101,7 +101,7 @@ export const parsePDF = async (file) => {
     // Validate that we got meaningful text
     if (!result.data.text || result.data.text.trim().length < 100) {
       throw new Error(
-        "Unable to extract meaningful text from PDF. Please ensure the PDF contains readable text and is not password-protected."
+        "Unable to extract meaningful text from PDF. Please ensure the PDF contains readable text and is not password-protected.",
       );
     }
 
@@ -111,7 +111,7 @@ export const parsePDF = async (file) => {
     // Validate that we found transactions
     if (transactions.length === 0) {
       throw new Error(
-        "No transactions found in the PDF. Please ensure this is a valid bank statement with transaction data."
+        "No transactions found in the PDF. Please ensure this is a valid bank statement with transaction data.",
       );
     }
 
@@ -122,11 +122,11 @@ export const parsePDF = async (file) => {
     // Provide more specific error messages
     if (error.message.includes("Unable to extract")) {
       throw new Error(
-        "PDF parsing failed: Unable to extract text. Please ensure the PDF is not password-protected and contains readable text."
+        "PDF parsing failed: Unable to extract text. Please ensure the PDF is not password-protected and contains readable text.",
       );
     } else if (error.message.includes("No transactions found")) {
       throw new Error(
-        "No transactions found in the PDF. Please ensure this is a valid bank statement with transaction data."
+        "No transactions found in the PDF. Please ensure this is a valid bank statement with transaction data.",
       );
     } else if (error.message.includes("too large")) {
       throw error; // Re-throw size validation errors
@@ -134,7 +134,7 @@ export const parsePDF = async (file) => {
       throw error; // Re-throw file type validation errors
     } else {
       throw new Error(
-        "Failed to parse PDF file. Please ensure it's a valid bank statement and try again."
+        "Failed to parse PDF file. Please ensure it's a valid bank statement and try again.",
       );
     }
   }
@@ -179,7 +179,7 @@ const parseBankOfAmericaText = (text) => {
     // Check if we're entering a transaction section
     if (
       sections.some((section) =>
-        line.toLowerCase().includes(section.toLowerCase())
+        line.toLowerCase().includes(section.toLowerCase()),
       )
     ) {
       inTransactionSection = true;
@@ -271,8 +271,8 @@ const parseBankOfAmericaText = (text) => {
         (t) =>
           t.date.getTime() === transaction.date.getTime() &&
           t.description === transaction.description &&
-          t.amount === transaction.amount
-      )
+          t.amount === transaction.amount,
+      ),
   );
 
   return uniqueTransactions;

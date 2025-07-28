@@ -32,7 +32,7 @@ const StatementImporter = () => {
         transactions = await parseStatement(file);
       } else {
         throw new Error(
-          "Unsupported file format. Please upload a CSV or PDF file."
+          "Unsupported file format. Please upload a CSV or PDF file.",
         );
       }
 

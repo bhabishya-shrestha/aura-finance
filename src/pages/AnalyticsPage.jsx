@@ -149,7 +149,7 @@ const AnalyticsPage = () => {
                 {formatCurrency(
                   transactions
                     .filter((t) => t.amount > 0)
-                    .reduce((sum, t) => sum + t.amount, 0)
+                    .reduce((sum, t) => sum + t.amount, 0),
                 )}
               </p>
             </div>
@@ -165,7 +165,7 @@ const AnalyticsPage = () => {
                 {formatCurrency(
                   transactions
                     .filter((t) => t.amount < 0)
-                    .reduce((sum, t) => sum + Math.abs(t.amount), 0)
+                    .reduce((sum, t) => sum + Math.abs(t.amount), 0),
                 )}
               </p>
             </div>

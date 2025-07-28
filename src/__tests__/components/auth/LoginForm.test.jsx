@@ -27,7 +27,7 @@ describe("LoginForm", () => {
 
     expect(screen.getByText("Welcome Back")).toBeInTheDocument();
     expect(
-      screen.getByText("Sign in to your Aura Finance account")
+      screen.getByText("Sign in to your Aura Finance account"),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Email Address")).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
@@ -67,7 +67,7 @@ describe("LoginForm", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Password must be at least 6 characters")
+        screen.getByText("Password must be at least 6 characters"),
       ).toBeInTheDocument();
     });
   });
@@ -151,7 +151,7 @@ describe("LoginForm", () => {
 
     expect(screen.getByText("Signing In...")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Signing In..." })
+      screen.getByRole("button", { name: "Signing In..." }),
     ).toBeDisabled();
   });
 
