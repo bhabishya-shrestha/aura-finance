@@ -19,7 +19,7 @@ import SettingsPage from "./pages/SettingsPage";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import MobileHeader from "./components/MobileHeader";
-import MobileNav from "./components/MobileNav";
+import MobileSidebar from "./components/MobileSidebar";
 import ErrorBoundary from "./components/ErrorBoundary";
 import LoadingSpinner from "./components/LoadingSpinner";
 import { initializeDatabase } from "./database";
@@ -67,6 +67,10 @@ const AppLayout = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
   };
 
+  const closeMobileSidebar = () => {
+    setIsMobileSidebarOpen(false);
+  };
+
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Sidebar - Hidden on mobile */}
@@ -79,6 +83,14 @@ const AppLayout = () => {
         />
       </div>
 
+      {/* Mobile Sidebar */}
+      <MobileSidebar
+        isOpen={isMobileSidebarOpen}
+        onClose={closeMobileSidebar}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+      />
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header - Desktop only */}
@@ -90,10 +102,11 @@ const AppLayout = () => {
         <MobileHeader
           onMenuToggle={toggleMobileSidebar}
           currentPage={currentPage}
+          isMenuOpen={isMobileSidebarOpen}
         />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto lg:pb-0 pb-20 pt-14 lg:pt-0">
+        <main className="flex-1 overflow-auto lg:pb-0 pt-14 lg:pt-0">
           <div className="w-full h-full">
             {currentPage === "dashboard" && <DashboardPage />}
             {currentPage === "accounts" && <AccountsPage />}
@@ -103,9 +116,6 @@ const AppLayout = () => {
             {currentPage === "settings" && <SettingsPage />}
           </div>
         </main>
-
-        {/* Mobile Navigation - Visible on mobile */}
-        <MobileNav onPageChange={setCurrentPage} currentPage={currentPage} />
       </div>
     </div>
   );
