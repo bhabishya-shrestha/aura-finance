@@ -176,7 +176,7 @@ const ReportsPage = () => {
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-400 truncate">
                 Total Income
               </p>
               <p className="text-lg sm:text-2xl font-bold text-green-600 truncate">
@@ -192,7 +192,7 @@ const ReportsPage = () => {
               <TrendingDown className="w-5 h-5 text-red-600" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-400 truncate">
                 Total Expenses
               </p>
               <p className="text-lg sm:text-2xl font-bold text-red-600 truncate">
@@ -208,7 +208,7 @@ const ReportsPage = () => {
               <DollarSign className="w-5 h-5 text-blue-600" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-400 truncate">
                 Net Income
               </p>
               <p
@@ -226,7 +226,7 @@ const ReportsPage = () => {
               <Calendar className="w-5 h-5 text-purple-600" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-400 truncate">
                 Transactions
               </p>
               <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
@@ -257,13 +257,13 @@ const ReportsPage = () => {
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <Icon className="w-4 h-4 text-gray-700 dark:text-gray-400" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-gray-900 dark:text-white truncate">
                       {category.category}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       {percentage}% of total
                     </p>
                   </div>
@@ -311,7 +311,7 @@ const ReportsPage = () => {
                     <div
                       className={`w-3 h-3 rounded-full flex-shrink-0 ${colors[index % colors.length]}`}
                     />
-                    <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400 flex-shrink-0" />
+                    <Icon className="w-4 h-4 text-gray-700 dark:text-gray-400 flex-shrink-0" />
                     <span className="font-medium text-gray-900 dark:text-white truncate">
                       {category.category}
                     </span>
@@ -320,7 +320,7 @@ const ReportsPage = () => {
                     <p className="font-semibold text-gray-900 dark:text-white">
                       {formatCurrency(category.amount)}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       {percentage}%
                     </p>
                   </div>
@@ -358,7 +358,7 @@ const ReportsPage = () => {
                     <p className="text-sm text-green-600 font-medium">
                       {formatCurrency(month.income)}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
                       Income
                     </p>
                   </div>
@@ -366,7 +366,7 @@ const ReportsPage = () => {
                     <p className="text-sm text-red-600 font-medium">
                       {formatCurrency(month.expenses)}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
                       Expenses
                     </p>
                   </div>
@@ -376,7 +376,7 @@ const ReportsPage = () => {
                     >
                       {formatCurrency(month.net)}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
                       Net
                     </p>
                   </div>
@@ -439,7 +439,7 @@ const ReportsPage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-20 lg:pb-8">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-14 lg:pb-8">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -447,7 +447,7 @@ const ReportsPage = () => {
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
               Financial Reports
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-gray-700 dark:text-gray-400 mt-1">
               Analyze your financial data and track your progress
             </p>
           </div>
@@ -491,7 +491,7 @@ const ReportsPage = () => {
                     className={`w-5 h-5 flex-shrink-0 ${
                       selectedReport === report.id
                         ? "text-blue-600"
-                        : "text-gray-600 dark:text-gray-400"
+                        : "text-gray-700 dark:text-gray-400"
                     }`}
                   />
                   <div className="min-w-0 flex-1">
@@ -504,7 +504,7 @@ const ReportsPage = () => {
                     >
                       {report.name}
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                       {report.description}
                     </p>
                   </div>

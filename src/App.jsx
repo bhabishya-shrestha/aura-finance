@@ -18,6 +18,7 @@ import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
+import MobileHeader from "./components/MobileHeader";
 import MobileNav from "./components/MobileNav";
 import ErrorBoundary from "./components/ErrorBoundary";
 import LoadingSpinner from "./components/LoadingSpinner";
@@ -80,13 +81,19 @@ const AppLayout = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header - Hidden on mobile */}
+        {/* Header - Desktop only */}
         <div className="hidden lg:block">
           <Header onMenuToggle={toggleMobileSidebar} showMenuButton={true} />
         </div>
 
+        {/* Mobile Header */}
+        <MobileHeader
+          onMenuToggle={toggleMobileSidebar}
+          currentPage={currentPage}
+        />
+
         {/* Page Content */}
-        <main className="flex-1 overflow-auto lg:pb-0 pb-20">
+        <main className="flex-1 overflow-auto lg:pb-0 pb-14">
           <div className="w-full h-full">
             {currentPage === "dashboard" && <DashboardPage />}
             {currentPage === "accounts" && <AccountsPage />}
@@ -107,6 +114,25 @@ const AppLayout = () => {
 // Main App Content Component
 const AppContent = () => {
   const { isAuthenticated, isInitialized } = useAuth();
+
+  // Handle route parameter from 404 redirect
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentRoute = urlParams.get("currentRoute");
+
+    if (currentRoute) {
+      // Remove the parameter from URL and navigate to the correct route
+      const newUrl =
+        window.location.pathname +
+        window.location.search
+          .replace(`?currentRoute=${currentRoute}`, "")
+          .replace(`&currentRoute=${currentRoute}`, "");
+      window.history.replaceState({}, "", newUrl);
+
+      // Navigate to the correct route
+      window.location.href = `/${currentRoute}`;
+    }
+  }, []);
 
   // Show loading screen while checking authentication
   if (!isInitialized) {
