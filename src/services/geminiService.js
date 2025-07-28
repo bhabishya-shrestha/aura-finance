@@ -7,9 +7,12 @@ class GeminiService {
     this.apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     this.requestCount = 0;
     this.lastRequestTime = 0;
+    this.dailyRequestCount = 0;
+    this.lastDailyReset = new Date().toDateString();
     this.rateLimit = {
-      maxRequests: 10, // Max 10 requests per minute
+      maxRequests: 100, // Increased for demo purposes (Gemini free tier: 15/min, 1500/day)
       timeWindow: 60000, // 1 minute in milliseconds
+      maxDailyRequests: 100, // Daily limit for demo
     };
 
     if (!this.apiKey) {
@@ -22,14 +25,28 @@ class GeminiService {
   // Rate limiting check
   checkRateLimit() {
     const now = Date.now();
+    const today = new Date().toDateString();
 
-    // Reset counter if time window has passed
+    // Reset daily counter if it's a new day
+    if (today !== this.lastDailyReset) {
+      this.dailyRequestCount = 0;
+      this.lastDailyReset = today;
+    }
+
+    // Reset minute counter if time window has passed
     if (now - this.lastRequestTime > this.rateLimit.timeWindow) {
       this.requestCount = 0;
       this.lastRequestTime = now;
     }
 
-    // Check if we're within rate limits
+    // Check daily limit
+    if (this.dailyRequestCount >= this.rateLimit.maxDailyRequests) {
+      throw new Error(
+        `Daily limit exceeded. Maximum ${this.rateLimit.maxDailyRequests} requests per day allowed.`
+      );
+    }
+
+    // Check minute limit
     if (this.requestCount >= this.rateLimit.maxRequests) {
       throw new Error(
         `Rate limit exceeded. Maximum ${this.rateLimit.maxRequests} requests per minute allowed.`
@@ -37,6 +54,7 @@ class GeminiService {
     }
 
     this.requestCount++;
+    this.dailyRequestCount++;
   }
 
   // Validate file size and type
