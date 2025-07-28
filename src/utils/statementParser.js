@@ -467,9 +467,16 @@ export const parseStatement = async file => {
       throw new Error(
         "PDF parsing failed due to format issues. Please ensure the PDF contains readable text and is not corrupted."
       );
-    } else if (error.message.includes("Tesseract")) {
+    } else if (
+      error.message.includes("Tesseract") ||
+      error.message.includes("pixRead")
+    ) {
       throw new Error(
-        "PDF OCR processing failed. Please ensure the PDF contains clear, readable text."
+        "PDF OCR processing failed. Please ensure the PDF contains clear, readable text and is not password-protected."
+      );
+    } else if (error.message.includes("Cannot read properties of undefined")) {
+      throw new Error(
+        "PDF format not recognized. Please try a different PDF file or convert to CSV format."
       );
     } else {
       // Re-throw the original error if it's already user-friendly

@@ -8,12 +8,20 @@ import {
   TrendingDown,
   DollarSign,
   Calendar,
+  X,
 } from "lucide-react";
 import useStore from "../store";
 
 const AccountsPage = () => {
-  const { accounts, getAccountBalance, getTransactionsByAccount } = useStore();
+  const { accounts, getAccountBalance, getTransactionsByAccount, addAccount } =
+    useStore();
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    type: "checking",
+    balance: "",
+  });
 
   const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
@@ -52,6 +60,41 @@ const AccountsPage = () => {
     return getTransactionsByAccount(accountId).slice(0, 5); // Last 5 transactions
   };
 
+  const handleAddAccount = async e => {
+    e.preventDefault();
+
+    if (!formData.name.trim() || !formData.balance) {
+      return;
+    }
+
+    try {
+      await addAccount({
+        name: formData.name.trim(),
+        type: formData.type,
+        balance: parseFloat(formData.balance),
+        id: Date.now(),
+      });
+
+      // Reset form and close modal
+      setFormData({
+        name: "",
+        type: "checking",
+        balance: "",
+      });
+      setShowAddModal(false);
+    } catch (error) {
+      console.error("Error adding account:", error);
+    }
+  };
+
+  const handleInputChange = e => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   return (
     <div className="flex-1 p-6">
       {/* Header */}
@@ -60,11 +103,102 @@ const AccountsPage = () => {
           <h1 className="text-3xl font-bold gradient-text">Accounts</h1>
           <p className="text-muted-gray mt-1">Manage your financial accounts</p>
         </div>
-        <button className="glass-card px-6 py-3 flex items-center gap-2 hover:bg-white/20 transition-all duration-200 group">
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="glass-card px-6 py-3 flex items-center gap-2 hover:bg-white/20 transition-all duration-200 group"
+        >
           <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
           <span className="font-medium">Add Account</span>
         </button>
       </div>
+
+      {/* Add Account Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
+                Add New Account
+              </h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-200 p-1"
+              >
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddAccount} className="space-y-4">
+              {/* Account Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Account Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter account name"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  required
+                />
+              </div>
+
+              {/* Account Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Account Type
+                </label>
+                <select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                >
+                  <option value="checking">Checking</option>
+                  <option value="savings">Savings</option>
+                  <option value="credit">Credit Card</option>
+                </select>
+              </div>
+
+              {/* Initial Balance */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Initial Balance
+                </label>
+                <input
+                  type="number"
+                  name="balance"
+                  value={formData.balance}
+                  onChange={handleInputChange}
+                  placeholder="0.00"
+                  step="0.01"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  required
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 font-medium text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm shadow-sm"
+                >
+                  Add Account
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Accounts List */}

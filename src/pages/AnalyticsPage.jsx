@@ -201,10 +201,12 @@ const AnalyticsPage = () => {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ category, percentage }) =>
-                  `${category} ${percentage.toFixed(1)}%`
-                }
-                outerRadius={80}
+                label={({ category, percentage }) => {
+                  // Only show label if percentage is significant
+                  if (percentage < 5) return null;
+                  return `${category}\n${percentage.toFixed(1)}%`;
+                }}
+                outerRadius={100}
                 fill="#8884d8"
                 dataKey="amount"
               >
@@ -215,7 +217,15 @@ const AnalyticsPage = () => {
                   />
                 ))}
               </Pie>
-              <Tooltip formatter={value => formatCurrency(value)} />
+              <Tooltip
+                formatter={value => formatCurrency(value)}
+                contentStyle={{
+                  backgroundColor: "rgba(0, 0, 0, 0.8)",
+                  border: "none",
+                  borderRadius: "8px",
+                  color: "white",
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
