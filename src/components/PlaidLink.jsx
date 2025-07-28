@@ -56,7 +56,7 @@ const PlaidLink = ({ onSuccess, onError, className = "" }) => {
 
       if (!limits.isWithinLimits) {
         setError(
-          `Monthly transaction limit reached (${limits.total_transactions}/2000). Please wait until next month or upgrade your plan.`,
+          `Monthly transaction limit reached (${limits.total_transactions}/2000). Please wait until next month or upgrade your plan.`
         );
         setIsLoading(false);
         return;
@@ -64,7 +64,7 @@ const PlaidLink = ({ onSuccess, onError, className = "" }) => {
 
       const response = await plaidService.createLinkToken(
         user.id,
-        "Aura Finance",
+        "Aura Finance"
       );
       setLinkToken(response.link_token);
     } catch (error) {
@@ -92,7 +92,7 @@ const PlaidLink = ({ onSuccess, onError, className = "" }) => {
 
         // Get institution information
         const institution = await plaidService.getInstitution(
-          metadata.institution.institution_id,
+          metadata.institution.institution_id
         );
 
         // Store Plaid item in database
@@ -107,12 +107,12 @@ const PlaidLink = ({ onSuccess, onError, className = "" }) => {
 
         // Get and store accounts
         const accounts = await plaidService.getAccounts(
-          exchangeResponse.access_token,
+          exchangeResponse.access_token
         );
         await plaidDatabase.storeAccounts(
           user.id,
           exchangeResponse.item_id,
-          accounts,
+          accounts
         );
 
         // Get recent transactions (last 30 days)
@@ -125,14 +125,14 @@ const PlaidLink = ({ onSuccess, onError, className = "" }) => {
           exchangeResponse.access_token,
           startDate,
           endDate,
-          { count: 100 },
+          { count: 100 }
         );
 
         if (transactionsResponse.transactions.length > 0) {
           await plaidDatabase.storeTransactions(
             user.id,
             exchangeResponse.item_id,
-            transactionsResponse.transactions,
+            transactionsResponse.transactions
           );
         }
 
@@ -140,7 +140,7 @@ const PlaidLink = ({ onSuccess, onError, className = "" }) => {
         await plaidUsageTracker.trackRequest(user.id, "/link/token/create");
         await plaidUsageTracker.trackRequest(
           user.id,
-          "/item/public_token/exchange",
+          "/item/public_token/exchange"
         );
         await plaidUsageTracker.trackRequest(user.id, "/accounts/get");
         await plaidUsageTracker.trackRequest(user.id, "/transactions/get");
@@ -167,11 +167,11 @@ const PlaidLink = ({ onSuccess, onError, className = "" }) => {
         setIsConnecting(false);
       }
     },
-    [user?.id, onSuccess, onError, loadUsageInfo],
+    [user?.id, onSuccess, onError, loadUsageInfo]
   );
 
   // Handle Plaid Link exit
-  const onPlaidExit = useCallback((err) => {
+  const onPlaidExit = useCallback(err => {
     if (err) {
       setError("Bank connection was cancelled or failed. Please try again.");
     }

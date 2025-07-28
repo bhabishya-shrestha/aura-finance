@@ -170,13 +170,13 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Login with email/password
-  const login = async (credentials) => {
+  const login = async credentials => {
     try {
       dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
       const { data, error } = await supabase.auth.signIn(
         credentials.email,
-        credentials.password,
+        credentials.password
       );
 
       if (error) {
@@ -206,7 +206,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Register with email/password
-  const register = async (userData) => {
+  const register = async userData => {
     try {
       dispatch({ type: AUTH_ACTIONS.REGISTER_START });
 
@@ -216,7 +216,7 @@ export const AuthProvider = ({ children }) => {
         {
           name: userData.name,
           email: userData.email,
-        },
+        }
       );
 
       if (error) {
@@ -246,7 +246,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // OAuth login
-  const loginWithOAuth = async (provider) => {
+  const loginWithOAuth = async provider => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
 

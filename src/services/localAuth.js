@@ -2,22 +2,22 @@ import db from "../database";
 import { v4 as uuidv4 } from "uuid";
 
 // JWT-like token generation for local use
-const generateToken = (payload) => {
+const generateToken = payload => {
   const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
   const payloadEncoded = btoa(JSON.stringify(payload));
   const signature = btoa(
-    JSON.stringify({ timestamp: Date.now(), nonce: uuidv4() }),
+    JSON.stringify({ timestamp: Date.now(), nonce: uuidv4() })
   );
   return `${header}.${payloadEncoded}.${signature}`;
 };
 
 // Password hashing using Web Crypto API
-const hashPassword = async (password) => {
+const hashPassword = async password => {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
   const hash = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, "0"))
+    .map(b => b.toString(16).padStart(2, "0"))
     .join("");
 };
 
@@ -30,7 +30,7 @@ const verifyPassword = async (password, hash) => {
 // Local Authentication Service
 export const localAuthService = {
   // Register a new user
-  register: async (userData) => {
+  register: async userData => {
     try {
       // Log for development purposes only
       if (import.meta.env.DEV) {
@@ -112,7 +112,7 @@ export const localAuthService = {
   },
 
   // Login user
-  login: async (credentials) => {
+  login: async credentials => {
     try {
       // Find user by email
       const user = await db.users
@@ -127,7 +127,7 @@ export const localAuthService = {
       // Verify password
       const isValidPassword = await verifyPassword(
         credentials.password,
-        user.passwordHash,
+        user.passwordHash
       );
       if (!isValidPassword) {
         throw new Error("Invalid email or password");
@@ -170,7 +170,7 @@ export const localAuthService = {
   },
 
   // Get current user from token
-  getCurrentUser: async (token) => {
+  getCurrentUser: async token => {
     try {
       if (!token) {
         throw new Error("No token provided");
@@ -215,7 +215,7 @@ export const localAuthService = {
   },
 
   // Logout user
-  logout: async (token) => {
+  logout: async token => {
     try {
       if (token) {
         // Remove session
@@ -236,7 +236,7 @@ export const localAuthService = {
   },
 
   // Refresh token
-  refreshToken: async (token) => {
+  refreshToken: async token => {
     try {
       const session = await db.sessions.where("token").equals(token).first();
 
@@ -299,9 +299,9 @@ export const localAuthService = {
 // Token management utilities
 export const tokenManager = {
   getToken: () => localStorage.getItem("authToken"),
-  setToken: (token) => localStorage.setItem("authToken", token),
+  setToken: token => localStorage.setItem("authToken", token),
   removeToken: () => localStorage.removeItem("authToken"),
-  isTokenValid: (token) => {
+  isTokenValid: token => {
     if (!token) return false;
     try {
       const parts = token.split(".");

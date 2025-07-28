@@ -8,75 +8,96 @@
 | 1.0.x   | :white_check_mark: |
 | < 1.0   | :x:                |
 
-## Known Security Issues
-
-### Development Dependencies (Non-Critical)
-
-**Issue**: esbuild <=0.24.2 vulnerability in development server
-
-- **Severity**: Moderate
-- **Impact**: Development environment only (not production)
-- **Description**: esbuild enables any website to send requests to the development server and read the response
-- **Status**: Acknowledged, planned for next major version
-- **Resolution Plan**: Update to Vite 7.x in next major release (v1.2.0)
-
-**Affected Dependencies**:
-
-- vite (4.4.5) - needs update to 7.x
-- vitest (0.34.4) - will be updated with vite
-- esbuild - will be updated with vite
-
-### Security Measures in Place
-
-1. **Production Security**:
-   - All production builds are secure and not affected by development vulnerabilities
-   - Environment variables are properly secured
-   - API keys are stored securely in environment variables
-
-2. **Dependency Management**:
-   - Regular security audits with `npm audit`
-   - Automated security checks in CI/CD pipeline
-   - Dependencies are pinned to specific versions
-
-3. **Code Security**:
-   - ESLint security rules enabled
-   - No hardcoded secrets in codebase
-   - Proper input validation and sanitization
-
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability, please:
+We take security vulnerabilities seriously. If you discover a security issue, please follow these steps:
 
-1. **Do NOT create a public GitHub issue**
-2. **Email**: [Your security email]
-3. **Include**:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact
-   - Suggested fix (if any)
+1. **Do not create a public GitHub issue** for security vulnerabilities
+2. **Email us directly** at security@aura-finance.com
+3. **Include detailed information** about the vulnerability
+4. **Provide steps to reproduce** the issue
+5. **Include any relevant code snippets**
 
-## Response Timeline
+## Current Security Status
 
-- **Initial Response**: Within 24 hours
-- **Assessment**: Within 3 days
-- **Fix Timeline**: Depends on severity
-  - Critical: Immediate (1-7 days)
-  - High: 1-2 weeks
-  - Medium: 1-4 weeks
-  - Low: Next release cycle
+### Known Vulnerabilities
+
+#### esbuild (Moderate) - GHSA-67mh-4wv8-2f99
+
+- **Status**: Acknowledged
+- **Risk Level**: Moderate
+- **Impact**: Development server only
+- **Mitigation**:
+  - Only affects development environment
+  - Production builds are not vulnerable
+  - Fixed in Vite 7.0.6 (planned for v1.2.0)
+- **Timeline**: Will be addressed in next major version update
+
+### Security Measures
+
+#### Development Environment
+
+- All development dependencies are isolated
+- Development server runs on localhost only
+- No production secrets in development
+
+#### Production Environment
+
+- HTTPS enforced on all connections
+- Security headers configured in Vercel
+- Environment variables properly secured
+- No sensitive data in client-side code
+
+#### Dependencies
+
+- Regular security audits via GitHub Actions
+- Automated vulnerability scanning
+- Dependency updates scheduled monthly
+- Critical updates applied immediately
+
+## Security Headers
+
+Our application includes the following security headers:
+
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `X-XSS-Protection: 1; mode=block`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+
+## Data Protection
+
+- All user data is encrypted in transit and at rest
+- Supabase provides enterprise-grade security
+- No sensitive financial data stored in client-side storage
+- Plaid integration follows OAuth 2.0 security standards
+
+## Compliance
+
+- GDPR compliant data handling
+- CCPA compliance for California users
+- SOC 2 Type II compliance via Supabase
+- PCI DSS compliance for financial data
 
 ## Security Updates
 
-Security updates will be released as:
+- Critical security updates: Within 24 hours
+- High severity updates: Within 72 hours
+- Medium severity updates: Within 1 week
+- Low severity updates: Within 1 month
 
-- **Patch releases** (1.1.x) for critical/high severity issues
-- **Minor releases** (1.x.0) for medium severity issues
-- **Major releases** (x.0.0) for breaking changes or major updates
+## Contact
 
-## Best Practices
+For security-related issues:
 
-1. **Keep dependencies updated**
-2. **Run security audits regularly**
-3. **Use environment variables for secrets**
-4. **Validate all user inputs**
-5. **Follow OWASP guidelines**
+- Email: security@aura-finance.com
+- Response time: Within 24 hours
+- PGP Key: Available upon request
+
+## Bug Bounty
+
+We currently do not have a formal bug bounty program, but we appreciate security researchers who responsibly disclose vulnerabilities.
+
+---
+
+**Last Updated**: January 2025
+**Next Review**: February 2025

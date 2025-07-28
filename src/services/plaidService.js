@@ -57,7 +57,7 @@ class RateLimiter {
     const requests = this.requests.get(key);
 
     // Remove old requests outside the window
-    const validRequests = requests.filter((time) => now - time < windowMs);
+    const validRequests = requests.filter(time => now - time < windowMs);
     this.requests.set(key, validRequests);
 
     // Check if we can make another request
@@ -97,7 +97,7 @@ class RateLimiter {
         throw new Error("Rate limit exceeded - maximum wait time reached");
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
 }
@@ -169,7 +169,7 @@ class PlaidAPI {
         retries < this.config.rateLimits.maxRetries
       ) {
         const delay = this.config.rateLimits.retryDelay * Math.pow(2, retries);
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await new Promise(resolve => setTimeout(resolve, delay));
         return this.makeRequestWithRetry(endpoint, data, itemId, retries + 1);
       }
       throw error;
@@ -255,7 +255,7 @@ export const plaidService = {
 
       const response = await plaidAPI.makeRequestWithRetry(
         "/accounts/balance/get",
-        data,
+        data
       );
       return response.accounts;
     } catch (error) {
@@ -291,7 +291,7 @@ export const plaidService = {
 
       const response = await plaidAPI.makeRequestWithRetry(
         "/transactions/get",
-        data,
+        data
       );
 
       return {
@@ -314,7 +314,7 @@ export const plaidService = {
         {
           institution_id: institutionId,
           country_codes: ["US"],
-        },
+        }
       );
 
       return response.institution;
@@ -400,7 +400,7 @@ export const plaidDatabase = {
    */
   async storeAccounts(userId, itemId, accounts) {
     try {
-      const accountsToInsert = accounts.map((account) => ({
+      const accountsToInsert = accounts.map(account => ({
         user_id: userId,
         plaid_item_id: itemId,
         plaid_account_id: account.account_id,
@@ -430,7 +430,7 @@ export const plaidDatabase = {
    */
   async storeTransactions(userId, itemId, transactions) {
     try {
-      const transactionsToInsert = transactions.map((transaction) => ({
+      const transactionsToInsert = transactions.map(transaction => ({
         user_id: userId,
         plaid_item_id: itemId,
         plaid_transaction_id: transaction.transaction_id,
@@ -521,7 +521,7 @@ export const plaidUsageTracker = {
       const endDate = new Date(
         new Date(startDate).getFullYear(),
         new Date(startDate).getMonth() + 1,
-        0,
+        0
       ).toISOString();
 
       const { data, error } = await supabase
@@ -543,13 +543,13 @@ export const plaidUsageTracker = {
     try {
       const usage = await this.getMonthlyUsage(userId);
       const totalTransactions =
-        usage.find((u) => u.endpoint === "/transactions/get")?.count || 0;
+        usage.find(u => u.endpoint === "/transactions/get")?.count || 0;
 
       return {
         transactionsRemaining: Math.max(
           0,
           PLAID_CONFIG.freeTierLimits.maxTransactionsPerMonth -
-            totalTransactions,
+            totalTransactions
         ),
         isWithinLimits:
           totalTransactions <

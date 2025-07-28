@@ -51,7 +51,7 @@ export const ThemeProvider = ({ children }) => {
     if (metaThemeColor) {
       metaThemeColor.setAttribute(
         "content",
-        theme === "dark" ? "#1C1B1F" : "#FFFFFF",
+        theme === "dark" ? "#1C1B1F" : "#FFFFFF"
       );
     }
 
@@ -63,7 +63,7 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-    const handleChange = (e) => {
+    const handleChange = e => {
       setSystemTheme(e.matches ? "dark" : "light");
       // If theme is set to 'auto', update the actual theme
       if (theme === "auto") {
@@ -76,10 +76,10 @@ export const ThemeProvider = ({ children }) => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+    setTheme(prev => (prev === "light" ? "dark" : "light"));
   };
 
-  const setThemeMode = (mode) => {
+  const setThemeMode = mode => {
     if (mode === "auto") {
       setTheme(systemTheme);
     } else {

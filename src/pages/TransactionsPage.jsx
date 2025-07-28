@@ -30,7 +30,7 @@ const TransactionsPage = () => {
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(
-        (transaction) =>
+        transaction =>
           transaction.description
             ?.toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
@@ -39,19 +39,15 @@ const TransactionsPage = () => {
             .includes(searchTerm.toLowerCase()) ||
           transaction.account?.name
             ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()),
+            .includes(searchTerm.toLowerCase())
       );
     }
 
     // Apply type filter
     if (selectedFilter === "income") {
-      filtered = filtered.filter(
-        (transaction) => transaction.type === "income",
-      );
+      filtered = filtered.filter(transaction => transaction.type === "income");
     } else if (selectedFilter === "expense") {
-      filtered = filtered.filter(
-        (transaction) => transaction.type === "expense",
-      );
+      filtered = filtered.filter(transaction => transaction.type === "expense");
     }
 
     // Apply sorting
@@ -86,14 +82,14 @@ const TransactionsPage = () => {
     setFilteredTransactions(filtered);
   }, [transactions, searchTerm, selectedFilter, sortBy, sortOrder]);
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
     }).format(amount);
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = dateString => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -101,7 +97,7 @@ const TransactionsPage = () => {
     });
   };
 
-  const getTransactionIcon = (type) => {
+  const getTransactionIcon = type => {
     return type === "income" ? (
       <TrendingUp className="w-4 h-4 text-green-600" />
     ) : (
@@ -109,7 +105,7 @@ const TransactionsPage = () => {
     );
   };
 
-  const handleSort = (field) => {
+  const handleSort = field => {
     if (sortBy === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -154,7 +150,7 @@ const TransactionsPage = () => {
             type="text"
             placeholder="Search transactions..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
@@ -199,7 +195,7 @@ const TransactionsPage = () => {
           <div className="relative">
             <select
               value={`${sortBy}-${sortOrder}`}
-              onChange={(e) => {
+              onChange={e => {
                 const [field, order] = e.target.value.split("-");
                 setSortBy(field);
                 setSortOrder(order);
@@ -280,7 +276,7 @@ const TransactionsPage = () => {
               </p>
             </div>
           ) : (
-            filteredTransactions.map((transaction) => (
+            filteredTransactions.map(transaction => (
               <div
                 key={transaction.id}
                 className="grid grid-cols-1 lg:grid-cols-12 gap-4 px-4 sm:px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
@@ -388,8 +384,8 @@ const TransactionsPage = () => {
             <p className="text-2xl font-bold text-green-600 mt-1">
               {formatCurrency(
                 filteredTransactions
-                  .filter((t) => t.type === "income")
-                  .reduce((sum, t) => sum + t.amount, 0),
+                  .filter(t => t.type === "income")
+                  .reduce((sum, t) => sum + t.amount, 0)
               )}
             </p>
           </div>
@@ -404,8 +400,8 @@ const TransactionsPage = () => {
             <p className="text-2xl font-bold text-red-600 mt-1">
               {formatCurrency(
                 filteredTransactions
-                  .filter((t) => t.type === "expense")
-                  .reduce((sum, t) => sum + Math.abs(t.amount), 0),
+                  .filter(t => t.type === "expense")
+                  .reduce((sum, t) => sum + Math.abs(t.amount), 0)
               )}
             </p>
           </div>
@@ -425,7 +421,7 @@ const TransactionsPage = () => {
               }`}
             >
               {formatCurrency(
-                filteredTransactions.reduce((sum, t) => sum + t.amount, 0),
+                filteredTransactions.reduce((sum, t) => sum + t.amount, 0)
               )}
             </p>
           </div>

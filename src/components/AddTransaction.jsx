@@ -14,7 +14,7 @@ const AddTransaction = () => {
     accountId: "",
   });
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
 
     if (!formData.description.trim() || !formData.amount) {
@@ -48,9 +48,9 @@ const AddTransaction = () => {
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = e => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value,
     }));
@@ -136,7 +136,7 @@ const AddTransaction = () => {
                     onChange={handleInputChange}
                     className="input-glass w-full pl-10 text-sm sm:text-base"
                   >
-                    {CATEGORIES.map((category) => (
+                    {CATEGORIES.map(category => (
                       <option key={category} value={category}>
                         {category}
                       </option>

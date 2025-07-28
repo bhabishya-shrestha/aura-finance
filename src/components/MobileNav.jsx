@@ -53,7 +53,7 @@ const MobileNav = ({ onPageChange, currentPage }) => {
     },
   ];
 
-  const handleMenuClick = (pageId) => {
+  const handleMenuClick = pageId => {
     onPageChange(pageId);
     setShowUserMenu(false);
   };
@@ -78,7 +78,7 @@ const MobileNav = ({ onPageChange, currentPage }) => {
         <div className="px-3 py-2">
           {/* Primary Navigation - 3 main items */}
           <div className="flex items-center justify-between">
-            {primaryMenuItems.map((item) => (
+            {primaryMenuItems.map(item => (
               <button
                 key={item.id}
                 onClick={() => handleMenuClick(item.id)}
@@ -154,7 +154,7 @@ const MobileNav = ({ onPageChange, currentPage }) => {
             {/* Secondary Navigation Items */}
             <div className="p-2">
               <div className="grid grid-cols-3 gap-2">
-                {secondaryMenuItems.map((item) => (
+                {secondaryMenuItems.map(item => (
                   <button
                     key={item.id}
                     onClick={() => handleMenuClick(item.id)}

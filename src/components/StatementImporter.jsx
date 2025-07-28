@@ -10,7 +10,7 @@ const StatementImporter = () => {
   const [processingStep, setProcessingStep] = useState("");
   const fileInputRef = useRef(null);
 
-  const handleFileUpload = async (event) => {
+  const handleFileUpload = async event => {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -32,7 +32,7 @@ const StatementImporter = () => {
         transactions = await parseStatement(file);
       } else {
         throw new Error(
-          "Unsupported file format. Please upload a CSV or PDF file.",
+          "Unsupported file format. Please upload a CSV or PDF file."
         );
       }
 

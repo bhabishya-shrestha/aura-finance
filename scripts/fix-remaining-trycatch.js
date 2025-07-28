@@ -12,7 +12,7 @@ const plaidServicePath = path.join(
   "..",
   "src",
   "services",
-  "plaidService.js",
+  "plaidService.js"
 );
 
 // Read the file
@@ -27,7 +27,7 @@ function removeTryCatchWrappers(content) {
   return content.replace(tryCatchPattern, (match, indent, tryContent) => {
     // Remove the try/catch wrapper and keep the content with proper indentation
     const lines = tryContent.split("\n");
-    const indentedLines = lines.map((line) => {
+    const indentedLines = lines.map(line => {
       if (line.trim() === "") return "";
       return indent + line;
     });

@@ -25,7 +25,7 @@ const AnalyticsPage = () => {
   const { transactions, getNetWorth } = useStore();
   const [timeRange, setTimeRange] = useState("month");
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -35,7 +35,7 @@ const AnalyticsPage = () => {
   // Calculate spending by category
   const getSpendingByCategory = () => {
     const categorySpending = {};
-    transactions.forEach((transaction) => {
+    transactions.forEach(transaction => {
       if (transaction.amount < 0) {
         // Only spending, not income
         const category = transaction.category;
@@ -61,7 +61,7 @@ const AnalyticsPage = () => {
     const monthlyData = {};
     const currentYear = new Date().getFullYear();
 
-    transactions.forEach((transaction) => {
+    transactions.forEach(transaction => {
       const date = new Date(transaction.date);
       if (date.getFullYear() === currentYear && transaction.amount < 0) {
         const month = date.toLocaleString("default", { month: "short" });
@@ -79,10 +79,10 @@ const AnalyticsPage = () => {
   // Calculate income vs spending
   const getIncomeVsSpending = () => {
     const income = transactions
-      .filter((t) => t.amount > 0)
+      .filter(t => t.amount > 0)
       .reduce((sum, t) => sum + t.amount, 0);
     const spending = transactions
-      .filter((t) => t.amount < 0)
+      .filter(t => t.amount < 0)
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
     return [
@@ -117,7 +117,7 @@ const AnalyticsPage = () => {
         <div className="flex gap-2">
           <select
             value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
+            onChange={e => setTimeRange(e.target.value)}
             className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
           >
             <option value="month">This Month</option>
@@ -148,8 +148,8 @@ const AnalyticsPage = () => {
               <p className="text-2xl font-bold text-green-400">
                 {formatCurrency(
                   transactions
-                    .filter((t) => t.amount > 0)
-                    .reduce((sum, t) => sum + t.amount, 0),
+                    .filter(t => t.amount > 0)
+                    .reduce((sum, t) => sum + t.amount, 0)
                 )}
               </p>
             </div>
@@ -164,8 +164,8 @@ const AnalyticsPage = () => {
               <p className="text-2xl font-bold text-red-400">
                 {formatCurrency(
                   transactions
-                    .filter((t) => t.amount < 0)
-                    .reduce((sum, t) => sum + Math.abs(t.amount), 0),
+                    .filter(t => t.amount < 0)
+                    .reduce((sum, t) => sum + Math.abs(t.amount), 0)
                 )}
               </p>
             </div>
@@ -215,7 +215,7 @@ const AnalyticsPage = () => {
                   />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => formatCurrency(value)} />
+              <Tooltip formatter={value => formatCurrency(value)} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -234,7 +234,7 @@ const AnalyticsPage = () => {
               />
               <XAxis dataKey="month" stroke="#a1a1a1" />
               <YAxis stroke="#a1a1a1" />
-              <Tooltip formatter={(value) => formatCurrency(value)} />
+              <Tooltip formatter={value => formatCurrency(value)} />
               <Bar dataKey="spending" fill="#00f2fe" />
             </BarChart>
           </ResponsiveContainer>
@@ -254,7 +254,7 @@ const AnalyticsPage = () => {
             />
             <XAxis dataKey="type" stroke="#a1a1a1" />
             <YAxis stroke="#a1a1a1" />
-            <Tooltip formatter={(value) => formatCurrency(value)} />
+            <Tooltip formatter={value => formatCurrency(value)} />
             <Bar dataKey="amount" fill="#8884d8" />
           </BarChart>
         </ResponsiveContainer>

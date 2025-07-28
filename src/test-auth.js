@@ -42,7 +42,7 @@ async function testAuth() {
 
         // Test token validation
         const userResult = await localAuthService.getCurrentUser(
-          loginResult.data.token,
+          loginResult.data.token
         );
         // eslint-disable-next-line no-console
         console.log("User validation result:", userResult);

@@ -60,7 +60,7 @@ const Sidebar = ({
     },
   ];
 
-  const handleMenuClick = (pageId) => {
+  const handleMenuClick = pageId => {
     onPageChange(pageId);
     // Close mobile sidebar after navigation
     if (isMobileOpen) {
@@ -145,7 +145,7 @@ const Sidebar = ({
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1">
-            {menuItems.map((item) => (
+            {menuItems.map(item => (
               <button
                 key={item.id}
                 onClick={() => handleMenuClick(item.id)}

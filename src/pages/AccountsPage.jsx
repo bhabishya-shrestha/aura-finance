@@ -15,14 +15,14 @@ const AccountsPage = () => {
   const { accounts, getAccountBalance, getTransactionsByAccount } = useStore();
   const [selectedAccount, setSelectedAccount] = useState(null);
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
     }).format(amount);
   };
 
-  const getAccountIcon = (type) => {
+  const getAccountIcon = type => {
     switch (type) {
       case "credit":
         return <CreditCard className="w-6 h-6" />;
@@ -35,7 +35,7 @@ const AccountsPage = () => {
     }
   };
 
-  const getAccountTypeColor = (type) => {
+  const getAccountTypeColor = type => {
     switch (type) {
       case "credit":
         return "text-purple-400";
@@ -48,7 +48,7 @@ const AccountsPage = () => {
     }
   };
 
-  const getAccountTransactions = (accountId) => {
+  const getAccountTransactions = accountId => {
     return getTransactionsByAccount(accountId).slice(0, 5); // Last 5 transactions
   };
 
@@ -74,7 +74,7 @@ const AccountsPage = () => {
               Your Accounts
             </h2>
             <div className="space-y-3">
-              {accounts.map((account) => {
+              {accounts.map(account => {
                 const balance = getAccountBalance(account.id);
                 const isSelected = selectedAccount?.id === account.id;
 
@@ -172,9 +172,9 @@ const AccountsPage = () => {
                     <div className="text-xl font-bold text-soft-white">
                       {
                         getTransactionsByAccount(selectedAccount.id).filter(
-                          (t) =>
+                          t =>
                             new Date(t.date).getMonth() ===
-                            new Date().getMonth(),
+                            new Date().getMonth()
                         ).length
                       }
                     </div>
@@ -185,8 +185,8 @@ const AccountsPage = () => {
                     <div className="text-xl font-bold text-soft-white">
                       {formatCurrency(
                         getTransactionsByAccount(selectedAccount.id)
-                          .filter((t) => t.amount > 0)
-                          .reduce((sum, t) => sum + t.amount, 0),
+                          .filter(t => t.amount > 0)
+                          .reduce((sum, t) => sum + t.amount, 0)
                       )}
                     </div>
                     <div className="text-muted-gray text-sm">Total Income</div>
@@ -202,7 +202,7 @@ const AccountsPage = () => {
                 <div className="space-y-3">
                   {getAccountTransactions(selectedAccount.id).length > 0 ? (
                     getAccountTransactions(selectedAccount.id).map(
-                      (transaction) => (
+                      transaction => (
                         <div
                           key={transaction.id}
                           className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"
@@ -234,7 +234,7 @@ const AccountsPage = () => {
                             </p>
                           </div>
                         </div>
-                      ),
+                      )
                     )
                   ) : (
                     <div className="text-center py-8 text-muted-gray">

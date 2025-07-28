@@ -12,7 +12,7 @@ const SearchBar = () => {
 
   // Close search results when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = event => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setIsOpen(false);
         setSelectedIndex(-1);
@@ -35,7 +35,7 @@ const SearchBar = () => {
     const searchResults = [];
 
     // Search transactions
-    transactions.forEach((transaction) => {
+    transactions.forEach(transaction => {
       if (
         transaction.description.toLowerCase().includes(searchTerm) ||
         transaction.category.toLowerCase().includes(searchTerm) ||
@@ -53,7 +53,7 @@ const SearchBar = () => {
     });
 
     // Search accounts
-    accounts.forEach((account) => {
+    accounts.forEach(account => {
       if (
         account.name.toLowerCase().includes(searchTerm) ||
         account.type.toLowerCase().includes(searchTerm) ||
@@ -76,17 +76,17 @@ const SearchBar = () => {
   }, [query, transactions, accounts]);
 
   // Keyboard navigation
-  const handleKeyDown = (e) => {
+  const handleKeyDown = e => {
     if (!isOpen) return;
 
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : 0));
+        setSelectedIndex(prev => (prev < results.length - 1 ? prev + 1 : 0));
         break;
       case "ArrowUp":
         e.preventDefault();
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : results.length - 1));
+        setSelectedIndex(prev => (prev > 0 ? prev - 1 : results.length - 1));
         break;
       case "Enter":
         e.preventDefault();
@@ -123,7 +123,7 @@ const SearchBar = () => {
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={e => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Search transactions, accounts..."
           className="fidelity-input w-full pl-10 pr-10 text-sm"

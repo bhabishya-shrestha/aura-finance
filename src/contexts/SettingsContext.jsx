@@ -68,14 +68,14 @@ export const SettingsProvider = ({ children }) => {
   }, [settings]);
 
   const updateSetting = (key, value) => {
-    setSettings((prev) => ({
+    setSettings(prev => ({
       ...prev,
       [key]: value,
     }));
   };
 
-  const updateMultipleSettings = (updates) => {
-    setSettings((prev) => ({
+  const updateMultipleSettings = updates => {
+    setSettings(prev => ({
       ...prev,
       ...updates,
     }));
@@ -98,20 +98,20 @@ export const SettingsProvider = ({ children }) => {
     URL.revokeObjectURL(url);
   };
 
-  const importSettings = async (file) => {
+  const importSettings = async file => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         try {
           const importedSettings = JSON.parse(e.target.result);
           // Validate imported settings
           const validSettings = {};
-          Object.keys(defaultSettings).forEach((key) => {
+          Object.keys(defaultSettings).forEach(key => {
             if (Object.prototype.hasOwnProperty.call(importedSettings, key)) {
               validSettings[key] = importedSettings[key];
             }
           });
-          setSettings((prev) => ({ ...prev, ...validSettings }));
+          setSettings(prev => ({ ...prev, ...validSettings }));
           resolve(validSettings);
         } catch (error) {
           reject(new Error("Invalid settings file format"));

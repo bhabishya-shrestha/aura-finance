@@ -63,7 +63,7 @@ export const auth = {
   },
 
   // Listen to auth changes
-  onAuthStateChange: (callback) => {
+  onAuthStateChange: callback => {
     return supabase.auth.onAuthStateChange(callback);
   },
 };
@@ -79,7 +79,7 @@ export const db = {
     return { data, error };
   },
 
-  createAccount: async (accountData) => {
+  createAccount: async accountData => {
     const { data, error } = await supabase
       .from("accounts")
       .insert(accountData)
@@ -98,7 +98,7 @@ export const db = {
     return { data, error };
   },
 
-  deleteAccount: async (id) => {
+  deleteAccount: async id => {
     // First, delete all transactions associated with this account
     const { error: deleteTransactionsError } = await supabase
       .from("transactions")
@@ -123,7 +123,7 @@ export const db = {
         *,
         account:accounts(name, type, is_active),
         category:categories(name, color, icon, is_default)
-      `,
+      `
       )
       .order("date", { ascending: false });
 
@@ -144,7 +144,7 @@ export const db = {
 
     // Process the data to handle null references
     if (data) {
-      data.forEach((transaction) => {
+      data.forEach(transaction => {
         // Handle deleted accounts
         if (!transaction.account || !transaction.account.is_active) {
           transaction.account = {
@@ -169,7 +169,7 @@ export const db = {
     return { data, error };
   },
 
-  createTransaction: async (transactionData) => {
+  createTransaction: async transactionData => {
     const { data, error } = await supabase
       .from("transactions")
       .insert(transactionData)
@@ -178,7 +178,7 @@ export const db = {
         *,
         account:accounts(name, type, is_active),
         category:categories(name, color, icon, is_default)
-      `,
+      `
       )
       .single();
 
@@ -215,7 +215,7 @@ export const db = {
         *,
         account:accounts(name, type, is_active),
         category:categories(name, color, icon, is_default)
-      `,
+      `
       )
       .single();
 
@@ -242,7 +242,7 @@ export const db = {
     return { data, error };
   },
 
-  deleteTransaction: async (id) => {
+  deleteTransaction: async id => {
     const { error } = await supabase.from("transactions").delete().eq("id", id);
     return { error };
   },
@@ -256,7 +256,7 @@ export const db = {
     return { data, error };
   },
 
-  createCategory: async (categoryData) => {
+  createCategory: async categoryData => {
     const { data, error } = await supabase
       .from("categories")
       .insert(categoryData)
@@ -275,7 +275,7 @@ export const db = {
     return { data, error };
   },
 
-  deleteCategory: async (id) => {
+  deleteCategory: async id => {
     // First, update all transactions that reference this category to set category_id to NULL
     const { error: updateError } = await supabase
       .from("transactions")

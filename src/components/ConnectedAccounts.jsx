@@ -53,7 +53,7 @@ const ConnectedAccounts = () => {
       const limits = await plaidUsageTracker.checkFreeTierLimits(user.id);
       if (!limits.isWithinLimits) {
         setError(
-          "Monthly transaction limit reached. Please wait until next month.",
+          "Monthly transaction limit reached. Please wait until next month."
         );
         return;
       }
@@ -68,14 +68,14 @@ const ConnectedAccounts = () => {
         accessToken,
         startDate,
         endDate,
-        { count: 100 },
+        { count: 100 }
       );
 
       if (transactionsResponse.transactions.length > 0) {
         await plaidDatabase.storeTransactions(
           user.id,
           itemId,
-          transactionsResponse.transactions,
+          transactionsResponse.transactions
         );
       }
 
@@ -116,7 +116,7 @@ const ConnectedAccounts = () => {
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = dateString => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -126,7 +126,7 @@ const ConnectedAccounts = () => {
     });
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
       case "good":
         return "text-green-600 dark:text-green-400";
@@ -139,7 +139,7 @@ const ConnectedAccounts = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = status => {
     switch (status) {
       case "good":
         return <CheckCircle className="w-4 h-4" />;
@@ -205,7 +205,7 @@ const ConnectedAccounts = () => {
 
       {/* Connected Accounts List */}
       <div className="space-y-4">
-        {connectedItems.map((item) => (
+        {connectedItems.map(item => (
           <div
             key={item.item_id}
             className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"

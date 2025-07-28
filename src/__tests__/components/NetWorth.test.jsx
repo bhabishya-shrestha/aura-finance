@@ -26,7 +26,7 @@ describe("NetWorth", () => {
 
     expect(screen.getByText("Net Worth")).toBeInTheDocument();
     expect(
-      screen.getByText("Total assets minus liabilities"),
+      screen.getByText("Total assets minus liabilities")
     ).toBeInTheDocument();
     expect(screen.getByText("$50,000")).toBeInTheDocument();
     expect(screen.getByText("Transactions")).toBeInTheDocument();

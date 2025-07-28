@@ -18,25 +18,25 @@ const RecentTransactions = () => {
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
     }).format(amount);
   };
 
-  const formatDate = (date) => {
+  const formatDate = date => {
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
       day: "numeric",
     }).format(new Date(date));
   };
 
-  const formatDateForInput = (date) => {
+  const formatDateForInput = date => {
     return new Date(date).toISOString().split("T")[0];
   };
 
-  const getCategoryColor = (category) => {
+  const getCategoryColor = category => {
     const colors = {
       Groceries: "text-green-600 dark:text-green-400",
       Restaurants: "text-yellow-600 dark:text-yellow-400",
@@ -51,7 +51,7 @@ const RecentTransactions = () => {
     return colors[category] || colors["Other"];
   };
 
-  const handleEdit = (transaction) => {
+  const handleEdit = transaction => {
     setEditingId(transaction.id);
     setEditData({
       description: transaction.description,
@@ -61,7 +61,7 @@ const RecentTransactions = () => {
     });
   };
 
-  const handleSave = async (transactionId) => {
+  const handleSave = async transactionId => {
     try {
       await updateTransaction(transactionId, {
         ...editData,
@@ -81,7 +81,7 @@ const RecentTransactions = () => {
     setEditData({});
   };
 
-  const handleDelete = async (transactionId) => {
+  const handleDelete = async transactionId => {
     if (window.confirm("Are you sure you want to delete this transaction?")) {
       try {
         await deleteTransaction(transactionId);
@@ -107,7 +107,7 @@ const RecentTransactions = () => {
             </p>
           </div>
         ) : (
-          recentTransactions.map((transaction) => (
+          recentTransactions.map(transaction => (
             <div
               key={transaction.id}
               className="p-3 sm:p-4 apple-glass-light rounded-apple-lg border border-apple-glass-200/30 hover:bg-apple-glass-200/40 transition-all duration-200 backdrop-blur-apple-sm"
@@ -123,7 +123,7 @@ const RecentTransactions = () => {
                       <input
                         type="date"
                         value={editData.date}
-                        onChange={(e) =>
+                        onChange={e =>
                           setEditData({ ...editData, date: e.target.value })
                         }
                         className="input-glass w-full mt-1 text-sm"
@@ -137,7 +137,7 @@ const RecentTransactions = () => {
                         type="number"
                         step="0.01"
                         value={editData.amount}
-                        onChange={(e) =>
+                        onChange={e =>
                           setEditData({ ...editData, amount: e.target.value })
                         }
                         className="input-glass w-full mt-1 text-sm"
@@ -152,7 +152,7 @@ const RecentTransactions = () => {
                     <input
                       type="text"
                       value={editData.description}
-                      onChange={(e) =>
+                      onChange={e =>
                         setEditData({
                           ...editData,
                           description: e.target.value,
@@ -169,12 +169,12 @@ const RecentTransactions = () => {
                       </label>
                       <select
                         value={editData.category}
-                        onChange={(e) =>
+                        onChange={e =>
                           setEditData({ ...editData, category: e.target.value })
                         }
                         className="input-glass w-full mt-1 text-sm"
                       >
-                        {CATEGORIES.map((category) => (
+                        {CATEGORIES.map(category => (
                           <option key={category} value={category}>
                             {category}
                           </option>

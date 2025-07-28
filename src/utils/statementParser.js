@@ -15,12 +15,12 @@ export const CATEGORIES = [
 ];
 
 // Parse CSV files
-export const parseCSV = (file) => {
+export const parseCSV = file => {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: results => {
         try {
           const transactions = results.data.map((row, index) => {
             // Handle different CSV formats
@@ -49,7 +49,7 @@ export const parseCSV = (file) => {
           reject(error);
         }
       },
-      error: (error) => {
+      error: error => {
         reject(error);
       },
     });
@@ -57,12 +57,12 @@ export const parseCSV = (file) => {
 };
 
 // Validate PDF file before processing
-const validatePDFFile = (file) => {
+const validatePDFFile = file => {
   // Check file size (max 10MB)
   const maxSize = 10 * 1024 * 1024; // 10MB
   if (file.size > maxSize) {
     throw new Error(
-      "PDF file is too large. Please upload a file smaller than 10MB.",
+      "PDF file is too large. Please upload a file smaller than 10MB."
     );
   }
 
@@ -81,7 +81,7 @@ const validatePDFFile = (file) => {
 };
 
 // Parse PDF files (optimized for Bank of America statements)
-export const parsePDF = async (file) => {
+export const parsePDF = async file => {
   try {
     // Validate the PDF file first
     validatePDFFile(file);
@@ -101,7 +101,7 @@ export const parsePDF = async (file) => {
     // Validate that we got meaningful text
     if (!result.data.text || result.data.text.trim().length < 100) {
       throw new Error(
-        "Unable to extract meaningful text from PDF. Please ensure the PDF contains readable text and is not password-protected.",
+        "Unable to extract meaningful text from PDF. Please ensure the PDF contains readable text and is not password-protected."
       );
     }
 
@@ -111,7 +111,7 @@ export const parsePDF = async (file) => {
     // Validate that we found transactions
     if (transactions.length === 0) {
       throw new Error(
-        "No transactions found in the PDF. Please ensure this is a valid bank statement with transaction data.",
+        "No transactions found in the PDF. Please ensure this is a valid bank statement with transaction data."
       );
     }
 
@@ -122,11 +122,11 @@ export const parsePDF = async (file) => {
     // Provide more specific error messages
     if (error.message.includes("Unable to extract")) {
       throw new Error(
-        "PDF parsing failed: Unable to extract text. Please ensure the PDF is not password-protected and contains readable text.",
+        "PDF parsing failed: Unable to extract text. Please ensure the PDF is not password-protected and contains readable text."
       );
     } else if (error.message.includes("No transactions found")) {
       throw new Error(
-        "No transactions found in the PDF. Please ensure this is a valid bank statement with transaction data.",
+        "No transactions found in the PDF. Please ensure this is a valid bank statement with transaction data."
       );
     } else if (error.message.includes("too large")) {
       throw error; // Re-throw size validation errors
@@ -134,16 +134,16 @@ export const parsePDF = async (file) => {
       throw error; // Re-throw file type validation errors
     } else {
       throw new Error(
-        "Failed to parse PDF file. Please ensure it's a valid bank statement and try again.",
+        "Failed to parse PDF file. Please ensure it's a valid bank statement and try again."
       );
     }
   }
 };
 
 // Parse Bank of America statement text with improved patterns
-const parseBankOfAmericaText = (text) => {
+const parseBankOfAmericaText = text => {
   const transactions = [];
-  const lines = text.split("\n").filter((line) => line.trim());
+  const lines = text.split("\n").filter(line => line.trim());
 
   // Enhanced transaction patterns for better matching
   const transactionPatterns = [
@@ -178,8 +178,8 @@ const parseBankOfAmericaText = (text) => {
 
     // Check if we're entering a transaction section
     if (
-      sections.some((section) =>
-        line.toLowerCase().includes(section.toLowerCase()),
+      sections.some(section =>
+        line.toLowerCase().includes(section.toLowerCase())
       )
     ) {
       inTransactionSection = true;
@@ -268,18 +268,18 @@ const parseBankOfAmericaText = (text) => {
     (transaction, index, self) =>
       index ===
       self.findIndex(
-        (t) =>
+        t =>
           t.date.getTime() === transaction.date.getTime() &&
           t.description === transaction.description &&
-          t.amount === transaction.amount,
-      ),
+          t.amount === transaction.amount
+      )
   );
 
   return uniqueTransactions;
 };
 
 // Validate date string
-const isValidDate = (dateStr) => {
+const isValidDate = dateStr => {
   try {
     const parsed = parseDate(dateStr);
     return (
@@ -293,7 +293,7 @@ const isValidDate = (dateStr) => {
 };
 
 // Parse date string to Date object with improved error handling
-const parseDate = (dateStr) => {
+const parseDate = dateStr => {
   try {
     // Handle MM/DD/YYYY format
     if (dateStr.includes("/")) {
@@ -314,7 +314,7 @@ const parseDate = (dateStr) => {
 };
 
 // Categorize transaction based on description
-const categorizeTransaction = (description) => {
+const categorizeTransaction = description => {
   const desc = description.toLowerCase();
 
   // Groceries
@@ -428,4 +428,20 @@ const categorizeTransaction = (description) => {
   }
 
   return "Other";
+};
+
+// Main function to parse statements (CSV or PDF)
+export const parseStatement = async file => {
+  if (file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv")) {
+    return await parseCSV(file);
+  } else if (
+    file.type === "application/pdf" ||
+    file.name.toLowerCase().endsWith(".pdf")
+  ) {
+    return await parsePDF(file);
+  } else {
+    throw new Error(
+      "Unsupported file format. Please upload a CSV or PDF file."
+    );
+  }
 };
