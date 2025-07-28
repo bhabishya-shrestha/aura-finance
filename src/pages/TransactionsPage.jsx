@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Search,
   Download,
-  Plus,
-  Calendar,
   DollarSign,
   TrendingUp,
   TrendingDown,
@@ -11,6 +9,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import useStore from "../store";
+import AddTransaction from "../components/AddTransaction";
 
 const TransactionsPage = () => {
   const { transactions, loadTransactions } = useStore();
@@ -114,6 +113,42 @@ const TransactionsPage = () => {
     }
   };
 
+  const handleExport = () => {
+    // Create CSV content
+    const headers = [
+      "Date",
+      "Description",
+      "Category",
+      "Account",
+      "Amount",
+      "Type",
+    ];
+    const csvContent = [
+      headers.join(","),
+      ...filteredTransactions.map(transaction =>
+        [
+          formatDate(transaction.date),
+          `"${transaction.description || ""}"`,
+          transaction.category?.name || "Unknown",
+          transaction.account?.name || "Uncategorized Account",
+          transaction.amount,
+          transaction.type || "expense",
+        ].join(",")
+      ),
+    ].join("\n");
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `transactions-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Header */}
@@ -129,14 +164,14 @@ const TransactionsPage = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 shadow-sm"
+            >
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Export</span>
             </button>
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Add Transaction</span>
-            </button>
+            <AddTransaction />
           </div>
         </div>
       </div>
@@ -155,9 +190,9 @@ const TransactionsPage = () => {
           />
         </div>
 
-        {/* and Sort Controls */}
+        {/* Filter and Sort Controls */}
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Buttons */}
+          {/* Filter Buttons */}
           <div className="flex gap-2">
             <button
               onClick={() => setSelectedFilter("all")}
@@ -213,171 +248,127 @@ const TransactionsPage = () => {
         </div>
       </div>
 
-      {/* Transactions List */}
+      {/* Transactions Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        {/* Desktop Table Header */}
-        <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-          <div className="col-span-3">
-            <button
-              onClick={() => handleSort("description")}
-              className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              Description
-              <ArrowUpDown className="w-3 h-3" />
-            </button>
-          </div>
-          <div className="col-span-2">
-            <button
-              onClick={() => handleSort("date")}
-              className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              Date
-              <ArrowUpDown className="w-3 h-3" />
-            </button>
-          </div>
-          <div className="col-span-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Category
-            </span>
-          </div>
-          <div className="col-span-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Account
-            </span>
-          </div>
-          <div className="col-span-2">
-            <button
-              onClick={() => handleSort("amount")}
-              className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              Amount
-              <ArrowUpDown className="w-3 h-3" />
-            </button>
-          </div>
-          <div className="col-span-1">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Type
-            </span>
-          </div>
-        </div>
-
-        {/* Transactions */}
-        <div className="divide-y divide-gray-200 dark:divide-gray-700">
-          {filteredTransactions.length === 0 ? (
-            <div className="p-8 text-center">
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No transactions found
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                {searchTerm || selectedFilter !== "all"
-                  ? "Try adjusting your search or filters"
-                  : "Add your first transaction to get started"}
-              </p>
-            </div>
-          ) : (
-            filteredTransactions.map(transaction => (
-              <div
-                key={transaction.id}
-                className="grid grid-cols-1 lg:grid-cols-12 gap-4 px-4 sm:px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
-              >
-                {/* Mobile Layout */}
-                <div className="lg:hidden space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <button
+                    onClick={() => handleSort("description")}
+                    className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  >
+                    Description
+                    <ArrowUpDown className="w-3 h-3" />
+                  </button>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Category
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Account
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <button
+                    onClick={() => handleSort("amount")}
+                    className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  >
+                    Amount
+                    <ArrowUpDown className="w-3 h-3" />
+                  </button>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Type
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <FileText className="w-12 h-12 text-gray-400" />
+                      <div>
+                        <p className="text-gray-900 dark:text-white font-medium">
+                          No transactions found
+                        </p>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">
+                          {searchTerm || selectedFilter !== "all"
+                            ? "Try adjusting your search or filters"
+                            : "Add your first transaction to get started"}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredTransactions.map(transaction => (
+                  <tr
+                    key={transaction.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
                         {getTransactionIcon(transaction.type)}
-                        <div className="flex items-center gap-2 text-muted text-xs">
-                          <Calendar className="w-3 h-3" />
-                          {formatDate(transaction.date)}
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {transaction.description || "Unknown"}
+                          </div>
                         </div>
                       </div>
-                      <h3 className="font-medium text-gray-900 dark:text-white mb-1">
-                        {transaction.description || "Untitled Transaction"}
-                      </h3>
-                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                          {transaction.category?.name || "Uncategorized"}
-                        </span>
-                        <span>•</span>
-                        <span>
-                          {transaction.account?.name || "Unknown Account"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right ml-4">
-                      <p
-                        className={`font-medium text-sm ${
-                          transaction.type === "income"
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {formatDate(transaction.date)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                        {transaction.category?.name || "Unknown"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {transaction.account?.name || "Uncategorized Account"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <span
+                        className={
+                          transaction.amount >= 0
                             ? "text-green-600"
                             : "text-red-600"
+                        }
+                      >
+                        {formatCurrency(Math.abs(transaction.amount))}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          transaction.type === "income"
+                            ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400"
+                            : "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400"
                         }`}
                       >
-                        {transaction.type === "income" ? "+" : "-"}
-                        {formatCurrency(Math.abs(transaction.amount))}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Desktop Layout */}
-                <div className="hidden lg:grid grid-cols-12 gap-4 items-center">
-                  <div className="col-span-3">
-                    <div className="flex items-center gap-3">
-                      {getTransactionIcon(transaction.type)}
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {transaction.description || "Untitled Transaction"}
+                        {transaction.type === "income" ? "Income" : "Expense"}
                       </span>
-                    </div>
-                  </div>
-                  <div className="col-span-2 text-sm text-gray-600 dark:text-gray-400">
-                    {formatDate(transaction.date)}
-                  </div>
-                  <div className="col-span-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                      {transaction.category?.name || "Uncategorized"}
-                    </span>
-                  </div>
-                  <div className="col-span-2 text-sm text-gray-600 dark:text-gray-400">
-                    {transaction.account?.name || "Unknown Account"}
-                  </div>
-                  <div className="col-span-2">
-                    <span
-                      className={`font-medium ${
-                        transaction.type === "income"
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }`}
-                    >
-                      {transaction.type === "income" ? "+" : "-"}
-                      {formatCurrency(Math.abs(transaction.amount))}
-                    </span>
-                  </div>
-                  <div className="col-span-1">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                        transaction.type === "income"
-                          ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400"
-                          : "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400"
-                      }`}
-                    >
-                      {transaction.type}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* Summary Stats */}
+      {/* Summary */}
       {filteredTransactions.length > 0 && (
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-green-600" />
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Total Income
               </span>
             </div>
@@ -385,43 +376,49 @@ const TransactionsPage = () => {
               {formatCurrency(
                 filteredTransactions
                   .filter(t => t.type === "income")
-                  .reduce((sum, t) => sum + t.amount, 0)
+                  .reduce((sum, t) => sum + (t.amount || 0), 0)
               )}
             </p>
           </div>
-
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2">
               <TrendingDown className="w-5 h-5 text-red-600" />
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Total Expenses
               </span>
             </div>
             <p className="text-2xl font-bold text-red-600 mt-1">
               {formatCurrency(
-                filteredTransactions
-                  .filter(t => t.type === "expense")
-                  .reduce((sum, t) => sum + Math.abs(t.amount), 0)
+                Math.abs(
+                  filteredTransactions
+                    .filter(t => t.type === "expense")
+                    .reduce((sum, t) => sum + (t.amount || 0), 0)
+                )
               )}
             </p>
           </div>
-
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-blue-600" />
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Net
               </span>
             </div>
             <p
               className={`text-2xl font-bold mt-1 ${
-                filteredTransactions.reduce((sum, t) => sum + t.amount, 0) >= 0
+                filteredTransactions.reduce(
+                  (sum, t) => sum + (t.amount || 0),
+                  0
+                ) >= 0
                   ? "text-green-600"
                   : "text-red-600"
               }`}
             >
               {formatCurrency(
-                filteredTransactions.reduce((sum, t) => sum + t.amount, 0)
+                filteredTransactions.reduce(
+                  (sum, t) => sum + (t.amount || 0),
+                  0
+                )
               )}
             </p>
           </div>

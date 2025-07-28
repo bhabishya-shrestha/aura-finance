@@ -10,28 +10,26 @@ import {
   Eye,
   EyeOff,
   Bell,
-  Globe,
   Sun,
   Moon,
   Monitor,
   Save,
   RotateCcw,
   Check,
-  AlertCircle,
+  Trash2,
 } from "lucide-react";
 import useStore from "../store";
 import { useSettings } from "../contexts/SettingsContext";
 import { useTheme } from "../contexts/ThemeContext";
 
 const SettingsPage = () => {
-  const { transactions, accounts } = useStore();
+  const { transactions } = useStore();
   const {
     settings,
     updateSetting,
     resetSettings,
     exportSettings,
     importSettings,
-    formatCurrency,
   } = useSettings();
   const { setTheme, currentTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("general");
@@ -90,61 +88,72 @@ const SettingsPage = () => {
     switch (activeTab) {
       case "general":
         return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-6">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 General Settings
               </h2>
               <button
                 onClick={handleSaveSettings}
                 disabled={isSaving}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
-                {isSaving ? "Saving..." : "Save"}
+                {isSaving ? "Saving..." : "Save Settings"}
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Default Currency
-                </label>
-                <select
-                  value={settings.currency}
-                  onChange={e => updateSetting("currency", e.target.value)}
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="USD">USD - US Dollar</option>
-                  <option value="EUR">EUR - Euro</option>
-                  <option value="GBP">GBP - British Pound</option>
-                  <option value="JPY">JPY - Japanese Yen</option>
-                </select>
+            {/* Currency Settings */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                Currency & Formatting
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Currency
+                  </label>
+                  <select
+                    value={settings.currency || "USD"}
+                    onChange={e => updateSetting("currency", e.target.value)}
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="CAD">CAD (C$)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Date Format
+                  </label>
+                  <select
+                    value={settings.dateFormat || "MM/DD/YYYY"}
+                    onChange={e => updateSetting("dateFormat", e.target.value)}
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                  </select>
+                </div>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Date Format
-                </label>
-                <select
-                  value={settings.dateFormat}
-                  onChange={e => updateSetting("dateFormat", e.target.value)}
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                  <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                </select>
-              </div>
-
+            {/* Language Settings */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                Language & Region
+              </h3>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Language
                 </label>
                 <select
-                  value={settings.language}
+                  value={settings.language || "en"}
                   onChange={e => updateSetting("language", e.target.value)}
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="en">English</option>
                   <option value="es">Español</option>
@@ -158,52 +167,40 @@ const SettingsPage = () => {
 
       case "profile":
         return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               Profile Settings
             </h2>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={settings.fullName}
-                  onChange={e => updateSetting("fullName", e.target.value)}
-                  placeholder="Enter your full name"
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={settings.email}
-                  onChange={e => updateSetting("email", e.target.value)}
-                  placeholder="Enter your email"
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Time Zone
-                </label>
-                <select
-                  value={settings.timezone}
-                  onChange={e => updateSetting("timezone", e.target.value)}
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="UTC-8">Pacific Time (UTC-8)</option>
-                  <option value="UTC-5">Eastern Time (UTC-5)</option>
-                  <option value="UTC+0">UTC</option>
-                  <option value="UTC+1">Central European Time (UTC+1)</option>
-                </select>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                Personal Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.firstName || ""}
+                    onChange={e => updateSetting("firstName", e.target.value)}
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter your first name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.lastName || ""}
+                    onChange={e => updateSetting("lastName", e.target.value)}
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter your last name"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -211,55 +208,53 @@ const SettingsPage = () => {
 
       case "security":
         return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               Security Settings
             </h2>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Current Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter current password"
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
-                  />
-                  <button
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                Password
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Current Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      className="w-full pl-10 pr-10 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter current password"
+                    />
+                    <Eye className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  placeholder="Enter new password"
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  placeholder="Confirm new password"
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                  Update Password
+                </button>
               </div>
             </div>
           </div>
@@ -267,172 +262,172 @@ const SettingsPage = () => {
 
       case "data":
         return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               Data Management
             </h2>
 
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Database className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      Data Statistics
-                    </span>
-                  </div>
-                  <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                    <div>Transactions: {transactions.length}</div>
-                    <div>Accounts: {accounts.length}</div>
-                    <div>
-                      Total Net Worth:{" "}
-                      {formatCurrency(
-                        transactions.reduce((sum, t) => sum + t.amount, 0)
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Globe className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      Storage
-                    </span>
-                  </div>
-                  <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                    <div>Local Storage: IndexedDB</div>
-                    <div>Data Privacy: 100% Local</div>
-                    <div>Backup: Manual Export</div>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Export Data */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                  Export Data
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Download your data as a CSV file for backup or analysis.
+                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => exportSettings()}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Settings
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Export transactions logic
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Transactions ({transactions.length})
+                  </button>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={exportSettings}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg text-white font-medium"
-                >
-                  <Download className="w-4 h-4" />
-                  Export Settings
-                </button>
-
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-600 hover:bg-gray-700 transition-colors rounded-lg text-white font-medium"
-                >
-                  <Upload className="w-4 h-4" />
-                  Import Settings
-                </button>
-
-                <button
-                  onClick={handleResetSettings}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 transition-colors rounded-lg text-white font-medium"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  Reset Settings
-                </button>
+              {/* Import Data */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                  Import Data
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Import settings or transactions from a file.
+                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Import Settings
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportSettings}
+                    className="hidden"
+                  />
+                </div>
               </div>
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                onChange={handleImportSettings}
-                className="hidden"
-              />
+              {/* Reset Data */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 md:col-span-2">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                  Reset & Clear Data
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Reset settings to default or clear all data. This action
+                  cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleResetSettings}
+                    className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-200"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reset Settings
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          "Are you sure you want to delete all data? This action cannot be undone."
+                        )
+                      ) {
+                        // Clear all data logic
+                      }
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Clear All Data
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         );
 
       case "appearance":
         return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               Appearance Settings
             </h2>
 
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  Theme
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  <button
-                    onClick={() => setTheme("light")}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                      currentTheme === "light"
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                        : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
-                    }`}
-                  >
-                    <Sun className="w-6 h-6" />
-                    <span className="text-sm font-medium">Light</span>
-                  </button>
-
-                  <button
-                    onClick={() => setTheme("dark")}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                      currentTheme === "dark"
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                        : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
-                    }`}
-                  >
-                    <Moon className="w-6 h-6" />
-                    <span className="text-sm font-medium">Dark</span>
-                  </button>
-
-                  <button
-                    onClick={() => setTheme("auto")}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                      settings.theme === "auto"
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                        : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
-                    }`}
-                  >
-                    <Monitor className="w-6 h-6" />
-                    <span className="text-sm font-medium">Auto</span>
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Glassmorphism Intensity
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={settings.glassmorphismIntensity}
-                  onChange={e =>
-                    updateSetting(
-                      "glassmorphismIntensity",
-                      parseInt(e.target.value)
-                    )
-                  }
-                  className="w-full"
-                />
-                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {settings.glassmorphismIntensity}%
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Animation Speed
-                </label>
-                <select
-                  value={settings.animationSpeed}
-                  onChange={e =>
-                    updateSetting("animationSpeed", e.target.value)
-                  }
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                Theme
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  onClick={() => setTheme("light")}
+                  className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                    currentTheme === "light"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
                 >
-                  <option value="fast">Fast</option>
-                  <option value="normal">Normal</option>
-                  <option value="slow">Slow</option>
-                </select>
+                  <Sun className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
+                  <div className="text-center">
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Light
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Clean and bright
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setTheme("dark")}
+                  className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                    currentTheme === "dark"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
+                >
+                  <Moon className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                  <div className="text-center">
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Dark
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Easy on the eyes
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setTheme("system")}
+                  className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                    currentTheme === "system"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
+                >
+                  <Monitor className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                  <div className="text-center">
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      System
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Follows your OS
+                    </div>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
@@ -440,67 +435,81 @@ const SettingsPage = () => {
 
       case "notifications":
         return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               Notification Settings
             </h2>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div>
-                  <div className="font-medium text-gray-900 dark:text-white">
-                    Email Notifications
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                Notification Preferences
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Email Notifications
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Receive notifications via email
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Receive updates via email
-                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.emailNotifications || false}
+                      onChange={e =>
+                        updateSetting("emailNotifications", e.target.checked)
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                  </label>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={settings.emailNotifications}
-                  onChange={e =>
-                    updateSetting("emailNotifications", e.target.checked)
-                  }
-                  className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
-                />
-              </div>
 
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div>
-                  <div className="font-medium text-gray-900 dark:text-white">
-                    Weekly Reports
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Push Notifications
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Receive browser notifications
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Get weekly spending summaries
-                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.pushNotifications || false}
+                      onChange={e =>
+                        updateSetting("pushNotifications", e.target.checked)
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                  </label>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={settings.weeklyReports}
-                  onChange={e =>
-                    updateSetting("weeklyReports", e.target.checked)
-                  }
-                  className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
-                />
-              </div>
 
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div>
-                  <div className="font-medium text-gray-900 dark:text-white">
-                    Budget Alerts
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Weekly Reports
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Get weekly spending summaries
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Get notified when approaching budget limits
-                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.weeklyReports || false}
+                      onChange={e =>
+                        updateSetting("weeklyReports", e.target.checked)
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                  </label>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={settings.budgetAlerts}
-                  onChange={e =>
-                    updateSetting("budgetAlerts", e.target.checked)
-                  }
-                  className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
-                />
               </div>
             </div>
           </div>
@@ -512,102 +521,63 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="flex-1 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      {/* Mobile Header */}
-      <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-          Settings
-        </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          Manage your preferences and account settings
-        </p>
-      </div>
-
-      {/* Desktop Header */}
-      <div className="hidden lg:block p-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
           Settings
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Manage your preferences and account settings
+          Manage your account preferences and application settings
         </p>
       </div>
 
       {/* Save Message */}
       {saveMessage && (
-        <div className="mx-4 lg:mx-6 mb-6 p-4 rounded-lg flex items-center gap-3">
-          {saveMessage.includes("Error") ? (
-            <AlertCircle className="w-5 h-5" />
-          ) : (
-            <Check className="w-5 h-5" />
-          )}
-          <span
-            className={
-              saveMessage.includes("Error")
-                ? "text-red-800 dark:text-red-200"
-                : "text-green-800 dark:text-green-200"
-            }
-          >
-            {saveMessage}
-          </span>
+        <div className="mb-6 p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+          <div className="flex items-center gap-2">
+            <Check className="w-5 h-5 text-green-600" />
+            <p className="text-green-800 dark:text-green-200">{saveMessage}</p>
+          </div>
         </div>
       )}
 
-      <div className="lg:hidden">
-        {/* Mobile Tab Navigation */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex overflow-x-auto scrollbar-hide">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                    : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
-              >
-                <tab.icon className="w-4 h-4" />
-                <span className="text-sm font-medium">{tab.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Mobile Content */}
-        <div className="p-4">{renderTabContent()}</div>
-      </div>
-
-      {/* Desktop Layout */}
-      <div className="hidden lg:grid lg:grid-cols-4 lg:gap-6 lg:px-6">
-        {/* Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Sidebar Navigation */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sticky top-6">
-            <nav className="space-y-2">
-              {tabs.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600"
-                      : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  <tab.icon className="w-5 h-5" />
-                  <span className="font-medium">{tab.label}</span>
-                </button>
-              ))}
-            </nav>
-          </div>
+          <nav className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="space-y-2">
+              {tabs.map(tab => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
+                      isActive
+                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    <Icon
+                      className={`w-5 h-5 ${
+                        isActive
+                          ? "text-blue-600 dark:text-blue-400"
+                          : "text-gray-500 dark:text-gray-400"
+                      }`}
+                    />
+                    <span className="font-medium">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
         </div>
 
-        {/* Content */}
-        <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            {renderTabContent()}
-          </div>
-        </div>
+        {/* Main Content */}
+        <div className="lg:col-span-3">{renderTabContent()}</div>
       </div>
     </div>
   );
