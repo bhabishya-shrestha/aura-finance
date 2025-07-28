@@ -30,21 +30,19 @@ const StatementImporter = ({ isOpen, onClose }) => {
         transactions = await parseStatement(file);
       } else if (
         file.type === "application/pdf" ||
-        file.name.endsWith(".pdf")
+        file.name.endsWith(".pdf") ||
+        file.type.startsWith("image/")
       ) {
-        setProcessingStep("Processing PDF with OCR...");
-        transactions = await parseStatement(file);
-      } else if (file.type.startsWith("image/")) {
-        setProcessingStep("Analyzing image with AI...");
+        setProcessingStep("Analyzing document with AI...");
 
-        // Use Gemini for image analysis
+        // Use Gemini for PDF and image analysis
         const result = await geminiService.analyzeImage(file);
 
         if (result.transactions && result.transactions.length > 0) {
           transactions = geminiService.convertToTransactions(result);
         } else {
           throw new Error(
-            "No transactions found in the image. Please try a clearer image or different document."
+            "No transactions found in the document. Please try a clearer document or different file."
           );
         }
       } else {
@@ -120,7 +118,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
               </h3>
               <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
                 Upload a CSV, PDF, or image to automatically import your
-                transactions. AI-powered analysis for receipts and statements.
+                transactions. AI-powered analysis for all document types.
               </p>
             </div>
 
