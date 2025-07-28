@@ -25,6 +25,11 @@ body {
   overflow-x: hidden;
 }
 
+/* Prevent body scroll when mobile sidebar is open */
+body.sidebar-open {
+  overflow: hidden;
+}
+
 /* Safe area support for mobile devices */
 .pt-safe {
   padding-top: env(safe-area-inset-top);

@@ -1,8 +1,8 @@
 import React from "react";
-import { Menu, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
-const MobileHeader = ({ onMenuToggle, currentPage }) => {
+const MobileHeader = ({ onMenuToggle, currentPage, isMenuOpen }) => {
   const { user } = useAuth();
 
   const getPageTitle = page => {
@@ -20,14 +20,35 @@ const MobileHeader = ({ onMenuToggle, currentPage }) => {
   return (
     <div className="lg:hidden fixed top-0 left-0 right-0 z-50 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow pt-safe h-14 flex items-center">
       <div className="flex items-center justify-between w-full px-4">
-        {/* Left side - Menu button and title */}
+        {/* Left side - Hamburger menu and title */}
         <div className="flex items-center gap-3">
           <button
             onClick={onMenuToggle}
-            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+            className={`p-2 rounded-lg transition-all duration-200 ${
+              isMenuOpen
+                ? "bg-blue-100 dark:bg-blue-900/20"
+                : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+            }`}
             aria-label="Toggle menu"
+            aria-expanded={isMenuOpen}
           >
-            <Menu className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+            <div className="relative w-4 h-4">
+              <span
+                className={`absolute top-0 left-0 w-4 h-0.5 bg-gray-700 dark:bg-gray-400 transition-all duration-300 ${
+                  isMenuOpen ? "rotate-45 translate-y-1.5" : ""
+                }`}
+              />
+              <span
+                className={`absolute top-1.5 left-0 w-4 h-0.5 bg-gray-700 dark:bg-gray-400 transition-all duration-300 ${
+                  isMenuOpen ? "opacity-0" : ""
+                }`}
+              />
+              <span
+                className={`absolute top-3 left-0 w-4 h-0.5 bg-gray-700 dark:bg-gray-400 transition-all duration-300 ${
+                  isMenuOpen ? "-rotate-45 -translate-y-1.5" : ""
+                }`}
+              />
+            </div>
           </button>
 
           <div className="min-w-0">
