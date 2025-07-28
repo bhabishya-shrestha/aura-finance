@@ -79,6 +79,7 @@ const SettingsPage = () => {
     { id: "general", label: "General", icon: Settings },
     { id: "profile", label: "Profile", icon: User },
     { id: "security", label: "Security", icon: Shield },
+    { id: "api", label: "API Configuration", icon: Database },
     { id: "data", label: "Data Management", icon: Database },
     { id: "appearance", label: "Appearance", icon: Palette },
     { id: "notifications", label: "Notifications", icon: Bell },

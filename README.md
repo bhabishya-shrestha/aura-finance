@@ -86,17 +86,28 @@ This is a personal project exploring modern web development. I am trying to impr
    npm install
    ```
 
-3. **Set up Supabase**
+3. **Set up environment variables**
+
+   ```bash
+   # Copy the example environment file
+   cp env.example .env
+
+   # Edit .env with your actual values
+   # Required: Supabase credentials
+   # Optional: Gemini AI key for document analysis
+   ```
+
+4. **Set up Supabase (Required)**
    - Create a project at [https://app.supabase.com](https://app.supabase.com)
    - Get your project URL and anon key
-   - Create a `.env` file with your credentials
+   - Update `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env`
 
-4. **Set up Gemini AI (Optional but recommended)**
+5. **Set up Gemini AI (Optional but recommended)**
    - Get a free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-   - Add `VITE_GEMINI_API_KEY=your_api_key` to your `.env` file
+   - Update `VITE_GEMINI_API_KEY` in `.env`
    - This enables AI-powered document analysis for receipts and statements
 
-5. **Deploy database schema**
+6. **Deploy database schema**
 
    ```bash
    supabase login
@@ -104,13 +115,13 @@ This is a personal project exploring modern web development. I am trying to impr
    supabase db push
    ```
 
-6. **Start the development server**
+7. **Start the development server**
 
    ```bash
    npm run dev
    ```
 
-7. **Open your browser**
+8. **Open your browser**
    Navigate to `http://localhost:5173`
 
 ### 🎯 Demo Account
@@ -168,6 +179,23 @@ The release process includes:
 npm run build
 vercel --prod
 ```
+
+### Vercel Deployment with AI Features
+
+To enable AI-powered document analysis in production:
+
+1. **Set up Vercel Environment Variables**
+   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+   - Select your aura-finance project
+   - Go to Settings → Environment Variables
+   - Add: `VITE_GEMINI_API_KEY` with your actual API key
+   - Redeploy your project
+
+2. **Domain Restrictions (Recommended)**
+   - Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Edit your API key
+   - Add domain restrictions: `yourdomain.vercel.app`
+   - This prevents unauthorized usage
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 

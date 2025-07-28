@@ -49,6 +49,12 @@ const StatementImporter = ({ isOpen, onClose }) => {
         const result = await geminiService.analyzeImage(file);
         setAnalysisResult(result);
 
+        if (result.success === false) {
+          // AI not available, show helpful message
+          setError(result.message);
+          return;
+        }
+
         if (result.transactions && result.transactions.length > 0) {
           transactions = geminiService.convertToTransactions(result);
         } else {

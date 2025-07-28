@@ -14,7 +14,7 @@ class GeminiService {
 
     if (!this.apiKey) {
       console.warn(
-        "Gemini API key not found. Please set VITE_GEMINI_API_KEY in your environment variables."
+        "AI features disabled: Gemini API key not configured. Visit the app settings to enable AI-powered document analysis."
       );
     }
   }
