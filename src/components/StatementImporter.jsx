@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Upload, AlertCircle, X } from "lucide-react";
 import { parseStatement } from "../utils/statementParser";
+import geminiService from "../services/geminiService";
 import useStore from "../store";
 
 const StatementImporter = ({ isOpen, onClose }) => {
@@ -33,9 +34,22 @@ const StatementImporter = ({ isOpen, onClose }) => {
       ) {
         setProcessingStep("Processing PDF with OCR...");
         transactions = await parseStatement(file);
+      } else if (file.type.startsWith("image/")) {
+        setProcessingStep("Analyzing image with AI...");
+
+        // Use Gemini for image analysis
+        const result = await geminiService.analyzeImage(file);
+
+        if (result.transactions && result.transactions.length > 0) {
+          transactions = geminiService.convertToTransactions(result);
+        } else {
+          throw new Error(
+            "No transactions found in the image. Please try a clearer image or different document."
+          );
+        }
       } else {
         throw new Error(
-          "Unsupported file format. Please upload a CSV or PDF file."
+          "Unsupported file format. Please upload a CSV, PDF, or image file (JPG, PNG, etc.)."
         );
       }
 
@@ -105,8 +119,8 @@ const StatementImporter = ({ isOpen, onClose }) => {
                 Import Bank Statement
               </h3>
               <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                Upload a CSV or PDF statement to automatically import your
-                transactions. We&apos;ll help you categorize and organize them.
+                Upload a CSV, PDF, or image to automatically import your
+                transactions. AI-powered analysis for receipts and statements.
               </p>
             </div>
 
@@ -114,7 +128,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv,.pdf"
+                accept=".csv,.pdf,.jpg,.jpeg,.png,.gif,.webp"
                 onChange={handleFileUpload}
                 className="hidden"
               />
@@ -133,7 +147,8 @@ const StatementImporter = ({ isOpen, onClose }) => {
               </button>
 
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                Supported formats: CSV, PDF (with OCR)
+                Supported formats: CSV, PDF, Images (JPG, PNG, GIF, WebP) with
+                AI analysis
               </div>
             </div>
           </div>

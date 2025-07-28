@@ -41,14 +41,16 @@ This is a personal project exploring modern web development. I am trying to impr
 - **Multi-user Support**: Secure user isolation with RLS
 - **Financial Reports**: Comprehensive analytics and insights
 
-### 📄 Data Import
+### 📄 Smart Document Import
 
-- **CSV Support**: Import transaction data from CSV files
-- **PDF Processing**: Enhanced OCR support for bank statements
-- **Smart Parsing**: Optimized for common bank statement formats
+- **AI-Powered OCR**: Google Gemini AI for intelligent document analysis
+- **Multi-Format Support**: CSV, PDF, and image files (JPG, PNG, GIF, WebP)
+- **Smart Document Detection**: Automatically identifies receipts, bank statements, and credit card statements
+- **Intelligent Parsing**: AI extracts transaction details with high accuracy
+- **Real-time Preview**: See document analysis results before importing
 - **Batch Import**: Review and edit transactions before importing
 - **Duplicate Detection**: Automatically identifies duplicate entries
-- **Improved Validation**: Better error handling and user feedback
+- **Confidence Scoring**: Shows AI analysis confidence levels
 
 ### 🔧 Technology Stack
 
@@ -58,7 +60,8 @@ This is a personal project exploring modern web development. I am trying to impr
 - **Authentication**: Supabase Auth
 - **State Management**: Zustand for lightweight state
 - **Icons**: Lucide React for consistent iconography
-- **Data Processing**: Papa Parse for CSV, Tesseract.js for OCR
+- **Data Processing**: Papa Parse for CSV, Tesseract.js for PDF OCR
+- **AI Integration**: Google Gemini API for intelligent document analysis
 
 ## 🚀 Getting Started
 
@@ -83,12 +86,28 @@ This is a personal project exploring modern web development. I am trying to impr
    npm install
    ```
 
-3. **Set up Supabase**
+3. **Set up environment variables**
+
+   ```bash
+   # Copy the example environment file
+   cp env.example .env
+
+   # Edit .env with your actual values
+   # Required: Supabase credentials
+   # Optional: Gemini AI key for document analysis
+   ```
+
+4. **Set up Supabase (Required)**
    - Create a project at [https://app.supabase.com](https://app.supabase.com)
    - Get your project URL and anon key
-   - Create a `.env` file with your credentials
+   - Update `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env`
 
-4. **Deploy database schema**
+5. **Set up Gemini AI (Optional but recommended)**
+   - Get a free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Update `VITE_GEMINI_API_KEY` in `.env`
+   - This enables AI-powered document analysis for receipts and statements
+
+6. **Deploy database schema**
 
    ```bash
    supabase login
@@ -96,13 +115,13 @@ This is a personal project exploring modern web development. I am trying to impr
    supabase db push
    ```
 
-5. **Start the development server**
+7. **Start the development server**
 
    ```bash
    npm run dev
    ```
 
-6. **Open your browser**
+8. **Open your browser**
    Navigate to `http://localhost:5173`
 
 ### 🎯 Demo Account
@@ -160,6 +179,23 @@ The release process includes:
 npm run build
 vercel --prod
 ```
+
+### Vercel Deployment with AI Features
+
+To enable AI-powered document analysis in production:
+
+1. **Set up Vercel Environment Variables**
+   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+   - Select your aura-finance project
+   - Go to Settings → Environment Variables
+   - Add: `VITE_GEMINI_API_KEY` with your actual API key
+   - Redeploy your project
+
+2. **Domain Restrictions (Recommended)**
+   - Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Edit your API key
+   - Add domain restrictions: `yourdomain.vercel.app`
+   - This prevents unauthorized usage
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
