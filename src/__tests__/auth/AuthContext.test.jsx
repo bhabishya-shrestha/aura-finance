@@ -21,7 +21,7 @@ const mockSignInWithOAuth = vi.hoisted(() => vi.fn());
 vi.mock("../../lib/supabase", () => ({
   supabase: {
     auth: {
-      signInWithPassword: mockSignInWithPassword,
+      signIn: mockSignInWithPassword,
       signUp: mockSignUp,
       signOut: mockSignOut,
       getUser: mockGetUser,
@@ -29,14 +29,6 @@ vi.mock("../../lib/supabase", () => ({
       onAuthStateChange: mockOnAuthStateChange,
       signInWithOAuth: mockSignInWithOAuth,
     },
-  },
-  auth: {
-    signIn: mockSignInWithPassword, // This is the wrapper function
-    signUp: mockSignUp,
-    signOut: mockSignOut,
-    getUser: mockGetUser,
-    getSession: mockGetSession,
-    onAuthStateChange: mockOnAuthStateChange,
   },
 }));
 
@@ -406,7 +398,7 @@ describe("AuthContext", () => {
   describe("Auth State Changes", () => {
     it("should handle auth state change events", async () => {
       const mockCallback = vi.fn();
-      mockOnAuthStateChange.mockImplementation((callback) => {
+      mockOnAuthStateChange.mockImplementation(callback => {
         mockCallback.mockImplementation(callback);
         return { data: { subscription: { unsubscribe: vi.fn() } } };
       });

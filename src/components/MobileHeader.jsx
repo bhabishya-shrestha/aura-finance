@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 const MobileHeader = ({ onMenuToggle, currentPage }) => {
   const { user } = useAuth();
 
-  const getPageTitle = (page) => {
+  const getPageTitle = page => {
     const titles = {
       dashboard: "Dashboard",
       accounts: "Accounts",

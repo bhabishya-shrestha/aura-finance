@@ -11,7 +11,7 @@ const Accounts = () => {
     balance: 0,
   });
 
-  const getAccountIcon = (type) => {
+  const getAccountIcon = type => {
     switch (type) {
       case "credit":
         return <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />;
@@ -24,7 +24,7 @@ const Accounts = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -49,8 +49,7 @@ const Accounts = () => {
     } catch (error) {
       // Error handling - in production, this would use a proper error notification system
       if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.error("Error adding account:", error);
+        // Error adding account
       }
     }
   };
@@ -59,7 +58,6 @@ const Accounts = () => {
     // Note: In a production app, this should use a proper confirmation dialog
     // For now, we'll keep the confirm but add proper error handling
     if (
-      // eslint-disable-next-line no-alert
       window.confirm(
         `Are you sure you want to delete "${accountName}"? This will also delete all associated transactions.`
       )
@@ -69,8 +67,7 @@ const Accounts = () => {
       } catch (error) {
         // Error handling - in production, this would use a proper error notification system
         if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.error("Error deleting account:", error);
+          // Error deleting account
         }
       }
     }
@@ -84,7 +81,7 @@ const Accounts = () => {
         </h2>
 
         <div className="space-y-2 sm:space-y-3">
-          {accounts.map((account) => {
+          {accounts.map(account => {
             const balance = getAccountBalance(account.id);
             return (
               <div
@@ -161,7 +158,7 @@ const Accounts = () => {
                 <input
                   type="text"
                   value={newAccount.name}
-                  onChange={(e) =>
+                  onChange={e =>
                     setNewAccount({ ...newAccount, name: e.target.value })
                   }
                   placeholder="e.g., Chase Checking"
@@ -175,7 +172,7 @@ const Accounts = () => {
                 </label>
                 <select
                   value={newAccount.type}
-                  onChange={(e) =>
+                  onChange={e =>
                     setNewAccount({ ...newAccount, type: e.target.value })
                   }
                   className="input-glass w-full text-sm sm:text-base"
@@ -194,7 +191,7 @@ const Accounts = () => {
                   type="number"
                   step="0.01"
                   value={newAccount.balance}
-                  onChange={(e) =>
+                  onChange={e =>
                     setNewAccount({ ...newAccount, balance: e.target.value })
                   }
                   placeholder="0.00"

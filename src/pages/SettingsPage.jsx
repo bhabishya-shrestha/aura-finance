@@ -7,7 +7,6 @@ import {
   Palette,
   Download,
   Upload,
-  Trash2,
   Eye,
   EyeOff,
   Bell,
@@ -52,7 +51,7 @@ const SettingsPage = () => {
     }, 1000);
   };
 
-  const handleImportSettings = async (event) => {
+  const handleImportSettings = async event => {
     const file = event.target.files[0];
     if (file) {
       try {
@@ -68,7 +67,6 @@ const SettingsPage = () => {
 
   const handleResetSettings = () => {
     if (
-      // eslint-disable-next-line no-alert
       window.confirm(
         "Are you sure you want to reset all settings to default? This action cannot be undone."
       )
@@ -123,7 +121,7 @@ const SettingsPage = () => {
         <div className="lg:col-span-1">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
             <nav className="space-y-2">
-              {tabs.map((tab) => (
+              {tabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
@@ -168,9 +166,7 @@ const SettingsPage = () => {
                     </label>
                     <select
                       value={settings.currency}
-                      onChange={(e) =>
-                        updateSetting("currency", e.target.value)
-                      }
+                      onChange={e => updateSetting("currency", e.target.value)}
                       className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="USD">USD - US Dollar</option>
@@ -186,7 +182,7 @@ const SettingsPage = () => {
                     </label>
                     <select
                       value={settings.dateFormat}
-                      onChange={(e) =>
+                      onChange={e =>
                         updateSetting("dateFormat", e.target.value)
                       }
                       className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -203,9 +199,7 @@ const SettingsPage = () => {
                     </label>
                     <select
                       value={settings.language}
-                      onChange={(e) =>
-                        updateSetting("language", e.target.value)
-                      }
+                      onChange={e => updateSetting("language", e.target.value)}
                       className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="en">English</option>
@@ -233,9 +227,7 @@ const SettingsPage = () => {
                     <input
                       type="text"
                       value={settings.fullName}
-                      onChange={(e) =>
-                        updateSetting("fullName", e.target.value)
-                      }
+                      onChange={e => updateSetting("fullName", e.target.value)}
                       placeholder="Enter your full name"
                       className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -248,7 +240,7 @@ const SettingsPage = () => {
                     <input
                       type="email"
                       value={settings.email}
-                      onChange={(e) => updateSetting("email", e.target.value)}
+                      onChange={e => updateSetting("email", e.target.value)}
                       placeholder="Enter your email"
                       className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -260,9 +252,7 @@ const SettingsPage = () => {
                     </label>
                     <select
                       value={settings.timezone}
-                      onChange={(e) =>
-                        updateSetting("timezone", e.target.value)
-                      }
+                      onChange={e => updateSetting("timezone", e.target.value)}
                       className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="UTC-8">Pacific Time (UTC-8)</option>
@@ -473,7 +463,7 @@ const SettingsPage = () => {
                       min="0"
                       max="100"
                       value={settings.glassmorphismIntensity}
-                      onChange={(e) =>
+                      onChange={e =>
                         updateSetting(
                           "glassmorphismIntensity",
                           parseInt(e.target.value)
@@ -492,7 +482,7 @@ const SettingsPage = () => {
                     </label>
                     <select
                       value={settings.animationSpeed}
-                      onChange={(e) =>
+                      onChange={e =>
                         updateSetting("animationSpeed", e.target.value)
                       }
                       className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -526,7 +516,7 @@ const SettingsPage = () => {
                     <input
                       type="checkbox"
                       checked={settings.emailNotifications}
-                      onChange={(e) =>
+                      onChange={e =>
                         updateSetting("emailNotifications", e.target.checked)
                       }
                       className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
@@ -545,7 +535,7 @@ const SettingsPage = () => {
                     <input
                       type="checkbox"
                       checked={settings.weeklyReports}
-                      onChange={(e) =>
+                      onChange={e =>
                         updateSetting("weeklyReports", e.target.checked)
                       }
                       className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
@@ -564,7 +554,7 @@ const SettingsPage = () => {
                     <input
                       type="checkbox"
                       checked={settings.budgetAlerts}
-                      onChange={(e) =>
+                      onChange={e =>
                         updateSetting("budgetAlerts", e.target.checked)
                       }
                       className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"

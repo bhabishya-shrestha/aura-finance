@@ -7,7 +7,6 @@ import {
   TrendingUp,
   Settings,
   LogOut,
-  User,
   Menu,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -54,7 +53,7 @@ const MobileNav = ({ onPageChange, currentPage }) => {
     },
   ];
 
-  const handleMenuClick = (pageId) => {
+  const handleMenuClick = pageId => {
     onPageChange(pageId);
     setShowUserMenu(false);
   };
@@ -79,7 +78,7 @@ const MobileNav = ({ onPageChange, currentPage }) => {
         <div className="px-3 py-2">
           {/* Primary Navigation - 3 main items */}
           <div className="flex items-center justify-between">
-            {primaryMenuItems.map((item) => (
+            {primaryMenuItems.map(item => (
               <button
                 key={item.id}
                 onClick={() => handleMenuClick(item.id)}
@@ -102,7 +101,7 @@ const MobileNav = ({ onPageChange, currentPage }) => {
               </button>
             ))}
 
-            {/* User Menu Button */}
+            {/* Menu Button */}
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-200 flex-1 mx-1 min-h-[52px] justify-center ${
@@ -120,10 +119,10 @@ const MobileNav = ({ onPageChange, currentPage }) => {
           </div>
         </div>
 
-        {/* User Menu Dropdown */}
+        {/* Menu Dropdown */}
         {showUserMenu && (
           <div className="absolute bottom-full left-0 right-0 mb-2 mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50">
-            {/* User Profile Section */}
+            {/* Profile Section */}
             {user && (
               <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-3">
@@ -142,7 +141,7 @@ const MobileNav = ({ onPageChange, currentPage }) => {
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {user.user_metadata?.full_name ||
                         user.email?.split("@")[0] ||
-                        "User"}
+                        ""}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       {user.email}
@@ -155,7 +154,7 @@ const MobileNav = ({ onPageChange, currentPage }) => {
             {/* Secondary Navigation Items */}
             <div className="p-2">
               <div className="grid grid-cols-3 gap-2">
-                {secondaryMenuItems.map((item) => (
+                {secondaryMenuItems.map(item => (
                   <button
                     key={item.id}
                     onClick={() => handleMenuClick(item.id)}

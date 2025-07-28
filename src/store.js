@@ -12,11 +12,11 @@ const useStore = create((set, get) => ({
   currentUser: null,
 
   // Actions
-  setLoading: (loading) => set({ isLoading: loading }),
+  setLoading: loading => set({ isLoading: loading }),
 
-  setModalOpen: (open) => set({ isModalOpen: open }),
+  setModalOpen: open => set({ isModalOpen: open }),
 
-  setParsedTransactions: (transactions) =>
+  setParsedTransactions: transactions =>
     set({ parsedTransactions: transactions }),
 
   // Load transactions from database
@@ -85,7 +85,7 @@ const useStore = create((set, get) => ({
   },
 
   // Add transactions to database
-  addTransactions: async (transactions) => {
+  addTransactions: async transactions => {
     try {
       set({ isLoading: true });
       const token = tokenManager.getToken();
@@ -105,7 +105,7 @@ const useStore = create((set, get) => ({
       }
 
       // Add userId to transactions
-      const transactionsWithUser = transactions.map((transaction) => ({
+      const transactionsWithUser = transactions.map(transaction => ({
         ...transaction,
         userId: userId || transaction.userId || null,
       }));
@@ -126,7 +126,7 @@ const useStore = create((set, get) => ({
   },
 
   // Delete a single transaction
-  deleteTransaction: async (transactionId) => {
+  deleteTransaction: async transactionId => {
     try {
       set({ isLoading: true });
       await db.transactions.delete(transactionId);
@@ -162,7 +162,7 @@ const useStore = create((set, get) => ({
   },
 
   // Add a new account
-  addAccount: async (accountData) => {
+  addAccount: async accountData => {
     try {
       set({ isLoading: true });
       const token = tokenManager.getToken();
@@ -195,7 +195,7 @@ const useStore = create((set, get) => ({
   },
 
   // Delete an account
-  deleteAccount: async (accountId) => {
+  deleteAccount: async accountId => {
     try {
       set({ isLoading: true });
       // Delete all transactions associated with this account
@@ -229,16 +229,16 @@ const useStore = create((set, get) => ({
   },
 
   // Get transactions by account
-  getTransactionsByAccount: (accountId) => {
+  getTransactionsByAccount: accountId => {
     const { transactions } = get();
-    return transactions.filter((t) => t.accountId === accountId);
+    return transactions.filter(t => t.accountId === accountId);
   },
 
   // Calculate account balance
-  getAccountBalance: (accountId) => {
+  getAccountBalance: accountId => {
     const { transactions } = get();
     return transactions
-      .filter((t) => t.accountId === accountId)
+      .filter(t => t.accountId === accountId)
       .reduce((total, transaction) => total + transaction.amount, 0);
   },
 }));

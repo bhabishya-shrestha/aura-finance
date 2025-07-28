@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, feature/*, hotfix/*, release/*]
   pull_request:
     branches: [main, develop]
 
@@ -36,6 +36,9 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Test build process
+        run: npm run test:build
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -61,8 +64,23 @@ jobs:
 
       - name: Run security audit
         run: npm audit --audit-level=high
-        continue-on-error: true
 
       - name: Run dependency check
         run: npx audit-ci --high
-        continue-on-error: true
+
+      - name: Run security vulnerability check
+        run: npm run security
+
+      - name: Install jq for JSON parsing
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Check for known vulnerabilities
+        run: |
+          echo "🔒 Security audit completed"
+          echo "📊 Vulnerability Summary:"
+          npm audit --audit-level=high --json | jq '.metadata.vulnerabilities' || echo "No vulnerabilities found or audit failed"
+
+          echo ""
+          echo "📋 Known Issues:"
+          echo "- esbuild vulnerability (moderate): Development-only, planned for v1.2.0"
+          echo "- See SECURITY.md for detailed information"

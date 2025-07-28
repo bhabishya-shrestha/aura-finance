@@ -1,101 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 
 const AuthCallbackPage = () => {
   const navigate = useNavigate();
+
   const [status, setStatus] = useState("loading"); // loading, success, error
   const [message, setMessage] = useState("Processing authentication...");
 
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        setStatus("loading");
-        setMessage("Processing authentication...");
+        const { data, error } = await supabase.auth.getSession();
 
-        // Get the current URL parameters and hash
-        const urlParams = new URLSearchParams(window.location.search);
-        const hashParams = new URLSearchParams(
-          window.location.hash.substring(1)
-        );
-
-        const error = urlParams.get("error") || hashParams.get("error");
-        const errorDescription =
-          urlParams.get("error_description") ||
-          hashParams.get("error_description");
-
-        // Check for OAuth errors
         if (error) {
-          console.error("OAuth error:", error, errorDescription);
-          setStatus("error");
-          setMessage(`Authentication failed: ${errorDescription || error}`);
-          return;
-        }
-
-        // Check if we have tokens in the hash
-        const accessToken = hashParams.get("access_token");
-        const refreshToken = hashParams.get("refresh_token");
-
-        console.log("Access token present:", !!accessToken);
-        console.log("Refresh token present:", !!refreshToken);
-
-        if (accessToken && refreshToken) {
-          console.log("Found tokens in URL hash, setting session...");
-
-          // Set the session manually with the tokens from the hash
-          const { data: setSessionData, error: setSessionError } =
-            await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-
-          if (setSessionError) {
-            console.error("Error setting session:", setSessionError);
-            setStatus("error");
-            setMessage("Failed to establish session. Please try again.");
-            return;
-          }
-
-          if (setSessionData.session) {
-            console.log(
-              "Session established successfully:",
-              setSessionData.session.user.email
-            );
-            setStatus("success");
-            setMessage("Authentication successful! Redirecting...");
-
-            setTimeout(() => {
-              navigate("/dashboard", { replace: true });
-            }, 1500);
-            return;
-          }
-        }
-
-        // Fallback: try to get existing session
-        const { data, error: sessionError } = await supabase.auth.getSession();
-
-        if (sessionError) {
-          console.error("Auth callback error:", sessionError);
           setStatus("error");
           setMessage("Authentication failed. Please try again.");
           return;
         }
 
         if (data.session) {
-          console.log("Authentication successful:", data.session.user.email);
           setStatus("success");
           setMessage("Authentication successful! Redirecting...");
-
           setTimeout(() => {
-            navigate("/dashboard", { replace: true });
-          }, 1500);
+            navigate("/dashboard");
+          }, 2000);
         } else {
           setStatus("error");
           setMessage("No session found. Please try logging in again.");
         }
       } catch (error) {
-        console.error("Unexpected error during auth callback:", error);
         setStatus("error");
         setMessage("An unexpected error occurred. Please try again.");
       }

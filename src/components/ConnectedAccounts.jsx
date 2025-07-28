@@ -1,14 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
-  CreditCard,
   AlertCircle,
   CheckCircle,
   Loader2,
   RefreshCw,
   Trash2,
   Bank,
-  DollarSign,
-  Calendar,
   Shield,
   X,
 } from "lucide-react";
@@ -19,7 +16,7 @@ import {
 } from "../services/plaidService";
 import { useAuth } from "../contexts/AuthContext";
 
-const ConnectedAccounts = ({ onRefresh }) => {
+const ConnectedAccounts = () => {
   const { user } = useAuth();
   const [connectedItems, setConnectedItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,13 +24,7 @@ const ConnectedAccounts = ({ onRefresh }) => {
   const [syncingItem, setSyncingItem] = useState(null);
   const [removingItem, setRemovingItem] = useState(null);
 
-  useEffect(() => {
-    if (user?.id) {
-      loadConnectedAccounts();
-    }
-  }, [user?.id]);
-
-  const loadConnectedAccounts = async () => {
+  const loadConnectedAccounts = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -41,12 +32,17 @@ const ConnectedAccounts = ({ onRefresh }) => {
       const items = await plaidDatabase.getPlaidItems(user.id);
       setConnectedItems(items);
     } catch (error) {
-      console.error("Error loading connected accounts:", error);
       setError("Failed to load connected accounts");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadConnectedAccounts();
+    }
+  }, [user?.id, loadConnectedAccounts]);
 
   const syncAccount = async (itemId, accessToken) => {
     try {
@@ -93,12 +89,7 @@ const ConnectedAccounts = ({ onRefresh }) => {
 
       // Reload accounts
       await loadConnectedAccounts();
-
-      if (onRefresh) {
-        onRefresh();
-      }
     } catch (error) {
-      console.error("Error syncing account:", error);
       setError("Failed to sync account. Please try again.");
     } finally {
       setSyncingItem(null);
@@ -118,19 +109,14 @@ const ConnectedAccounts = ({ onRefresh }) => {
 
       // Reload accounts
       await loadConnectedAccounts();
-
-      if (onRefresh) {
-        onRefresh();
-      }
     } catch (error) {
-      console.error("Error removing account:", error);
       setError("Failed to remove account. Please try again.");
     } finally {
       setRemovingItem(null);
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = dateString => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -140,7 +126,7 @@ const ConnectedAccounts = ({ onRefresh }) => {
     });
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
       case "good":
         return "text-green-600 dark:text-green-400";
@@ -153,7 +139,7 @@ const ConnectedAccounts = ({ onRefresh }) => {
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = status => {
     switch (status) {
       case "good":
         return <CheckCircle className="w-4 h-4" />;
@@ -219,7 +205,7 @@ const ConnectedAccounts = ({ onRefresh }) => {
 
       {/* Connected Accounts List */}
       <div className="space-y-4">
-        {connectedItems.map((item) => (
+        {connectedItems.map(item => (
           <div
             key={item.item_id}
             className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"
@@ -316,8 +302,8 @@ const ConnectedAccounts = ({ onRefresh }) => {
               Your Data is Secure
             </h3>
             <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-              We use Plaid's bank-level security to access your financial data.
-              We never store your bank credentials and only have read-only
+              We use Plaid&apos;s bank-level security to access your financial
+              data. We never store your bank credentials and only have read-only
               access to your accounts.
             </p>
           </div>

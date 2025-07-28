@@ -7,8 +7,6 @@ import {
   PieChart,
   BarChart3,
   Download,
-  Filter,
-  CalendarDays,
   CreditCard,
   PiggyBank,
   ShoppingCart,
@@ -32,7 +30,7 @@ const ReportsPage = () => {
     loadTransactions();
   }, [loadTransactions]);
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -44,7 +42,7 @@ const ReportsPage = () => {
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    return transactions.filter((transaction) => {
+    return transactions.filter(transaction => {
       const transactionDate = new Date(transaction.date);
       return (
         transactionDate.getMonth() === currentMonth &&
@@ -53,7 +51,7 @@ const ReportsPage = () => {
     });
   };
 
-  const getCategoryIcon = (categoryName) => {
+  const getCategoryIcon = categoryName => {
     const icons = {
       "Food & Dining": Utensils,
       Transportation: Car,
@@ -73,10 +71,10 @@ const ReportsPage = () => {
 
   const calculateCategoryBreakdown = () => {
     const periodData = getCurrentPeriodData();
-    const expenses = periodData.filter((t) => t.type === "expense");
+    const expenses = periodData.filter(t => t.type === "expense");
 
     const categoryMap = {};
-    expenses.forEach((transaction) => {
+    expenses.forEach(transaction => {
       const category = transaction.category?.name || "Uncategorized";
       if (!categoryMap[category]) {
         categoryMap[category] = 0;
@@ -102,7 +100,7 @@ const ReportsPage = () => {
       const monthName = date.toLocaleDateString("en-US", { month: "short" });
       const year = date.getFullYear();
 
-      const monthTransactions = transactions.filter((t) => {
+      const monthTransactions = transactions.filter(t => {
         const tDate = new Date(t.date);
         return (
           tDate.getMonth() === date.getMonth() && tDate.getFullYear() === year
@@ -110,11 +108,11 @@ const ReportsPage = () => {
       });
 
       const income = monthTransactions
-        .filter((t) => t.type === "income")
+        .filter(t => t.type === "income")
         .reduce((sum, t) => sum + t.amount, 0);
 
       const expenses = monthTransactions
-        .filter((t) => t.type === "expense")
+        .filter(t => t.type === "expense")
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
       months.push({
@@ -130,10 +128,10 @@ const ReportsPage = () => {
 
   const periodData = getCurrentPeriodData();
   const totalIncome = periodData
-    .filter((t) => t.type === "income")
+    .filter(t => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = periodData
-    .filter((t) => t.type === "expense")
+    .filter(t => t.type === "expense")
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
   const netIncome = totalIncome - totalExpenses;
   const categoryBreakdown = calculateCategoryBreakdown();
@@ -243,7 +241,7 @@ const ReportsPage = () => {
           Top Expense Categories
         </h3>
         <div className="space-y-3">
-          {categoryBreakdown.slice(0, 5).map((category) => {
+          {categoryBreakdown.slice(0, 5).map(category => {
             const Icon = getCategoryIcon(category.category);
             const percentage = (
               (category.amount / totalExpenses) *
@@ -347,7 +345,7 @@ const ReportsPage = () => {
           Monthly Income vs Expenses
         </h3>
         <div className="space-y-4">
-          {monthlyTrends.map((month) => (
+          {monthlyTrends.map(month => (
             <div key={month.month} className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-gray-900 dark:text-white">
@@ -386,13 +384,13 @@ const ReportsPage = () => {
                 <div
                   className="bg-green-500 h-full"
                   style={{
-                    width: `${(month.income / Math.max(...monthlyTrends.map((m) => m.income))) * 100}%`,
+                    width: `${(month.income / Math.max(...monthlyTrends.map(m => m.income))) * 100}%`,
                   }}
                 />
                 <div
                   className="bg-red-500 h-full"
                   style={{
-                    width: `${(month.expenses / Math.max(...monthlyTrends.map((m) => m.expenses))) * 100}%`,
+                    width: `${(month.expenses / Math.max(...monthlyTrends.map(m => m.expenses))) * 100}%`,
                   }}
                 />
               </div>
@@ -455,7 +453,7 @@ const ReportsPage = () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <select
               value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
+              onChange={e => setSelectedPeriod(e.target.value)}
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="month">This Month</option>
@@ -474,7 +472,7 @@ const ReportsPage = () => {
       {/* Report Navigation */}
       <div className="mb-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {reports.map((report) => {
+          {reports.map(report => {
             const Icon = report.icon;
             return (
               <button

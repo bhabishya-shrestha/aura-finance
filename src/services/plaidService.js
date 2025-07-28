@@ -57,7 +57,7 @@ class RateLimiter {
     const requests = this.requests.get(key);
 
     // Remove old requests outside the window
-    const validRequests = requests.filter((time) => now - time < windowMs);
+    const validRequests = requests.filter(time => now - time < windowMs);
     this.requests.set(key, validRequests);
 
     // Check if we can make another request
@@ -97,7 +97,7 @@ class RateLimiter {
         throw new Error("Rate limit exceeded - maximum wait time reached");
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
 }
@@ -169,7 +169,7 @@ class PlaidAPI {
         retries < this.config.rateLimits.maxRetries
       ) {
         const delay = this.config.rateLimits.retryDelay * Math.pow(2, retries);
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await new Promise(resolve => setTimeout(resolve, delay));
         return this.makeRequestWithRetry(endpoint, data, itemId, retries + 1);
       }
       throw error;
@@ -198,47 +198,34 @@ export const plaidService = {
    * Create a Link token for connecting accounts
    */
   async createLinkToken(userId, clientName = "Aura Finance") {
-    try {
-      const response = await plaidAPI.makeRequest("/link/token/create", {
-        user: { client_user_id: userId },
-        client_name: clientName,
-        country_codes: ["US"],
-        language: "en",
-        products: ["transactions", "auth"],
-        account_filters: {
-          depository: {
-            account_subtypes: ["checking", "savings"],
-          },
-          credit: {
-            account_subtypes: ["credit card"],
-          },
+    const response = await plaidAPI.makeRequest("/link/token/create", {
+      user: { client_user_id: userId },
+      client_name: clientName,
+      country_codes: ["US"],
+      language: "en",
+      products: ["transactions", "auth"],
+      account_filters: {
+        depository: {
+          account_subtypes: ["checking", "savings"],
         },
-      });
+        credit: {
+          account_subtypes: ["credit card"],
+        },
+      },
+    });
 
-      return response;
-    } catch (error) {
-      console.error("Error creating link token:", error);
-      throw error;
-    }
+    return response;
   },
 
   /**
    * Exchange public token for access token
    */
   async exchangePublicToken(publicToken) {
-    try {
-      const response = await plaidAPI.makeRequest(
-        "/item/public_token/exchange",
-        {
-          public_token: publicToken,
-        }
-      );
+    const response = await plaidAPI.makeRequest("/item/public_token/exchange", {
+      public_token: publicToken,
+    });
 
-      return response;
-    } catch (error) {
-      console.error("Error exchanging public token:", error);
-      throw error;
-    }
+    return response;
   },
 
   /**
@@ -252,7 +239,6 @@ export const plaidService = {
 
       return response.accounts;
     } catch (error) {
-      console.error("Error getting accounts:", error);
       throw error;
     }
   },
@@ -273,7 +259,6 @@ export const plaidService = {
       );
       return response.accounts;
     } catch (error) {
-      console.error("Error getting account balances:", error);
       throw error;
     }
   },
@@ -315,7 +300,6 @@ export const plaidService = {
         request_id: response.request_id,
       };
     } catch (error) {
-      console.error("Error getting transactions:", error);
       throw error;
     }
   },
@@ -335,7 +319,6 @@ export const plaidService = {
 
       return response.institution;
     } catch (error) {
-      console.error("Error getting institution:", error);
       throw error;
     }
   },
@@ -351,7 +334,6 @@ export const plaidService = {
 
       return response;
     } catch (error) {
-      console.error("Error removing item:", error);
       throw error;
     }
   },
@@ -367,7 +349,6 @@ export const plaidService = {
 
       return response.item;
     } catch (error) {
-      console.error("Error getting item status:", error);
       throw error;
     }
   },
@@ -392,7 +373,6 @@ export const plaidDatabase = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Error storing Plaid item:", error);
       throw error;
     }
   },
@@ -411,7 +391,6 @@ export const plaidDatabase = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Error getting Plaid items:", error);
       throw error;
     }
   },
@@ -421,7 +400,7 @@ export const plaidDatabase = {
    */
   async storeAccounts(userId, itemId, accounts) {
     try {
-      const accountsToInsert = accounts.map((account) => ({
+      const accountsToInsert = accounts.map(account => ({
         user_id: userId,
         plaid_item_id: itemId,
         plaid_account_id: account.account_id,
@@ -442,7 +421,6 @@ export const plaidDatabase = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Error storing accounts:", error);
       throw error;
     }
   },
@@ -452,7 +430,7 @@ export const plaidDatabase = {
    */
   async storeTransactions(userId, itemId, transactions) {
     try {
-      const transactionsToInsert = transactions.map((transaction) => ({
+      const transactionsToInsert = transactions.map(transaction => ({
         user_id: userId,
         plaid_item_id: itemId,
         plaid_transaction_id: transaction.transaction_id,
@@ -485,7 +463,6 @@ export const plaidDatabase = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Error storing transactions:", error);
       throw error;
     }
   },
@@ -517,7 +494,6 @@ export const plaidDatabase = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error("Error removing Plaid item:", error);
       throw error;
     }
   },
@@ -535,7 +511,7 @@ export const plaidUsageTracker = {
 
       if (error) throw error;
     } catch (error) {
-      console.error("Error tracking Plaid usage:", error);
+      throw error;
     }
   },
 
@@ -559,8 +535,7 @@ export const plaidUsageTracker = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Error getting monthly usage:", error);
-      return [];
+      throw error;
     }
   },
 
@@ -568,7 +543,7 @@ export const plaidUsageTracker = {
     try {
       const usage = await this.getMonthlyUsage(userId);
       const totalTransactions =
-        usage.find((u) => u.endpoint === "/transactions/get")?.count || 0;
+        usage.find(u => u.endpoint === "/transactions/get")?.count || 0;
 
       return {
         transactionsRemaining: Math.max(
@@ -581,8 +556,7 @@ export const plaidUsageTracker = {
           PLAID_CONFIG.freeTierLimits.maxTransactionsPerMonth,
       };
     } catch (error) {
-      console.error("Error checking free tier limits:", error);
-      return { transactionsRemaining: 0, isWithinLimits: false };
+      throw error;
     }
   },
 };

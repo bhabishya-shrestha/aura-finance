@@ -15,12 +15,12 @@ export const CATEGORIES = [
 ];
 
 // Parse CSV files
-export const parseCSV = (file) => {
+export const parseCSV = file => {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: results => {
         try {
           const transactions = results.data.map((row, index) => {
             // Handle different CSV formats
@@ -49,7 +49,7 @@ export const parseCSV = (file) => {
           reject(error);
         }
       },
-      error: (error) => {
+      error: error => {
         reject(error);
       },
     });
@@ -57,7 +57,7 @@ export const parseCSV = (file) => {
 };
 
 // Validate PDF file before processing
-const validatePDFFile = (file) => {
+const validatePDFFile = file => {
   // Check file size (max 10MB)
   const maxSize = 10 * 1024 * 1024; // 10MB
   if (file.size > maxSize) {
@@ -81,34 +81,22 @@ const validatePDFFile = (file) => {
 };
 
 // Parse PDF files (optimized for Bank of America statements)
-export const parsePDF = async (file) => {
+export const parsePDF = async file => {
   try {
     // Validate the PDF file first
     validatePDFFile(file);
 
     // Show loading state
-    if (import.meta.env.DEV) {
-      console.log("Starting PDF validation and OCR processing...");
-    }
 
     // Perform OCR on the PDF with improved settings
     const result = await Tesseract.recognize(file, "eng", {
-      logger: (m) => {
-        if (import.meta.env.DEV) {
-          console.log(m);
-        }
-      },
+      logger: () => {},
       // Improved OCR settings for better accuracy
       tessedit_char_whitelist:
         "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,$()-/ ",
       tessedit_pageseg_mode: "6", // Uniform block of text
       preserve_interword_spaces: "1",
     });
-
-    if (import.meta.env.DEV) {
-      console.log("OCR completed, parsing text...");
-      console.log("Extracted text length:", result.data.text.length);
-    }
 
     // Validate that we got meaningful text
     if (!result.data.text || result.data.text.trim().length < 100) {
@@ -130,9 +118,6 @@ export const parsePDF = async (file) => {
     return transactions;
   } catch (error) {
     // Enhanced error handling
-    if (import.meta.env.DEV) {
-      console.error("Error parsing PDF:", error);
-    }
 
     // Provide more specific error messages
     if (error.message.includes("Unable to extract")) {
@@ -156,9 +141,9 @@ export const parsePDF = async (file) => {
 };
 
 // Parse Bank of America statement text with improved patterns
-const parseBankOfAmericaText = (text) => {
+const parseBankOfAmericaText = text => {
   const transactions = [];
-  const lines = text.split("\n").filter((line) => line.trim());
+  const lines = text.split("\n").filter(line => line.trim());
 
   // Enhanced transaction patterns for better matching
   const transactionPatterns = [
@@ -193,7 +178,7 @@ const parseBankOfAmericaText = (text) => {
 
     // Check if we're entering a transaction section
     if (
-      sections.some((section) =>
+      sections.some(section =>
         line.toLowerCase().includes(section.toLowerCase())
       )
     ) {
@@ -249,12 +234,6 @@ const parseBankOfAmericaText = (text) => {
 
   // If no transactions found with section parsing, try regex on entire text
   if (transactions.length === 0) {
-    if (import.meta.env.DEV) {
-      console.log(
-        "No transactions found in sections, trying full text parsing..."
-      );
-    }
-
     for (const pattern of transactionPatterns) {
       const matches = [...text.matchAll(pattern)];
 
@@ -289,22 +268,18 @@ const parseBankOfAmericaText = (text) => {
     (transaction, index, self) =>
       index ===
       self.findIndex(
-        (t) =>
+        t =>
           t.date.getTime() === transaction.date.getTime() &&
           t.description === transaction.description &&
           t.amount === transaction.amount
       )
   );
 
-  if (import.meta.env.DEV) {
-    console.log(`Found ${uniqueTransactions.length} transactions`);
-  }
-
   return uniqueTransactions;
 };
 
 // Validate date string
-const isValidDate = (dateStr) => {
+const isValidDate = dateStr => {
   try {
     const parsed = parseDate(dateStr);
     return (
@@ -318,7 +293,7 @@ const isValidDate = (dateStr) => {
 };
 
 // Parse date string to Date object with improved error handling
-const parseDate = (dateStr) => {
+const parseDate = dateStr => {
   try {
     // Handle MM/DD/YYYY format
     if (dateStr.includes("/")) {
@@ -334,15 +309,12 @@ const parseDate = (dateStr) => {
 
     throw new Error("Unsupported date format");
   } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error("Error parsing date:", dateStr, error);
-    }
     return new Date();
   }
 };
 
 // Categorize transaction based on description
-const categorizeTransaction = (description) => {
+const categorizeTransaction = description => {
   const desc = description.toLowerCase();
 
   // Groceries
@@ -456,4 +428,20 @@ const categorizeTransaction = (description) => {
   }
 
   return "Other";
+};
+
+// Main function to parse statements (CSV or PDF)
+export const parseStatement = async file => {
+  if (file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv")) {
+    return await parseCSV(file);
+  } else if (
+    file.type === "application/pdf" ||
+    file.name.toLowerCase().endsWith(".pdf")
+  ) {
+    return await parsePDF(file);
+  } else {
+    throw new Error(
+      "Unsupported file format. Please upload a CSV or PDF file."
+    );
+  }
 };

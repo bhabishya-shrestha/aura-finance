@@ -8,7 +8,6 @@ import {
   Shield,
   Info,
   X,
-  RefreshCw,
 } from "lucide-react";
 import {
   plaidService,
@@ -26,20 +25,20 @@ const PlaidLink = ({ onSuccess, onError, className = "" }) => {
   const [isConnecting, setIsConnecting] = useState(false);
 
   // Load usage information
-  useEffect(() => {
-    if (user?.id) {
-      loadUsageInfo();
-    }
-  }, [user?.id]);
-
-  const loadUsageInfo = async () => {
+  const loadUsageInfo = useCallback(async () => {
     try {
       const limits = await plaidUsageTracker.checkFreeTierLimits(user.id);
       setUsageInfo(limits);
     } catch (error) {
-      console.error("Error loading usage info:", error);
+      // Silent fail for usage info loading
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadUsageInfo();
+    }
+  }, [user?.id, loadUsageInfo]);
 
   // Create link token
   const createLinkToken = useCallback(async () => {
@@ -69,7 +68,6 @@ const PlaidLink = ({ onSuccess, onError, className = "" }) => {
       );
       setLinkToken(response.link_token);
     } catch (error) {
-      console.error("Error creating link token:", error);
       setError("Failed to initialize bank connection. Please try again.");
     } finally {
       setIsLoading(false);
@@ -160,7 +158,6 @@ const PlaidLink = ({ onSuccess, onError, className = "" }) => {
           });
         }
       } catch (error) {
-        console.error("Error connecting bank account:", error);
         setError("Failed to connect bank account. Please try again.");
 
         if (onError) {
@@ -170,13 +167,12 @@ const PlaidLink = ({ onSuccess, onError, className = "" }) => {
         setIsConnecting(false);
       }
     },
-    [user?.id, onSuccess, onError]
+    [user?.id, onSuccess, onError, loadUsageInfo]
   );
 
   // Handle Plaid Link exit
-  const onPlaidExit = useCallback((err) => {
+  const onPlaidExit = useCallback(err => {
     if (err) {
-      console.error("Plaid Link error:", err);
       setError("Bank connection was cancelled or failed. Please try again.");
     }
     setIsConnecting(false);

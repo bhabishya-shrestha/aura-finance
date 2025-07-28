@@ -2,7 +2,7 @@ const API_BASE_URL = "http://localhost:3001/api";
 
 // Token management
 const getToken = () => localStorage.getItem("authToken");
-const setToken = (token) => localStorage.setItem("authToken", token);
+const setToken = token => localStorage.setItem("authToken", token);
 const removeToken = () => localStorage.removeItem("authToken");
 
 // API request helper
@@ -41,7 +41,7 @@ const apiRequest = async (endpoint, options = {}) => {
 
 // Authentication API
 export const authAPI = {
-  register: async (userData) => {
+  register: async userData => {
     const response = await apiRequest("/auth/register", {
       method: "POST",
       body: JSON.stringify(userData),
@@ -54,7 +54,7 @@ export const authAPI = {
     return response;
   },
 
-  login: async (credentials) => {
+  login: async credentials => {
     const response = await apiRequest("/auth/login", {
       method: "POST",
       body: JSON.stringify(credentials),
@@ -86,7 +86,7 @@ export const usersAPI = {
     return await apiRequest("/users/profile");
   },
 
-  updateProfile: async (profileData) => {
+  updateProfile: async profileData => {
     return await apiRequest("/users/profile", {
       method: "PUT",
       body: JSON.stringify(profileData),
@@ -100,11 +100,11 @@ export const accountsAPI = {
     return await apiRequest("/accounts");
   },
 
-  getById: async (id) => {
+  getById: async id => {
     return await apiRequest(`/accounts/${id}`);
   },
 
-  create: async (accountData) => {
+  create: async accountData => {
     return await apiRequest("/accounts", {
       method: "POST",
       body: JSON.stringify(accountData),
@@ -118,7 +118,7 @@ export const accountsAPI = {
     });
   },
 
-  delete: async (id) => {
+  delete: async id => {
     return await apiRequest(`/accounts/${id}`, {
       method: "DELETE",
     });
@@ -135,11 +135,11 @@ export const transactionsAPI = {
     return await apiRequest(endpoint);
   },
 
-  getById: async (id) => {
+  getById: async id => {
     return await apiRequest(`/transactions/${id}`);
   },
 
-  create: async (transactionData) => {
+  create: async transactionData => {
     return await apiRequest("/transactions", {
       method: "POST",
       body: JSON.stringify(transactionData),
@@ -153,14 +153,14 @@ export const transactionsAPI = {
     });
   },
 
-  delete: async (id) => {
+  delete: async id => {
     return await apiRequest(`/transactions/${id}`, {
       method: "DELETE",
     });
   },
 
   // Batch operations
-  createBatch: async (transactions) => {
+  createBatch: async transactions => {
     return await apiRequest("/transactions/batch", {
       method: "POST",
       body: JSON.stringify({ transactions }),
@@ -174,7 +174,7 @@ export const categoriesAPI = {
     return await apiRequest("/categories");
   },
 
-  create: async (categoryData) => {
+  create: async categoryData => {
     return await apiRequest("/categories", {
       method: "POST",
       body: JSON.stringify(categoryData),
@@ -188,7 +188,7 @@ export const categoriesAPI = {
     });
   },
 
-  delete: async (id) => {
+  delete: async id => {
     return await apiRequest(`/categories/${id}`, {
       method: "DELETE",
     });
@@ -205,7 +205,7 @@ export const analyticsAPI = {
     return await apiRequest(`/analytics/spending-by-category?period=${period}`);
   },
 
-  getMonthlyTrends: async (year) => {
+  getMonthlyTrends: async year => {
     return await apiRequest(`/analytics/monthly-trends?year=${year}`);
   },
 

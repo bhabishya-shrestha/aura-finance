@@ -1,0 +1,71 @@
+name: Security Checks
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop, feature/*, hotfix/*, release/*]
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    name: Security Audit
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install jq for JSON parsing
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+
+      - name: Run dependency check
+        run: npx audit-ci --high
+
+      - name: Run security vulnerability check
+        run: npm run security
+
+      - name: Check for known vulnerabilities
+        run: |
+          echo "🔒 Security audit completed"
+          echo "📊 Vulnerability Summary:"
+          npm audit --audit-level=high --json | jq '.metadata.vulnerabilities' || echo "No vulnerabilities found or audit failed"
+
+          echo ""
+          echo "📋 Known Issues:"
+          echo "- esbuild vulnerability (moderate): Development-only, planned for v1.2.0"
+          echo "- See SECURITY.md for detailed information"
+
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Check code formatting
+        run: npm run format:check

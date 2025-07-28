@@ -26,7 +26,7 @@ const NetWorth = () => {
     }
   }, [getNetWorth, netWorth]);
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
