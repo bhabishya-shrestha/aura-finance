@@ -178,8 +178,11 @@ const parseBankOfAmericaText = text => {
 
     // Check if we're entering a transaction section
     if (
-      sections.some(section =>
-        line.toLowerCase().includes(section.toLowerCase())
+      sections.some(
+        section =>
+          line &&
+          typeof line === "string" &&
+          line.toLowerCase().includes(section.toLowerCase())
       )
     ) {
       inTransactionSection = true;
@@ -189,6 +192,8 @@ const parseBankOfAmericaText = text => {
     // Check if we're leaving a transaction section
     if (
       inTransactionSection &&
+      line &&
+      typeof line === "string" &&
       (line.toLowerCase().includes("total") ||
         line.toLowerCase().includes("summary") ||
         line.toLowerCase().includes("balance") ||
@@ -315,6 +320,11 @@ const parseDate = dateStr => {
 
 // Categorize transaction based on description
 const categorizeTransaction = description => {
+  // Handle undefined or null descriptions
+  if (!description || typeof description !== "string") {
+    return "Other";
+  }
+
   const desc = description.toLowerCase();
 
   // Groceries
@@ -432,16 +442,38 @@ const categorizeTransaction = description => {
 
 // Main function to parse statements (CSV or PDF)
 export const parseStatement = async file => {
-  if (file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv")) {
-    return await parseCSV(file);
-  } else if (
-    file.type === "application/pdf" ||
-    file.name.toLowerCase().endsWith(".pdf")
-  ) {
-    return await parsePDF(file);
-  } else {
-    throw new Error(
-      "Unsupported file format. Please upload a CSV or PDF file."
-    );
+  try {
+    if (!file) {
+      throw new Error("No file provided");
+    }
+
+    if (file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv")) {
+      return await parseCSV(file);
+    } else if (
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf")
+    ) {
+      return await parsePDF(file);
+    } else {
+      throw new Error(
+        "Unsupported file format. Please upload a CSV or PDF file."
+      );
+    }
+  } catch (error) {
+    console.error("Statement parsing error:", error);
+
+    // Provide more specific error messages
+    if (error.message.includes("includes")) {
+      throw new Error(
+        "PDF parsing failed due to format issues. Please ensure the PDF contains readable text and is not corrupted."
+      );
+    } else if (error.message.includes("Tesseract")) {
+      throw new Error(
+        "PDF OCR processing failed. Please ensure the PDF contains clear, readable text."
+      );
+    } else {
+      // Re-throw the original error if it's already user-friendly
+      throw error;
+    }
   }
 };
