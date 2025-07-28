@@ -5,6 +5,29 @@ All notable changes to Aura Finance will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-01-01
+
+### Added
+
+- **Enhanced Mobile Experience**: Optimized mobile navigation and responsive design
+- **Improved PDF Import**: Enhanced PDF parsing with better error handling and validation
+- **Professional Versioning**: Implemented proper semantic versioning and release procedures
+- **Mobile UI Fixes**: Fixed squished bottom navigation and touch interaction issues
+
+### Fixed
+
+- **Mobile Navigation**: Resolved bottom navigation bar spacing and touch target issues
+- **PDF Import Validation**: Improved PDF file validation and error messaging
+- **Responsive Design**: Enhanced mobile layout for better usability on small screens
+- **Touch Interactions**: Optimized touch targets and gesture handling for mobile devices
+
+### Technical Improvements
+
+- **Error Handling**: Better error messages for PDF import failures
+- **Mobile Optimization**: Improved responsive breakpoints and mobile-first design
+- **Code Quality**: Enhanced component safety and mobile accessibility
+- **Performance**: Optimized mobile rendering and touch response
+
 ## [Unreleased]
 
 ### Planned

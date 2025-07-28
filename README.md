@@ -11,6 +11,7 @@ This is a personal project exploring modern web development and entrepreneurship
 - **Real-time data synchronization** across devices
 - **Secure authentication** and data protection
 - **Professional deployment** practices
+- **Mobile-first design** with optimized touch interactions
 
 ## ✨ Features
 
@@ -18,6 +19,7 @@ This is a personal project exploring modern web development and entrepreneurship
 
 - **Modern Interface**: Clean, responsive design that works on all devices
 - **Dark Mode**: Sophisticated dark theme with proper contrast ratios
+- **Mobile Optimized**: Enhanced mobile navigation and touch interactions
 - **Responsive Design**: Optimized for desktop, tablet, and mobile
 - **Smooth Animations**: Subtle transitions and micro-interactions
 - **Professional Typography**: Clear hierarchy and readable fonts
@@ -37,14 +39,16 @@ This is a personal project exploring modern web development and entrepreneurship
 - **Transaction History**: View and manage your financial records
 - **Category Management**: Organize transactions with custom categories
 - **Multi-user Support**: Secure user isolation with RLS
+- **Financial Reports**: Comprehensive analytics and insights
 
 ### 📄 Data Import
 
 - **CSV Support**: Import transaction data from CSV files
-- **PDF Processing**: OCR support for bank statements
+- **PDF Processing**: Enhanced OCR support for bank statements
 - **Smart Parsing**: Optimized for common bank statement formats
 - **Batch Import**: Review and edit transactions before importing
 - **Duplicate Detection**: Automatically identifies duplicate entries
+- **Improved Validation**: Better error handling and user feedback
 
 ### 🔧 Technology Stack
 
@@ -121,6 +125,29 @@ npm run demo:info
 
 ## 🚀 Deployment
 
+### Professional Release Process
+
+```bash
+# Release a new patch version (1.1.0 → 1.1.1)
+npm run release:patch
+
+# Release a new minor version (1.1.0 → 1.2.0)
+npm run release:minor
+
+# Release a new major version (1.1.0 → 2.0.0)
+npm run release:major
+```
+
+The release process includes:
+
+- ✅ Pre-release validation (branch, uncommitted changes)
+- ✅ Automated testing
+- ✅ Build verification
+- ✅ Version bump and git tagging
+- ✅ GitHub release creation
+- ✅ Production deployment
+- ✅ Post-release validation
+
 ### Quick Deploy
 
 ```bash
@@ -140,29 +167,25 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
 ### Current Version
 
-- **Version**: 1.0.0
+- **Version**: 1.1.0
 - **Status**: Production Release
-- **Release Date**: 2025-07-27
+- **Release Date**: 2025-01-01
 
 ### Version Commands
 
 ```bash
 # Show current version
-./scripts/version.sh version
+node -p "require('./package.json').version"
 
-# Release new version
-./scripts/version.sh release patch  # 1.0.0 → 1.0.1
-./scripts/version.sh release minor  # 1.0.0 → 1.1.0
-./scripts/version.sh release major  # 1.0.0 → 2.0.0
+# Professional release (recommended)
+npm run release:patch   # 1.1.0 → 1.1.1
+npm run release:minor   # 1.1.0 → 1.2.0
+npm run release:major   # 1.1.0 → 2.0.0
 
-# Run tests
-./scripts/version.sh test
-
-# Build project
-./scripts/version.sh build
-
-# Deploy to production
-./scripts/version.sh deploy
+# Manual version bump
+npm run version:patch
+npm run version:minor
+npm run version:major
 ```
 
 ### Semantic Versioning
@@ -187,9 +210,16 @@ See [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
 1. **Click "Import Statement"** in the header
 2. **Upload your file**:
    - **CSV**: Standard format with Date, Description, Amount columns
-   - **PDF**: Bank statements (OCR processing)
+   - **PDF**: Bank statements (enhanced OCR processing)
 3. **Review and edit** transactions before importing
 4. **Confirm import** to add to your database
+
+**PDF Requirements:**
+
+- File size under 10MB
+- Contains readable text (not scanned images)
+- Not password-protected
+- Valid bank statement format
 
 ## 🧪 Development
 
@@ -211,6 +241,27 @@ npm run format
 ```bash
 npm run build
 ```
+
+## 📈 Recent Updates (v1.1.0)
+
+### ✨ New Features
+
+- **Enhanced Mobile Experience**: Optimized mobile navigation and responsive design
+- **Improved PDF Import**: Enhanced PDF parsing with better error handling and validation
+- **Professional Versioning**: Implemented proper semantic versioning and release procedures
+
+### 🔧 Improvements
+
+- **Mobile Navigation**: Fixed bottom navigation bar spacing and touch target issues
+- **PDF Import Validation**: Improved PDF file validation and error messaging
+- **Responsive Design**: Enhanced mobile layout for better usability on small screens
+- **Touch Interactions**: Optimized touch targets and gesture handling for mobile devices
+
+### 🐛 Bug Fixes
+
+- **Mobile UI**: Resolved squished bottom navigation and responsive layout issues
+- **PDF Processing**: Fixed "invalid PDF" errors with better validation and error handling
+- **User Experience**: Improved loading states and user feedback throughout the app
 
 ## 📈 Future Roadmap
 

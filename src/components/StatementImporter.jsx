@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Upload, FileText, X, Check, AlertCircle } from "lucide-react";
+import { Upload, FileText, X, Check, AlertCircle, Info } from "lucide-react";
 import useStore from "../store";
 import { parseCSV, parsePDF, CATEGORIES } from "../utils/statementParser";
 
@@ -13,6 +13,7 @@ const StatementImporter = () => {
   } = useStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [processingStep, setProcessingStep] = useState("");
   const fileInputRef = useRef(null);
 
   const handleFileUpload = async (event) => {
@@ -21,16 +22,19 @@ const StatementImporter = () => {
 
     setIsProcessing(true);
     setError("");
+    setProcessingStep("Validating file...");
 
     try {
       let transactions = [];
 
       if (file.type === "text/csv" || file.name.endsWith(".csv")) {
+        setProcessingStep("Parsing CSV file...");
         transactions = await parseCSV(file);
       } else if (
         file.type === "application/pdf" ||
         file.name.endsWith(".pdf")
       ) {
+        setProcessingStep("Processing PDF with OCR...");
         transactions = await parsePDF(file);
       } else {
         throw new Error(
@@ -49,6 +53,7 @@ const StatementImporter = () => {
       setError(err.message);
     } finally {
       setIsProcessing(false);
+      setProcessingStep("");
     }
   };
 
@@ -93,7 +98,17 @@ const StatementImporter = () => {
       return;
     }
 
-    await addTransactions(selectedTransactions);
+    try {
+      await addTransactions(selectedTransactions);
+      setModalOpen(false);
+      setParsedTransactions([]);
+      setError("");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (err) {
+      setError("Failed to import transactions. Please try again.");
+    }
   };
 
   const handleCancel = () => {
@@ -144,6 +159,29 @@ const StatementImporter = () => {
                 <p className="text-muted-gray mb-6">
                   Supported formats: CSV and PDF (Bank of America statements)
                 </p>
+
+                {/* File Requirements Info */}
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div className="text-left">
+                      <h4 className="text-sm font-medium text-blue-400 mb-2">
+                        File Requirements:
+                      </h4>
+                      <ul className="text-xs text-blue-300 space-y-1">
+                        <li>• PDF files must be under 10MB</li>
+                        <li>
+                          • PDFs must contain readable text (not scanned images)
+                        </li>
+                        <li>• PDFs must not be password-protected</li>
+                        <li>
+                          • CSV files should have Date, Description, and Amount
+                          columns
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <input
@@ -162,7 +200,7 @@ const StatementImporter = () => {
                 {isProcessing ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    <span>Processing...</span>
+                    <span>{processingStep}</span>
                   </>
                 ) : (
                   <>
@@ -173,9 +211,12 @@ const StatementImporter = () => {
               </button>
 
               {error && (
-                <div className="mt-4 p-4 bg-red-500/20 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400">
-                  <AlertCircle className="w-5 h-5" />
-                  <span>{error}</span>
+                <div className="mt-4 p-4 bg-red-500/20 border border-red-500/30 rounded-lg flex items-start gap-3 text-red-400">
+                  <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                  <div className="text-left">
+                    <p className="font-medium mb-1">Import Error</p>
+                    <p className="text-sm">{error}</p>
+                  </div>
                 </div>
               )}
             </div>
@@ -315,9 +356,12 @@ const StatementImporter = () => {
               </div>
 
               {error && (
-                <div className="mt-4 p-4 bg-red-500/20 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400">
-                  <AlertCircle className="w-5 h-5" />
-                  <span>{error}</span>
+                <div className="mt-4 p-4 bg-red-500/20 border border-red-500/30 rounded-lg flex items-start gap-3 text-red-400">
+                  <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                  <div className="text-left">
+                    <p className="font-medium mb-1">Import Error</p>
+                    <p className="text-sm">{error}</p>
+                  </div>
                 </div>
               )}
             </div>

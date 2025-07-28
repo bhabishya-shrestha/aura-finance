@@ -170,49 +170,49 @@ const ReportsPage = () => {
     <div className="space-y-6">
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
                 Total Income
               </p>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-lg sm:text-2xl font-bold text-green-600 truncate">
                 {formatCurrency(totalIncome)}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
               <TrendingDown className="w-5 h-5 text-red-600" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
                 Total Expenses
               </p>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-lg sm:text-2xl font-bold text-red-600 truncate">
                 {formatCurrency(totalExpenses)}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
               <DollarSign className="w-5 h-5 text-blue-600" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
                 Net Income
               </p>
               <p
-                className={`text-2xl font-bold ${netIncome >= 0 ? "text-green-600" : "text-red-600"}`}
+                className={`text-lg sm:text-2xl font-bold truncate ${netIncome >= 0 ? "text-green-600" : "text-red-600"}`}
               >
                 {formatCurrency(netIncome)}
               </p>
@@ -220,16 +220,16 @@ const ReportsPage = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
               <Calendar className="w-5 h-5 text-purple-600" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
                 Transactions
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
                 {periodData.length}
               </p>
             </div>
@@ -238,7 +238,7 @@ const ReportsPage = () => {
       </div>
 
       {/* Top Expense Categories */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Top Expense Categories
         </h3>
@@ -255,12 +255,12 @@ const ReportsPage = () => {
                 key={category.category}
                 className="flex items-center justify-between"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 dark:text-white truncate">
                       {category.category}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -268,7 +268,7 @@ const ReportsPage = () => {
                     </p>
                   </div>
                 </div>
-                <p className="font-semibold text-gray-900 dark:text-white">
+                <p className="font-semibold text-gray-900 dark:text-white ml-2">
                   {formatCurrency(category.amount)}
                 </p>
               </div>
@@ -282,7 +282,7 @@ const ReportsPage = () => {
   const renderExpenseAnalysis = () => (
     <div className="space-y-6">
       {/* Category Breakdown Chart */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Expense Breakdown by Category
         </h3>
@@ -307,16 +307,16 @@ const ReportsPage = () => {
             return (
               <div key={category.category} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div
-                      className={`w-3 h-3 rounded-full ${colors[index % colors.length]}`}
+                      className={`w-3 h-3 rounded-full flex-shrink-0 ${colors[index % colors.length]}`}
                     />
-                    <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    <span className="font-medium text-gray-900 dark:text-white">
+                    <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400 flex-shrink-0" />
+                    <span className="font-medium text-gray-900 dark:text-white truncate">
                       {category.category}
                     </span>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right ml-2">
                     <p className="font-semibold text-gray-900 dark:text-white">
                       {formatCurrency(category.amount)}
                     </p>
@@ -342,7 +342,7 @@ const ReportsPage = () => {
   const renderMonthlyTrends = () => (
     <div className="space-y-6">
       {/* Monthly Trends Chart */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Monthly Income vs Expenses
         </h3>
@@ -353,7 +353,7 @@ const ReportsPage = () => {
                 <span className="font-medium text-gray-900 dark:text-white">
                   {month.month}
                 </span>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4">
                   <div className="text-right">
                     <p className="text-sm text-green-600 font-medium">
                       {formatCurrency(month.income)}
@@ -405,7 +405,7 @@ const ReportsPage = () => {
 
   const renderBudgetReport = () => (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Budget vs Actual Spending
         </h3>
@@ -439,7 +439,7 @@ const ReportsPage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-20 lg:pb-8">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -480,7 +480,7 @@ const ReportsPage = () => {
               <button
                 key={report.id}
                 onClick={() => setSelectedReport(report.id)}
-                className={`p-4 rounded-lg border transition-all duration-200 text-left ${
+                className={`p-4 rounded-lg border transition-all duration-200 text-left min-h-[80px] ${
                   selectedReport === report.id
                     ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                     : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
@@ -488,15 +488,15 @@ const ReportsPage = () => {
               >
                 <div className="flex items-center gap-3">
                   <Icon
-                    className={`w-5 h-5 ${
+                    className={`w-5 h-5 flex-shrink-0 ${
                       selectedReport === report.id
                         ? "text-blue-600"
                         : "text-gray-600 dark:text-gray-400"
                     }`}
                   />
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <h3
-                      className={`font-medium ${
+                      className={`font-medium truncate ${
                         selectedReport === report.id
                           ? "text-blue-600"
                           : "text-gray-900 dark:text-white"
@@ -504,7 +504,7 @@ const ReportsPage = () => {
                     >
                       {report.name}
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                       {report.description}
                     </p>
                   </div>
