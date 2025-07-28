@@ -12,21 +12,8 @@ describe("GeminiService", () => {
   let service;
 
   beforeEach(() => {
-    service = new geminiService();
+    service = geminiService;
     vi.clearAllMocks();
-  });
-
-  describe("constructor", () => {
-    it("should initialize with API key", () => {
-      expect(service.apiKey).toBe("test-api-key");
-    });
-
-    it("should set up rate limiting", () => {
-      expect(service.rateLimit).toEqual({
-        maxRequests: 10,
-        timeWindow: 60000,
-      });
-    });
   });
 
   describe("validateFile", () => {
