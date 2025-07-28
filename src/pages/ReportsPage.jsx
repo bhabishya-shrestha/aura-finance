@@ -310,7 +310,7 @@ const ReportsPage = () => {
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-3 h-3 rounded-full ${colors[index % colors.length]}`}
-                    ></div>
+                    />
                     <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                     <span className="font-medium text-gray-900 dark:text-white">
                       {category.category}
@@ -329,7 +329,7 @@ const ReportsPage = () => {
                   <div
                     className={`h-2 rounded-full ${colors[index % colors.length]}`}
                     style={{ width: `${percentage}%` }}
-                  ></div>
+                  />
                 </div>
               </div>
             );
@@ -388,13 +388,13 @@ const ReportsPage = () => {
                   style={{
                     width: `${(month.income / Math.max(...monthlyTrends.map((m) => m.income))) * 100}%`,
                   }}
-                ></div>
+                />
                 <div
                   className="bg-red-500 h-full"
                   style={{
                     width: `${(month.expenses / Math.max(...monthlyTrends.map((m) => m.expenses))) * 100}%`,
                   }}
-                ></div>
+                />
               </div>
             </div>
           ))}
