@@ -41,14 +41,16 @@ This is a personal project exploring modern web development. I am trying to impr
 - **Multi-user Support**: Secure user isolation with RLS
 - **Financial Reports**: Comprehensive analytics and insights
 
-### 📄 Data Import
+### 📄 Smart Document Import
 
-- **CSV Support**: Import transaction data from CSV files
-- **PDF Processing**: Enhanced OCR support for bank statements
-- **Smart Parsing**: Optimized for common bank statement formats
+- **AI-Powered OCR**: Google Gemini AI for intelligent document analysis
+- **Multi-Format Support**: CSV, PDF, and image files (JPG, PNG, GIF, WebP)
+- **Smart Document Detection**: Automatically identifies receipts, bank statements, and credit card statements
+- **Intelligent Parsing**: AI extracts transaction details with high accuracy
+- **Real-time Preview**: See document analysis results before importing
 - **Batch Import**: Review and edit transactions before importing
 - **Duplicate Detection**: Automatically identifies duplicate entries
-- **Improved Validation**: Better error handling and user feedback
+- **Confidence Scoring**: Shows AI analysis confidence levels
 
 ### 🔧 Technology Stack
 
@@ -58,7 +60,8 @@ This is a personal project exploring modern web development. I am trying to impr
 - **Authentication**: Supabase Auth
 - **State Management**: Zustand for lightweight state
 - **Icons**: Lucide React for consistent iconography
-- **Data Processing**: Papa Parse for CSV, Tesseract.js for OCR
+- **Data Processing**: Papa Parse for CSV, Tesseract.js for PDF OCR
+- **AI Integration**: Google Gemini API for intelligent document analysis
 
 ## 🚀 Getting Started
 
@@ -88,7 +91,12 @@ This is a personal project exploring modern web development. I am trying to impr
    - Get your project URL and anon key
    - Create a `.env` file with your credentials
 
-4. **Deploy database schema**
+4. **Set up Gemini AI (Optional but recommended)**
+   - Get a free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Add `VITE_GEMINI_API_KEY=your_api_key` to your `.env` file
+   - This enables AI-powered document analysis for receipts and statements
+
+5. **Deploy database schema**
 
    ```bash
    supabase login
@@ -96,13 +104,13 @@ This is a personal project exploring modern web development. I am trying to impr
    supabase db push
    ```
 
-5. **Start the development server**
+6. **Start the development server**
 
    ```bash
    npm run dev
    ```
 
-6. **Open your browser**
+7. **Open your browser**
    Navigate to `http://localhost:5173`
 
 ### 🎯 Demo Account
