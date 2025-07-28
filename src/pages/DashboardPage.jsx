@@ -11,6 +11,11 @@ const DashboardPage = () => {
   const [error, setError] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
+  // Defensive: Always set modal closed on mount
+  useEffect(() => {
+    setIsImportModalOpen(false);
+  }, []);
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -23,6 +28,12 @@ const DashboardPage = () => {
 
     loadData();
   }, []);
+
+  // Debug: Log modal state on every render
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log("[DashboardPage] isImportModalOpen:", isImportModalOpen);
+  }, [isImportModalOpen]);
 
   const handleImportClick = () => {
     try {

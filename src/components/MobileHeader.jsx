@@ -18,8 +18,8 @@ const MobileHeader = ({ onMenuToggle, currentPage }) => {
   };
 
   return (
-    <div className="lg:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-      <div className="flex items-center justify-between">
+    <div className="lg:hidden fixed top-0 left-0 right-0 z-50 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow pt-safe h-14 flex items-center">
+      <div className="flex items-center justify-between w-full px-4">
         {/* Left side - Menu button and title */}
         <div className="flex items-center gap-3">
           <button

@@ -93,7 +93,7 @@ const AppLayout = () => {
         />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto lg:pb-0 pb-20">
+        <main className="flex-1 overflow-auto lg:pb-0 pb-20 pt-14 lg:pt-0">
           <div className="w-full h-full">
             {currentPage === "dashboard" && <DashboardPage />}
             {currentPage === "accounts" && <AccountsPage />}
