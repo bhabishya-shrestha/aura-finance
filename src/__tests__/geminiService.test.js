@@ -54,12 +54,12 @@ describe("GeminiService", () => {
     });
 
     it("should throw error when rate limit exceeded", () => {
-      // Make 10 requests
-      for (let i = 0; i < 10; i++) {
+      // Make 15 requests (the limit)
+      for (let i = 0; i < 15; i++) {
         service.checkRateLimit();
       }
 
-      // 11th request should fail
+      // 16th request should fail
       expect(() => service.checkRateLimit()).toThrow("Rate limit exceeded");
     });
   });
@@ -107,9 +107,9 @@ describe("GeminiService", () => {
   describe("categorizeTransaction", () => {
     it("should categorize common transaction types", () => {
       const testCases = [
-        { description: "WALMART", expected: "Shopping" },
-        { description: "STARBUCKS", expected: "Food & Dining" },
-        { description: "SHELL", expected: "Transportation" },
+        { description: "WALMART", expected: "Groceries" },
+        { description: "STARBUCKS", expected: "Restaurants" },
+        { description: "SHELL", expected: "Transport" },
         { description: "NETFLIX", expected: "Entertainment" },
         { description: "AMAZON", expected: "Shopping" },
       ];
