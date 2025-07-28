@@ -1,14 +1,17 @@
 import React, { useState, useRef } from "react";
-import { Upload, AlertCircle } from "lucide-react";
+import { Upload, AlertCircle, X } from "lucide-react";
 import { parseStatement } from "../utils/statementParser";
 import useStore from "../store";
 
-const StatementImporter = () => {
+const StatementImporter = ({ isOpen, onClose }) => {
   const { addTransactions } = useStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
   const [processingStep, setProcessingStep] = useState("");
   const fileInputRef = useRef(null);
+
+  // Don't render if not open
+  if (!isOpen) return null;
 
   const handleFileUpload = async event => {
     const file = event.target.files[0];
@@ -48,10 +51,28 @@ const StatementImporter = () => {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+
+      // Close modal after successful import
+      setTimeout(() => {
+        onClose();
+        setError("");
+        setProcessingStep("");
+      }, 1500);
     } catch (err) {
       setError(err.message);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (!isProcessing) {
+      onClose();
+      setError("");
+      setProcessingStep("");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -64,25 +85,12 @@ const StatementImporter = () => {
             Import Bank Statement
           </h2>
           <button
-            onClick={() => {
-              /* Close modal logic would go here */
-            }}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            onClick={handleClose}
+            disabled={isProcessing}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Close"
           >
-            <span className="sr-only">Close</span>
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <X className="w-6 h-6" />
           </button>
         </div>
 

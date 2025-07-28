@@ -4,13 +4,17 @@ import Accounts from "../components/Accounts";
 import RecentTransactions from "../components/RecentTransactions";
 import AddTransaction from "../components/AddTransaction";
 import StatementImporter from "../components/StatementImporter";
-import useStore from "../store";
 import { useAuth } from "../contexts/AuthContext";
 
 const DashboardPage = () => {
-  const { setModalOpen } = useStore();
   const { isLoading } = useAuth();
   const [error, setError] = useState(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  // Defensive: Always set modal closed on mount
+  useEffect(() => {
+    setIsImportModalOpen(false);
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -25,9 +29,15 @@ const DashboardPage = () => {
     loadData();
   }, []);
 
+  // Debug: Log modal state on every render
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log("[DashboardPage] isImportModalOpen:", isImportModalOpen);
+  }, [isImportModalOpen]);
+
   const handleImportClick = () => {
     try {
-      setModalOpen(true);
+      setIsImportModalOpen(true);
     } catch (err) {
       setError(err.message);
     }
@@ -154,7 +164,10 @@ const DashboardPage = () => {
       </div>
 
       {/* Statement Importer Modal */}
-      <StatementImporter />
+      <StatementImporter
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+      />
     </div>
   );
 };
