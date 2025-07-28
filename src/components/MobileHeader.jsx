@@ -45,7 +45,7 @@ const MobileHeader = ({ onMenuToggle, currentPage, isMenuOpen }) => {
         <div className="flex items-center gap-3">
           <button
             onClick={onMenuToggle}
-            className={`p-2 rounded-lg transition-all duration-200 ${
+            className={`w-10 h-10 rounded-lg transition-all duration-200 flex items-center justify-center ${
               isMenuOpen
                 ? "bg-blue-100 dark:bg-blue-900/20"
                 : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -53,20 +53,20 @@ const MobileHeader = ({ onMenuToggle, currentPage, isMenuOpen }) => {
             aria-label="Toggle menu"
             aria-expanded={isMenuOpen}
           >
-            <div className="relative w-4 h-4">
+            <div className="relative w-5 h-5">
               <span
-                className={`absolute top-0 left-0 w-4 h-0.5 bg-gray-700 dark:bg-gray-400 transition-all duration-300 ${
-                  isMenuOpen ? "rotate-45 translate-y-1.5" : ""
+                className={`absolute top-0 left-0 w-5 h-0.5 bg-gray-700 dark:bg-gray-400 transition-all duration-300 ${
+                  isMenuOpen ? "rotate-45 translate-y-2" : ""
                 }`}
               />
               <span
-                className={`absolute top-1.5 left-0 w-4 h-0.5 bg-gray-700 dark:bg-gray-400 transition-all duration-300 ${
+                className={`absolute top-2 left-0 w-5 h-0.5 bg-gray-700 dark:bg-gray-400 transition-all duration-300 ${
                   isMenuOpen ? "opacity-0" : ""
                 }`}
               />
               <span
-                className={`absolute top-3 left-0 w-4 h-0.5 bg-gray-700 dark:bg-gray-400 transition-all duration-300 ${
-                  isMenuOpen ? "-rotate-45 -translate-y-1.5" : ""
+                className={`absolute top-4 left-0 w-5 h-0.5 bg-gray-700 dark:bg-gray-400 transition-all duration-300 ${
+                  isMenuOpen ? "-rotate-45 -translate-y-2" : ""
                 }`}
               />
             </div>
@@ -85,14 +85,14 @@ const MobileHeader = ({ onMenuToggle, currentPage, isMenuOpen }) => {
           <div className="relative">
             <button
               onClick={toggleNotifications}
-              className={`p-2 rounded-lg transition-colors duration-200 relative ${
+              className={`w-10 h-10 rounded-lg transition-colors duration-200 flex items-center justify-center ${
                 showNotifications
                   ? "bg-blue-100 dark:bg-blue-900/20"
                   : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
               }`}
               aria-label="Notifications"
             >
-              <Bell className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+              <Bell className="w-5 h-5 text-gray-700 dark:text-gray-400" />
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full" />
             </button>
 

@@ -81,6 +81,43 @@ const useStore = create((set, get) => ({
     }
   },
 
+  // Add a single transaction
+  addTransaction: async transactionData => {
+    try {
+      set({ isLoading: true });
+      const token = tokenManager.getToken();
+      let userId = null;
+
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          userId = payload.userId;
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            console.error("Error parsing token:", error);
+          }
+        }
+      }
+
+      const transactionWithUser = {
+        ...transactionData,
+        userId: userId || transactionData.userId || null,
+        id: transactionData.id || Date.now(), // Ensure unique ID
+      };
+
+      await db.transactions.add(transactionWithUser);
+      // Reload transactions to update the UI
+      await get().loadTransactions();
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("Error adding transaction:", error);
+      }
+      throw error; // Re-throw to handle in component
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
   // Add transactions to database
   addTransactions: async transactions => {
     try {
