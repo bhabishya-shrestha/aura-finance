@@ -10,7 +10,7 @@ module.exports = {
     "plugin:react/jsx-runtime",
     "plugin:react-hooks/recommended",
   ],
-  ignorePatterns: ["dist", ".eslintrc.cjs", "backend/**/*"],
+  ignorePatterns: ["dist", ".eslintrc.cjs", "backend/**/*", "scripts/**/*"],
   parserOptions: {
     ecmaVersion: "latest",
     sourceType: "module",
@@ -45,7 +45,7 @@ module.exports = {
     "react/void-dom-elements-no-children": "error",
     "prefer-const": "error",
     "no-var": "error",
-    "no-console": "warn",
+    "no-console": process.env.NODE_ENV === "production" ? "error" : "warn",
     "no-debugger": "error",
     "no-alert": "warn",
     "no-eval": "error",
