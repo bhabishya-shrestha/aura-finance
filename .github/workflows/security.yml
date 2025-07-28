@@ -38,6 +38,11 @@ jobs:
           echo "📊 Vulnerability Summary:"
           npm audit --audit-level=high --json | jq '.metadata.vulnerabilities' || echo "No vulnerabilities found or audit failed"
 
+          echo ""
+          echo "📋 Known Issues:"
+          echo "- esbuild vulnerability (moderate): Development-only, planned for v1.2.0"
+          echo "- See SECURITY.md for detailed information"
+
   code-quality:
     runs-on: ubuntu-latest
     name: Code Quality
