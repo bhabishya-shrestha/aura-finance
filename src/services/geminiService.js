@@ -10,9 +10,9 @@ class GeminiService {
     this.dailyRequestCount = 0;
     this.lastDailyReset = new Date().toDateString();
     this.rateLimit = {
-      maxRequests: 100, // Increased for demo purposes (Gemini free tier: 15/min, 1500/day)
+      maxRequests: 15, // Keep 15 per minute (matches Gemini free tier)
       timeWindow: 60000, // 1 minute in milliseconds
-      maxDailyRequests: 100, // Daily limit for demo
+      maxDailyRequests: 150, // Daily limit for demo (100-150 range)
     };
 
     if (!this.apiKey) {
