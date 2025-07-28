@@ -109,3 +109,10 @@ temp/
 .local/
 .vercel
 local-dev/
+
+# Test files and sensitive documents
+test.pdf
+*.pdf
+test-*.pdf
+sample-*.pdf
+demo-*.pdf
