@@ -5,9 +5,58 @@ const GEMINI_API_URL =
 class GeminiService {
   constructor() {
     this.apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    this.requestCount = 0;
+    this.lastRequestTime = 0;
+    this.rateLimit = {
+      maxRequests: 10, // Max 10 requests per minute
+      timeWindow: 60000, // 1 minute in milliseconds
+    };
+
     if (!this.apiKey) {
       console.warn(
         "Gemini API key not found. Please set VITE_GEMINI_API_KEY in your environment variables."
+      );
+    }
+  }
+
+  // Rate limiting check
+  checkRateLimit() {
+    const now = Date.now();
+
+    // Reset counter if time window has passed
+    if (now - this.lastRequestTime > this.rateLimit.timeWindow) {
+      this.requestCount = 0;
+      this.lastRequestTime = now;
+    }
+
+    // Check if we're within rate limits
+    if (this.requestCount >= this.rateLimit.maxRequests) {
+      throw new Error(
+        `Rate limit exceeded. Maximum ${this.rateLimit.maxRequests} requests per minute allowed.`
+      );
+    }
+
+    this.requestCount++;
+  }
+
+  // Validate file size and type
+  validateFile(file) {
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "application/pdf",
+    ];
+
+    if (file.size > maxSize) {
+      throw new Error("File size too large. Maximum 10MB allowed.");
+    }
+
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error(
+        "File type not supported. Please upload an image (JPG, PNG, GIF, WebP) or PDF."
       );
     }
   }
@@ -50,6 +99,10 @@ class GeminiService {
     if (!this.apiKey) {
       throw new Error("Gemini API key not configured");
     }
+
+    // Apply security checks
+    this.checkRateLimit();
+    this.validateFile(file);
 
     try {
       const base64Data = await this.fileToBase64(file);
