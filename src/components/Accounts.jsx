@@ -61,7 +61,7 @@ const Accounts = () => {
     if (
       // eslint-disable-next-line no-alert
       window.confirm(
-        `Are you sure you want to delete "${accountName}"? This will also delete all associated transactions.`
+        `Are you sure you want to delete "${accountName}"? This will also delete all associated transactions.`,
       )
     ) {
       try {

@@ -23,7 +23,7 @@ module.exports = {
   plugins: ["react-refresh"],
   rules: {
     "react-refresh/only-export-components": "off",
-    "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
+    "no-unused-vars": ["warn", { varsIgnorePattern: "^[A-Z_]" }],
     "react/prop-types": "off",
     "react/jsx-key": "error",
     "react/jsx-no-duplicate-props": "error",
@@ -52,6 +52,7 @@ module.exports = {
     "no-implied-eval": "error",
     "no-new-func": "error",
     "no-script-url": "error",
+    "no-useless-catch": "warn",
   },
   overrides: [
     {

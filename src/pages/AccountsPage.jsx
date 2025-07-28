@@ -174,7 +174,7 @@ const AccountsPage = () => {
                         getTransactionsByAccount(selectedAccount.id).filter(
                           (t) =>
                             new Date(t.date).getMonth() ===
-                            new Date().getMonth()
+                            new Date().getMonth(),
                         ).length
                       }
                     </div>
@@ -186,7 +186,7 @@ const AccountsPage = () => {
                       {formatCurrency(
                         getTransactionsByAccount(selectedAccount.id)
                           .filter((t) => t.amount > 0)
-                          .reduce((sum, t) => sum + t.amount, 0)
+                          .reduce((sum, t) => sum + t.amount, 0),
                       )}
                     </div>
                     <div className="text-muted-gray text-sm">Total Income</div>
@@ -234,7 +234,7 @@ const AccountsPage = () => {
                             </p>
                           </div>
                         </div>
-                      )
+                      ),
                     )
                   ) : (
                     <div className="text-center py-8 text-muted-gray">

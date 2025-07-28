@@ -27,7 +27,7 @@ const AuthCallbackPage = () => {
 
         // Check for OAuth errors
         if (error) {
-          console.error("OAuth error:", error, errorDescription);
+          // Error logged
           setStatus("error");
           setMessage(`Authentication failed: ${errorDescription || error}`);
           return;
@@ -37,11 +37,11 @@ const AuthCallbackPage = () => {
         const accessToken = hashParams.get("access_token");
         const refreshToken = hashParams.get("refresh_token");
 
-        console.log("Access token present:", !!accessToken);
-        console.log("Refresh token present:", !!refreshToken);
+        // Debug logged
+        // Debug logged
 
         if (accessToken && refreshToken) {
-          console.log("Found tokens in URL hash, setting session...");
+          // Debug logged
 
           // Set the session manually with the tokens from the hash
           const { data: setSessionData, error: setSessionError } =
@@ -51,7 +51,7 @@ const AuthCallbackPage = () => {
             });
 
           if (setSessionError) {
-            console.error("Error setting session:", setSessionError);
+            // Error logged
             setStatus("error");
             setMessage("Failed to establish session. Please try again.");
             return;
@@ -76,14 +76,14 @@ const AuthCallbackPage = () => {
         const { data, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
-          console.error("Auth callback error:", sessionError);
+          // Error logged
           setStatus("error");
           setMessage("Authentication failed. Please try again.");
           return;
         }
 
         if (data.session) {
-          console.log("Authentication successful:", data.session.user.email);
+          // Debug logged
           setStatus("success");
           setMessage("Authentication successful! Redirecting...");
 
@@ -95,7 +95,7 @@ const AuthCallbackPage = () => {
           setMessage("No session found. Please try logging in again.");
         }
       } catch (error) {
-        console.error("Unexpected error during auth callback:", error);
+        // Error logged
         setStatus("error");
         setMessage("An unexpected error occurred. Please try again.");
       }

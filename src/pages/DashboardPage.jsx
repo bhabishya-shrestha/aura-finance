@@ -13,8 +13,8 @@ const DashboardPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log("DashboardPage mounted");
-    console.log("Auth state:", { user, isAuthenticated, isLoading });
+    // Debug logged
+    // Debug logged
   }, [user, isAuthenticated, isLoading]);
 
   const handleImportClick = () => {

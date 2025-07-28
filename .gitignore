@@ -11,12 +11,19 @@ dist/
 build/
 *.local
 
-# Environment variables
+# Environment variables and secrets
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*.local
+
+# GitHub credentials and configuration
+.git-credentials
+.github-env
+.github-token
+.github-secrets
 
 # IDE and editor files
 .vscode/
@@ -24,6 +31,7 @@ build/
 *.swp
 *.swo
 *~
+.vscode-server/
 
 # OS generated files
 .DS_Store
@@ -33,10 +41,15 @@ build/
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
 
 # Logs
 logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
 # Runtime data
 pids
@@ -95,12 +108,189 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+.tmp/
 
 # Database files (for local development)
 *.db
 *.sqlite
 *.sqlite3
+*.sql
 
-# Local development files
+# Local development files and tools
 .local/
 .vercel
+local-dev/
+dev-tools/
+scripts/
+tools/
+
+# Development documentation and guides (exclude all except essential)
+docs/
+documentation/
+guides/
+tutorials/
+how-to/
+setup/
+installation/
+deployment/
+DEPLOYMENT*
+SETUP*
+INSTALLATION*
+OAUTH*
+SECURITY*
+CONTRIBUTING*
+QA*
+PR_*
+CLEANUP*
+
+# Configuration files that might contain secrets (exclude all except essential)
+config/
+configs/
+*.config.js
+*.config.json
+*.config.yaml
+*.config.yml
+!vite.config.js
+!tailwind.config.js
+!postcss.config.js
+!vercel.json
+
+# Test files and data
+test/
+tests/
+__tests__/
+*.test.js
+*.test.jsx
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.jsx
+*.spec.ts
+*.spec.tsx
+test-*
+spec-*
+fixtures/
+mocks/
+stubs/
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+*.save
+
+# Archive files
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+
+# Lock files (keep package-lock.json but ignore others)
+yarn.lock
+pnpm-lock.yaml
+package-lock.json.bak
+
+# Local development scripts (exclude all except local-dev)
+*.sh
+*.bat
+*.cmd
+*.ps1
+!local-dev/*.sh
+
+# API keys and tokens
+*api*
+*token*
+*key*
+*secret*
+*password*
+*credential*
+*auth*
+
+# Deployment and CI/CD files (keep only essential)
+.github/
+!.github/workflows/
+!.github/actions/
+deploy/
+deployment/
+ci/
+cd/
+.github-env
+.github-token
+
+# Monitoring and analytics
+*.analytics
+*.metrics
+*.stats
+monitoring/
+analytics/
+
+# Backup and sync files
+*.sync
+*.backup
+*.tmp
+*.temp
+
+# Local development databases
+supabase/.temp/
+supabase/.env
+supabase/config.toml.bak
+
+# Sensitive files
+secrets/
+private/
+internal/
+confidential/
+sensitive/
+
+# Development utilities
+utils/
+utilities/
+helpers/
+lib/local/
+src/utils/local/
+
+# Local configuration overrides
+local.config.js
+local.config.json
+local.settings.json
+
+# Development environment files
+.dev/
+.development/
+.staging/
+
+# Cache directories
+.cache/
+cache/
+*.cache
+
+# Temporary development files
+*.dev
+*.development
+*.staging
+*.local
+
+# Exclude all documentation except essential
+*.doc
+*.docx
+*.pdf
+*.txt
+!README.md
+!CHANGELOG.md
+!package.json
+!package-lock.json
+!env.example
+
+# Exclude all configuration except essential
+*.conf
+*.cfg
+*.ini
+!vite.config.js
+!tailwind.config.js
+!postcss.config.js
+!vercel.json
+!package.json
+!package-lock.json
+!env.example

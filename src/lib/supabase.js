@@ -99,6 +99,17 @@ export const db = {
   },
 
   deleteAccount: async (id) => {
+    // First, delete all transactions associated with this account
+    const { error: deleteTransactionsError } = await supabase
+      .from("transactions")
+      .delete()
+      .eq("account_id", id);
+
+    if (deleteTransactionsError) {
+      return { error: deleteTransactionsError };
+    }
+
+    // Then delete the account
     const { error } = await supabase.from("accounts").delete().eq("id", id);
     return { error };
   },
@@ -110,9 +121,9 @@ export const db = {
       .select(
         `
         *,
-        account:accounts(name, type),
-        category:categories(name, color, icon)
-      `
+        account:accounts(name, type, is_active),
+        category:categories(name, color, icon, is_default)
+      `,
       )
       .order("date", { ascending: false });
 
@@ -130,6 +141,31 @@ export const db = {
     }
 
     const { data, error } = await query;
+
+    // Process the data to handle null references
+    if (data) {
+      data.forEach((transaction) => {
+        // Handle deleted accounts
+        if (!transaction.account || !transaction.account.is_active) {
+          transaction.account = {
+            name: "Deleted Account",
+            type: "unknown",
+            is_active: false,
+          };
+        }
+
+        // Handle deleted categories
+        if (!transaction.category) {
+          transaction.category = {
+            name: "Uncategorized",
+            color: "#6B7280",
+            icon: "tag",
+            is_default: false,
+          };
+        }
+      });
+    }
+
     return { data, error };
   },
 
@@ -140,11 +176,32 @@ export const db = {
       .select(
         `
         *,
-        account:accounts(name, type),
-        category:categories(name, color, icon)
-      `
+        account:accounts(name, type, is_active),
+        category:categories(name, color, icon, is_default)
+      `,
       )
       .single();
+
+    // Process the data to handle null references
+    if (data) {
+      if (!data.account || !data.account.is_active) {
+        data.account = {
+          name: "Deleted Account",
+          type: "unknown",
+          is_active: false,
+        };
+      }
+
+      if (!data.category) {
+        data.category = {
+          name: "Uncategorized",
+          color: "#6B7280",
+          icon: "tag",
+          is_default: false,
+        };
+      }
+    }
+
     return { data, error };
   },
 
@@ -156,11 +213,32 @@ export const db = {
       .select(
         `
         *,
-        account:accounts(name, type),
-        category:categories(name, color, icon)
-      `
+        account:accounts(name, type, is_active),
+        category:categories(name, color, icon, is_default)
+      `,
       )
       .single();
+
+    // Process the data to handle null references
+    if (data) {
+      if (!data.account || !data.account.is_active) {
+        data.account = {
+          name: "Deleted Account",
+          type: "unknown",
+          is_active: false,
+        };
+      }
+
+      if (!data.category) {
+        data.category = {
+          name: "Uncategorized",
+          color: "#6B7280",
+          icon: "tag",
+          is_default: false,
+        };
+      }
+    }
+
     return { data, error };
   },
 
@@ -198,6 +276,17 @@ export const db = {
   },
 
   deleteCategory: async (id) => {
+    // First, update all transactions that reference this category to set category_id to NULL
+    const { error: updateError } = await supabase
+      .from("transactions")
+      .update({ category_id: null })
+      .eq("category_id", id);
+
+    if (updateError) {
+      return { error: updateError };
+    }
+
+    // Then delete the category
     const { error } = await supabase.from("categories").delete().eq("id", id);
     return { error };
   },

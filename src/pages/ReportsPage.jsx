@@ -97,7 +97,7 @@ const ReportsPage = () => {
       const date = new Date(
         currentDate.getFullYear(),
         currentDate.getMonth() - i,
-        1
+        1,
       );
       const monthName = date.toLocaleDateString("en-US", { month: "short" });
       const year = date.getFullYear();

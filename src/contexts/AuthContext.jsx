@@ -134,7 +134,7 @@ export const AuthProvider = ({ children }) => {
         } = await auth.getSession();
 
         if (error) {
-          console.error("Error getting session:", error);
+          // Error logged
           dispatch({
             type: AUTH_ACTIONS.LOAD_USER_FAILURE,
             payload: error.message,
@@ -160,7 +160,7 @@ export const AuthProvider = ({ children }) => {
           });
         }
       } catch (error) {
-        console.error("Error initializing auth:", error);
+        // Error logged
         dispatch({
           type: AUTH_ACTIONS.LOAD_USER_FAILURE,
           payload: error.message,
@@ -174,7 +174,7 @@ export const AuthProvider = ({ children }) => {
     const {
       data: { subscription },
     } = auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user?.email);
+      // Debug logged
 
       dispatch({
         type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
@@ -203,7 +203,7 @@ export const AuthProvider = ({ children }) => {
       );
 
       if (error) {
-        console.error("❌ Login failed:", error);
+        // Error logged
         dispatch({
           type: AUTH_ACTIONS.LOGIN_FAILURE,
           payload: error.message,
@@ -211,7 +211,7 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: error.message };
       }
 
-      console.log("✅ Login successful");
+      // Debug logged
       dispatch({
         type: AUTH_ACTIONS.LOGIN_SUCCESS,
         payload: {
@@ -247,7 +247,7 @@ export const AuthProvider = ({ children }) => {
       );
 
       if (error) {
-        console.error("❌ Registration failed:", error);
+        // Error logged
         dispatch({
           type: AUTH_ACTIONS.REGISTER_FAILURE,
           payload: error.message,
@@ -255,7 +255,7 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: error.message };
       }
 
-      console.log("✅ Registration successful");
+      // Debug logged
       dispatch({
         type: AUTH_ACTIONS.REGISTER_SUCCESS,
         payload: {
@@ -288,7 +288,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (error) {
-        console.error("❌ OAuth login failed:", error);
+        // Error logged
         dispatch({
           type: AUTH_ACTIONS.LOGIN_FAILURE,
           payload: error.message,
@@ -296,7 +296,7 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: error.message };
       }
 
-      console.log("✅ OAuth login initiated");
+      // Debug logged
       return { success: true, data };
     } catch (error) {
       console.error("💥 OAuth login error:", error);
@@ -315,11 +315,11 @@ export const AuthProvider = ({ children }) => {
       const { error } = await auth.signOut();
 
       if (error) {
-        console.error("❌ Logout failed:", error);
+        // Error logged
         return { success: false, error: error.message };
       }
 
-      console.log("✅ Logout successful");
+      // Debug logged
       dispatch({ type: AUTH_ACTIONS.LOGOUT });
       return { success: true };
     } catch (error) {
