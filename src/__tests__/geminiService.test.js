@@ -13,6 +13,11 @@ describe("GeminiService", () => {
 
   beforeEach(() => {
     service = geminiService;
+    // Reset the singleton's state for each test
+    service.requestCount = 0;
+    service.lastRequestTime = 0;
+    service.dailyRequestCount = 0;
+    service.lastDailyReset = new Date().toDateString();
     vi.clearAllMocks();
   });
 
