@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+
 import { CreditCard, Wallet, PiggyBank, Plus, Trash2, X } from "lucide-react";
 import useStore from "../store";
 

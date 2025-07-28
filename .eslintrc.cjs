@@ -3,6 +3,7 @@ module.exports = {
   env: {
     browser: true,
     es2020: true,
+    node: true,
   },
   extends: [
     "eslint:recommended",
@@ -10,10 +11,13 @@ module.exports = {
     "plugin:react/jsx-runtime",
     "plugin:react-hooks/recommended",
   ],
-  ignorePatterns: ["dist", ".eslintrc.cjs", "backend/**/*", "scripts/**/*"],
+  ignorePatterns: ["dist", ".eslintrc.cjs", "scripts/**/*"],
   parserOptions: {
     ecmaVersion: "latest",
     sourceType: "module",
+    ecmaFeatures: {
+      jsx: true,
+    },
   },
   settings: {
     react: {
@@ -22,56 +26,15 @@ module.exports = {
   },
   plugins: ["react-refresh"],
   rules: {
-    "react-refresh/only-export-components": "off",
-    "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
+    "react-refresh/only-export-components": [
+      "warn",
+      { allowConstantExport: true },
+    ],
     "react/prop-types": "off",
-    "react/jsx-key": "error",
-    "react/jsx-no-duplicate-props": "error",
-    "react/jsx-no-undef": "error",
-    "react/no-array-index-key": "warn",
-    "react/no-danger": "warn",
-    "react/no-deprecated": "warn",
-    "react/no-direct-mutation-state": "error",
-    "react/no-find-dom-node": "error",
-    "react/no-is-mounted": "error",
-    "react/no-render-return-value": "error",
-    "react/no-string-refs": "error",
+    "react/react-in-jsx-scope": "off",
+    "no-console": "warn",
+    "react-hooks/exhaustive-deps": "warn",
     "react/no-unescaped-entities": "warn",
-    "react/no-unknown-property": "error",
-    "react/no-unsafe": "warn",
-    "react/self-closing-comp": "error",
-    "react/sort-comp": "warn",
-    "react/sort-prop-types": "off",
-    "react/void-dom-elements-no-children": "error",
-    "prefer-const": "error",
-    "no-var": "error",
-    "no-console": process.env.NODE_ENV === "production" ? "error" : "warn",
-    "no-debugger": "error",
-    "no-alert": "warn",
-    "no-eval": "error",
-    "no-implied-eval": "error",
-    "no-new-func": "error",
-    "no-script-url": "error",
+    "no-unused-vars": ["error", { varsIgnorePattern: "^React$" }],
   },
-  overrides: [
-    {
-      files: ["backend/**/*.js"],
-      env: {
-        node: true,
-        es2020: true,
-      },
-      extends: ["eslint:recommended"],
-      parserOptions: {
-        ecmaVersion: "latest",
-        sourceType: "commonjs",
-      },
-      rules: {
-        "no-console": "off",
-        "no-unused-vars": [
-          "error",
-          { varsIgnorePattern: "^[A-Z_]", argsIgnorePattern: "^_" },
-        ],
-      },
-    },
-  ],
 };

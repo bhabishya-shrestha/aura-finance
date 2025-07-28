@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+
 import {
   Settings,
   User,
@@ -7,7 +7,6 @@ import {
   Palette,
   Download,
   Upload,
-  Trash2,
   Eye,
   EyeOff,
   Bell,

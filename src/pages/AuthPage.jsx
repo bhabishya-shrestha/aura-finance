@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+
 import { Sparkles, Shield, TrendingUp } from "lucide-react";
 import LoginForm from "../components/auth/LoginForm";
 import RegisterForm from "../components/auth/RegisterForm";

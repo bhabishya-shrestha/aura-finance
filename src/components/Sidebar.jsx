@@ -1,10 +1,6 @@
-import React, { useState } from "react";
 import {
-  Menu,
-  X,
   BarChart3,
   Wallet,
-  PieChart,
   Settings,
   Home,
   TrendingUp,

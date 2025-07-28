@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+
 import {
   TrendingUp,
   TrendingDown,
@@ -7,8 +7,6 @@ import {
   PieChart,
   BarChart3,
   Download,
-  Filter,
-  CalendarDays,
   CreditCard,
   PiggyBank,
   ShoppingCart,

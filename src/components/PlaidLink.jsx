@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+
 import { usePlaidLink } from "react-plaid-link";
 import {
   CreditCard,
@@ -8,8 +8,7 @@ import {
   Shield,
   Info,
   X,
-  RefreshCw,
-} from "lucide-react";
+  } from "lucide-react";
 import {
   plaidService,
   plaidDatabase,

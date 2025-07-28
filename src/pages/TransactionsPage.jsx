@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+
 import {
-  Filter,
   Search,
   Download,
   Plus,
@@ -160,9 +159,9 @@ const TransactionsPage = () => {
           />
         </div>
 
-        {/* Filter and Sort Controls */}
+        {/* and Sort Controls */}
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Filter Buttons */}
+          {/* Buttons */}
           <div className="flex gap-2">
             <button
               onClick={() => setSelectedFilter("all")}
