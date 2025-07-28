@@ -7,14 +7,11 @@ const useStore = create((set, get) => ({
   transactions: [],
   accounts: [],
   isLoading: false,
-  isModalOpen: false,
   parsedTransactions: [],
   currentUser: null,
 
   // Actions
   setLoading: loading => set({ isLoading: loading }),
-
-  setModalOpen: open => set({ isModalOpen: open }),
 
   setParsedTransactions: transactions =>
     set({ parsedTransactions: transactions }),
@@ -113,7 +110,7 @@ const useStore = create((set, get) => ({
       await db.transactions.bulkAdd(transactionsWithUser);
       // Reload transactions to update the UI
       await get().loadTransactions();
-      set({ isModalOpen: false, parsedTransactions: [] });
+      set({ parsedTransactions: [] });
     } catch (error) {
       // Error handling - in production, this would use a proper error notification system
       if (import.meta.env.DEV) {
