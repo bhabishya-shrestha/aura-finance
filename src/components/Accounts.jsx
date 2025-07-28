@@ -1,4 +1,4 @@
-
+import React, { useState } from "react";
 import { CreditCard, Wallet, PiggyBank, Plus, Trash2, X } from "lucide-react";
 import useStore from "../store";
 
@@ -49,8 +49,7 @@ const Accounts = () => {
     } catch (error) {
       // Error handling - in production, this would use a proper error notification system
       if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.error("Error adding account:", error);
+        // Error adding account
       }
     }
   };
@@ -59,7 +58,6 @@ const Accounts = () => {
     // Note: In a production app, this should use a proper confirmation dialog
     // For now, we'll keep the confirm but add proper error handling
     if (
-      // eslint-disable-next-line no-alert
       window.confirm(
         `Are you sure you want to delete "${accountName}"? This will also delete all associated transactions.`
       )
@@ -69,8 +67,7 @@ const Accounts = () => {
       } catch (error) {
         // Error handling - in production, this would use a proper error notification system
         if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.error("Error deleting account:", error);
+          // Error deleting account
         }
       }
     }

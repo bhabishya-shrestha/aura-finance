@@ -1,3 +1,4 @@
+import React from "react";
 import { Upload } from "lucide-react";
 import NetWorth from "./NetWorth";
 import Accounts from "./Accounts";

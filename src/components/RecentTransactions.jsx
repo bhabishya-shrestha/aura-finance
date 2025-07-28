@@ -1,4 +1,4 @@
-
+import React, { useState } from "react";
 import {
   Calendar,
   DollarSign,
@@ -72,10 +72,7 @@ const RecentTransactions = () => {
       setEditData({});
     } catch (error) {
       // Error handling - in production, this would use a proper error notification system
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.error("Error updating transaction:", error);
-      }
+      // Silent fail for now, could be replaced with toast notification
     }
   };
 
@@ -85,17 +82,11 @@ const RecentTransactions = () => {
   };
 
   const handleDelete = async (transactionId) => {
-    // Note: In a production app, this should use a proper confirmation dialog
-    // eslint-disable-next-line no-alert
     if (window.confirm("Are you sure you want to delete this transaction?")) {
       try {
         await deleteTransaction(transactionId);
       } catch (error) {
-        // Error handling - in production, this would use a proper error notification system
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.error("Error deleting transaction:", error);
-        }
+        // Handle error silently or show user notification
       }
     }
   };

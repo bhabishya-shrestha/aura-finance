@@ -1,5 +1,5 @@
-
-import { supabase, auth } from "../lib/supabase";
+import React, { createContext, useContext, useEffect, useReducer } from "react";
+import { supabase } from "../lib/supabase";
 
 // Action types
 const AUTH_ACTIONS = {
@@ -125,18 +125,14 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        dispatch({ type: AUTH_ACTIONS.LOAD_USER_START });
-
-        // Get initial session
         const {
           data: { session },
           error,
-        } = await auth.getSession();
+        } = await supabase.auth.getSession();
 
         if (error) {
-          console.error("Error getting session:", error);
           dispatch({
-            type: AUTH_ACTIONS.LOAD_USER_FAILURE,
+            type: AUTH_ACTIONS.LOGIN_FAILURE,
             payload: error.message,
           });
           return;
@@ -145,65 +141,45 @@ export const AuthProvider = ({ children }) => {
         if (session?.user) {
           dispatch({
             type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
-            payload: {
-              user: session.user,
-              session: session,
-            },
+            payload: { user: session.user, session: session },
           });
         } else {
-          dispatch({
-            type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
-            payload: {
-              user: null,
-              session: null,
-            },
-          });
+          dispatch({ type: AUTH_ACTIONS.LOGOUT });
         }
       } catch (error) {
-        console.error("Error initializing auth:", error);
-        dispatch({
-          type: AUTH_ACTIONS.LOAD_USER_FAILURE,
-          payload: error.message,
-        });
+        dispatch({ type: AUTH_ACTIONS.LOGIN_FAILURE, payload: error.message });
       }
     };
 
     initializeAuth();
 
-    // Listen for auth state changes
     const {
       data: { subscription },
-    } = auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user?.email);
-
-      dispatch({
-        type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
-        payload: {
-          user: session?.user || null,
-          session: session || null,
-        },
-      });
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        dispatch({
+          type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+          payload: { user: session.user, session: session },
+        });
+      } else if (event === "SIGNED_OUT") {
+        dispatch({ type: AUTH_ACTIONS.LOGOUT });
+      }
     });
 
-    // Cleanup subscription
-    return () => {
-      subscription?.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   // Login with email/password
   const login = async (credentials) => {
     try {
-      console.log("🔐 Attempting login with:", credentials.email);
       dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
-      const { data, error } = await auth.signIn(
+      const { data, error } = await supabase.auth.signIn(
         credentials.email,
         credentials.password
       );
 
       if (error) {
-        console.error("❌ Login failed:", error);
         dispatch({
           type: AUTH_ACTIONS.LOGIN_FAILURE,
           payload: error.message,
@@ -211,7 +187,6 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: error.message };
       }
 
-      console.log("✅ Login successful");
       dispatch({
         type: AUTH_ACTIONS.LOGIN_SUCCESS,
         payload: {
@@ -222,7 +197,6 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (error) {
-      console.error("💥 Login error:", error);
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: error.message || "Login failed",
@@ -234,10 +208,9 @@ export const AuthProvider = ({ children }) => {
   // Register with email/password
   const register = async (userData) => {
     try {
-      console.log("📝 Attempting registration with:", userData.email);
       dispatch({ type: AUTH_ACTIONS.REGISTER_START });
 
-      const { data, error } = await auth.signUp(
+      const { data, error } = await supabase.auth.signUp(
         userData.email,
         userData.password,
         {
@@ -247,7 +220,6 @@ export const AuthProvider = ({ children }) => {
       );
 
       if (error) {
-        console.error("❌ Registration failed:", error);
         dispatch({
           type: AUTH_ACTIONS.REGISTER_FAILURE,
           payload: error.message,
@@ -255,7 +227,6 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: error.message };
       }
 
-      console.log("✅ Registration successful");
       dispatch({
         type: AUTH_ACTIONS.REGISTER_SUCCESS,
         payload: {
@@ -266,7 +237,6 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (error) {
-      console.error("💥 Registration error:", error);
       dispatch({
         type: AUTH_ACTIONS.REGISTER_FAILURE,
         payload: error.message || "Registration failed",
@@ -278,7 +248,6 @@ export const AuthProvider = ({ children }) => {
   // OAuth login
   const loginWithOAuth = async (provider) => {
     try {
-      console.log(`🔐 Attempting OAuth login with: ${provider}`);
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
 
       // Let Supabase handle the redirect automatically
@@ -288,7 +257,6 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (error) {
-        console.error("❌ OAuth login failed:", error);
         dispatch({
           type: AUTH_ACTIONS.LOGIN_FAILURE,
           payload: error.message,
@@ -296,10 +264,8 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: error.message };
       }
 
-      console.log("✅ OAuth login initiated");
       return { success: true, data };
     } catch (error) {
-      console.error("💥 OAuth login error:", error);
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: error.message || "OAuth login failed",
@@ -311,19 +277,15 @@ export const AuthProvider = ({ children }) => {
   // Logout
   const logout = async () => {
     try {
-      console.log("🚪 Logging out...");
-      const { error } = await auth.signOut();
+      const { error } = await supabase.auth.signOut();
 
       if (error) {
-        console.error("❌ Logout failed:", error);
         return { success: false, error: error.message };
       }
 
-      console.log("✅ Logout successful");
       dispatch({ type: AUTH_ACTIONS.LOGOUT });
       return { success: true };
     } catch (error) {
-      console.error("💥 Logout error:", error);
       return { success: false, error: error.message };
     }
   };

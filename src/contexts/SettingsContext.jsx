@@ -1,3 +1,4 @@
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 const SettingsContext = createContext();
 
@@ -50,8 +51,7 @@ export const SettingsProvider = ({ children }) => {
         return { ...defaultSettings, ...parsed };
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error loading settings:", error);
+      // Error loading settings
     }
     return defaultSettings;
   });
@@ -63,8 +63,7 @@ export const SettingsProvider = ({ children }) => {
     try {
       localStorage.setItem("aura-settings", JSON.stringify(settings));
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error saving settings:", error);
+      // Error saving settings
     }
   }, [settings]);
 

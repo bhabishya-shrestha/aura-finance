@@ -87,28 +87,16 @@ export const parsePDF = async (file) => {
     validatePDFFile(file);
 
     // Show loading state
-    if (import.meta.env.DEV) {
-      console.log("Starting PDF validation and OCR processing...");
-    }
 
     // Perform OCR on the PDF with improved settings
     const result = await Tesseract.recognize(file, "eng", {
-      logger: (m) => {
-        if (import.meta.env.DEV) {
-          console.log(m);
-        }
-      },
+      logger: () => {},
       // Improved OCR settings for better accuracy
       tessedit_char_whitelist:
         "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,$()-/ ",
       tessedit_pageseg_mode: "6", // Uniform block of text
       preserve_interword_spaces: "1",
     });
-
-    if (import.meta.env.DEV) {
-      console.log("OCR completed, parsing text...");
-      console.log("Extracted text length:", result.data.text.length);
-    }
 
     // Validate that we got meaningful text
     if (!result.data.text || result.data.text.trim().length < 100) {
@@ -130,9 +118,6 @@ export const parsePDF = async (file) => {
     return transactions;
   } catch (error) {
     // Enhanced error handling
-    if (import.meta.env.DEV) {
-      console.error("Error parsing PDF:", error);
-    }
 
     // Provide more specific error messages
     if (error.message.includes("Unable to extract")) {
@@ -249,12 +234,6 @@ const parseBankOfAmericaText = (text) => {
 
   // If no transactions found with section parsing, try regex on entire text
   if (transactions.length === 0) {
-    if (import.meta.env.DEV) {
-      console.log(
-        "No transactions found in sections, trying full text parsing..."
-      );
-    }
-
     for (const pattern of transactionPatterns) {
       const matches = [...text.matchAll(pattern)];
 
@@ -296,10 +275,6 @@ const parseBankOfAmericaText = (text) => {
       )
   );
 
-  if (import.meta.env.DEV) {
-    console.log(`Found ${uniqueTransactions.length} transactions`);
-  }
-
   return uniqueTransactions;
 };
 
@@ -334,9 +309,6 @@ const parseDate = (dateStr) => {
 
     throw new Error("Unsupported date format");
   } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error("Error parsing date:", dateStr, error);
-    }
     return new Date();
   }
 };

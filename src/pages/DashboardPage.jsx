@@ -1,4 +1,4 @@
-
+import React, { useState, useEffect } from "react";
 import NetWorth from "../components/NetWorth";
 import Accounts from "../components/Accounts";
 import RecentTransactions from "../components/RecentTransactions";
@@ -9,19 +9,26 @@ import { useAuth } from "../contexts/AuthContext";
 
 const DashboardPage = () => {
   const { setModalOpen } = useStore();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log("DashboardPage mounted");
-    console.log("Auth state:", { user, isAuthenticated, isLoading });
-  }, [user, isAuthenticated, isLoading]);
+    const loadData = async () => {
+      try {
+        // Load any necessary data for dashboard
+        setError(null);
+      } catch (error) {
+        setError("Failed to load dashboard data");
+      }
+    };
+
+    loadData();
+  }, []);
 
   const handleImportClick = () => {
     try {
       setModalOpen(true);
     } catch (err) {
-      console.error("Error opening import modal:", err);
       setError(err.message);
     }
   };

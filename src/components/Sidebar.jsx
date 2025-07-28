@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   BarChart3,
   Wallet,
@@ -17,8 +18,8 @@ const Sidebar = ({
   isMobileOpen,
   onMobileToggle,
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useAuth();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems = [
     {

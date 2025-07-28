@@ -1,4 +1,4 @@
-
+import React, { useState, useRef } from "react";
 import {
   Settings,
   User,
@@ -67,7 +67,6 @@ const SettingsPage = () => {
 
   const handleResetSettings = () => {
     if (
-      // eslint-disable-next-line no-alert
       window.confirm(
         "Are you sure you want to reset all settings to default? This action cannot be undone."
       )

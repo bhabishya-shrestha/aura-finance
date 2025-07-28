@@ -1,4 +1,4 @@
-
+import React, { useState } from "react";
 import {
   BarChart,
   Bar,
@@ -10,7 +10,7 @@ import {
   PieChart,
   Pie,
   Cell,
-  } from "recharts";
+} from "recharts";
 import {
   TrendingUp,
   TrendingDown,

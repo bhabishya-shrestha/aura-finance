@@ -1,5 +1,5 @@
-
-import { Sparkles, Bell, Menu, Sun, Moon, } from "lucide-react";
+import React from "react";
+import { Sparkles, Bell, Menu, Sun, Moon } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import SearchBar from "./SearchBar";

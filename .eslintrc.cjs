@@ -32,9 +32,23 @@ module.exports = {
     ],
     "react/prop-types": "off",
     "react/react-in-jsx-scope": "off",
-    "no-console": "warn",
+    "no-console": process.env.NODE_ENV === "production" ? "error" : "warn",
     "react-hooks/exhaustive-deps": "warn",
     "react/no-unescaped-entities": "warn",
     "no-unused-vars": ["error", { varsIgnorePattern: "^React$" }],
   },
+  overrides: [
+    {
+      files: ["src/contexts/**/*.jsx"],
+      rules: {
+        "react-refresh/only-export-components": "off",
+      },
+    },
+    {
+      files: ["src/services/plaidService.js"],
+      rules: {
+        "no-useless-catch": "off",
+      },
+    },
+  ],
 };

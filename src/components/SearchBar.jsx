@@ -1,3 +1,4 @@
+import React, { useState, useRef, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import useStore from "../store";
 
@@ -101,13 +102,9 @@ const SearchBar = () => {
     }
   };
 
-  const handleResultClick = (result) => {
+  const handleResultClick = () => {
     // Handle result click - you can navigate to the specific item
-    // Log for development purposes only
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
-      console.log("Selected:", result);
-    }
+    // For now, just close the dropdown and clear query
     setIsOpen(false);
     setQuery("");
     setSelectedIndex(-1);

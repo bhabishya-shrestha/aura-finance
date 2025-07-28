@@ -1,4 +1,4 @@
-
+import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
@@ -21,7 +21,7 @@ const mockSignInWithOAuth = vi.hoisted(() => vi.fn());
 vi.mock("../../lib/supabase", () => ({
   supabase: {
     auth: {
-      signInWithPassword: mockSignInWithPassword,
+      signIn: mockSignInWithPassword,
       signUp: mockSignUp,
       signOut: mockSignOut,
       getUser: mockGetUser,
@@ -29,14 +29,6 @@ vi.mock("../../lib/supabase", () => ({
       onAuthStateChange: mockOnAuthStateChange,
       signInWithOAuth: mockSignInWithOAuth,
     },
-  },
-  auth: {
-    signIn: mockSignInWithPassword, // This is the wrapper function
-    signUp: mockSignUp,
-    signOut: mockSignOut,
-    getUser: mockGetUser,
-    getSession: mockGetSession,
-    onAuthStateChange: mockOnAuthStateChange,
   },
 }));
 
