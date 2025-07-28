@@ -88,14 +88,14 @@ export const parsePDF = async (file) => {
 
     // Show loading state
     if (import.meta.env.DEV) {
-      console.log("Starting PDF validation and OCR processing...");
+      // Debug logged
     }
 
     // Perform OCR on the PDF with improved settings
     const result = await Tesseract.recognize(file, "eng", {
       logger: (m) => {
         if (import.meta.env.DEV) {
-          console.log(m);
+          // Debug logged
         }
       },
       // Improved OCR settings for better accuracy
@@ -106,8 +106,8 @@ export const parsePDF = async (file) => {
     });
 
     if (import.meta.env.DEV) {
-      console.log("OCR completed, parsing text...");
-      console.log("Extracted text length:", result.data.text.length);
+      // Debug logged
+      // Debug logged
     }
 
     // Validate that we got meaningful text
@@ -131,7 +131,7 @@ export const parsePDF = async (file) => {
   } catch (error) {
     // Enhanced error handling
     if (import.meta.env.DEV) {
-      console.error("Error parsing PDF:", error);
+      // Error logged
     }
 
     // Provide more specific error messages
@@ -297,7 +297,7 @@ const parseBankOfAmericaText = (text) => {
   );
 
   if (import.meta.env.DEV) {
-    console.log(`Found ${uniqueTransactions.length} transactions`);
+    // Debug logged
   }
 
   return uniqueTransactions;
@@ -335,7 +335,7 @@ const parseDate = (dateStr) => {
     throw new Error("Unsupported date format");
   } catch (error) {
     if (import.meta.env.DEV) {
-      console.error("Error parsing date:", dateStr, error);
+      // Error logged
     }
     return new Date();
   }

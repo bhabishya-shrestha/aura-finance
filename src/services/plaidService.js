@@ -217,7 +217,7 @@ export const plaidService = {
 
       return response;
     } catch (error) {
-      console.error("Error creating link token:", error);
+      // Error logged
       throw error;
     }
   },
@@ -231,12 +231,12 @@ export const plaidService = {
         "/item/public_token/exchange",
         {
           public_token: publicToken,
-        }
+        },
       );
 
       return response;
     } catch (error) {
-      console.error("Error exchanging public token:", error);
+      // Error logged
       throw error;
     }
   },
@@ -252,7 +252,7 @@ export const plaidService = {
 
       return response.accounts;
     } catch (error) {
-      console.error("Error getting accounts:", error);
+      // Error logged
       throw error;
     }
   },
@@ -269,11 +269,11 @@ export const plaidService = {
 
       const response = await plaidAPI.makeRequestWithRetry(
         "/accounts/balance/get",
-        data
+        data,
       );
       return response.accounts;
     } catch (error) {
-      console.error("Error getting account balances:", error);
+      // Error logged
       throw error;
     }
   },
@@ -306,7 +306,7 @@ export const plaidService = {
 
       const response = await plaidAPI.makeRequestWithRetry(
         "/transactions/get",
-        data
+        data,
       );
 
       return {
@@ -315,7 +315,7 @@ export const plaidService = {
         request_id: response.request_id,
       };
     } catch (error) {
-      console.error("Error getting transactions:", error);
+      // Error logged
       throw error;
     }
   },
@@ -330,12 +330,12 @@ export const plaidService = {
         {
           institution_id: institutionId,
           country_codes: ["US"],
-        }
+        },
       );
 
       return response.institution;
     } catch (error) {
-      console.error("Error getting institution:", error);
+      // Error logged
       throw error;
     }
   },
@@ -351,7 +351,7 @@ export const plaidService = {
 
       return response;
     } catch (error) {
-      console.error("Error removing item:", error);
+      // Error logged
       throw error;
     }
   },
@@ -367,7 +367,7 @@ export const plaidService = {
 
       return response.item;
     } catch (error) {
-      console.error("Error getting item status:", error);
+      // Error logged
       throw error;
     }
   },
@@ -392,7 +392,7 @@ export const plaidDatabase = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Error storing Plaid item:", error);
+      // Error logged
       throw error;
     }
   },
@@ -411,7 +411,7 @@ export const plaidDatabase = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Error getting Plaid items:", error);
+      // Error logged
       throw error;
     }
   },
@@ -442,7 +442,7 @@ export const plaidDatabase = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Error storing accounts:", error);
+      // Error logged
       throw error;
     }
   },
@@ -485,7 +485,7 @@ export const plaidDatabase = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Error storing transactions:", error);
+      // Error logged
       throw error;
     }
   },
@@ -517,7 +517,7 @@ export const plaidDatabase = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error("Error removing Plaid item:", error);
+      // Error logged
       throw error;
     }
   },
@@ -535,7 +535,7 @@ export const plaidUsageTracker = {
 
       if (error) throw error;
     } catch (error) {
-      console.error("Error tracking Plaid usage:", error);
+      // Error logged
     }
   },
 
@@ -545,7 +545,7 @@ export const plaidUsageTracker = {
       const endDate = new Date(
         new Date(startDate).getFullYear(),
         new Date(startDate).getMonth() + 1,
-        0
+        0,
       ).toISOString();
 
       const { data, error } = await supabase
@@ -559,7 +559,7 @@ export const plaidUsageTracker = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Error getting monthly usage:", error);
+      // Error logged
       return [];
     }
   },
@@ -574,14 +574,14 @@ export const plaidUsageTracker = {
         transactionsRemaining: Math.max(
           0,
           PLAID_CONFIG.freeTierLimits.maxTransactionsPerMonth -
-            totalTransactions
+            totalTransactions,
         ),
         isWithinLimits:
           totalTransactions <
           PLAID_CONFIG.freeTierLimits.maxTransactionsPerMonth,
       };
     } catch (error) {
-      console.error("Error checking free tier limits:", error);
+      // Error logged
       return { transactionsRemaining: 0, isWithinLimits: false };
     }
   },

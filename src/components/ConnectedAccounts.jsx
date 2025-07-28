@@ -31,7 +31,7 @@ const ConnectedAccounts = ({ onRefresh }) => {
     if (user?.id) {
       loadConnectedAccounts();
     }
-  }, [user?.id]);
+  }, [user?.id, loadConnectedAccounts]);
 
   const loadConnectedAccounts = async () => {
     try {
@@ -41,7 +41,6 @@ const ConnectedAccounts = ({ onRefresh }) => {
       const items = await plaidDatabase.getPlaidItems(user.id);
       setConnectedItems(items);
     } catch (error) {
-      console.error("Error loading connected accounts:", error);
       setError("Failed to load connected accounts");
     } finally {
       setIsLoading(false);
@@ -57,7 +56,7 @@ const ConnectedAccounts = ({ onRefresh }) => {
       const limits = await plaidUsageTracker.checkFreeTierLimits(user.id);
       if (!limits.isWithinLimits) {
         setError(
-          "Monthly transaction limit reached. Please wait until next month."
+          "Monthly transaction limit reached. Please wait until next month.",
         );
         return;
       }
@@ -72,14 +71,14 @@ const ConnectedAccounts = ({ onRefresh }) => {
         accessToken,
         startDate,
         endDate,
-        { count: 100 }
+        { count: 100 },
       );
 
       if (transactionsResponse.transactions.length > 0) {
         await plaidDatabase.storeTransactions(
           user.id,
           itemId,
-          transactionsResponse.transactions
+          transactionsResponse.transactions,
         );
       }
 
@@ -98,7 +97,6 @@ const ConnectedAccounts = ({ onRefresh }) => {
         onRefresh();
       }
     } catch (error) {
-      console.error("Error syncing account:", error);
       setError("Failed to sync account. Please try again.");
     } finally {
       setSyncingItem(null);
@@ -123,7 +121,6 @@ const ConnectedAccounts = ({ onRefresh }) => {
         onRefresh();
       }
     } catch (error) {
-      console.error("Error removing account:", error);
       setError("Failed to remove account. Please try again.");
     } finally {
       setRemovingItem(null);

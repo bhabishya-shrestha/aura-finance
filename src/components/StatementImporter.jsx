@@ -38,13 +38,13 @@ const StatementImporter = () => {
         transactions = await parsePDF(file);
       } else {
         throw new Error(
-          "Unsupported file type. Please upload a CSV or PDF file."
+          "Unsupported file type. Please upload a CSV or PDF file.",
         );
       }
 
       if (transactions.length === 0) {
         throw new Error(
-          "No transactions found in the file. Please check the file format."
+          "No transactions found in the file. Please check the file format.",
         );
       }
 
@@ -283,7 +283,7 @@ const StatementImporter = () => {
                               handleTransactionUpdate(
                                 index,
                                 "date",
-                                new Date(e.target.value)
+                                new Date(e.target.value),
                               )
                             }
                             className="w-full mt-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
@@ -301,7 +301,7 @@ const StatementImporter = () => {
                               handleTransactionUpdate(
                                 index,
                                 "description",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             className="w-full mt-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
@@ -320,7 +320,7 @@ const StatementImporter = () => {
                               handleTransactionUpdate(
                                 index,
                                 "amount",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             className="w-full mt-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
@@ -337,7 +337,7 @@ const StatementImporter = () => {
                               handleTransactionUpdate(
                                 index,
                                 "category",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             className="w-full mt-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"

@@ -123,7 +123,7 @@ export const db = {
         *,
         account:accounts(name, type, is_active),
         category:categories(name, color, icon, is_default)
-      `
+      `,
       )
       .order("date", { ascending: false });
 
@@ -178,7 +178,7 @@ export const db = {
         *,
         account:accounts(name, type, is_active),
         category:categories(name, color, icon, is_default)
-      `
+      `,
       )
       .single();
 
@@ -215,7 +215,7 @@ export const db = {
         *,
         account:accounts(name, type, is_active),
         category:categories(name, color, icon, is_default)
-      `
+      `,
       )
       .single();
 
