@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   Upload,
   AlertCircle,
@@ -12,6 +12,7 @@ import {
   EyeOff,
   Info,
 } from "lucide-react";
+import { ClipLoader } from "react-spinners";
 import { parseStatement } from "../utils/statementParser";
 import geminiService from "../services/geminiService";
 import useStore from "../store";
@@ -24,6 +25,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   const [error, setError] = useState("");
   const [processingStep, setProcessingStep] = useState("");
   const [processingProgress, setProcessingProgress] = useState(0);
+  const [displayProgress, setDisplayProgress] = useState(0);
   const [previewData, setPreviewData] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -35,6 +37,24 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   const [isEditingSummary, setIsEditingSummary] = useState(false);
   const [showAccountAssignment, setShowAccountAssignment] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Smooth progress animation
+  useEffect(() => {
+    if (isProcessing) {
+      const timer = setInterval(() => {
+        setDisplayProgress(prev => {
+          if (prev < processingProgress) {
+            return Math.min(prev + 1, processingProgress);
+          }
+          return prev;
+        });
+      }, 50); // Update every 50ms for smooth animation
+
+      return () => clearInterval(timer);
+    } else {
+      setDisplayProgress(0);
+    }
+  }, [processingProgress, isProcessing]);
 
   // Enhanced file validation
   const validateFile = useCallback(file => {
@@ -94,7 +114,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       try {
         // Validate file
         validateFile(file);
-        setProcessingProgress(10);
+        setProcessingProgress(15);
         setProcessingStep("Validating file...");
 
         let transactions = [];
@@ -102,10 +122,13 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
 
         // Process based on file type
         if (file.type === "text/csv" || file.name.endsWith(".csv")) {
-          setProcessingProgress(30);
+          setProcessingProgress(35);
           setProcessingStep("Parsing CSV file...");
 
           transactions = await parseStatement(file);
+          setProcessingProgress(70);
+          setProcessingStep("Processing transactions...");
+
           summary = {
             documentType: "CSV File",
             source: file.name,
@@ -118,12 +141,16 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           file.name.endsWith(".pdf") ||
           file.type.startsWith("image/")
         ) {
+          setProcessingProgress(25);
+          setProcessingStep("Uploading document...");
+
           setProcessingProgress(40);
           setProcessingStep("Analyzing document with AI...");
 
           // Use enhanced Gemini for PDF and image analysis
           const result = await geminiService.analyzeImage(file);
-          setProcessingProgress(80);
+          setProcessingProgress(70);
+          setProcessingStep("Processing AI results...");
 
           if (result.transactions && result.transactions.length > 0) {
             transactions = geminiService.convertToTransactions(result);
@@ -139,7 +166,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           );
         }
 
-        setProcessingProgress(90);
+        setProcessingProgress(85);
         setProcessingStep("Preparing results...");
 
         if (transactions.length === 0) {
@@ -473,11 +500,14 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                 <div className="space-y-6">
                   <div className="text-center">
                     <div className="relative inline-block mb-4">
-                      {/* Enhanced animated loading spinner */}
-                      <div
-                        className="w-16 h-16 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full shadow-lg"
-                        style={{ animation: "spin 1s linear infinite" }}
-                      ></div>
+                      {/* Professional loading spinner */}
+                      <ClipLoader
+                        size={64}
+                        color="#3B82F6"
+                        loading={true}
+                        speedMultiplier={1}
+                        className="shadow-lg"
+                      />
                       {/* Pulsing ring effect */}
                       <div className="absolute inset-0 w-16 h-16 border-2 border-blue-400/30 rounded-full animate-ping"></div>
                     </div>
@@ -497,14 +527,14 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                         Progress
                       </span>
                       <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                        {processingProgress}%
+                        {displayProgress}%
                       </span>
                     </div>
 
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
                       <div
                         className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 h-3 rounded-full transition-all duration-1000 ease-out relative"
-                        style={{ width: `${processingProgress}%` }}
+                        style={{ width: `${displayProgress}%` }}
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-400/50 via-transparent to-blue-600/50 animate-pulse"></div>
@@ -514,7 +544,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                     <div className="grid grid-cols-3 gap-3 text-xs">
                       <div
                         className={`text-center p-3 rounded-lg transition-all duration-500 ${
-                          processingProgress >= 15
+                          displayProgress >= 15
                             ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm"
                             : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
                         }`}
@@ -524,7 +554,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                       </div>
                       <div
                         className={`text-center p-3 rounded-lg transition-all duration-500 ${
-                          processingProgress >= 50
+                          displayProgress >= 50
                             ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm"
                             : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
                         }`}
@@ -534,7 +564,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                       </div>
                       <div
                         className={`text-center p-3 rounded-lg transition-all duration-500 ${
-                          processingProgress >= 85
+                          displayProgress >= 85
                             ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm"
                             : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
                         }`}
@@ -791,7 +821,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                 >
                   {isProcessing ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <ClipLoader size={16} color="#ffffff" loading={true} />
                       Importing...
                     </>
                   ) : (
