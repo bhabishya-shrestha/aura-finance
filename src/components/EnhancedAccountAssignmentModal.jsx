@@ -105,10 +105,18 @@ const EnhancedAccountAssignmentModal = ({
 
     // Analyze transaction patterns to suggest account types
     const patterns = {
-      banking: ["bank", "checking", "savings", "deposit", "withdrawal"],
-      credit: ["credit", "card", "visa", "mastercard", "amex"],
-      investment: ["investment", "stock", "fund", "portfolio", "trading"],
-      loan: ["loan", "mortgage", "payment", "interest"],
+      checking: ["bank", "checking", "deposit", "withdrawal", "debit"],
+      savings: ["savings", "interest", "deposit"],
+      credit: ["credit", "card", "visa", "mastercard", "amex", "discover"],
+      investment: [
+        "investment",
+        "stock",
+        "fund",
+        "portfolio",
+        "trading",
+        "brokerage",
+      ],
+      loan: ["loan", "mortgage", "payment", "interest", "finance"],
     };
 
     // Detect account type from transaction patterns
@@ -119,44 +127,95 @@ const EnhancedAccountAssignmentModal = ({
           transactionTexts.some(text => text.includes(keyword))
         )
       ) {
-        detectedType = type === "banking" ? "checking" : type;
+        detectedType = type;
         break;
       }
     }
 
-    // Generate suggested account names based on transaction content
-    const commonMerchants = new Set();
+    // Extract institution names from transaction descriptions
+    const institutionPatterns = [
+      /(chase|bank of america|wells fargo|citibank|us bank|pnc|td bank|capital one|american express|discover)/i,
+      /(amazon|walmart|target|costco|home depot|lowes|kroger|safeway|whole foods)/i,
+      /(netflix|spotify|hulu|disney|amazon prime|youtube|google|microsoft|apple)/i,
+    ];
+
+    const detectedInstitutions = new Set();
     transactions.forEach(t => {
       const description = t.description || "";
-      const words = description.split(" ").filter(word => word.length > 3);
-      words.forEach(word => {
-        if (word.match(/^[A-Z]/) && !word.includes(".")) {
-          commonMerchants.add(word);
+      institutionPatterns.forEach(pattern => {
+        const match = description.match(pattern);
+        if (match) {
+          detectedInstitutions.add(match[1].toLowerCase());
         }
       });
     });
 
-    // Create suggestions based on detected patterns
-    if (commonMerchants.size > 0) {
-      const merchantNames = Array.from(commonMerchants).slice(0, 3);
-      suggestions.push({
-        name: `${merchantNames[0]} Account`,
-        type: detectedType,
-        confidence: 0.8,
-        reason: `Based on transactions with ${merchantNames.join(", ")}`,
-      });
+    // Generate financial account suggestions based on detected patterns
+    if (detectedInstitutions.size > 0) {
+      const institutions = Array.from(detectedInstitutions);
+
+      // Suggest based on financial institutions
+      const financialInstitutions = institutions.filter(inst =>
+        [
+          "chase",
+          "bank of america",
+          "wells fargo",
+          "citibank",
+          "us bank",
+          "pnc",
+          "td bank",
+          "capital one",
+        ].includes(inst)
+      );
+
+      if (financialInstitutions.length > 0) {
+        const institution = financialInstitutions[0];
+        const institutionName = institution
+          .split(" ")
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+
+        suggestions.push({
+          name: `${institutionName} ${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)}`,
+          type: detectedType,
+          confidence: 0.9,
+          reason: `Detected ${institutionName} transactions`,
+        });
+      }
     }
 
-    // Suggest based on transaction amounts and frequency
+    // Suggest based on transaction patterns and amounts
     const avgAmount =
       transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0) /
       transactions.length;
-    if (avgAmount > 1000) {
+
+    if (avgAmount > 500) {
       suggestions.push({
-        name: "High-Value Account",
+        name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
         type: detectedType,
         confidence: 0.7,
-        reason: "High average transaction amounts",
+        reason: `Based on ${detectedType} transaction patterns`,
+      });
+    }
+
+    // Suggest based on transaction frequency and types
+    const creditCardPatterns = [
+      "visa",
+      "mastercard",
+      "amex",
+      "discover",
+      "credit",
+    ];
+    const hasCreditCardTransactions = creditCardPatterns.some(pattern =>
+      transactionTexts.some(text => text.includes(pattern))
+    );
+
+    if (hasCreditCardTransactions) {
+      suggestions.push({
+        name: "Credit Card Account",
+        type: "credit",
+        confidence: 0.8,
+        reason: "Detected credit card transactions",
       });
     }
 
@@ -164,13 +223,24 @@ const EnhancedAccountAssignmentModal = ({
     const categories = new Set(
       transactions.map(t => t.category).filter(Boolean)
     );
+
     if (categories.size > 0) {
       const categoryList = Array.from(categories).slice(0, 2);
       suggestions.push({
-        name: `${categoryList[0]} Account`,
+        name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
         type: detectedType,
         confidence: 0.6,
         reason: `Based on categories: ${categoryList.join(", ")}`,
+      });
+    }
+
+    // Add default suggestion if no specific patterns detected
+    if (suggestions.length === 0) {
+      suggestions.push({
+        name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
+        type: detectedType,
+        confidence: 0.5,
+        reason: "Default account suggestion",
       });
     }
 
@@ -210,22 +280,19 @@ const EnhancedAccountAssignmentModal = ({
       }
     }
 
-    // If no direct match, try to suggest based on transaction patterns
-    const patterns = {
-      food: ["restaurant", "cafe", "food", "dining", "meal"],
-      transportation: ["uber", "lyft", "gas", "fuel", "parking", "transit"],
-      shopping: ["amazon", "walmart", "target", "store", "shop"],
-      travel: ["hotel", "airline", "booking", "travel"],
-      healthcare: ["doctor", "pharmacy", "medical", "health"],
-      entertainment: ["netflix", "spotify", "movie", "game"],
+    // If no direct match, try to suggest based on transaction patterns and account types
+    const financialPatterns = {
+      credit: ["visa", "mastercard", "amex", "discover", "credit"],
+      checking: ["checking", "debit", "bank", "deposit"],
+      savings: ["savings", "interest", "deposit"],
+      investment: ["investment", "stock", "fund", "brokerage"],
     };
 
-    for (const [pattern, keywords] of Object.entries(patterns)) {
+    for (const [accountType, keywords] of Object.entries(financialPatterns)) {
       if (keywords.some(keyword => description.includes(keyword))) {
-        // Look for accounts that might be used for this type of spending
+        // Look for accounts of the matching type
         const relevantAccounts = accounts.filter(
-          acc =>
-            acc.type === "credit" || acc.name.toLowerCase().includes(pattern)
+          acc => acc.type === accountType
         );
         if (relevantAccounts.length > 0) {
           return {
@@ -309,6 +376,18 @@ const EnhancedAccountAssignmentModal = ({
     }
 
     return categoryIcons.default;
+  };
+
+  // Format account type for display
+  const formatAccountType = type => {
+    const typeMap = {
+      checking: "Checking Account",
+      savings: "Savings Account",
+      credit: "Credit Card",
+      investment: "Investment Account",
+      loan: "Loan Account",
+    };
+    return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
   };
 
   const handleCreateAccount = async () => {
@@ -460,8 +539,8 @@ const EnhancedAccountAssignmentModal = ({
                       <p className="font-medium text-gray-900 dark:text-white truncate">
                         {account.name}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                        {account.type}
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {formatAccountType(account.type)}
                       </p>
                     </div>
                   </div>
@@ -499,7 +578,7 @@ const EnhancedAccountAssignmentModal = ({
                             {suggestion.name}
                           </p>
                           <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded">
-                            {suggestion.type}
+                            {formatAccountType(suggestion.type)}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">

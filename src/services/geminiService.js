@@ -162,6 +162,13 @@ DOCUMENT ANALYSIS INSTRUCTIONS:
    - Account number (if visible, mask sensitive parts)
    - Account holder name (if present)
    - Statement period or date range
+   
+   IMPORTANT: For account type detection, look for:
+   - "Checking" or "Checking Account" → accountType: "checking"
+   - "Savings" or "Savings Account" → accountType: "savings"
+   - "Credit Card" or "Credit" → accountType: "credit"
+   - "Investment" or "Brokerage" → accountType: "investment"
+   - "Loan" or "Mortgage" → accountType: "loan"
 
 3. **Transaction Extraction**: Extract ALL transactions with the following details:
    - Date (YYYY-MM-DD format)
@@ -213,8 +220,8 @@ RESPONSE FORMAT (JSON only):
     "transactionCount": number,
     "accountSuggestions": [
       {
-        "name": "string (suggested account name)",
-        "type": "string (account type)",
+        "name": "string (suggested account name based on institution and type, e.g., 'Chase Checking', 'Bank of America Savings')",
+        "type": "string (checking, savings, credit, investment, loan)",
         "reason": "string (why this account is suggested)",
         "confidence": "number (0-1)"
       }
@@ -621,12 +628,14 @@ IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside t
       // Enhanced account information
       accountInfo: geminiResponse.accountInfo || null,
       accountSuggestions: geminiResponse.summary?.accountSuggestions || [],
-      detectedAccount: geminiResponse.accountInfo ? {
-        name: geminiResponse.accountInfo.accountName,
-        type: geminiResponse.accountInfo.accountType,
-        institution: geminiResponse.accountInfo.institution,
-        confidence: geminiResponse.accountInfo.confidence,
-      } : null,
+      detectedAccount: geminiResponse.accountInfo
+        ? {
+            name: geminiResponse.accountInfo.accountName,
+            type: geminiResponse.accountInfo.accountType,
+            institution: geminiResponse.accountInfo.institution,
+            confidence: geminiResponse.accountInfo.confidence,
+          }
+        : null,
     };
   }
 }
