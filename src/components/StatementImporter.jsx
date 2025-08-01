@@ -16,7 +16,7 @@ import { parseStatement } from "../utils/statementParser";
 import geminiService from "../services/geminiService";
 import useStore from "../store";
 import DuplicateReviewModal from "./DuplicateReviewModal";
-import AccountAssignmentModal from "./AccountAssignmentModal";
+import EnhancedAccountAssignmentModal from "./EnhancedAccountAssignmentModal";
 
 const StatementImporter = ({ isOpen, onClose }) => {
   const { addTransactions, checkForDuplicates } = useStore();
@@ -796,8 +796,8 @@ const StatementImporter = ({ isOpen, onClose }) => {
         summary={duplicateResults?.summary}
       />
 
-      {/* Account Assignment Modal */}
-      <AccountAssignmentModal
+      {/* Enhanced Account Assignment Modal */}
+      <EnhancedAccountAssignmentModal
         isOpen={showAccountAssignment}
         onClose={() => setShowAccountAssignment(false)}
         transactions={previewData?.transactions || []}

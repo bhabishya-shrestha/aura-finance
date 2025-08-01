@@ -5,11 +5,88 @@ import RecentTransactions from "../components/RecentTransactions";
 import AddTransaction from "../components/AddTransaction";
 import StatementImporter from "../components/StatementImporter";
 import { useAuth } from "../contexts/AuthContext";
+import useStore from "../store";
+
+// Quick Analytics Card Component
+const QuickAnalyticsCard = ({
+  title,
+  value,
+  subtitle,
+  trend = null,
+  className = "",
+}) => {
+  const formatCurrency = amount => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  };
+
+  const getTrendIcon = trend => {
+    if (!trend) return null;
+    if (trend > 0) {
+      return (
+        <div className="flex items-center gap-1 text-green-500">
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+            />
+          </svg>
+          <span className="text-xs">+{Math.abs(trend).toFixed(1)}%</span>
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex items-center gap-1 text-red-500">
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6"
+            />
+          </svg>
+          <span className="text-xs">-{Math.abs(trend).toFixed(1)}%</span>
+        </div>
+      );
+    }
+  };
+
+  return (
+    <div
+      className={`text-center p-6 apple-glass-light rounded-apple-lg ${className}`}
+    >
+      <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-success mb-2">
+        {formatCurrency(value)}
+      </div>
+      <div className="text-muted text-sm lg:text-base mb-1">{title}</div>
+      {subtitle && <div className="text-xs text-muted-gray">{subtitle}</div>}
+      {trend !== null && getTrendIcon(trend)}
+    </div>
+  );
+};
 
 const DashboardPage = ({ onPageChange }) => {
   const { isLoading } = useAuth();
   const [error, setError] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  
+  // Get analytics data from store
+  const { getQuickAnalytics } = useStore();
+  const quickAnalytics = getQuickAnalytics('month');
 
   // Defensive: Always set modal closed on mount
   useEffect(() => {
@@ -134,28 +211,23 @@ const DashboardPage = ({ onPageChange }) => {
             Quick Analytics
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-            <div className="text-center p-6 apple-glass-light rounded-apple-lg">
-              <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-success mb-2">
-                $2,450
-              </div>
-              <div className="text-muted text-sm lg:text-base">
-                This Month&apos;s Spending
-              </div>
-            </div>
-            <div className="text-center p-6 apple-glass-light rounded-apple-lg">
-              <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-success mb-2">
-                $8,200
-              </div>
-              <div className="text-muted text-sm lg:text-base">
-                This Month&apos;s Income
-              </div>
-            </div>
-            <div className="text-center p-6 apple-glass-light rounded-apple-lg sm:col-span-2 xl:col-span-1">
-              <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-success mb-2">
-                $5,750
-              </div>
-              <div className="text-muted text-sm lg:text-base">Net Savings</div>
-            </div>
+            <QuickAnalyticsCard
+              title="This Month's Spending"
+              value={quickAnalytics.spending}
+              subtitle={`${quickAnalytics.transactionCount} transactions`}
+              trend={quickAnalytics.spendingTrend}
+            />
+            <QuickAnalyticsCard
+              title="This Month's Income"
+              value={quickAnalytics.income}
+              subtitle="Total income"
+            />
+            <QuickAnalyticsCard
+              title="Net Savings"
+              value={quickAnalytics.netSavings}
+              subtitle="Income minus spending"
+              className="sm:col-span-2 xl:col-span-1"
+            />
           </div>
         </div>
       </div>

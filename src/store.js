@@ -2,6 +2,7 @@ import { create } from "zustand";
 import db from "./database";
 import { tokenManager } from "./services/localAuth";
 import { findDuplicateTransactions } from "./utils/duplicateDetector";
+import analyticsService from "./services/analyticsService";
 
 const useStore = create((set, get) => ({
   // State
@@ -43,6 +44,8 @@ const useStore = create((set, get) => ({
           .toArray();
       }
 
+      // Clear analytics cache when transactions are loaded
+      analyticsService.clearCache();
       set({ transactions });
     } catch (error) {
       // Error handling - in production, this would use a proper error notification system
@@ -72,6 +75,8 @@ const useStore = create((set, get) => ({
         accounts = await db.accounts.toArray();
       }
 
+      // Clear analytics cache when accounts are loaded
+      analyticsService.clearCache();
       set({ accounts });
     } catch (error) {
       // Error handling - in production, this would use a proper error notification system
@@ -144,26 +149,26 @@ const useStore = create((set, get) => ({
       // Filter out $0 transactions that are likely fees, adjustments, or interest charges
       const filteredTransactions = transactions.filter(transaction => {
         const amount = parseFloat(transaction.amount) || 0;
-        
+
         if (amount === 0) {
           const description = (transaction.description || "").toLowerCase();
           const skipPatterns = [
-            "interest", 
-            "fee", 
-            "charge", 
-            "adjustment", 
+            "interest",
+            "fee",
+            "charge",
+            "adjustment",
             "credit",
             "cash advance",
             "balance transfer",
             "finance charge",
             "late fee",
             "overdraft",
-            "service charge"
+            "service charge",
           ];
-          
+
           return !skipPatterns.some(pattern => description.includes(pattern));
         }
-        
+
         return true;
       });
 
@@ -366,13 +371,10 @@ const useStore = create((set, get) => ({
     }
   },
 
-  // Calculate net worth
+  // Calculate net worth using analytics service
   getNetWorth: () => {
-    const { transactions } = get();
-    return transactions.reduce(
-      (total, transaction) => total + transaction.amount,
-      0
-    );
+    const { transactions, accounts } = get();
+    return analyticsService.calculateNetWorth(transactions, accounts);
   },
 
   // Get recent transactions (last 10)
@@ -393,6 +395,61 @@ const useStore = create((set, get) => ({
     return transactions
       .filter(t => t.accountId === accountId)
       .reduce((total, transaction) => total + transaction.amount, 0);
+  },
+
+  // Analytics methods using the analytics service
+  getQuickAnalytics: (timeRange = "month") => {
+    const { transactions } = get();
+    return analyticsService.calculateQuickAnalytics(transactions, timeRange);
+  },
+
+  getSpendingByCategory: (timeRange = "month") => {
+    const { transactions } = get();
+    return analyticsService.calculateSpendingByCategory(
+      transactions,
+      timeRange
+    );
+  },
+
+  getIncomeVsSpending: (timeRange = "month") => {
+    const { transactions } = get();
+    return analyticsService.calculateIncomeVsSpending(transactions, timeRange);
+  },
+
+  getMonthlySpending: (timeRange = "year") => {
+    const { transactions } = get();
+    return analyticsService.calculateMonthlySpending(transactions, timeRange);
+  },
+
+  getAccountAnalytics: (accountId, timeRange = "month") => {
+    const { transactions } = get();
+    return analyticsService.calculateAccountAnalytics(
+      transactions,
+      accountId,
+      timeRange
+    );
+  },
+
+  getSpendingTrends: (periods = 12) => {
+    const { transactions } = get();
+    return analyticsService.calculateSpendingTrends(transactions, periods);
+  },
+
+  getTopSpendingCategories: (timeRange = "month", limit = 5) => {
+    const { transactions } = get();
+    return analyticsService.getTopSpendingCategories(
+      transactions,
+      timeRange,
+      limit
+    );
+  },
+
+  getAverageDailySpending: (timeRange = "month") => {
+    const { transactions } = get();
+    return analyticsService.calculateAverageDailySpending(
+      transactions,
+      timeRange
+    );
   },
 
   // Reset all user data
