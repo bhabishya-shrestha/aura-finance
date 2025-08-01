@@ -1,17 +1,22 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Home,
   CreditCard,
   TrendingUp,
   FileText,
   LogOut,
-  X,
   ChevronRight,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
   const { user, logout } = useAuth();
+  const sidebarRef = useRef(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
 
   // Manage body scroll when sidebar is open
   useEffect(() => {
@@ -26,6 +31,32 @@ const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
       document.body.classList.remove("sidebar-open");
     };
   }, [isOpen]);
+
+  // Touch event handlers for swipe gestures
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    
+    // Close sidebar on left swipe (swipe left to close)
+    if (isLeftSwipe) {
+      onClose();
+    }
+    
+    // Reset touch states
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
 
   const navigationItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
@@ -61,6 +92,10 @@ const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
 
       {/* Sidebar */}
       <div
+        ref={sidebarRef}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
         className={`fixed top-14 left-0 h-[calc(100vh-3.5rem)] w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-50 lg:hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
@@ -80,12 +115,9 @@ const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="text-xs text-gray-400 dark:text-gray-500">
+            Swipe left to close
+          </div>
         </div>
 
         {/* Navigation */}
