@@ -8,6 +8,15 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
   const { user, logout } = useAuth();
   const { toggleTheme, currentTheme } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  
+  // Mock notifications data - in a real app, this would come from a store or API
+  const notifications = [];
+  const hasNewNotifications = false;
+
+  const toggleNotifications = () => {
+    setShowNotifications(!showNotifications);
+  };
 
   const handleLogout = async () => {
     try {
