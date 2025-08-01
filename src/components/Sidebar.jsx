@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
 
 const Sidebar = ({
   onPageChange,
@@ -18,7 +17,6 @@ const Sidebar = ({
   isMobileOpen,
   onMobileToggle,
 }) => {
-  const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems = [

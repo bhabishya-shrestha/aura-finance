@@ -7,8 +7,6 @@ import {
   Palette,
   Download,
   Upload,
-  Eye,
-  EyeOff,
   Bell,
   Sun,
   Moon,
@@ -16,14 +14,11 @@ import {
   Save,
   RotateCcw,
   Check,
-  Trash2,
 } from "lucide-react";
-import useStore from "../store";
 import { useSettings } from "../contexts/SettingsContext";
 import { useTheme } from "../contexts/ThemeContext";
 
 const SettingsPage = () => {
-  const { transactions } = useStore();
   const {
     settings,
     updateSetting,
@@ -33,7 +28,6 @@ const SettingsPage = () => {
   } = useSettings();
   const { setTheme, currentTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("general");
-  const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const fileInputRef = useRef(null);
@@ -229,7 +223,9 @@ const SettingsPage = () => {
                   </div>
                   <select
                     value={settings.autoLogout || 30}
-                    onChange={e => updateSetting("autoLogout", parseInt(e.target.value))}
+                    onChange={e =>
+                      updateSetting("autoLogout", parseInt(e.target.value))
+                    }
                     className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value={15}>15 minutes</option>
@@ -253,7 +249,10 @@ const SettingsPage = () => {
                       type="checkbox"
                       checked={settings.requirePasswordForChanges || true}
                       onChange={e =>
-                        updateSetting("requirePasswordForChanges", e.target.checked)
+                        updateSetting(
+                          "requirePasswordForChanges",
+                          e.target.checked
+                        )
                       }
                       className="sr-only peer"
                     />
