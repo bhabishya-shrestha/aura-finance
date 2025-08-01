@@ -22,6 +22,7 @@ import MobileHeader from "./components/MobileHeader";
 import MobileSidebar from "./components/MobileSidebar";
 import ErrorBoundary from "./components/ErrorBoundary";
 import LoadingSpinner from "./components/LoadingSpinner";
+import DevTools from "./components/DevTools";
 import { initializeDatabase } from "./database";
 import useStore from "./store";
 
@@ -117,6 +118,9 @@ const AppLayout = () => {
           </div>
         </main>
       </div>
+
+      {/* Development Tools - Only shown in development */}
+      <DevTools />
     </div>
   );
 };
