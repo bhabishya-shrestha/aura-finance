@@ -48,6 +48,7 @@
     "react-dom": "^18.2.0",
     "react-plaid-link": "^4.0.0",
     "react-router-dom": "^6.8.1",
+    "react-spinners": "^0.17.0",
     "recharts": "^2.8.0",
     "uuid": "^11.1.0",
     "zustand": "^4.4.7"

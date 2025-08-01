@@ -291,8 +291,12 @@ describe("StatementImporter", () => {
     const fileInput = document.querySelector('input[type="file"]');
     fireEvent.change(fileInput, { target: { files: [file] } });
 
+    // Wait for the 1-second delay to complete and preview to show
     await waitFor(() => {
       expect(screen.getByText("Transaction Preview")).toBeInTheDocument();
+    }, { timeout: 2000 });
+
+    await waitFor(() => {
       expect(screen.getByText("Test Transaction")).toBeInTheDocument();
       expect(screen.getByText("+$100.00")).toBeInTheDocument();
     });

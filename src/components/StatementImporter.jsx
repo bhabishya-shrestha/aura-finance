@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   Upload,
   AlertCircle,
@@ -7,23 +7,24 @@ import {
   FileText,
   Image,
   FileSpreadsheet,
-  Loader2,
   Eye,
   EyeOff,
   Info,
 } from "lucide-react";
+
 import { parseStatement } from "../utils/statementParser";
 import geminiService from "../services/geminiService";
 import useStore from "../store";
 import DuplicateReviewModal from "./DuplicateReviewModal";
 import EnhancedAccountAssignmentModal from "./EnhancedAccountAssignmentModal";
 
-const StatementImporter = ({ isOpen, onClose }) => {
+const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   const { addTransactions, checkForDuplicates, accounts } = useStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
   const [processingStep, setProcessingStep] = useState("");
   const [processingProgress, setProcessingProgress] = useState(0);
+  const [displayProgress, setDisplayProgress] = useState(0);
   const [previewData, setPreviewData] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -34,7 +35,26 @@ const StatementImporter = ({ isOpen, onClose }) => {
   const [editableSummary, setEditableSummary] = useState(null);
   const [isEditingSummary, setIsEditingSummary] = useState(false);
   const [showAccountAssignment, setShowAccountAssignment] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Smooth progress animation
+  useEffect(() => {
+    if (isProcessing) {
+      const timer = setInterval(() => {
+        setDisplayProgress(prev => {
+          if (prev < processingProgress) {
+            return Math.min(prev + 1, processingProgress);
+          }
+          return prev;
+        });
+      }, 50); // Update every 50ms for smooth animation
+
+      return () => clearInterval(timer);
+    } else {
+      setDisplayProgress(0);
+    }
+  }, [processingProgress, isProcessing]);
 
   // Enhanced file validation
   const validateFile = useCallback(file => {
@@ -94,7 +114,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
       try {
         // Validate file
         validateFile(file);
-        setProcessingProgress(10);
+        setProcessingProgress(15);
         setProcessingStep("Validating file...");
 
         let transactions = [];
@@ -102,10 +122,13 @@ const StatementImporter = ({ isOpen, onClose }) => {
 
         // Process based on file type
         if (file.type === "text/csv" || file.name.endsWith(".csv")) {
-          setProcessingProgress(30);
+          setProcessingProgress(35);
           setProcessingStep("Parsing CSV file...");
 
           transactions = await parseStatement(file);
+          setProcessingProgress(70);
+          setProcessingStep("Processing transactions...");
+
           summary = {
             documentType: "CSV File",
             source: file.name,
@@ -118,12 +141,16 @@ const StatementImporter = ({ isOpen, onClose }) => {
           file.name.endsWith(".pdf") ||
           file.type.startsWith("image/")
         ) {
+          setProcessingProgress(25);
+          setProcessingStep("Uploading document...");
+
           setProcessingProgress(40);
           setProcessingStep("Analyzing document with AI...");
 
           // Use enhanced Gemini for PDF and image analysis
           const result = await geminiService.analyzeImage(file);
-          setProcessingProgress(80);
+          setProcessingProgress(70);
+          setProcessingStep("Processing AI results...");
 
           if (result.transactions && result.transactions.length > 0) {
             transactions = geminiService.convertToTransactions(result);
@@ -139,7 +166,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
           );
         }
 
-        setProcessingProgress(90);
+        setProcessingProgress(85);
         setProcessingStep("Preparing results...");
 
         if (transactions.length === 0) {
@@ -158,10 +185,13 @@ const StatementImporter = ({ isOpen, onClose }) => {
         setProcessingStep("Analysis complete!");
         setProcessingSummary(summary);
 
-        // Auto-show preview for small transaction sets
-        if (transactions.length <= 10) {
-          setShowPreview(true);
-        }
+        // Show 100% for a moment before transitioning
+        setTimeout(() => {
+          // Auto-show preview for small transaction sets
+          if (transactions.length <= 10) {
+            setShowPreview(true);
+          }
+        }, 1000); // Show 100% for 1 second
       } catch (err) {
         setError(err.message);
         setProcessingProgress(0);
@@ -203,25 +233,49 @@ const StatementImporter = ({ isOpen, onClose }) => {
 
   // Reset and close
   const handleClose = useCallback(() => {
-    if (!isProcessing) {
-      onClose();
-      setError("");
-      setProcessingStep("");
-      setProcessingProgress(0);
-      setPreviewData(null);
-      setShowPreview(false);
-      setShowAllTransactions(false);
-      setSelectedFile(null);
-      setProcessingSummary(null);
-      setShowDuplicateModal(false);
-      setDuplicateResults(null);
-      setIsEditingSummary(false);
-      setEditableSummary(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+    if (isProcessing) {
+      // Show custom confirmation dialog if processing
+      setShowCancelConfirm(true);
+      return;
     }
-  }, [isProcessing, onClose]);
+
+    onClose();
+    setError("");
+    setProcessingStep("");
+    setProcessingProgress(0);
+    setPreviewData(null);
+    setShowPreview(false);
+    setShowAllTransactions(false);
+    setSelectedFile(null);
+    setProcessingSummary(null);
+    setShowDuplicateModal(false);
+    setDuplicateResults(null);
+    setIsEditingSummary(false);
+    setEditableSummary(null);
+
+    // Call onImportComplete if provided
+    if (onImportComplete) {
+      onImportComplete();
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, [isProcessing, onClose, onImportComplete]);
+
+  // Handle cancel confirmation
+  const handleCancelConfirm = useCallback(() => {
+    setIsProcessing(false);
+    setProcessingProgress(0);
+    setDisplayProgress(0);
+    setProcessingStep("");
+    setShowCancelConfirm(false);
+    onClose();
+  }, [onClose]);
+
+  const handleCancelCancel = useCallback(() => {
+    setShowCancelConfirm(false);
+  }, []);
 
   // Import transactions with duplicate detection
   const handleImport = useCallback(async () => {
@@ -331,10 +385,23 @@ const StatementImporter = ({ isOpen, onClose }) => {
         setIsProcessing(true);
         setProcessingStep("Importing transactions...");
 
-        await addTransactions(transactionsWithAccount);
+        // Ensure all transactions have account assignments
+        const validatedTransactions = transactionsWithAccount.map(
+          transaction => ({
+            ...transaction,
+            accountId: transaction.accountId || null,
+          })
+        );
+
+        await addTransactions(validatedTransactions);
 
         setProcessingStep("Import completed successfully!");
         setShowAccountAssignment(false);
+
+        // Call onImportComplete if provided
+        if (onImportComplete) {
+          onImportComplete();
+        }
 
         // Reset and close after successful import
         setTimeout(() => {
@@ -346,7 +413,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
         setIsProcessing(false);
       }
     },
-    [addTransactions, handleClose]
+    [addTransactions, handleClose, onImportComplete]
   );
 
   // Get confidence color
@@ -398,8 +465,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
           </div>
           <button
             onClick={handleClose}
-            disabled={isProcessing}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
@@ -453,10 +519,10 @@ const StatementImporter = ({ isOpen, onClose }) => {
               {isProcessing && (
                 <div className="space-y-6">
                   <div className="text-center">
-                    <div className="relative inline-block">
-                      <div className="w-16 h-16 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin mx-auto mb-4"></div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-pulse" />
+                    <div className="relative inline-block mb-4">
+                      {/* Simple loading indicator */}
+                      <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full animate-pulse"></div>
                       </div>
                     </div>
 
@@ -475,23 +541,24 @@ const StatementImporter = ({ isOpen, onClose }) => {
                         Progress
                       </span>
                       <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                        {processingProgress}%
+                        {displayProgress}%
                       </span>
                     </div>
 
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-700 ease-out relative"
-                        style={{ width: `${processingProgress}%` }}
+                        className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 h-3 rounded-full transition-all duration-1000 ease-out relative"
+                        style={{ width: `${displayProgress}%` }}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/50 via-transparent to-blue-600/50 animate-pulse"></div>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-3 text-xs">
                       <div
                         className={`text-center p-3 rounded-lg transition-all duration-500 ${
-                          processingProgress >= 15
+                          displayProgress >= 15
                             ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm"
                             : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
                         }`}
@@ -501,7 +568,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
                       </div>
                       <div
                         className={`text-center p-3 rounded-lg transition-all duration-500 ${
-                          processingProgress >= 50
+                          displayProgress >= 50
                             ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm"
                             : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
                         }`}
@@ -511,7 +578,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
                       </div>
                       <div
                         className={`text-center p-3 rounded-lg transition-all duration-500 ${
-                          processingProgress >= 85
+                          displayProgress >= 85
                             ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm"
                             : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
                         }`}
@@ -756,8 +823,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
                     setIsEditingSummary(false);
                     setEditableSummary(null);
                   }}
-                  disabled={isProcessing}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   Upload Another File
                 </button>
@@ -768,7 +834,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
                 >
                   {isProcessing ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <div className="w-4 h-4 bg-white rounded-full animate-pulse"></div>
                       Importing...
                     </>
                   ) : (
@@ -801,8 +867,51 @@ const StatementImporter = ({ isOpen, onClose }) => {
         onClose={() => setShowAccountAssignment(false)}
         transactions={previewData?.transactions || []}
         accounts={accounts || []}
+        detectedAccountInfo={previewData?.summary?.detectedAccount || null}
+        accountSuggestions={previewData?.summary?.accountSuggestions || []}
         onComplete={handleAccountAssignmentComplete}
       />
+
+      {/* Cancel Confirmation Dialog */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Cancel Import?
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Processing is in progress
+                </p>
+              </div>
+            </div>
+
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
+              Are you sure you want to cancel the import process? This action
+              cannot be undone.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelCancel}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Continue Processing
+              </button>
+              <button
+                onClick={handleCancelConfirm}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Cancel Import
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

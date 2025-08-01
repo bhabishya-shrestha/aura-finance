@@ -9,12 +9,19 @@ import {
   DollarSign,
   Calendar,
   X,
+  Edit3,
+  Save,
 } from "lucide-react";
 import useStore from "../store";
 
 const AccountsPage = () => {
-  const { accounts, getAccountBalance, getTransactionsByAccount, addAccount } =
-    useStore();
+  const {
+    accounts,
+    getAccountBalance,
+    getTransactionsByAccount,
+    addAccount,
+    updateAccountBalance,
+  } = useStore();
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -22,6 +29,8 @@ const AccountsPage = () => {
     type: "checking",
     balance: "",
   });
+  const [editingBalance, setEditingBalance] = useState(null);
+  const [newBalance, setNewBalance] = useState("");
 
   const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
@@ -93,6 +102,35 @@ const AccountsPage = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleEditBalance = (accountId, currentBalance) => {
+    setEditingBalance(accountId);
+    setNewBalance(currentBalance.toString());
+  };
+
+  const handleSaveBalance = async accountId => {
+    try {
+      const balance = parseFloat(newBalance);
+      if (isNaN(balance)) {
+        alert("Please enter a valid balance amount");
+        return;
+      }
+
+      await updateAccountBalance(accountId, balance);
+      setEditingBalance(null);
+      setNewBalance("");
+    } catch (error) {
+      alert("Error updating balance. Please try again.");
+      if (import.meta.env.DEV) {
+        console.error("Error updating balance:", error);
+      }
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingBalance(null);
+    setNewBalance("");
   };
 
   return (
@@ -241,19 +279,66 @@ const AccountsPage = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <p
-                          className={`font-semibold text-sm lg:text-base ${
-                            balance >= 0 ? "text-green-400" : "text-red-400"
-                          }`}
-                        >
-                          {formatCurrency(balance)}
-                        </p>
-                        <div className="flex items-center gap-1 mt-1">
-                          {balance >= 0 ? (
-                            <TrendingUp className="w-3 h-3 text-green-400" />
+                      <div className="flex items-center gap-2">
+                        {editingBalance !== account.id && (
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleEditBalance(account.id, balance);
+                            }}
+                            className="p-1 hover:bg-blue-500/20 rounded text-blue-400"
+                            title="Edit Balance"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                          </button>
+                        )}
+                        <div className="text-right flex-shrink-0">
+                          {editingBalance === account.id ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={newBalance}
+                                onChange={e => setNewBalance(e.target.value)}
+                                className="w-20 sm:w-24 px-2 py-1 text-sm border border-white/20 rounded bg-white/10 text-soft-white"
+                                onKeyPress={e => {
+                                  if (e.key === "Enter") {
+                                    handleSaveBalance(account.id);
+                                  }
+                                }}
+                              />
+                              <button
+                                onClick={() => handleSaveBalance(account.id)}
+                                className="p-1 hover:bg-green-500/20 rounded text-green-400"
+                              >
+                                <Save className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={handleCancelEdit}
+                                className="p-1 hover:bg-gray-500/20 rounded text-gray-400"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
                           ) : (
-                            <TrendingDown className="w-3 h-3 text-red-400" />
+                            <>
+                              <p
+                                className={`font-semibold text-sm lg:text-base ${
+                                  balance >= 0
+                                    ? "text-green-400"
+                                    : "text-red-400"
+                                }`}
+                              >
+                                {formatCurrency(balance)}
+                              </p>
+                              <div className="flex items-center gap-1 mt-1">
+                                {balance >= 0 ? (
+                                  <TrendingUp className="w-3 h-3 text-green-400" />
+                                ) : (
+                                  <TrendingDown className="w-3 h-3 text-red-400" />
+                                )}
+                              </div>
+                            </>
                           )}
                         </div>
                       </div>

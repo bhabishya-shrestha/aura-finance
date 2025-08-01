@@ -1,10 +1,20 @@
 import React, { useState } from "react";
-import { Plus, X, DollarSign, Calendar, FileText, Tag } from "lucide-react";
+import {
+  Plus,
+  X,
+  DollarSign,
+  Calendar,
+  FileText,
+  Tag,
+  CreditCard,
+  Wallet,
+  PiggyBank,
+} from "lucide-react";
 import useStore from "../store";
 import { CATEGORIES } from "../utils/statementParser";
 
 const AddTransaction = () => {
-  const { addTransaction } = useStore();
+  const { addTransaction, accounts } = useStore();
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     description: "",
@@ -14,6 +24,18 @@ const AddTransaction = () => {
     accountId: "1", // Default account
   });
   const [errors, setErrors] = useState({});
+
+
+
+  // Initialize form with first available account
+  React.useEffect(() => {
+    if (accounts && accounts.length > 0 && !formData.accountId) {
+      setFormData(prev => ({
+        ...prev,
+        accountId: accounts[0].id.toString(),
+      }));
+    }
+  }, [accounts, formData.accountId]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -28,6 +50,10 @@ const AddTransaction = () => {
 
     if (!formData.date) {
       newErrors.date = "Date is required";
+    }
+
+    if (!formData.accountId) {
+      newErrors.accountId = "Account is required";
     }
 
     setErrors(newErrors);
@@ -46,6 +72,7 @@ const AddTransaction = () => {
         ...formData,
         description: formData.description.trim(),
         amount: parseFloat(formData.amount),
+        accountId: parseInt(formData.accountId),
         date: new Date(formData.date),
         id: Date.now(), // Generate unique ID
       });
@@ -56,7 +83,8 @@ const AddTransaction = () => {
         amount: "",
         category: "Other",
         date: new Date().toISOString().split("T")[0],
-        accountId: "1",
+        accountId:
+          accounts && accounts.length > 0 ? accounts[0].id.toString() : "",
       });
       setErrors({});
       setShowModal(false);
@@ -87,7 +115,8 @@ const AddTransaction = () => {
       amount: "",
       category: "Other",
       date: new Date().toISOString().split("T")[0],
-      accountId: "1",
+      accountId:
+        accounts && accounts.length > 0 ? accounts[0].id.toString() : "",
     });
     setErrors({});
     setShowModal(false);
@@ -206,6 +235,41 @@ const AddTransaction = () => {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              {/* Account */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Account
+                </label>
+                <div className="relative">
+                  <Wallet className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <select
+                    name="accountId"
+                    value={formData.accountId}
+                    onChange={handleInputChange}
+                    className={`w-full pl-10 px-3 py-2 bg-white dark:bg-gray-700 border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none ${
+                      errors.accountId
+                        ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300 dark:border-gray-600"
+                    }`}
+                  >
+                    {accounts && accounts.length > 0 ? (
+                      accounts.map(account => (
+                        <option key={account.id} value={account.id.toString()}>
+                          {account.name} ({account.type})
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">No accounts available</option>
+                    )}
+                  </select>
+                </div>
+                {errors.accountId && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                    {errors.accountId}
+                  </p>
+                )}
               </div>
 
               {/* Date */}

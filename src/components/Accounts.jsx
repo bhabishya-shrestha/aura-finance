@@ -1,15 +1,33 @@
 import React, { useState } from "react";
-import { CreditCard, Wallet, PiggyBank, Plus, Trash2, X } from "lucide-react";
+import {
+  CreditCard,
+  Wallet,
+  PiggyBank,
+  Plus,
+  Trash2,
+  X,
+  Edit3,
+  Save,
+  X as CloseIcon,
+} from "lucide-react";
 import useStore from "../store";
 
 const Accounts = () => {
-  const { accounts, addAccount, deleteAccount, getAccountBalance } = useStore();
+  const {
+    accounts,
+    addAccount,
+    deleteAccount,
+    getAccountBalance,
+    updateAccountBalance,
+  } = useStore();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newAccount, setNewAccount] = useState({
     name: "",
     type: "checking",
     balance: 0,
   });
+  const [editingBalance, setEditingBalance] = useState(null);
+  const [newBalance, setNewBalance] = useState("");
 
   const getAccountIcon = type => {
     switch (type) {
@@ -33,8 +51,12 @@ const Accounts = () => {
 
   const handleAddAccount = async () => {
     if (!newAccount.name.trim()) {
-      // Use a more user-friendly approach instead of alert
-      setNewAccount({ ...newAccount, name: newAccount.name.trim() });
+      alert("Please enter an account name");
+      return;
+    }
+
+    if (isNaN(parseFloat(newAccount.balance))) {
+      alert("Please enter a valid initial balance");
       return;
     }
 
@@ -47,7 +69,7 @@ const Accounts = () => {
       setNewAccount({ name: "", type: "checking", balance: 0 });
       setShowAddModal(false);
     } catch (error) {
-      // Error handling - in production, this would use a proper error notification system
+      alert("Error adding account. Please try again.");
       if (import.meta.env.DEV) {
         // Error adding account
       }
@@ -71,6 +93,35 @@ const Accounts = () => {
         }
       }
     }
+  };
+
+  const handleEditBalance = (accountId, currentBalance) => {
+    setEditingBalance(accountId);
+    setNewBalance(currentBalance.toString());
+  };
+
+  const handleSaveBalance = async accountId => {
+    try {
+      const balance = parseFloat(newBalance);
+      if (isNaN(balance)) {
+        alert("Please enter a valid balance amount");
+        return;
+      }
+
+      await updateAccountBalance(accountId, balance);
+      setEditingBalance(null);
+      setNewBalance("");
+    } catch (error) {
+      alert("Error updating balance. Please try again.");
+      if (import.meta.env.DEV) {
+        // Error updating balance
+      }
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingBalance(null);
+    setNewBalance("");
   };
 
   return (
@@ -103,11 +154,48 @@ const Accounts = () => {
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                  <div className="text-right">
-                    <p className="text-primary font-semibold text-sm sm:text-base">
-                      {formatCurrency(balance)}
-                    </p>
-                  </div>
+                  {editingBalance === account.id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={newBalance}
+                        onChange={e => setNewBalance(e.target.value)}
+                        className="w-20 sm:w-24 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        onKeyPress={e => {
+                          if (e.key === "Enter") {
+                            handleSaveBalance(account.id);
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => handleSaveBalance(account.id)}
+                        className="p-1 sm:p-1.5 hover:bg-green-500/20 rounded transition-all duration-200 text-green-600 dark:text-green-400"
+                      >
+                        <Save className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="p-1 sm:p-1.5 hover:bg-gray-500/20 rounded transition-all duration-200 text-gray-600 dark:text-gray-400"
+                      >
+                        <CloseIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-right">
+                      <p className="text-primary font-semibold text-sm sm:text-base">
+                        {formatCurrency(balance)}
+                      </p>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => handleEditBalance(account.id, balance)}
+                    className="p-1 sm:p-1.5 hover:bg-blue-500/20 rounded transition-all duration-200 text-blue-600 dark:text-blue-400"
+                    title="Edit Balance"
+                  >
+                    <Edit3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </button>
 
                   <button
                     onClick={() =>
@@ -123,10 +211,10 @@ const Accounts = () => {
           })}
         </div>
 
-        <div className="mt-4 pt-3 sm:pt-4 border-t border-apple-glass-300/30">
+        <div className="mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setShowAddModal(true)}
-            className="w-full py-2 px-3 sm:px-4 bg-apple-glass-200/40 hover:bg-apple-glass-300/50 transition-all duration-200 rounded-apple-lg text-primary text-sm flex items-center justify-center gap-2 backdrop-blur-apple-sm"
+            className="w-full py-2 px-3 sm:px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 text-sm flex items-center justify-center gap-2 font-medium shadow-sm"
           >
             <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
             Add Account
@@ -136,84 +224,104 @@ const Accounts = () => {
 
       {/* Add Account Modal */}
       {showAddModal && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <div className="flex items-center justify-between mb-4 sm:mb-6">
-              <h3 className="text-lg sm:text-xl font-semibold text-primary">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
                 Add New Account
               </h3>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="icon-muted hover:icon-white transition-all duration-200"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-200 p-1"
               >
                 <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
-            <div className="space-y-3 sm:space-y-4">
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                handleAddAccount();
+              }}
+              className="space-y-4"
+            >
+              {/* Account Name */}
               <div>
-                <label className="block text-sm font-medium text-muted mb-1 sm:mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Account Name
                 </label>
-                <input
-                  type="text"
-                  value={newAccount.name}
-                  onChange={e =>
-                    setNewAccount({ ...newAccount, name: e.target.value })
-                  }
-                  placeholder="e.g., Chase Checking"
-                  className="input-glass w-full text-sm sm:text-base"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={newAccount.name}
+                    onChange={e =>
+                      setNewAccount({ ...newAccount, name: e.target.value })
+                    }
+                    placeholder="e.g., Chase Checking"
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    required
+                  />
+                </div>
               </div>
 
+              {/* Account Type */}
               <div>
-                <label className="block text-sm font-medium text-muted mb-1 sm:mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Account Type
                 </label>
-                <select
-                  value={newAccount.type}
-                  onChange={e =>
-                    setNewAccount({ ...newAccount, type: e.target.value })
-                  }
-                  className="input-glass w-full text-sm sm:text-base"
-                >
-                  <option value="checking">Checking</option>
-                  <option value="savings">Savings</option>
-                  <option value="credit">Credit Card</option>
-                </select>
+                <div className="relative">
+                  <select
+                    value={newAccount.type}
+                    onChange={e =>
+                      setNewAccount({ ...newAccount, type: e.target.value })
+                    }
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none"
+                    required
+                  >
+                    <option value="checking">Checking</option>
+                    <option value="savings">Savings</option>
+                    <option value="credit">Credit Card</option>
+                  </select>
+                </div>
               </div>
 
+              {/* Initial Balance */}
               <div>
-                <label className="block text-sm font-medium text-muted mb-1 sm:mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Initial Balance
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={newAccount.balance}
-                  onChange={e =>
-                    setNewAccount({ ...newAccount, balance: e.target.value })
-                  }
-                  placeholder="0.00"
-                  className="input-glass w-full text-sm sm:text-base"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newAccount.balance}
+                    onChange={e =>
+                      setNewAccount({ ...newAccount, balance: e.target.value })
+                    }
+                    placeholder="0.00"
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="flex-1 btn-glass-outlined text-sm sm:text-base"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddAccount}
-                className="flex-1 btn-glass-primary text-sm sm:text-base"
-              >
-                Add Account
-              </button>
-            </div>
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 font-medium text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm shadow-sm"
+                >
+                  Add Account
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
