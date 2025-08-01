@@ -2,12 +2,7 @@ import React, { useState } from "react";
 import { Bell, LogOut, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
-const MobileHeader = ({
-  onMenuToggle,
-  currentPage,
-  isMenuOpen,
-  onPageChange,
-}) => {
+const MobileHeader = ({ onMenuToggle, currentPage, onPageChange }) => {
   const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -29,7 +24,7 @@ const MobileHeader = ({
       await logout();
       setShowUserMenu(false);
     } catch (error) {
-      console.error("Sign out error:", error);
+      // Error handled silently - user will be redirected to login
     }
   };
 

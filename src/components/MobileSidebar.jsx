@@ -45,7 +45,7 @@ const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
       await logout();
       onClose();
     } catch (error) {
-      console.error("Sign out error:", error);
+      // Error handled silently - user will be redirected to login
     }
   };
 
