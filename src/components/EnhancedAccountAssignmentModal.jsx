@@ -11,10 +11,8 @@ import {
   Search,
   Sparkles,
   CheckCircle,
-  Clock,
   DollarSign,
   Calendar,
-  MapPin,
   Smartphone,
   ShoppingBag,
   Car,
@@ -25,10 +23,7 @@ import {
   GraduationCap,
   Briefcase,
   Edit3,
-  CheckSquare,
-  Square,
   Users,
-  Settings,
 } from "lucide-react";
 import useStore from "../store";
 
@@ -118,7 +113,7 @@ const EnhancedAccountAssignmentModal = ({
       // Generate AI-powered account suggestions
       generateAccountSuggestions();
     }
-  }, [isOpen, transactions, detectedAccountInfo]);
+  }, [isOpen, transactions, detectedAccountInfo, generateAccountSuggestions]);
 
   // Enhanced AI-powered account suggestion algorithm
   const generateAccountSuggestions = () => {
@@ -322,7 +317,7 @@ const EnhancedAccountAssignmentModal = ({
           return {
             account: relevantAccounts[0],
             confidence: 0.6,
-            reason: `Pattern match: ${pattern}`,
+            reason: `Pattern match: ${accountType}`,
           };
         }
       }
@@ -432,7 +427,7 @@ const EnhancedAccountAssignmentModal = ({
       setSelectedAccounts(updatedSelection);
       setShowCreateAccount(false);
     } catch (error) {
-      console.error("Error creating account:", error);
+      // Error creating account
     } finally {
       setIsProcessing(false);
     }
@@ -538,20 +533,20 @@ const EnhancedAccountAssignmentModal = ({
 
     try {
       setIsProcessing(true);
-      
+
       // Update the transaction in the store
       await updateTransaction(editingTransaction.id, {
         description: editingTransaction.description,
         amount: editingTransaction.amount,
         type: editingTransaction.type,
         category: editingTransaction.category,
-        date: editingTransaction.date
+        date: editingTransaction.date,
       });
 
       setShowTransactionEditModal(false);
       setEditingTransaction(null);
     } catch (error) {
-      console.error("Error updating transaction:", error);
+      // Error updating transaction
     } finally {
       setIsProcessing(false);
     }
@@ -1024,7 +1019,9 @@ const EnhancedAccountAssignmentModal = ({
                               </div>
 
                               <button
-                                onClick={() => handleEditTransaction(transaction)}
+                                onClick={() =>
+                                  handleEditTransaction(transaction)
+                                }
                                 className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex-shrink-0"
                                 title="Edit transaction"
                               >
@@ -1350,10 +1347,11 @@ const EnhancedAccountAssignmentModal = ({
                       value={Math.abs(editingTransaction.amount).toFixed(2)}
                       onChange={e => {
                         const value = parseFloat(e.target.value) || 0;
-                        const sign = editingTransaction.type === 'expense' ? -1 : 1;
+                        const sign =
+                          editingTransaction.type === "expense" ? -1 : 1;
                         setEditingTransaction(prev => ({
                           ...prev,
-                          amount: value * sign
+                          amount: value * sign,
                         }));
                       }}
                       className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1408,25 +1406,30 @@ const EnhancedAccountAssignmentModal = ({
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       {editingTransaction.description || "Transaction"}
                     </span>
-                    <span className={`font-semibold ${
-                      editingTransaction.amount > 0
-                        ? "text-green-600 dark:text-green-400"
-                        : "text-red-600 dark:text-red-400"
-                    }`}>
+                    <span
+                      className={`font-semibold ${
+                        editingTransaction.amount > 0
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-red-600 dark:text-red-400"
+                      }`}
+                    >
                       {formatCurrency(Math.abs(editingTransaction.amount))}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      editingTransaction.type === 'income' 
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                        : editingTransaction.type === 'expense'
-                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                        : editingTransaction.type === 'refund'
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                        : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300'
-                    }`}>
-                      {editingTransaction.type.charAt(0).toUpperCase() + editingTransaction.type.slice(1)}
+                    <span
+                      className={`text-xs px-2 py-1 rounded ${
+                        editingTransaction.type === "income"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                          : editingTransaction.type === "expense"
+                            ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                            : editingTransaction.type === "refund"
+                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                              : "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300"
+                      }`}
+                    >
+                      {editingTransaction.type.charAt(0).toUpperCase() +
+                        editingTransaction.type.slice(1)}
                     </span>
                     {editingTransaction.category && (
                       <span className="text-xs text-gray-500 dark:text-gray-400">

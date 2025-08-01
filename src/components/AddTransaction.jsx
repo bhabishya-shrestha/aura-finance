@@ -25,19 +25,7 @@ const AddTransaction = () => {
   });
   const [errors, setErrors] = useState({});
 
-  // Helper function to get account icon
-  const getAccountIcon = type => {
-    switch (type) {
-      case "credit":
-        return <CreditCard className="w-4 h-4" />;
-      case "checking":
-        return <Wallet className="w-4 h-4" />;
-      case "savings":
-        return <PiggyBank className="w-4 h-4" />;
-      default:
-        return <Wallet className="w-4 h-4" />;
-    }
-  };
+
 
   // Initialize form with first available account
   React.useEffect(() => {

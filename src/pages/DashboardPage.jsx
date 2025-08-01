@@ -83,8 +83,6 @@ const DashboardPage = ({ onPageChange }) => {
   const { isLoading } = useAuth();
   const [error, setError] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-
   // Get analytics data from store with refresh capability
   const { getQuickAnalytics, loadTransactions } = useStore();
   const quickAnalytics = getQuickAnalytics("month");
@@ -92,7 +90,6 @@ const DashboardPage = ({ onPageChange }) => {
   // Refresh analytics when transactions are imported
   const handleImportComplete = async () => {
     await loadTransactions();
-    setRefreshKey(prev => prev + 1);
   };
 
   // Defensive: Always set modal closed on mount

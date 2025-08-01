@@ -118,6 +118,7 @@ const AnalyticsPage = () => {
     getTopSpendingCategories,
     getAverageDailySpending,
     getQuickAnalytics,
+    GRADIENT_COLORS,
   ]);
 
   // Animation effects

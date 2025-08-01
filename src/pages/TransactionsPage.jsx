@@ -7,7 +7,6 @@ import {
   TrendingDown,
   FileText,
   ArrowUpDown,
-  MoreHorizontal,
   Building2,
   CreditCard,
   PiggyBank,
@@ -124,7 +123,7 @@ const TransactionsPage = () => {
         // Reload transactions to update the UI
         await loadTransactions();
       } catch (error) {
-        console.error("Error updating transaction:", error);
+        // Error updating transaction
       }
     }
   };
@@ -188,7 +187,7 @@ const TransactionsPage = () => {
       setSelectedTransactions(new Set());
       await loadTransactions();
     } catch (error) {
-      console.error("Error updating transactions:", error);
+      // Error updating transactions
     }
   };
 
@@ -447,7 +446,9 @@ const TransactionsPage = () => {
                   <tr
                     key={transaction.id}
                     className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                      selectedTransactions.has(transaction.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                      selectedTransactions.has(transaction.id)
+                        ? "bg-blue-50 dark:bg-blue-900/20"
+                        : ""
                     }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -667,9 +668,10 @@ const TransactionsPage = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Assign {selectedTransactions.size} Transaction{selectedTransactions.size !== 1 ? 's' : ''} to Account
+              Assign {selectedTransactions.size} Transaction
+              {selectedTransactions.size !== 1 ? "s" : ""} to Account
             </h3>
-            
+
             <div className="space-y-2 mb-6">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Select Account
@@ -687,7 +689,9 @@ const TransactionsPage = () => {
                       </div>
                       <div className="flex-1 text-left">
                         <p className="font-medium">{account.name}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{account.type}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
+                          {account.type}
+                        </p>
                       </div>
                     </button>
                   ))}
@@ -698,7 +702,7 @@ const TransactionsPage = () => {
                 </p>
               )}
             </div>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={() => setShowBulkAssignment(false)}

@@ -7,7 +7,6 @@ import {
   FileText,
   Image,
   FileSpreadsheet,
-  Loader2,
   Eye,
   EyeOff,
   Info,
@@ -414,7 +413,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         setIsProcessing(false);
       }
     },
-    [addTransactions, handleClose]
+    [addTransactions, handleClose, onImportComplete]
   );
 
   // Get confidence color
@@ -890,11 +889,12 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                 </p>
               </div>
             </div>
-            
+
             <p className="text-gray-700 dark:text-gray-300 mb-6">
-              Are you sure you want to cancel the import process? This action cannot be undone.
+              Are you sure you want to cancel the import process? This action
+              cannot be undone.
             </p>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={handleCancelCancel}
