@@ -47,6 +47,7 @@ const SettingsPage = ({ onPageChange }) => {
   const [saveMessage, setSaveMessage] = useState("");
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showDataResetConfirm, setShowDataResetConfirm] = useState(false);
+
   const fileInputRef = useRef(null);
 
   // Load user data on mount
@@ -106,38 +107,68 @@ const SettingsPage = ({ onPageChange }) => {
       label: "General",
       icon: Settings,
       description: "Currency, language, and basic preferences",
+      color: "blue",
     },
     {
       id: "profile",
       label: "Profile",
       icon: User,
       description: "Personal information and account details",
+      color: "green",
     },
     {
       id: "security",
       label: "Security",
       icon: Shield,
       description: "Password, privacy, and security settings",
+      color: "red",
     },
     {
       id: "appearance",
       label: "Appearance",
       icon: Palette,
       description: "Theme, colors, and visual preferences",
+      color: "purple",
     },
     {
       id: "notifications",
       label: "Notifications",
       icon: Bell,
       description: "Email and app notification preferences",
+      color: "orange",
     },
     {
       id: "data",
       label: "Data Management",
       icon: Database,
       description: "Export, import, and data reset options",
+      color: "indigo",
     },
   ];
+
+  const getColorClasses = (color, isActive = false) => {
+    const colorMap = {
+      blue: isActive
+        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
+        : "text-blue-600 dark:text-blue-400",
+      green: isActive
+        ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+        : "text-green-600 dark:text-green-400",
+      red: isActive
+        ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+        : "text-red-600 dark:text-red-400",
+      purple: isActive
+        ? "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400"
+        : "text-purple-600 dark:text-purple-400",
+      orange: isActive
+        ? "bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400"
+        : "text-orange-600 dark:text-orange-400",
+      indigo: isActive
+        ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400"
+        : "text-indigo-600 dark:text-indigo-400",
+    };
+    return colorMap[color] || colorMap.blue;
+  };
 
   const renderMobileSettingsList = () => (
     <div className="space-y-1">
@@ -177,64 +208,52 @@ const SettingsPage = ({ onPageChange }) => {
     switch (activeTab) {
       case "general":
         return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <div className="p-6">
+            {/* Header */}
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 General Settings
               </h2>
-              <button
-                onClick={handleSaveSettings}
-                disabled={isSaving}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-4 h-4" />
-                {isSaving ? "Saving..." : "Save Settings"}
-              </button>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Configure your basic preferences and regional settings
+              </p>
             </div>
 
-            {/* Currency Settings */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Currency & Formatting
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Currency
-                  </label>
-                  <select
-                    value={settings.currency || "USD"}
-                    onChange={e => updateSetting("currency", e.target.value)}
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="CAD">CAD (C$)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Date Format
-                  </label>
-                  <select
-                    value={settings.dateFormat || "MM/DD/YYYY"}
-                    onChange={e => updateSetting("dateFormat", e.target.value)}
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                  </select>
-                </div>
+            {/* Settings */}
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Currency
+                </label>
+                <select
+                  value={settings.currency || "USD"}
+                  onChange={e => updateSetting("currency", e.target.value)}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                >
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                  <option value="CAD">CAD (C$)</option>
+                  <option value="AUD">AUD (A$)</option>
+                  <option value="JPY">JPY (¥)</option>
+                </select>
               </div>
-            </div>
 
-            {/* Language Settings */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Language & Region
-              </h3>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Date Format
+                </label>
+                <select
+                  value={settings.dateFormat || "MM/DD/YYYY"}
+                  onChange={e => updateSetting("dateFormat", e.target.value)}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                >
+                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                  <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                </select>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Language
@@ -242,92 +261,122 @@ const SettingsPage = ({ onPageChange }) => {
                 <select
                   value={settings.language || "en"}
                   onChange={e => updateSetting("language", e.target.value)}
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                 >
                   <option value="en">English</option>
                   <option value="es">Español</option>
                   <option value="fr">Français</option>
                   <option value="de">Deutsch</option>
+                  <option value="it">Italiano</option>
+                  <option value="pt">Português</option>
                 </select>
               </div>
+            </div>
+
+            {/* Save Button */}
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={handleSaveSettings}
+                disabled={isSaving}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                <Save className="w-4 h-4" />
+                {isSaving ? "Saving..." : "Save Changes"}
+              </button>
             </div>
           </div>
         );
 
       case "profile":
         return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Profile Settings
-            </h2>
+          <div className="space-y-8">
+            {/* Header */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Profile Settings
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Manage your personal information and account details
+              </p>
+            </div>
 
-            {/* User Information Display */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Account Information
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email Address
-                  </label>
-                  <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">
-                    {user?.email || "Not available"}
+            {/* Account Information */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <User className="w-5 h-5 text-green-600" />
+                  Account Information
+                </h3>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Email Address
+                    </label>
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">
+                      {user?.email || "Not available"}
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Account Created
-                  </label>
-                  <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">
-                    {user?.created_at
-                      ? new Date(user.created_at).toLocaleDateString()
-                      : "Not available"}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Account Created
+                    </label>
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white">
+                      {user?.created_at
+                        ? new Date(user.created_at).toLocaleDateString()
+                        : "Not available"}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Personal Information */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Personal Information
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    value={
-                      settings.firstName ||
-                      user?.user_metadata?.full_name?.split(" ")[0] ||
-                      ""
-                    }
-                    onChange={e => updateSetting("firstName", e.target.value)}
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your first name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    value={
-                      settings.lastName ||
-                      user?.user_metadata?.full_name
-                        ?.split(" ")
-                        .slice(1)
-                        .join(" ") ||
-                      ""
-                    }
-                    onChange={e => updateSetting("lastName", e.target.value)}
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your last name"
-                  />
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600" />
+                  Personal Information
+                </h3>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      value={
+                        settings.firstName ||
+                        user?.user_metadata?.full_name?.split(" ")[0] ||
+                        ""
+                      }
+                      onChange={e => updateSetting("firstName", e.target.value)}
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      placeholder="Enter your first name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      value={
+                        settings.lastName ||
+                        user?.user_metadata?.full_name
+                          ?.split(" ")
+                          .slice(1)
+                          .join(" ") ||
+                        ""
+                      }
+                      onChange={e => updateSetting("lastName", e.target.value)}
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      placeholder="Enter your last name"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -336,16 +385,26 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "security":
         return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Security Settings
-            </h2>
+          <div className="space-y-8">
+            {/* Header */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Security Settings
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Manage your account security and privacy preferences
+              </p>
+            </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Account Security
-              </h3>
-              <div className="space-y-4">
+            {/* Account Security */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-red-600" />
+                  Account Security
+                </h3>
+              </div>
+              <div className="p-6 space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">
@@ -360,7 +419,7 @@ const SettingsPage = ({ onPageChange }) => {
                     onChange={e =>
                       updateSetting("autoLogout", parseInt(e.target.value))
                     }
-                    className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                   >
                     <option value={15}>15 minutes</option>
                     <option value={30}>30 minutes</option>
@@ -393,6 +452,20 @@ const SettingsPage = ({ onPageChange }) => {
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Two-Factor Authentication
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Add an extra layer of security to your account
+                    </div>
+                  </div>
+                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                    Enable 2FA
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -400,19 +473,26 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "appearance":
         return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Appearance Settings
-            </h2>
+          <div className="p-6">
+            {/* Header */}
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Appearance Settings
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Customize the look and feel of your application
+              </p>
+            </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+            {/* Theme Selection */}
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Theme
-              </h3>
+              </label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button
                   onClick={() => setTheme("light")}
-                  className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                  className={`p-4 rounded-lg border-2 smooth-transition hover:scale-105 ${
                     currentTheme === "light"
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
@@ -420,18 +500,15 @@ const SettingsPage = ({ onPageChange }) => {
                 >
                   <Sun className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
                   <div className="text-center">
-                    <div className="font-medium text-gray-900 dark:text-white">
+                    <div className="font-medium text-gray-900 dark:text-white text-sm">
                       Light
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Clean and bright
                     </div>
                   </div>
                 </button>
 
                 <button
                   onClick={() => setTheme("dark")}
-                  className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                  className={`p-4 rounded-lg border-2 smooth-transition hover:scale-105 ${
                     currentTheme === "dark"
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
@@ -439,18 +516,15 @@ const SettingsPage = ({ onPageChange }) => {
                 >
                   <Moon className="w-8 h-8 text-blue-500 mx-auto mb-2" />
                   <div className="text-center">
-                    <div className="font-medium text-gray-900 dark:text-white">
+                    <div className="font-medium text-gray-900 dark:text-white text-sm">
                       Dark
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Easy on the eyes
                     </div>
                   </div>
                 </button>
 
                 <button
                   onClick={() => setTheme("system")}
-                  className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                  className={`p-4 rounded-lg border-2 smooth-transition hover:scale-105 ${
                     currentTheme === "system"
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
@@ -458,11 +532,8 @@ const SettingsPage = ({ onPageChange }) => {
                 >
                   <Monitor className="w-8 h-8 text-gray-500 mx-auto mb-2" />
                   <div className="text-center">
-                    <div className="font-medium text-gray-900 dark:text-white">
+                    <div className="font-medium text-gray-900 dark:text-white text-sm">
                       System
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Follows your OS
                     </div>
                   </div>
                 </button>
@@ -473,16 +544,26 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "notifications":
         return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Notification Settings
-            </h2>
+          <div className="space-y-8">
+            {/* Header */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Notification Settings
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Control how and when you receive notifications
+              </p>
+            </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Notification Preferences
-              </h3>
-              <div className="space-y-4">
+            {/* Notification Preferences */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-orange-600" />
+                  Notification Preferences
+                </h3>
+              </div>
+              <div className="p-6 space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">
@@ -526,6 +607,28 @@ const SettingsPage = ({ onPageChange }) => {
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Transaction Alerts
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Get notified for large transactions
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.transactionAlerts || false}
+                      onChange={e =>
+                        updateSetting("transactionAlerts", e.target.checked)
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
@@ -533,42 +636,56 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "data":
         return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Data Management
-            </h2>
+          <div className="space-y-8">
+            {/* Header */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Data Management
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Export, import, and manage your data
+              </p>
+            </div>
 
             {/* Data Summary */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Your Data Summary
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {transactions.length}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Database className="w-5 h-5 text-indigo-600" />
+                  Your Data Summary
+                </h3>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                      {transactions.length}
+                    </div>
+                    <div className="text-sm text-blue-700 dark:text-blue-300">
+                      Transactions
+                    </div>
                   </div>
-                  <div className="text-sm text-blue-700 dark:text-blue-300">
-                    Transactions
-                  </div>
-                </div>
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {accounts.length}
-                  </div>
-                  <div className="text-sm text-green-700 dark:text-green-300">
-                    Accounts
+                  <div className="p-6 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                    <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                      {accounts.length}
+                    </div>
+                    <div className="text-sm text-green-700 dark:text-green-300">
+                      Accounts
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Export & Import */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Data Export & Import
-              </h3>
-              <div className="space-y-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Download className="w-5 h-5 text-green-600" />
+                  Data Export & Import
+                </h3>
+              </div>
+              <div className="p-6 space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">
@@ -616,11 +733,14 @@ const SettingsPage = ({ onPageChange }) => {
             </div>
 
             {/* Data Reset */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Data Reset
-              </h3>
-              <div className="space-y-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                  Data Reset
+                </h3>
+              </div>
+              <div className="p-6 space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">
@@ -714,22 +834,22 @@ const SettingsPage = ({ onPageChange }) => {
       </div>
 
       {/* Desktop Layout */}
-      <div className="hidden lg:block p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      <div className="hidden lg:block p-6 lg:p-8 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white">
+        <div className="mb-8">
+          <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white">
             Settings
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm lg:text-base">
-            Manage your account preferences and application settings
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Customize your Aura Finance experience
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Sidebar Navigation */}
           <div className="lg:col-span-1">
-            <nav className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-              <div className="space-y-2">
+            <nav className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sticky top-8 animate-slide-in-left">
+              <div className="space-y-1">
                 {settingsSections.map(section => {
                   const Icon = section.icon;
                   const isActive = activeTab === section.id;
@@ -738,20 +858,34 @@ const SettingsPage = ({ onPageChange }) => {
                     <button
                       key={section.id}
                       onClick={() => setActiveTab(section.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 group ${
                         isActive
-                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
+                          ? getColorClasses(section.color, true)
                           : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                       }`}
                     >
                       <Icon
-                        className={`w-5 h-5 ${
+                        className={`w-4 h-4 transition-all duration-200 ${
                           isActive
-                            ? "text-blue-600 dark:text-blue-400"
-                            : "text-gray-500 dark:text-gray-400"
+                            ? section.color === "blue"
+                              ? "text-blue-600 dark:text-blue-400"
+                              : section.color === "green"
+                                ? "text-green-600 dark:text-green-400"
+                                : section.color === "red"
+                                  ? "text-red-600 dark:text-red-400"
+                                  : section.color === "purple"
+                                    ? "text-purple-600 dark:text-purple-400"
+                                    : section.color === "orange"
+                                      ? "text-orange-600 dark:text-orange-400"
+                                      : section.color === "indigo"
+                                        ? "text-indigo-600 dark:text-indigo-400"
+                                        : "text-blue-600 dark:text-blue-400"
+                            : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300"
                         }`}
                       />
-                      <span className="font-medium">{section.label}</span>
+                      <span className="font-medium text-sm">
+                        {section.label}
+                      </span>
                     </button>
                   );
                 })}
@@ -760,14 +894,18 @@ const SettingsPage = ({ onPageChange }) => {
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-3">{renderSectionContent()}</div>
+          <div className="lg:col-span-2 animate-slide-in-right">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              {renderSectionContent()}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Reset Settings Confirmation Modal */}
       {showResetConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full">
             <div className="flex items-center gap-3 mb-4">
               <AlertTriangle className="w-6 h-6 text-yellow-500" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -799,7 +937,7 @@ const SettingsPage = ({ onPageChange }) => {
       {/* Reset Data Confirmation Modal */}
       {showDataResetConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full">
             <div className="flex items-center gap-3 mb-4">
               <AlertTriangle className="w-6 h-6 text-red-500" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">

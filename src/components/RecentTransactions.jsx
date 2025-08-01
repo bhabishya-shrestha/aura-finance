@@ -263,7 +263,7 @@ const RecentTransactions = ({ onPageChange }) => {
 
       {recentTransactions.length > 0 && (
         <div className="mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600">
-          <button 
+          <button
             onClick={() => onPageChange && onPageChange("transactions")}
             className="w-full py-2 px-3 sm:px-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-700 transition-all duration-200 rounded-lg text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 text-sm font-medium"
           >

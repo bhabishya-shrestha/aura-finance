@@ -6,10 +6,8 @@ import {
   Home,
   TrendingUp,
   FileText,
-  Sparkles,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 const Sidebar = ({
   onPageChange,
@@ -18,6 +16,69 @@ const Sidebar = ({
   onMobileToggle,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { user } = useAuth();
+
+  // Generate personalized greeting based on time and user info
+  const getPersonalizedGreeting = () => {
+    const hour = new Date().getHours();
+    const userName =
+      user?.user_metadata?.full_name?.split(" ")[0] ||
+      user?.email?.split("@")[0] ||
+      "there";
+
+    let timeGreeting = "";
+    if (hour < 12) {
+      timeGreeting = "Good morning";
+    } else if (hour < 17) {
+      timeGreeting = "Good afternoon";
+    } else {
+      timeGreeting = "Good evening";
+    }
+
+    // Add some variety to the greetings
+    const greetings = [
+      `${timeGreeting}, ${userName}!`,
+      `${timeGreeting}, ${userName}! 👋`,
+      `Hello ${userName}! ✨`,
+      `Welcome back, ${userName}!`,
+      `Hey ${userName}! 💫`,
+      `${timeGreeting}, ${userName}! 🌟`,
+    ];
+
+    // Use a simple hash of the date to get consistent daily greeting
+    const today = new Date().toDateString();
+    const hash = today.split("").reduce((a, b) => {
+      a = (a << 5) - a + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+
+    return greetings[Math.abs(hash) % greetings.length];
+  };
+
+  // Generate daily motivational message
+  const getDailyMessage = () => {
+    const messages = [
+      "Ready to manage your finances?",
+      "Your financial future starts today!",
+      "Smart choices, bright future! 💰",
+      "Every transaction counts! 📊",
+      "Building wealth, one step at a time!",
+      "Your money, your control! 💪",
+      "Financial freedom awaits! 🚀",
+      "Track, plan, succeed! 📈",
+      "Your financial journey continues!",
+      "Making money work for you! 💎",
+    ];
+
+    // Use a different hash for the message to get variety
+    const today = new Date().toDateString();
+    const hash = today.split("").reduce((a, b) => {
+      a = (a << 7) - a + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+
+    return messages[Math.abs(hash) % messages.length];
+  };
 
   const menuItems = [
     {
@@ -82,32 +143,62 @@ const Sidebar = ({
 
       {/* Sidebar */}
       <div
-        className={`bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-screen transition-all duration-300 ease-in-out fixed lg:relative z-50 ${
-          isCollapsed ? "w-16 lg:w-20" : "w-64"
+        className={`bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-screen smooth-transition-slow fixed lg:relative z-50 ${
+          isCollapsed ? "w-16 lg:w-20 shadow-lg" : "w-64"
         } ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
-        <div className="p-3 sm:p-4 h-full flex flex-col">
+        <div className="p-4 h-full flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div
+            className={`${isCollapsed ? "flex flex-col items-center" : "flex items-center justify-between"} mb-6`}
+          >
             {!isCollapsed && (
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
-                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                </div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
-                  Aura Finance
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
+                  {getPersonalizedGreeting()}
                 </h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {getDailyMessage()}
+                </p>
               </div>
             )}
             <button
               onClick={toggleCollapse}
-              className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 group flex-shrink-0"
+              className={`p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg smooth-transition group flex-shrink-0 ${
+                isCollapsed
+                  ? "bg-gray-50 dark:bg-gray-800/50 sidebar-collapsed-pulse"
+                  : ""
+              }`}
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {isCollapsed ? (
-                <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-all duration-200" />
+                <svg
+                  className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white smooth-transition"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
               ) : (
-                <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-all duration-200" />
+                <svg
+                  className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white smooth-transition"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
               )}
             </button>
           </div>
@@ -118,29 +209,24 @@ const Sidebar = ({
               <button
                 key={item.id}
                 onClick={() => handleMenuClick(item.id)}
-                className={`w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg transition-all duration-200 group relative ${
+                className={`w-full flex items-center gap-3 p-3 rounded-lg smooth-transition group relative ${
                   currentPage === item.id
                     ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600"
-                    : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                    : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 } ${isCollapsed ? "justify-center" : ""}`}
                 title={isCollapsed ? item.label : item.description}
               >
                 <item.icon
-                  className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-200 ${
+                  className={`w-5 h-5 smooth-transition ${
                     currentPage === item.id
                       ? "text-blue-600 dark:text-blue-400"
                       : "text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                  } ${isCollapsed ? "" : "group-hover:scale-110"}`}
+                  } ${isCollapsed ? "" : "group-hover:scale-105"}`}
                 />
                 {!isCollapsed && (
-                  <span className="font-medium text-sm sm:text-base truncate">
+                  <span className="font-medium text-base truncate">
                     {item.label}
                   </span>
-                )}
-
-                {/* Active indicator */}
-                {currentPage === item.id && (
-                  <div className="absolute right-2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full shadow-sm" />
                 )}
               </button>
             ))}
@@ -148,17 +234,12 @@ const Sidebar = ({
 
           {/* Footer */}
           <div
-            className={`mt-auto pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700 ${isCollapsed ? "text-center" : ""}`}
+            className={`mt-auto pt-3 border-t border-gray-200 dark:border-gray-700 ${isCollapsed ? "text-center" : ""}`}
           >
-            {!isCollapsed && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                Version 1.0.1
-              </div>
-            )}
             <div
               className={`text-xs text-gray-500 dark:text-gray-400 ${isCollapsed ? "text-center" : ""}`}
             >
-              {isCollapsed ? "AF" : "Aura Finance"}
+              {isCollapsed ? "v1.0" : "Version 1.0.1"}
             </div>
           </div>
         </div>

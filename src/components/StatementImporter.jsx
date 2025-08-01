@@ -16,10 +16,10 @@ import { parseStatement } from "../utils/statementParser";
 import geminiService from "../services/geminiService";
 import useStore from "../store";
 import DuplicateReviewModal from "./DuplicateReviewModal";
-import AccountAssignmentModal from "./AccountAssignmentModal";
+import EnhancedAccountAssignmentModal from "./EnhancedAccountAssignmentModal";
 
 const StatementImporter = ({ isOpen, onClose }) => {
-  const { addTransactions, checkForDuplicates } = useStore();
+  const { addTransactions, checkForDuplicates, accounts } = useStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
   const [processingStep, setProcessingStep] = useState("");
@@ -34,7 +34,6 @@ const StatementImporter = ({ isOpen, onClose }) => {
   const [editableSummary, setEditableSummary] = useState(null);
   const [isEditingSummary, setIsEditingSummary] = useState(false);
   const [showAccountAssignment, setShowAccountAssignment] = useState(false);
-  const [detectedAccountInfo, setDetectedAccountInfo] = useState(null);
   const fileInputRef = useRef(null);
 
   // Enhanced file validation
@@ -796,12 +795,12 @@ const StatementImporter = ({ isOpen, onClose }) => {
         summary={duplicateResults?.summary}
       />
 
-      {/* Account Assignment Modal */}
-      <AccountAssignmentModal
+      {/* Enhanced Account Assignment Modal */}
+      <EnhancedAccountAssignmentModal
         isOpen={showAccountAssignment}
         onClose={() => setShowAccountAssignment(false)}
         transactions={previewData?.transactions || []}
-        detectedAccountInfo={detectedAccountInfo}
+        accounts={accounts || []}
         onComplete={handleAccountAssignmentComplete}
       />
     </div>

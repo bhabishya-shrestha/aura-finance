@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Mail, Lock, User, Loader2 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import auraLogo from "../../assets/aura-finance.png";
 
 const RegisterForm = ({ onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
@@ -125,6 +126,15 @@ const RegisterForm = ({ onSwitchToLogin }) => {
       <div className="apple-glass-heavy rounded-apple-xl p-4 sm:p-6 lg:p-8">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+              <img
+                src={auraLogo}
+                alt="Aura Finance"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
           <h2 className="text-xl sm:text-2xl font-bold text-gradient mb-2">
             Create Account
           </h2>

@@ -22,26 +22,65 @@ import {
 import useStore from "../store";
 
 const AnalyticsPage = () => {
-  const { transactions, getNetWorth } = useStore();
+  const {
+    getNetWorth,
+    getSpendingByCategory,
+    getMonthlySpending,
+    getIncomeVsSpending,
+    getSpendingTrends,
+    getTopSpendingCategories,
+    getAverageDailySpending,
+    getQuickAnalytics,
+  } = useStore();
+
   const [timeRange, setTimeRange] = useState("month");
   const [analyticsData, setAnalyticsData] = useState({
     spendingByCategory: [],
     monthlySpending: [],
     incomeVsSpending: [],
+    spendingTrends: [],
+    topCategories: [],
+    avgDailySpending: 0,
+    quickAnalytics: {
+      income: 0,
+      spending: 0,
+      netSavings: 0,
+      spendingTrend: 0,
+      transactionCount: 0,
+    },
   });
 
-  // Update analytics data when transactions change
+  // Update analytics data when time range changes
   useEffect(() => {
-    const spendingByCategory = getSpendingByCategory();
-    const monthlySpending = getMonthlySpending();
-    const incomeVsSpending = getIncomeVsSpending();
+    const spendingByCategory = getSpendingByCategory(timeRange);
+    const monthlySpending = getMonthlySpending(
+      timeRange === "month" ? "year" : timeRange
+    );
+    const incomeVsSpending = getIncomeVsSpending(timeRange);
+    const spendingTrends = getSpendingTrends(12);
+    const topCategories = getTopSpendingCategories(timeRange, 5);
+    const avgDailySpending = getAverageDailySpending(timeRange);
+    const quickAnalytics = getQuickAnalytics(timeRange);
 
     setAnalyticsData({
       spendingByCategory,
       monthlySpending,
       incomeVsSpending,
+      spendingTrends,
+      topCategories,
+      avgDailySpending,
+      quickAnalytics,
     });
-  }, [transactions]);
+  }, [
+    timeRange,
+    getSpendingByCategory,
+    getMonthlySpending,
+    getIncomeVsSpending,
+    getSpendingTrends,
+    getTopSpendingCategories,
+    getAverageDailySpending,
+    getQuickAnalytics,
+  ]);
 
   const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
@@ -50,66 +89,12 @@ const AnalyticsPage = () => {
     }).format(amount);
   };
 
-  // Calculate spending by category
-  const getSpendingByCategory = () => {
-    const categorySpending = {};
-    transactions.forEach(transaction => {
-      if (transaction.amount < 0) {
-        // Only spending, not income
-        const category = transaction.category;
-        categorySpending[category] =
-          (categorySpending[category] || 0) + Math.abs(transaction.amount);
-      }
-    });
-
-    return Object.entries(categorySpending)
-      .map(([category, amount]) => ({
-        category,
-        amount,
-        percentage:
-          (amount /
-            Object.values(categorySpending).reduce((a, b) => a + b, 0)) *
-          100,
-      }))
-      .sort((a, b) => b.amount - a.amount);
-  };
-
-  // Calculate monthly spending
-  const getMonthlySpending = () => {
-    const monthlyData = {};
-    const currentYear = new Date().getFullYear();
-
-    transactions.forEach(transaction => {
-      const date = new Date(transaction.date);
-      if (date.getFullYear() === currentYear && transaction.amount < 0) {
-        const month = date.toLocaleString("default", { month: "short" });
-        monthlyData[month] =
-          (monthlyData[month] || 0) + Math.abs(transaction.amount);
-      }
-    });
-
-    return Object.entries(monthlyData).map(([month, amount]) => ({
-      month,
-      spending: amount,
-    }));
-  };
-
-  // Calculate income vs spending
-  const getIncomeVsSpending = () => {
-    const income = transactions
-      .filter(t => t.amount > 0)
-      .reduce((sum, t) => sum + t.amount, 0);
-    const spending = transactions
-      .filter(t => t.amount < 0)
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-    return [
-      { type: "Income", amount: income, color: "#10B981" },
-      { type: "Spending", amount: spending, color: "#EF4444" },
-    ];
-  };
-
-  const { spendingByCategory, monthlySpending, incomeVsSpending } = analyticsData;
+  const {
+    spendingByCategory,
+    monthlySpending,
+    incomeVsSpending,
+    quickAnalytics,
+  } = analyticsData;
 
   const COLORS = [
     "#0088FE",
@@ -168,11 +153,7 @@ const AnalyticsPage = () => {
                 Total Income
               </p>
               <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-400">
-                {formatCurrency(
-                  transactions
-                    .filter(t => t.amount > 0)
-                    .reduce((sum, t) => sum + t.amount, 0)
-                )}
+                {formatCurrency(incomeVsSpending.income)}
               </p>
             </div>
             <DollarSign className="w-6 h-6 lg:w-8 lg:h-8 text-green-400" />
@@ -186,11 +167,7 @@ const AnalyticsPage = () => {
                 Total Spending
               </p>
               <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-400">
-                {formatCurrency(
-                  transactions
-                    .filter(t => t.amount < 0)
-                    .reduce((sum, t) => sum + Math.abs(t.amount), 0)
-                )}
+                {formatCurrency(incomeVsSpending.spending)}
               </p>
             </div>
             <TrendingDown className="w-6 h-6 lg:w-8 lg:h-8 text-red-400" />
@@ -204,7 +181,7 @@ const AnalyticsPage = () => {
                 Total Transactions
               </p>
               <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-soft-white">
-                {transactions.length}
+                {quickAnalytics.transactionCount}
               </p>
             </div>
             <Calendar className="w-6 h-6 lg:w-8 lg:h-8 text-blue-400" />

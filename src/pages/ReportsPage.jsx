@@ -21,48 +21,60 @@ import {
 import useStore from "../store";
 
 const ReportsPage = () => {
-  const { transactions, loadTransactions } = useStore();
+  const {
+    getSpendingByCategory,
+    getMonthlySpending,
+    getSpendingTrends,
+    getTopSpendingCategories,
+    getAverageDailySpending,
+    getIncomeVsSpending,
+  } = useStore();
+
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [selectedReport, setSelectedReport] = useState("overview");
   const [reportData, setReportData] = useState({
     categoryBreakdown: [],
     monthlyTrends: [],
+    spendingTrends: [],
+    topCategories: [],
+    avgDailySpending: 0,
+    incomeVsSpending: {},
   });
 
-  // Update report data when transactions change
+  // Update report data when period changes
   useEffect(() => {
-    const categoryBreakdown = calculateCategoryBreakdown();
-    const monthlyTrends = calculateMonthlyTrends();
+    const categoryBreakdown = getSpendingByCategory(selectedPeriod);
+    const monthlyTrends = getMonthlySpending(
+      selectedPeriod === "month" ? "year" : selectedPeriod
+    );
+    const spendingTrends = getSpendingTrends(12);
+    const topCategories = getTopSpendingCategories(selectedPeriod, 10);
+    const avgDailySpending = getAverageDailySpending(selectedPeriod);
+    const incomeVsSpending = getIncomeVsSpending(selectedPeriod);
 
     setReportData({
       categoryBreakdown,
       monthlyTrends,
+      spendingTrends,
+      topCategories,
+      avgDailySpending,
+      incomeVsSpending,
     });
-  }, [transactions]);
-
-  useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
+  }, [
+    selectedPeriod,
+    getSpendingByCategory,
+    getMonthlySpending,
+    getSpendingTrends,
+    getTopSpendingCategories,
+    getAverageDailySpending,
+    getIncomeVsSpending,
+  ]);
 
   const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
     }).format(amount);
-  };
-
-  const getCurrentPeriodData = () => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    return transactions.filter(transaction => {
-      const transactionDate = new Date(transaction.date);
-      return (
-        transactionDate.getMonth() === currentMonth &&
-        transactionDate.getFullYear() === currentYear
-      );
-    });
   };
 
   const getCategoryIcon = categoryName => {
@@ -83,86 +95,27 @@ const ReportsPage = () => {
     return icons[categoryName] || DollarSign;
   };
 
-  const calculateCategoryBreakdown = () => {
-    const periodData = getCurrentPeriodData();
-    const expenses = periodData.filter(t => t.amount < 0); // Negative amounts are expenses
-
-    const categoryMap = {};
-    expenses.forEach(transaction => {
-      const category = transaction.category || "Uncategorized";
-      if (!categoryMap[category]) {
-        categoryMap[category] = 0;
-      }
-      categoryMap[category] += Math.abs(transaction.amount);
-    });
-
-    return Object.entries(categoryMap)
-      .map(([category, amount]) => ({ category, amount }))
-      .sort((a, b) => b.amount - a.amount);
-  };
-
-  const calculateMonthlyTrends = () => {
-    const months = [];
-    const currentDate = new Date();
-
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() - i,
-        1
-      );
-      const monthName = date.toLocaleDateString("en-US", { month: "short" });
-      const monthYear = date.getFullYear();
-
-      const monthTransactions = transactions.filter(transaction => {
-        const transactionDate = new Date(transaction.date);
-        return (
-          transactionDate.getMonth() === date.getMonth() &&
-          transactionDate.getFullYear() === date.getFullYear()
-        );
-      });
-
-      const income = monthTransactions
-        .filter(t => t.amount > 0) // Positive amounts are income
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-      const expenses = monthTransactions
-        .filter(t => t.amount < 0) // Negative amounts are expenses
-        .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
-
-      months.push({
-        month: monthName,
-        year: monthYear,
-        income,
-        expenses,
-        net: income - expenses,
-      });
-    }
-
-    return months;
-  };
-
   const handleExportReport = () => {
-    const reportData = {
+    const exportData = {
       period: selectedPeriod,
       report: selectedReport,
       generatedAt: new Date().toISOString(),
       data: {
         overview: {
-          totalIncome: getCurrentPeriodData()
-            .filter(t => t.amount > 0)
-            .reduce((sum, t) => sum + (t.amount || 0), 0),
-          totalExpenses: getCurrentPeriodData()
-            .filter(t => t.amount < 0)
-            .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0),
+          totalIncome: reportData.incomeVsSpending.income || 0,
+          totalExpenses: reportData.incomeVsSpending.spending || 0,
+          netSavings: reportData.incomeVsSpending.net || 0,
           categoryBreakdown: reportData.categoryBreakdown,
+          topCategories: reportData.topCategories,
+          avgDailySpending: reportData.avgDailySpending,
         },
         monthlyTrends: reportData.monthlyTrends,
+        spendingTrends: reportData.spendingTrends,
       },
     };
 
     // Create and download JSON file
-    const blob = new Blob([JSON.stringify(reportData, null, 2)], {
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
       type: "application/json",
     });
     const url = window.URL.createObjectURL(blob);
@@ -186,15 +139,10 @@ const ReportsPage = () => {
   };
 
   const renderOverviewReport = () => {
-    const periodData = getCurrentPeriodData();
-    const totalIncome = periodData
-      .filter(t => t.amount > 0)
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-    const totalExpenses = periodData
-      .filter(t => t.amount < 0)
-      .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
-    const netIncome = totalIncome - totalExpenses;
-    const { categoryBreakdown } = reportData;
+    const { incomeVsSpending, categoryBreakdown } = reportData;
+    const totalIncome = incomeVsSpending.income || 0;
+    const totalExpenses = incomeVsSpending.spending || 0;
+    const netIncome = incomeVsSpending.net || 0;
 
     return (
       <div className="space-y-6">
@@ -438,7 +386,7 @@ const ReportsPage = () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleExportReport}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm w-full sm:w-auto"
             >
               <Download className="w-4 h-4" />
               <span className="text-white font-medium">Export Report</span>
