@@ -102,7 +102,7 @@ const AppLayout = () => {
         <MobileHeader
           onMenuToggle={toggleMobileSidebar}
           currentPage={currentPage}
-          isMenuOpen={isMobileSidebarOpen}
+          onPageChange={setCurrentPage}
         />
 
         {/* Page Content */}

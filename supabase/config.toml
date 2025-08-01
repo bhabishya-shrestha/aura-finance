@@ -121,7 +121,11 @@ site_url = "https://aura-finance-tool.vercel.app"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 additional_redirect_urls = [
   "https://aura-finance-tool.vercel.app",
-  "http://localhost:5173"
+  "https://aura-finance-app.vercel.app",
+  "https://aura-finance-app.vercel.app/auth/callback",
+  "https://aura-finance-tool.vercel.app/auth/callback",
+  "http://localhost:5173",
+  "http://localhost:5173/auth/callback"
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
