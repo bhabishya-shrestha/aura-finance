@@ -94,6 +94,7 @@ const useStore = create((set, get) => ({
           userId = payload.userId;
         } catch (error) {
           if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
             console.error("Error parsing token:", error);
           }
         }
@@ -110,6 +111,7 @@ const useStore = create((set, get) => ({
       await get().loadTransactions();
     } catch (error) {
       if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
         console.error("Error adding transaction:", error);
       }
       throw error; // Re-throw to handle in component

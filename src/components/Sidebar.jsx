@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
 
 const Sidebar = ({
   onPageChange,
@@ -18,7 +17,6 @@ const Sidebar = ({
   isMobileOpen,
   onMobileToggle,
 }) => {
-  const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems = [
@@ -97,7 +95,7 @@ const Sidebar = ({
                   <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                 </div>
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
-                  Aura
+                  Aura Finance
                 </h2>
               </div>
             )}
@@ -113,35 +111,6 @@ const Sidebar = ({
               )}
             </button>
           </div>
-
-          {/* User Info */}
-          {user && !isCollapsed && (
-            <div className="mb-4 sm:mb-6 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
-                  <span className="text-xs sm:text-sm font-medium text-white">
-                    {(
-                      user.user_metadata?.full_name ||
-                      user.email?.split("@")[0] ||
-                      "U"
-                    )
-                      .charAt(0)
-                      .toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {user.user_metadata?.full_name ||
-                      user.email?.split("@")[0] ||
-                      "User"}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {user.email}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1">
@@ -189,7 +158,7 @@ const Sidebar = ({
             <div
               className={`text-xs text-gray-500 dark:text-gray-400 ${isCollapsed ? "text-center" : ""}`}
             >
-              {isCollapsed ? "Aura" : "Aura Finance"}
+              {isCollapsed ? "AF" : "Aura Finance"}
             </div>
           </div>
         </div>

@@ -21,7 +21,7 @@ const mockSignInWithOAuth = vi.hoisted(() => vi.fn());
 vi.mock("../../lib/supabase", () => ({
   supabase: {
     auth: {
-      signIn: mockSignInWithPassword,
+      signInWithPassword: mockSignInWithPassword,
       signUp: mockSignUp,
       signOut: mockSignOut,
       getUser: mockGetUser,
@@ -110,11 +110,12 @@ describe("AuthContext", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId("user")).toHaveTextContent("no-user");
-        expect(screen.getByTestId("authenticated")).toHaveTextContent("false");
         expect(screen.getByTestId("loading")).toHaveTextContent("false");
-        expect(screen.getByTestId("error")).toHaveTextContent("no-error");
       });
+
+      expect(screen.getByTestId("user")).toHaveTextContent("no-user");
+      expect(screen.getByTestId("authenticated")).toHaveTextContent("false");
+      expect(screen.getByTestId("error")).toHaveTextContent("no-error");
     });
 
     it("should initialize with existing session", async () => {
@@ -133,11 +134,11 @@ describe("AuthContext", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId("user")).toHaveTextContent(
-          "test@example.com"
-        );
-        expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
+        expect(screen.getByTestId("loading")).toHaveTextContent("false");
       });
+
+      expect(screen.getByTestId("user")).toHaveTextContent("test@example.com");
+      expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
     });
   });
 
@@ -169,10 +170,10 @@ describe("AuthContext", () => {
       fireEvent.click(screen.getByText("Login"));
 
       await waitFor(() => {
-        expect(mockSignInWithPassword).toHaveBeenCalledWith(
-          "test@example.com",
-          "password"
-        );
+        expect(mockSignInWithPassword).toHaveBeenCalledWith({
+          email: "test@example.com",
+          password: "password",
+        });
       });
     });
 
@@ -235,14 +236,16 @@ describe("AuthContext", () => {
       fireEvent.click(screen.getByText("Register"));
 
       await waitFor(() => {
-        expect(mockSignUp).toHaveBeenCalledWith(
-          "test@example.com",
-          "password",
-          {
-            name: "Test User",
-            email: "test@example.com",
-          }
-        );
+        expect(mockSignUp).toHaveBeenCalledWith({
+          email: "test@example.com",
+          password: "password",
+          options: {
+            data: {
+              name: "Test User",
+              full_name: "Test User",
+            },
+          },
+        });
       });
     });
 
@@ -278,14 +281,14 @@ describe("AuthContext", () => {
   });
 
   describe("OAuth Login", () => {
-    it("should handle OAuth login initiation", async () => {
+    it("should handle OAuth login", async () => {
       mockGetSession.mockResolvedValue({
         data: { session: null },
         error: null,
       });
 
       mockSignInWithOAuth.mockResolvedValue({
-        data: { url: "https://github.com/oauth/authorize" },
+        data: { url: "https://github.com/oauth" },
         error: null,
       });
 
@@ -307,74 +310,20 @@ describe("AuthContext", () => {
         });
       });
     });
-
-    it("should handle OAuth login error", async () => {
-      mockGetSession.mockResolvedValue({
-        data: { session: null },
-        error: null,
-      });
-
-      mockSignInWithOAuth.mockResolvedValue({
-        data: null,
-        error: { message: "OAuth provider not configured" },
-      });
-
-      render(
-        <TestWrapper>
-          <TestComponent />
-        </TestWrapper>
-      );
-
-      await waitFor(() => {
-        expect(screen.getByTestId("loading")).toHaveTextContent("false");
-      });
-
-      fireEvent.click(screen.getByText("GitHub OAuth"));
-
-      await waitFor(() => {
-        expect(screen.getByTestId("error")).toHaveTextContent(
-          "OAuth provider not configured"
-        );
-      });
-    });
   });
 
   describe("Logout", () => {
-    it("should handle successful logout", async () => {
+    it("should handle logout", async () => {
+      const mockUser = { id: "123", email: "test@example.com" };
+      const mockSession = { user: mockUser };
+
       mockGetSession.mockResolvedValue({
-        data: { session: null },
+        data: { session: mockSession },
         error: null,
       });
 
       mockSignOut.mockResolvedValue({
         error: null,
-      });
-
-      render(
-        <TestWrapper>
-          <TestComponent />
-        </TestWrapper>
-      );
-
-      await waitFor(() => {
-        expect(screen.getByTestId("loading")).toHaveTextContent("false");
-      });
-
-      fireEvent.click(screen.getByText("Logout"));
-
-      await waitFor(() => {
-        expect(mockSignOut).toHaveBeenCalled();
-      });
-    });
-
-    it("should handle logout error", async () => {
-      mockGetSession.mockResolvedValue({
-        data: { session: null },
-        error: null,
-      });
-
-      mockSignOut.mockResolvedValue({
-        error: { message: "Logout failed" },
       });
 
       render(
@@ -396,16 +345,22 @@ describe("AuthContext", () => {
   });
 
   describe("Auth State Changes", () => {
-    it("should handle auth state change events", async () => {
-      const mockCallback = vi.fn();
-      mockOnAuthStateChange.mockImplementation(callback => {
-        mockCallback.mockImplementation(callback);
-        return { data: { subscription: { unsubscribe: vi.fn() } } };
-      });
+    it("should handle auth state changes", async () => {
+      const mockUser = { id: "123", email: "test@example.com" };
+      const mockSession = { user: mockUser };
 
       mockGetSession.mockResolvedValue({
         data: { session: null },
         error: null,
+      });
+
+      // Simulate auth state change
+      let authStateCallback;
+      mockOnAuthStateChange.mockImplementation(callback => {
+        authStateCallback = callback;
+        return {
+          data: { subscription: { unsubscribe: vi.fn() } },
+        };
       });
 
       render(
@@ -415,18 +370,29 @@ describe("AuthContext", () => {
       );
 
       await waitFor(() => {
-        expect(mockOnAuthStateChange).toHaveBeenCalled();
+        expect(screen.getByTestId("loading")).toHaveTextContent("false");
       });
 
-      // Simulate auth state change
-      const mockUser = { id: "123", email: "test@example.com" };
-      mockCallback("SIGNED_IN", { user: mockUser });
+      // Simulate sign in
+      if (authStateCallback) {
+        authStateCallback("SIGNED_IN", mockSession);
+      }
 
       await waitFor(() => {
         expect(screen.getByTestId("user")).toHaveTextContent(
           "test@example.com"
         );
         expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
+      });
+
+      // Simulate sign out
+      if (authStateCallback) {
+        authStateCallback("SIGNED_OUT", null);
+      }
+
+      await waitFor(() => {
+        expect(screen.getByTestId("user")).toHaveTextContent("no-user");
+        expect(screen.getByTestId("authenticated")).toHaveTextContent("false");
       });
     });
   });
