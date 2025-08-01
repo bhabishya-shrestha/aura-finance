@@ -287,7 +287,7 @@ const AccountsPage = () => {
                             <Edit3 className="w-3 h-3" />
                           </button>
                         )}
-                      <div className="text-right flex-shrink-0">
+                        <div className="text-right flex-shrink-0">
                         {editingBalance === account.id ? (
                           <div className="flex items-center gap-2">
                             <input
