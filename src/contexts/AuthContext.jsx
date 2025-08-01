@@ -252,10 +252,15 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
 
-      // Let Supabase handle the redirect automatically
-      // The OAuth providers are already configured with the correct Supabase callback URL
+      // Dynamically determine the correct redirect URL based on current domain
+      const currentOrigin = window.location.origin;
+      const redirectTo = `${currentOrigin}/auth/callback`;
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider,
+        options: {
+          redirectTo: redirectTo,
+        },
       });
 
       if (error) {
