@@ -12,7 +12,7 @@ import {
   EyeOff,
   Info,
 } from "lucide-react";
-import { ClipLoader } from "react-spinners";
+
 import { parseStatement } from "../utils/statementParser";
 import geminiService from "../services/geminiService";
 import useStore from "../store";
@@ -230,29 +230,43 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
 
   // Reset and close
   const handleClose = useCallback(() => {
-    if (!isProcessing) {
-      onClose();
-      setError("");
-      setProcessingStep("");
-      setProcessingProgress(0);
-      setPreviewData(null);
-      setShowPreview(false);
-      setShowAllTransactions(false);
-      setSelectedFile(null);
-      setProcessingSummary(null);
-      setShowDuplicateModal(false);
-      setDuplicateResults(null);
-      setIsEditingSummary(false);
-      setEditableSummary(null);
-
-      // Call onImportComplete if provided
-      if (onImportComplete) {
-        onImportComplete();
+    if (isProcessing) {
+      // Show confirmation dialog if processing
+      if (
+        window.confirm(
+          "Processing is in progress. Are you sure you want to cancel?"
+        )
+      ) {
+        setIsProcessing(false);
+        setProcessingProgress(0);
+        setDisplayProgress(0);
+        setProcessingStep("");
+      } else {
+        return; // User cancelled the confirmation
       }
+    }
 
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+    onClose();
+    setError("");
+    setProcessingStep("");
+    setProcessingProgress(0);
+    setPreviewData(null);
+    setShowPreview(false);
+    setShowAllTransactions(false);
+    setSelectedFile(null);
+    setProcessingSummary(null);
+    setShowDuplicateModal(false);
+    setDuplicateResults(null);
+    setIsEditingSummary(false);
+    setEditableSummary(null);
+
+    // Call onImportComplete if provided
+    if (onImportComplete) {
+      onImportComplete();
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   }, [isProcessing, onClose, onImportComplete]);
 
@@ -444,8 +458,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           </div>
           <button
             onClick={handleClose}
-            disabled={isProcessing}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
@@ -500,16 +513,10 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                 <div className="space-y-6">
                   <div className="text-center">
                     <div className="relative inline-block mb-4">
-                      {/* Professional loading spinner */}
-                      <ClipLoader
-                        size={64}
-                        color="#3B82F6"
-                        loading={true}
-                        speedMultiplier={1}
-                        className="shadow-lg"
-                      />
-                      {/* Pulsing ring effect */}
-                      <div className="absolute inset-0 w-16 h-16 border-2 border-blue-400/30 rounded-full animate-ping"></div>
+                      {/* Simple loading indicator */}
+                      <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full animate-pulse"></div>
+                      </div>
                     </div>
 
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -809,8 +816,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                     setIsEditingSummary(false);
                     setEditableSummary(null);
                   }}
-                  disabled={isProcessing}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   Upload Another File
                 </button>
@@ -821,7 +827,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                 >
                   {isProcessing ? (
                     <>
-                      <ClipLoader size={16} color="#ffffff" loading={true} />
+                      <div className="w-4 h-4 bg-white rounded-full animate-pulse"></div>
                       Importing...
                     </>
                   ) : (
