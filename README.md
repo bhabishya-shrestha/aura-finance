@@ -5,6 +5,7 @@ A modern, AI-powered personal finance management application built with React, f
 ## ✨ Features
 
 ### 🚀 Enhanced Document Import System
+
 - **Multi-format Support**: Import from CSV, PDF, and image files (JPG, PNG, GIF, WebP, HEIC)
 - **AI-Powered Analysis**: Uses Google Gemini 1.5 Flash for intelligent document processing
 - **Smart Categorization**: Automatically categorizes transactions based on merchant names
@@ -13,6 +14,7 @@ A modern, AI-powered personal finance management application built with React, f
 - **Error Handling**: Comprehensive error messages and validation
 
 ### 📊 Financial Management
+
 - **Transaction Tracking**: Monitor income and expenses with detailed categorization
 - **Account Management**: Multiple account support with balance tracking
 - **Net Worth Analytics**: Real-time net worth calculation and trends
@@ -20,12 +22,14 @@ A modern, AI-powered personal finance management application built with React, f
 - **Search & Filter**: Advanced search and filtering capabilities
 
 ### 🎨 Modern Design
+
 - **Apple-Inspired UI**: Clean, modern interface with glassmorphism effects
 - **Dark/Light Mode**: Seamless theme switching with persistent preferences
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
 - **Accessibility**: WCAG compliant with keyboard navigation support
 
 ### 🔐 Security & Authentication
+
 - **User Authentication**: Secure login and registration system
 - **Data Privacy**: Local storage with optional cloud sync via Supabase
 - **API Security**: Rate limiting and secure API key management
@@ -43,34 +47,40 @@ A modern, AI-powered personal finance management application built with React, f
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
+
+- Node.js 18+
 - npm or yarn
 - Google Gemini API key (for AI features)
 
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/your-username/aura-finance.git
    cd aura-finance
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp env.example .env.local
    ```
-   
+
    Add your Gemini API key:
+
    ```env
    VITE_GEMINI_API_KEY=your_gemini_api_key_here
    ```
 
 4. **Start the development server**
+
    ```bash
    npm run dev
    ```
@@ -103,11 +113,13 @@ aura-finance/
 ## 🔧 Enhanced Import System
 
 ### Supported File Types
+
 - **CSV Files**: Standard CSV format with Date, Description, and Amount columns
 - **PDF Documents**: Bank statements, receipts, invoices
 - **Image Files**: JPG, PNG, GIF, WebP, HEIC (iPhone photos)
 
 ### AI-Powered Processing
+
 The application uses Google Gemini 1.5 Flash to intelligently analyze documents:
 
 1. **Document Type Detection**: Automatically identifies document types (bank statements, receipts, invoices)
@@ -117,6 +129,7 @@ The application uses Google Gemini 1.5 Flash to intelligently analyze documents:
 5. **Fallback Processing**: Text-based extraction when AI analysis fails
 
 ### Import Workflow
+
 1. **File Upload**: Drag-and-drop or click to browse
 2. **Validation**: File size and type validation
 3. **Processing**: AI analysis with progress tracking
@@ -124,6 +137,7 @@ The application uses Google Gemini 1.5 Flash to intelligently analyze documents:
 5. **Import**: Confirm and import to your account
 
 ### Error Handling
+
 - **File Validation**: Size limits (20MB) and format restrictions
 - **Processing Errors**: Graceful handling of API failures
 - **Data Quality**: Validation of extracted transaction data
@@ -132,16 +146,19 @@ The application uses Google Gemini 1.5 Flash to intelligently analyze documents:
 ## 🧪 Testing
 
 Run the test suite:
+
 ```bash
 npm test
 ```
 
 Run tests with coverage:
+
 ```bash
 npm run test:coverage
 ```
 
 Run specific test files:
+
 ```bash
 npm test -- StatementImporter.test.jsx
 ```
@@ -149,11 +166,13 @@ npm test -- StatementImporter.test.jsx
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
+
 1. Connect your GitHub repository to Vercel
 2. Set environment variables in Vercel dashboard
 3. Deploy automatically on push to main branch
 
 ### Manual Deployment
+
 ```bash
 npm run build
 npm run preview
@@ -182,6 +201,7 @@ npm run preview
 5. Open a Pull Request
 
 ### Development Guidelines
+
 - Follow the existing code style and conventions
 - Write tests for new features
 - Update documentation as needed
@@ -202,6 +222,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 For support and questions:
+
 - Create an issue on GitHub
 - Check the documentation
 - Review existing issues and discussions

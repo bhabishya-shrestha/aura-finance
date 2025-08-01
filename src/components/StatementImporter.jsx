@@ -18,10 +18,7 @@ import useStore from "../store";
 import DuplicateReviewModal from "./DuplicateReviewModal";
 
 const StatementImporter = ({ isOpen, onClose }) => {
-  const {
-    addTransactions,
-    checkForDuplicates,
-  } = useStore();
+  const { addTransactions, checkForDuplicates } = useStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
   const [processingStep, setProcessingStep] = useState("");
