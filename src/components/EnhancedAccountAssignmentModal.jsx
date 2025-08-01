@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   X,
   Plus,
-  Check,
   AlertCircle,
   Building2,
   CreditCard,
@@ -10,7 +9,6 @@ import {
   ChevronDown,
   ChevronUp,
   Search,
-  Filter,
 } from "lucide-react";
 import useStore from "../store";
 
@@ -129,7 +127,7 @@ const EnhancedAccountAssignmentModal = ({
 
       setShowCreateAccount(false);
     } catch (error) {
-      console.error("Error creating account:", error);
+              // Error creating account
     }
   };
 

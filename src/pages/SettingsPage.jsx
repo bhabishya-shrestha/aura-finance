@@ -18,11 +18,6 @@ import {
   ArrowLeft,
   Trash2,
   AlertTriangle,
-  CreditCard,
-  Globe,
-  Lock,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 import { useSettings } from "../contexts/SettingsContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -52,7 +47,7 @@ const SettingsPage = ({ onPageChange }) => {
   const [saveMessage, setSaveMessage] = useState("");
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showDataResetConfirm, setShowDataResetConfirm] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+
   const fileInputRef = useRef(null);
 
   // Load user data on mount
@@ -872,13 +867,19 @@ const SettingsPage = ({ onPageChange }) => {
                       <Icon
                         className={`w-4 h-4 transition-all duration-200 ${
                           isActive
-                            ? section.color === 'blue' ? "text-blue-600 dark:text-blue-400"
-                              : section.color === 'green' ? "text-green-600 dark:text-green-400"
-                              : section.color === 'red' ? "text-red-600 dark:text-red-400"
-                              : section.color === 'purple' ? "text-purple-600 dark:text-purple-400"
-                              : section.color === 'orange' ? "text-orange-600 dark:text-orange-400"
-                              : section.color === 'indigo' ? "text-indigo-600 dark:text-indigo-400"
-                              : "text-blue-600 dark:text-blue-400"
+                            ? section.color === "blue"
+                              ? "text-blue-600 dark:text-blue-400"
+                              : section.color === "green"
+                                ? "text-green-600 dark:text-green-400"
+                                : section.color === "red"
+                                  ? "text-red-600 dark:text-red-400"
+                                  : section.color === "purple"
+                                    ? "text-purple-600 dark:text-purple-400"
+                                    : section.color === "orange"
+                                      ? "text-orange-600 dark:text-orange-400"
+                                      : section.color === "indigo"
+                                        ? "text-indigo-600 dark:text-indigo-400"
+                                        : "text-blue-600 dark:text-blue-400"
                             : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300"
                         }`}
                       />

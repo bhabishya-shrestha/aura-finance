@@ -6,8 +6,6 @@ import {
   Home,
   TrendingUp,
   FileText,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -151,7 +149,9 @@ const Sidebar = ({
       >
         <div className="p-4 h-full flex flex-col">
           {/* Header */}
-          <div className={`${isCollapsed ? "flex flex-col items-center" : "flex items-center justify-between"} mb-6`}>
+          <div
+            className={`${isCollapsed ? "flex flex-col items-center" : "flex items-center justify-between"} mb-6`}
+          >
             {!isCollapsed && (
               <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">

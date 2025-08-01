@@ -374,6 +374,9 @@ const useStore = create((set, get) => ({
   // Calculate net worth using analytics service
   getNetWorth: () => {
     const { transactions, accounts } = get();
+    if (!transactions || !accounts) {
+      return 0;
+    }
     return analyticsService.calculateNetWorth(transactions, accounts);
   },
 
@@ -400,11 +403,23 @@ const useStore = create((set, get) => ({
   // Analytics methods using the analytics service
   getQuickAnalytics: (timeRange = "month") => {
     const { transactions } = get();
+    if (!transactions || transactions.length === 0) {
+      return {
+        income: 0,
+        spending: 0,
+        netSavings: 0,
+        spendingTrend: 0,
+        transactionCount: 0,
+      };
+    }
     return analyticsService.calculateQuickAnalytics(transactions, timeRange);
   },
 
   getSpendingByCategory: (timeRange = "month") => {
     const { transactions } = get();
+    if (!transactions || transactions.length === 0) {
+      return [];
+    }
     return analyticsService.calculateSpendingByCategory(
       transactions,
       timeRange
@@ -413,16 +428,31 @@ const useStore = create((set, get) => ({
 
   getIncomeVsSpending: (timeRange = "month") => {
     const { transactions } = get();
+    if (!transactions || transactions.length === 0) {
+      return { income: 0, spending: 0, net: 0, data: [] };
+    }
     return analyticsService.calculateIncomeVsSpending(transactions, timeRange);
   },
 
   getMonthlySpending: (timeRange = "year") => {
     const { transactions } = get();
+    if (!transactions || transactions.length === 0) {
+      return [];
+    }
     return analyticsService.calculateMonthlySpending(transactions, timeRange);
   },
 
   getAccountAnalytics: (accountId, timeRange = "month") => {
     const { transactions } = get();
+    if (!transactions || transactions.length === 0) {
+      return {
+        income: 0,
+        spending: 0,
+        net: 0,
+        transactionCount: 0,
+        categoryBreakdown: [],
+      };
+    }
     return analyticsService.calculateAccountAnalytics(
       transactions,
       accountId,
@@ -432,11 +462,17 @@ const useStore = create((set, get) => ({
 
   getSpendingTrends: (periods = 12) => {
     const { transactions } = get();
+    if (!transactions || transactions.length === 0) {
+      return [];
+    }
     return analyticsService.calculateSpendingTrends(transactions, periods);
   },
 
   getTopSpendingCategories: (timeRange = "month", limit = 5) => {
     const { transactions } = get();
+    if (!transactions || transactions.length === 0) {
+      return [];
+    }
     return analyticsService.getTopSpendingCategories(
       transactions,
       timeRange,
@@ -446,6 +482,9 @@ const useStore = create((set, get) => ({
 
   getAverageDailySpending: (timeRange = "month") => {
     const { transactions } = get();
+    if (!transactions || transactions.length === 0) {
+      return 0;
+    }
     return analyticsService.calculateAverageDailySpending(
       transactions,
       timeRange

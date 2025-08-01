@@ -22,16 +22,17 @@ import {
 import useStore from "../store";
 
 const AnalyticsPage = () => {
-  const { 
-    getNetWorth, 
-    getSpendingByCategory, 
-    getMonthlySpending, 
+  const {
+    getNetWorth,
+    getSpendingByCategory,
+    getMonthlySpending,
     getIncomeVsSpending,
     getSpendingTrends,
     getTopSpendingCategories,
-    getAverageDailySpending
+    getAverageDailySpending,
+    getQuickAnalytics,
   } = useStore();
-  
+
   const [timeRange, setTimeRange] = useState("month");
   const [analyticsData, setAnalyticsData] = useState({
     spendingByCategory: [],
@@ -39,17 +40,27 @@ const AnalyticsPage = () => {
     incomeVsSpending: [],
     spendingTrends: [],
     topCategories: [],
-    avgDailySpending: 0
+    avgDailySpending: 0,
+    quickAnalytics: {
+      income: 0,
+      spending: 0,
+      netSavings: 0,
+      spendingTrend: 0,
+      transactionCount: 0,
+    },
   });
 
   // Update analytics data when time range changes
   useEffect(() => {
     const spendingByCategory = getSpendingByCategory(timeRange);
-    const monthlySpending = getMonthlySpending(timeRange === 'month' ? 'year' : timeRange);
+    const monthlySpending = getMonthlySpending(
+      timeRange === "month" ? "year" : timeRange
+    );
     const incomeVsSpending = getIncomeVsSpending(timeRange);
     const spendingTrends = getSpendingTrends(12);
     const topCategories = getTopSpendingCategories(timeRange, 5);
     const avgDailySpending = getAverageDailySpending(timeRange);
+    const quickAnalytics = getQuickAnalytics(timeRange);
 
     setAnalyticsData({
       spendingByCategory,
@@ -57,9 +68,19 @@ const AnalyticsPage = () => {
       incomeVsSpending,
       spendingTrends,
       topCategories,
-      avgDailySpending
+      avgDailySpending,
+      quickAnalytics,
     });
-  }, [timeRange, getSpendingByCategory, getMonthlySpending, getIncomeVsSpending, getSpendingTrends, getTopSpendingCategories, getAverageDailySpending]);
+  }, [
+    timeRange,
+    getSpendingByCategory,
+    getMonthlySpending,
+    getIncomeVsSpending,
+    getSpendingTrends,
+    getTopSpendingCategories,
+    getAverageDailySpending,
+    getQuickAnalytics,
+  ]);
 
   const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
@@ -68,13 +89,11 @@ const AnalyticsPage = () => {
     }).format(amount);
   };
 
-  const { 
-    spendingByCategory, 
-    monthlySpending, 
-    incomeVsSpending, 
-    spendingTrends, 
-    topCategories, 
-    avgDailySpending 
+  const {
+    spendingByCategory,
+    monthlySpending,
+    incomeVsSpending,
+    quickAnalytics,
   } = analyticsData;
 
   const COLORS = [
@@ -134,11 +153,7 @@ const AnalyticsPage = () => {
                 Total Income
               </p>
               <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-400">
-                {formatCurrency(
-                  transactions
-                    .filter(t => t.amount > 0)
-                    .reduce((sum, t) => sum + t.amount, 0)
-                )}
+                {formatCurrency(incomeVsSpending.income)}
               </p>
             </div>
             <DollarSign className="w-6 h-6 lg:w-8 lg:h-8 text-green-400" />
@@ -152,11 +167,7 @@ const AnalyticsPage = () => {
                 Total Spending
               </p>
               <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-400">
-                {formatCurrency(
-                  transactions
-                    .filter(t => t.amount < 0)
-                    .reduce((sum, t) => sum + Math.abs(t.amount), 0)
-                )}
+                {formatCurrency(incomeVsSpending.spending)}
               </p>
             </div>
             <TrendingDown className="w-6 h-6 lg:w-8 lg:h-8 text-red-400" />
@@ -170,7 +181,7 @@ const AnalyticsPage = () => {
                 Total Transactions
               </p>
               <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-soft-white">
-                {transactions.length}
+                {quickAnalytics.transactionCount}
               </p>
             </div>
             <Calendar className="w-6 h-6 lg:w-8 lg:h-8 text-blue-400" />

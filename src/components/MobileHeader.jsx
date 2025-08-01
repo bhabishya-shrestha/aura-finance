@@ -3,30 +3,13 @@ import { Bell, LogOut, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import auraLogo from "../assets/aura-finance.png";
 
-const MobileHeader = ({
-  onMenuToggle,
-  currentPage,
-  onPageChange,
-  onCloseMobileSidebar,
-}) => {
+const MobileHeader = ({ onMenuToggle, onPageChange, onCloseMobileSidebar }) => {
   const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   // Mock notifications data - in a real app, this would come from a store or API
   const hasNewNotifications = false;
-
-  const getPageTitle = page => {
-    const titles = {
-      dashboard: "Dashboard",
-      accounts: "Accounts",
-      transactions: "Transactions",
-      analytics: "Analytics",
-      reports: "Reports",
-      settings: "Settings",
-    };
-    return titles[page] || "Aura Finance";
-  };
 
   const handleSignOut = async () => {
     try {

@@ -35,7 +35,7 @@ const AccountAssignmentModal = ({
       setSelectedAccountId(newAccount.id);
       setShowCreateAccount(false);
     } catch (error) {
-      console.error("Error creating account:", error);
+              // Error creating account
     }
   };
 
@@ -163,7 +163,7 @@ const AccountAssignmentModal = ({
                       No Existing Accounts
                     </h4>
                     <p className="text-sm text-blue-700 dark:text-blue-300">
-                      You don't have any accounts yet. Let's create one for your transactions.
+                      You don&apos;t have any accounts yet. Let&apos;s create one for your transactions.
                     </p>
                   </div>
                 </div>

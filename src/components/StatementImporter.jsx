@@ -34,7 +34,6 @@ const StatementImporter = ({ isOpen, onClose }) => {
   const [editableSummary, setEditableSummary] = useState(null);
   const [isEditingSummary, setIsEditingSummary] = useState(false);
   const [showAccountAssignment, setShowAccountAssignment] = useState(false);
-  const [detectedAccountInfo, setDetectedAccountInfo] = useState(null);
   const fileInputRef = useRef(null);
 
   // Enhanced file validation
@@ -802,7 +801,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
         onClose={() => setShowAccountAssignment(false)}
         transactions={previewData?.transactions || []}
         accounts={accounts || []}
-        detectedAccountInfo={detectedAccountInfo}
+
         onComplete={handleAccountAssignmentComplete}
       />
     </div>

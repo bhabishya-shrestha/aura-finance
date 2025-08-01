@@ -107,10 +107,9 @@ const DashboardPage = ({ onPageChange }) => {
   }, []);
 
   // Debug: Log modal state on every render
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log("[DashboardPage] isImportModalOpen:", isImportModalOpen);
-  }, [isImportModalOpen]);
+      useEffect(() => {
+   
+    }, [isImportModalOpen]);
 
   const handleImportClick = () => {
     try {
