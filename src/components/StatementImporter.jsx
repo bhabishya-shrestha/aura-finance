@@ -29,6 +29,9 @@ const StatementImporter = ({ isOpen, onClose }) => {
   const [processingSummary, setProcessingSummary] = useState(null);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateResults, setDuplicateResults] = useState(null);
+  const [showAllTransactions, setShowAllTransactions] = useState(false);
+  const [editableSummary, setEditableSummary] = useState(null);
+  const [isEditingSummary, setIsEditingSummary] = useState(false);
   const fileInputRef = useRef(null);
 
   // Enhanced file validation
@@ -82,8 +85,9 @@ const StatementImporter = ({ isOpen, onClose }) => {
     async file => {
       setIsProcessing(true);
       setError("");
-      setProcessingProgress(0);
-      setProcessingSummary(null);
+              setProcessingProgress(0);
+        setProcessingSummary(null);
+        setShowAllTransactions(false);
 
       try {
         // Validate file
@@ -204,10 +208,13 @@ const StatementImporter = ({ isOpen, onClose }) => {
       setProcessingProgress(0);
       setPreviewData(null);
       setShowPreview(false);
+      setShowAllTransactions(false);
       setSelectedFile(null);
       setProcessingSummary(null);
       setShowDuplicateModal(false);
       setDuplicateResults(null);
+      setIsEditingSummary(false);
+      setEditableSummary(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -464,25 +471,67 @@ const StatementImporter = ({ isOpen, onClose }) => {
                   <div className="flex items-start gap-3">
                     <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                        Analysis Results
-                      </h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                          Analysis Results
+                        </h4>
+                        <button
+                          onClick={() => {
+                            if (isEditingSummary) {
+                              // Save changes
+                              setProcessingSummary(editableSummary);
+                              setIsEditingSummary(false);
+                            } else {
+                              // Start editing
+                              setEditableSummary(processingSummary);
+                              setIsEditingSummary(true);
+                            }
+                          }}
+                          className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                        >
+                          {isEditingSummary ? "Save" : "Edit"}
+                        </button>
+                      </div>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-gray-600 dark:text-gray-400">
                             Document Type:
                           </span>
-                          <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                            {processingSummary.documentType}
-                          </span>
+                          {isEditingSummary ? (
+                            <input
+                              type="text"
+                              value={editableSummary.documentType}
+                              onChange={(e) => setEditableSummary({
+                                ...editableSummary,
+                                documentType: e.target.value
+                              })}
+                              className="ml-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          ) : (
+                            <span className="ml-2 font-medium text-gray-900 dark:text-white">
+                              {processingSummary.documentType}
+                            </span>
+                          )}
                         </div>
                         <div>
                           <span className="text-gray-600 dark:text-gray-400">
                             Source:
                           </span>
-                          <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                            {processingSummary.source}
-                          </span>
+                          {isEditingSummary ? (
+                            <input
+                              type="text"
+                              value={editableSummary.source}
+                              onChange={(e) => setEditableSummary({
+                                ...editableSummary,
+                                source: e.target.value
+                              })}
+                              className="ml-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          ) : (
+                            <span className="ml-2 font-medium text-gray-900 dark:text-white">
+                              {processingSummary.source}
+                            </span>
+                          )}
                         </div>
                         <div>
                           <span className="text-gray-600 dark:text-gray-400">
@@ -546,7 +595,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
                   <div className="max-h-64 overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
                       {previewData.transactions
-                        .slice(0, 10)
+                        .slice(0, showAllTransactions ? previewData.transactions.length : 10)
                         .map((transaction, index) => (
                           <div
                             key={index}
@@ -576,9 +625,16 @@ const StatementImporter = ({ isOpen, onClose }) => {
                           </div>
                         ))}
                       {previewData.transactions.length > 10 && (
-                        <div className="p-3 text-center text-sm text-gray-500 dark:text-gray-400">
-                          +{previewData.transactions.length - 10} more
-                          transactions
+                        <div className="p-3 text-center">
+                          <button
+                            onClick={() => setShowAllTransactions(!showAllTransactions)}
+                            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+                          >
+                            {showAllTransactions 
+                              ? "Show Less" 
+                              : `+${previewData.transactions.length - 10} more transactions`
+                            }
+                          </button>
                         </div>
                       )}
                     </div>
@@ -594,6 +650,9 @@ const StatementImporter = ({ isOpen, onClose }) => {
                     setSelectedFile(null);
                     setProcessingSummary(null);
                     setShowPreview(false);
+                    setShowAllTransactions(false);
+                    setIsEditingSummary(false);
+                    setEditableSummary(null);
                   }}
                   disabled={isProcessing}
                   className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"

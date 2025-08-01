@@ -11,63 +11,46 @@ db.version(2).stores({
   accounts: "++id, name, type, balance, userId",
 });
 
-// Initialize with some sample data for demonstration
+// Initialize database without sample data
 export const initializeDatabase = async () => {
   try {
-    // Check if we already have data
-    const transactionCount = await db.transactions.count();
-
-    if (transactionCount === 0) {
-      // Add sample accounts (will be associated with user when they register)
-      await db.accounts.bulkAdd([
-        {
-          name: "Bank of America Checking",
-          type: "checking",
-          balance: 0,
-          userId: null,
-        },
-        {
-          name: "Bank of America Credit Card",
-          type: "credit",
-          balance: 0,
-          userId: null,
-        },
-        { name: "Savings Account", type: "savings", balance: 0, userId: null },
-      ]);
-
-      // Add sample transactions (will be associated with user when they register)
-      await db.transactions.bulkAdd([
-        {
-          date: new Date("2024-01-15"),
-          description: "Grocery Store",
-          amount: -85.5,
-          category: "Groceries",
-          accountId: 1,
-          userId: null,
-        },
-        {
-          date: new Date("2024-01-14"),
-          description: "Gas Station",
-          amount: -45.0,
-          category: "Transport",
-          accountId: 1,
-          userId: null,
-        },
-        {
-          date: new Date("2024-01-13"),
-          description: "Salary Deposit",
-          amount: 2500.0,
-          category: "Income",
-          accountId: 1,
-          userId: null,
-        },
-      ]);
-    }
+    // Clean up any existing test data
+    await cleanupTestData();
   } catch (error) {
     // Log error for development, could be replaced with proper error handling
     if (import.meta.env.DEV) {
       // eslint-disable-next-line no-console
       console.error("Error initializing database:", error);
+    }
+  }
+};
+
+// Clean up test/sample data
+export const cleanupTestData = async () => {
+  try {
+    // Remove test transactions
+    const testTransactions = await db.transactions
+      .where("description")
+      .anyOf(["Grocery Store", "Gas Station", "Salary Deposit"])
+      .toArray();
+    
+    if (testTransactions.length > 0) {
+      await db.transactions.bulkDelete(testTransactions.map(t => t.id));
+    }
+
+    // Remove test accounts
+    const testAccounts = await db.accounts
+      .where("name")
+      .anyOf(["Bank of America Checking", "Bank of America Credit Card", "Savings Account"])
+      .toArray();
+    
+    if (testAccounts.length > 0) {
+      await db.accounts.bulkDelete(testAccounts.map(a => a.id));
+    }
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.error("Error cleaning up test data:", error);
     }
   }
 };

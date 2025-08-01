@@ -126,7 +126,7 @@ const RecentTransactions = () => {
                         onChange={e =>
                           setEditData({ ...editData, date: e.target.value })
                         }
-                        className="input-glass w-full mt-1 text-sm"
+                        className="w-full mt-1 text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                     <div>
@@ -140,7 +140,7 @@ const RecentTransactions = () => {
                         onChange={e =>
                           setEditData({ ...editData, amount: e.target.value })
                         }
-                        className="input-glass w-full mt-1 text-sm"
+                        className="w-full mt-1 text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -158,7 +158,7 @@ const RecentTransactions = () => {
                           description: e.target.value,
                         })
                       }
-                      className="input-glass w-full mt-1 text-sm"
+                      className="w-full mt-1 text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
 
@@ -172,7 +172,7 @@ const RecentTransactions = () => {
                         onChange={e =>
                           setEditData({ ...editData, category: e.target.value })
                         }
-                        className="input-glass w-full mt-1 text-sm"
+                        className="w-full mt-1 text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         {CATEGORIES.map(category => (
                           <option key={category} value={category}>
@@ -185,13 +185,13 @@ const RecentTransactions = () => {
                     <div className="flex gap-2 ml-4">
                       <button
                         onClick={() => handleSave(transaction.id)}
-                        className="p-2 bg-apple-green/20 hover:bg-apple-green/30 border border-apple-green/30 rounded-apple-lg icon-success transition-all duration-200 backdrop-blur-apple-sm"
+                        className="p-2 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 border border-green-300 dark:border-green-700 rounded-lg text-green-700 dark:text-green-300 hover:text-green-800 dark:hover:text-green-200 transition-all duration-200"
                       >
                         <Save className="w-4 h-4" />
                       </button>
                       <button
                         onClick={handleCancel}
-                        className="p-2 bg-apple-glass-200/40 hover:bg-apple-glass-300/50 border border-apple-glass-300/30 rounded-apple-lg icon-muted transition-all duration-200 backdrop-blur-apple-sm"
+                        className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200 transition-all duration-200"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -242,13 +242,13 @@ const RecentTransactions = () => {
                     <div className="flex gap-1">
                       <button
                         onClick={() => handleEdit(transaction)}
-                        className="p-1.5 hover:bg-apple-glass-200/40 rounded-apple transition-all duration-200 icon-muted hover:icon-white backdrop-blur-apple-sm"
+                        className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all duration-200 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white"
                       >
                         <Edit3 className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(transaction.id)}
-                        className="p-1.5 hover:bg-apple-red/20 rounded-apple transition-all duration-200 icon-muted hover:icon-error backdrop-blur-apple-sm"
+                        className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-all duration-200 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                       >
                         <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>

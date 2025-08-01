@@ -26,21 +26,21 @@ const TransactionsPage = () => {
   useEffect(() => {
     let filtered = [...transactions];
 
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        transaction =>
-          transaction.description
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          transaction.category?.name
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          transaction.account?.name
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase())
-      );
-    }
+              // Apply search filter
+          if (searchTerm) {
+            filtered = filtered.filter(
+              transaction =>
+                transaction.description
+                  ?.toLowerCase()
+                  .includes(searchTerm.toLowerCase()) ||
+                transaction.category
+                  ?.toLowerCase()
+                  .includes(searchTerm.toLowerCase()) ||
+                transaction.accountName
+                  ?.toLowerCase()
+                  .includes(searchTerm.toLowerCase())
+            );
+          }
 
     // Apply type filter
     if (selectedFilter === "income") {
@@ -235,7 +235,7 @@ const TransactionsPage = () => {
                 setSortBy(field);
                 setSortOrder(order);
               }}
-              className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent [&>option]:bg-white [&>option]:text-gray-900 dark:[&>option]:bg-gray-800 dark:[&>option]:text-white"
             >
               <option value="date-desc">Date (Newest)</option>
               <option value="date-asc">Date (Oldest)</option>
@@ -326,11 +326,11 @@ const TransactionsPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                        {transaction.category?.name || "Unknown"}
+                        {transaction.category || "Unknown"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {transaction.account?.name || "Uncategorized Account"}
+                      {transaction.accountName || "Uncategorized Account"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <span
