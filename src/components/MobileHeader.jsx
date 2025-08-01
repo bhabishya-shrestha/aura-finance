@@ -24,7 +24,7 @@ const MobileHeader = ({ onMenuToggle, currentPage, isMenuOpen }) => {
       await signOut();
       setShowUserMenu(false);
     } catch (error) {
-      console.error("Error signing out:", error);
+      // Error handled silently - user will be redirected to login
     }
   };
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Sparkles, Bell, Menu, Sun, Moon } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -7,9 +7,15 @@ import SearchBar from "./SearchBar";
 const Header = ({ onMenuToggle, showMenuButton = false }) => {
   const { user, logout } = useAuth();
   const { toggleTheme, currentTheme } = useTheme();
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setShowUserMenu(false);
+    } catch (error) {
+      // Error handled silently - user will be redirected to login
+    }
   };
 
   return (
@@ -35,25 +41,22 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
               <h1 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white truncate">
                 Aura Finance
               </h1>
-              <p className="text-xs text-gray-600 dark:text-gray-400 truncate hidden sm:block">
-                Personal Finance Dashboard
-              </p>
             </div>
           </div>
         </div>
 
         {/* Center Section - Search (Hidden on mobile) */}
-        <div className="hidden md:flex flex-1 max-w-md mx-4 lg:mx-8">
+        <div className="hidden lg:flex flex-1 max-w-md mx-8">
           <SearchBar />
         </div>
 
-        {/* Right Section - User Menu */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        {/* Right Section - Theme Toggle, Notifications, User Profile */}
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
-            aria-label={`Switch to ${currentTheme === "dark" ? "light" : "dark"} mode`}
+            className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 flex-shrink-0"
+            aria-label="Toggle theme"
           >
             {currentTheme === "dark" ? (
               <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-400" />
@@ -64,11 +67,11 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
 
           {/* Notifications */}
           <button
-            className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 relative"
+            className="relative p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 flex-shrink-0"
             aria-label="Notifications"
           >
             <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-400" />
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full shadow-sm" />
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>
 
           {/* User Profile */}
@@ -84,10 +87,13 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
                   {user.email}
                 </p>
               </div>
-              <div className="relative group">
+              <div className="relative">
                 <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  onMouseEnter={() => setShowUserMenu(true)}
                   className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium hover:scale-105 transition-all duration-200 shadow-sm flex-shrink-0"
                   aria-label="User menu"
+                  aria-expanded={showUserMenu}
                 >
                   {(
                     user.user_metadata?.full_name ||
@@ -99,16 +105,21 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
                 </button>
 
                 {/* Dropdown Menu */}
-                <div className="absolute right-0 top-full mt-2 w-48 fidelity-card shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                  <div className="p-2">
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
-                    >
-                      Sign Out
-                    </button>
+                {showUserMenu && (
+                  <div
+                    className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50"
+                    onMouseLeave={() => setShowUserMenu(false)}
+                  >
+                    <div className="p-2">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           )}

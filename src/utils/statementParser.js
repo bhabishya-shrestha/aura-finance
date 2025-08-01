@@ -460,8 +460,6 @@ export const parseStatement = async file => {
       );
     }
   } catch (error) {
-    console.error("Statement parsing error:", error);
-
     // Provide more specific error messages
     if (error.message.includes("includes")) {
       throw new Error(

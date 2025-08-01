@@ -7,8 +7,6 @@ import {
   Palette,
   Download,
   Upload,
-  Eye,
-  EyeOff,
   Bell,
   Sun,
   Moon,
@@ -16,14 +14,11 @@ import {
   Save,
   RotateCcw,
   Check,
-  Trash2,
 } from "lucide-react";
-import useStore from "../store";
 import { useSettings } from "../contexts/SettingsContext";
 import { useTheme } from "../contexts/ThemeContext";
 
 const SettingsPage = () => {
-  const { transactions } = useStore();
   const {
     settings,
     updateSetting,
@@ -33,7 +28,6 @@ const SettingsPage = () => {
   } = useSettings();
   const { setTheme, currentTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("general");
-  const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const fileInputRef = useRef(null);
@@ -215,46 +209,56 @@ const SettingsPage = () => {
 
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Password
+                Account Security
               </h3>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Current Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      className="w-full pl-10 pr-10 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter current password"
-                    />
-                    <Eye className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Auto Logout
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Automatically log out after inactivity
+                    </div>
                   </div>
+                  <select
+                    value={settings.autoLogout || 30}
+                    onChange={e =>
+                      updateSetting("autoLogout", parseInt(e.target.value))
+                    }
+                    className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value={15}>15 minutes</option>
+                    <option value={30}>30 minutes</option>
+                    <option value={60}>1 hour</option>
+                    <option value={0}>Never</option>
+                  </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    New Password
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Require Password for Changes
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Ask for password when making important changes
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.requirePasswordForChanges || true}
+                      onChange={e =>
+                        updateSetting(
+                          "requirePasswordForChanges",
+                          e.target.checked
+                        )
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                   </label>
-                  <input
-                    type="password"
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter new password"
-                  />
                 </div>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
-                  Update Password
-                </button>
               </div>
             </div>
           </div>
@@ -267,92 +271,77 @@ const SettingsPage = () => {
               Data Management
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Export Data */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                  Export Data
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Download your data as a CSV file for backup or analysis.
-                </p>
-                <div className="space-y-3">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                Data Export & Import
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Export Settings
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Download your settings as a backup file
+                    </div>
+                  </div>
                   <button
-                    onClick={() => exportSettings()}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200"
+                    onClick={exportSettings}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
                   >
                     <Download className="w-4 h-4" />
-                    Export Settings
-                  </button>
-                  <button
-                    onClick={() => {
-                      // Export transactions logic
-                    }}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                  >
-                    <Download className="w-4 h-4" />
-                    Export Transactions ({transactions.length})
+                    Export
                   </button>
                 </div>
-              </div>
 
-              {/* Import Data */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                  Import Data
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Import settings or transactions from a file.
-                </p>
-                <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Import Settings
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Restore settings from a backup file
+                    </div>
+                  </div>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
                   >
                     <Upload className="w-4 h-4" />
-                    Import Settings
+                    Import
                   </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".json"
-                    onChange={handleImportSettings}
-                    className="hidden"
-                  />
                 </div>
-              </div>
 
-              {/* Reset Data */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 md:col-span-2">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                  Reset & Clear Data
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Reset settings to default or clear all data. This action
-                  cannot be undone.
-                </p>
-                <div className="flex gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportSettings}
+                  className="hidden"
+                />
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                Data Reset
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Reset Settings
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Reset all settings to default values
+                    </div>
+                  </div>
                   <button
                     onClick={handleResetSettings}
-                    className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-200"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    Reset Settings
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (
-                        window.confirm(
-                          "Are you sure you want to delete all data? This action cannot be undone."
-                        )
-                      ) {
-                        // Clear all data logic
-                      }
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Clear All Data
+                    Reset
                   </button>
                 </div>
               </div>
@@ -470,40 +459,18 @@ const SettingsPage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">
-                      Push Notifications
+                      Budget Alerts
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Receive browser notifications
+                      Get notified when you exceed budget limits
                     </div>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={settings.pushNotifications || false}
+                      checked={settings.budgetAlerts || true}
                       onChange={e =>
-                        updateSetting("pushNotifications", e.target.checked)
-                      }
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-white">
-                      Weekly Reports
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Get weekly spending summaries
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.weeklyReports || false}
-                      onChange={e =>
-                        updateSetting("weeklyReports", e.target.checked)
+                        updateSetting("budgetAlerts", e.target.checked)
                       }
                       className="sr-only peer"
                     />
@@ -524,10 +491,10 @@ const SettingsPage = () => {
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white">
           Settings
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm lg:text-base">
           Manage your account preferences and application settings
         </p>
       </div>
@@ -542,7 +509,7 @@ const SettingsPage = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
         {/* Sidebar Navigation */}
         <div className="lg:col-span-1">
           <nav className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">

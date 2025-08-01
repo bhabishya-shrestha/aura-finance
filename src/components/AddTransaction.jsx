@@ -61,7 +61,6 @@ const AddTransaction = () => {
       setErrors({});
       setShowModal(false);
     } catch (error) {
-      console.error("Error adding transaction:", error);
       setErrors({ submit: "Failed to add transaction. Please try again." });
     }
   };
