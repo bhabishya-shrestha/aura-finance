@@ -11,7 +11,7 @@ import {
 import useStore from "../store";
 import { CATEGORIES } from "../utils/statementParser";
 
-const RecentTransactions = () => {
+const RecentTransactions = ({ onPageChange }) => {
   const { getRecentTransactions, deleteTransaction, updateTransaction } =
     useStore();
   const recentTransactions = getRecentTransactions();
@@ -110,7 +110,7 @@ const RecentTransactions = () => {
           recentTransactions.map(transaction => (
             <div
               key={transaction.id}
-              className="p-3 sm:p-4 apple-glass-light rounded-apple-lg border border-apple-glass-200/30 hover:bg-apple-glass-200/40 transition-all duration-200 backdrop-blur-apple-sm"
+              className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200"
             >
               {editingId === transaction.id ? (
                 // Edit Mode
@@ -262,8 +262,11 @@ const RecentTransactions = () => {
       </div>
 
       {recentTransactions.length > 0 && (
-        <div className="mt-4 pt-3 sm:pt-4 border-t border-apple-glass-300/30">
-          <button className="w-full py-2 px-3 sm:px-4 bg-apple-glass-200/40 hover:bg-apple-glass-300/50 transition-all duration-200 rounded-apple-lg text-primary text-sm backdrop-blur-apple-sm">
+        <div className="mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600">
+          <button 
+            onClick={() => onPageChange && onPageChange("transactions")}
+            className="w-full py-2 px-3 sm:px-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-700 transition-all duration-200 rounded-lg text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 text-sm font-medium"
+          >
             View All Transactions
           </button>
         </div>
