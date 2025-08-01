@@ -1,0 +1,39 @@
+{
+  "environments": {
+    "development": {
+      "name": "Development",
+      "url": "http://localhost:5173",
+      "callback": "http://localhost:5173/auth/callback"
+    },
+    "staging": {
+      "name": "Staging",
+      "url": "https://aura-finance-app.vercel.app",
+      "callback": "https://aura-finance-app.vercel.app/auth/callback"
+    },
+    "production": {
+      "name": "Production",
+      "url": "https://aura-finance-tool.vercel.app",
+      "callback": "https://aura-finance-tool.vercel.app/auth/callback"
+    }
+  },
+  "setupInstructions": {
+    "development": [
+      "1. Go to Supabase Dashboard > Authentication > URL Configuration",
+      "2. Set Site URL to: http://localhost:5173",
+      "3. Add Redirect URLs: http://localhost:5173/auth/callback",
+      "4. Save configuration"
+    ],
+    "staging": [
+      "1. Go to Supabase Dashboard > Authentication > URL Configuration",
+      "2. Set Site URL to: https://aura-finance-app.vercel.app",
+      "3. Add Redirect URLs: https://aura-finance-app.vercel.app/auth/callback",
+      "4. Save configuration"
+    ],
+    "production": [
+      "1. Go to Supabase Dashboard > Authentication > URL Configuration",
+      "2. Set Site URL to: https://aura-finance-tool.vercel.app",
+      "3. Add Redirect URLs: https://aura-finance-tool.vercel.app/auth/callback",
+      "4. Save configuration"
+    ]
+  }
+}
