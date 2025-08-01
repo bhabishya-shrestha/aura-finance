@@ -93,7 +93,7 @@ class GeminiService {
           reject(new Error("Failed to process file. Please try again."));
         }
       };
-      reader.onerror = error =>
+      reader.onerror = () =>
         reject(new Error("Failed to read file. Please try again."));
     });
   }

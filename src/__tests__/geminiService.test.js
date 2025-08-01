@@ -37,7 +37,7 @@ describe("GeminiService", () => {
     });
 
     it("should reject files that are too large", () => {
-      const largeFile = { size: 11 * 1024 * 1024, type: "image/jpeg" };
+      const largeFile = { size: 21 * 1024 * 1024, type: "image/jpeg" };
       expect(() => service.validateFile(largeFile)).toThrow(
         "File size too large"
       );

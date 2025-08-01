@@ -15,9 +15,13 @@ import {
 import { parseStatement } from "../utils/statementParser";
 import geminiService from "../services/geminiService";
 import useStore from "../store";
+import DuplicateReviewModal from "./DuplicateReviewModal";
 
 const StatementImporter = ({ isOpen, onClose }) => {
-  const { addTransactions } = useStore();
+  const {
+    addTransactions,
+    checkForDuplicates,
+  } = useStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
   const [processingStep, setProcessingStep] = useState("");
@@ -26,10 +30,12 @@ const StatementImporter = ({ isOpen, onClose }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [processingSummary, setProcessingSummary] = useState(null);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateResults, setDuplicateResults] = useState(null);
   const fileInputRef = useRef(null);
 
   // Enhanced file validation
-  const validateFile = useCallback((file) => {
+  const validateFile = useCallback(file => {
     const maxSize = 20 * 1024 * 1024; // 20MB
     const allowedTypes = [
       "image/jpeg",
@@ -39,7 +45,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
       "image/heic",
       "image/heif",
       "application/pdf",
-      "text/csv"
+      "text/csv",
     ];
 
     if (file.size > maxSize) {
@@ -56,7 +62,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
   }, []);
 
   // Format file size
-  const formatFileSize = useCallback((bytes) => {
+  const formatFileSize = useCallback(bytes => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
@@ -65,145 +71,132 @@ const StatementImporter = ({ isOpen, onClose }) => {
   }, []);
 
   // Get file type icon
-  const getFileIcon = useCallback((file) => {
+  const getFileIcon = useCallback(file => {
     if (file.type.startsWith("image/")) return <Image className="w-5 h-5" />;
-    if (file.type === "application/pdf") return <FileText className="w-5 h-5" />;
-    if (file.type === "text/csv") return <FileSpreadsheet className="w-5 h-5" />;
+    if (file.type === "application/pdf")
+      return <FileText className="w-5 h-5" />;
+    if (file.type === "text/csv")
+      return <FileSpreadsheet className="w-5 h-5" />;
     return <FileText className="w-5 h-5" />;
   }, []);
 
   // Enhanced file processing with better progress tracking
-  const processFile = useCallback(async (file) => {
-    setIsProcessing(true);
-    setError("");
-    setProcessingProgress(0);
-    setProcessingSummary(null);
+  const processFile = useCallback(
+    async file => {
+      setIsProcessing(true);
+      setError("");
+      setProcessingProgress(0);
+      setProcessingSummary(null);
 
-    try {
-      // Validate file
-      validateFile(file);
-      setProcessingProgress(10);
-      setProcessingStep("Validating file...");
+      try {
+        // Validate file
+        validateFile(file);
+        setProcessingProgress(10);
+        setProcessingStep("Validating file...");
 
-      let transactions = [];
-      let summary = null;
+        let transactions = [];
+        let summary = null;
 
-      // Process based on file type
-      if (file.type === "text/csv" || file.name.endsWith(".csv")) {
-        setProcessingProgress(30);
-        setProcessingStep("Parsing CSV file...");
-        
-        transactions = await parseStatement(file);
-        summary = {
-          documentType: "CSV File",
-          source: file.name,
-          confidence: "high",
-          quality: "excellent",
-          transactionCount: transactions.length
-        };
-      } else if (
-        file.type === "application/pdf" ||
-        file.name.endsWith(".pdf") ||
-        file.type.startsWith("image/")
-      ) {
-        setProcessingProgress(40);
-        setProcessingStep("Analyzing document with AI...");
+        // Process based on file type
+        if (file.type === "text/csv" || file.name.endsWith(".csv")) {
+          setProcessingProgress(30);
+          setProcessingStep("Parsing CSV file...");
 
-        // Use enhanced Gemini for PDF and image analysis
-        const result = await geminiService.analyzeImage(file);
-        setProcessingProgress(80);
+          transactions = await parseStatement(file);
+          summary = {
+            documentType: "CSV File",
+            source: file.name,
+            confidence: "high",
+            quality: "excellent",
+            transactionCount: transactions.length,
+          };
+        } else if (
+          file.type === "application/pdf" ||
+          file.name.endsWith(".pdf") ||
+          file.type.startsWith("image/")
+        ) {
+          setProcessingProgress(40);
+          setProcessingStep("Analyzing document with AI...");
 
-        if (result.transactions && result.transactions.length > 0) {
-          transactions = geminiService.convertToTransactions(result);
-          summary = geminiService.getProcessingSummary(result);
+          // Use enhanced Gemini for PDF and image analysis
+          const result = await geminiService.analyzeImage(file);
+          setProcessingProgress(80);
+
+          if (result.transactions && result.transactions.length > 0) {
+            transactions = geminiService.convertToTransactions(result);
+            summary = geminiService.getProcessingSummary(result);
+          } else {
+            throw new Error(
+              "No transactions found in the document. Please try a clearer document or different file."
+            );
+          }
         } else {
           throw new Error(
-            "No transactions found in the document. Please try a clearer document or different file."
+            "Unsupported file format. Please upload a CSV, PDF, or image file."
           );
         }
-      } else {
-        throw new Error(
-          "Unsupported file format. Please upload a CSV, PDF, or image file."
-        );
+
+        setProcessingProgress(90);
+        setProcessingStep("Preparing results...");
+
+        if (transactions.length === 0) {
+          throw new Error("No transactions found in the file.");
+        }
+
+        // Set preview data
+        setPreviewData({
+          transactions,
+          summary,
+          fileName: file.name,
+          fileSize: formatFileSize(file.size),
+        });
+
+        setProcessingProgress(100);
+        setProcessingStep("Analysis complete!");
+        setProcessingSummary(summary);
+
+        // Auto-show preview for small transaction sets
+        if (transactions.length <= 10) {
+          setShowPreview(true);
+        }
+      } catch (err) {
+        setError(err.message);
+        setProcessingProgress(0);
+      } finally {
+        setIsProcessing(false);
       }
-
-      setProcessingProgress(90);
-      setProcessingStep("Preparing results...");
-
-      if (transactions.length === 0) {
-        throw new Error("No transactions found in the file.");
-      }
-
-      // Set preview data
-      setPreviewData({
-        transactions,
-        summary,
-        fileName: file.name,
-        fileSize: formatFileSize(file.size)
-      });
-
-      setProcessingProgress(100);
-      setProcessingStep("Analysis complete!");
-      setProcessingSummary(summary);
-
-      // Auto-show preview for small transaction sets
-      if (transactions.length <= 10) {
-        setShowPreview(true);
-      }
-
-    } catch (err) {
-      setError(err.message);
-      setProcessingProgress(0);
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [validateFile, formatFileSize]);
+    },
+    [validateFile, formatFileSize]
+  );
 
   // Handle file upload
-  const handleFileUpload = useCallback(async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  const handleFileUpload = useCallback(
+    async event => {
+      const file = event.target.files[0];
+      if (!file) return;
 
-    setSelectedFile(file);
-    await processFile(file);
-  }, [processFile]);
+      setSelectedFile(file);
+      await processFile(file);
+    },
+    [processFile]
+  );
 
   // Handle drag and drop
-  const handleDrop = useCallback(async (event) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files[0];
-    if (!file) return;
+  const handleDrop = useCallback(
+    async event => {
+      event.preventDefault();
+      const file = event.dataTransfer.files[0];
+      if (!file) return;
 
-    setSelectedFile(file);
-    await processFile(file);
-  }, [processFile]);
+      setSelectedFile(file);
+      await processFile(file);
+    },
+    [processFile]
+  );
 
-  const handleDragOver = useCallback((event) => {
+  const handleDragOver = useCallback(event => {
     event.preventDefault();
   }, []);
-
-  // Import transactions
-  const handleImport = useCallback(async () => {
-    if (!previewData?.transactions) return;
-
-    try {
-      setIsProcessing(true);
-      setProcessingStep("Importing transactions...");
-
-      await addTransactions(previewData.transactions);
-      
-      setProcessingStep("Import completed successfully!");
-      
-      // Reset and close after successful import
-      setTimeout(() => {
-        handleClose();
-      }, 1500);
-    } catch (err) {
-      setError("Failed to import transactions. Please try again.");
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [previewData, addTransactions]);
 
   // Reset and close
   const handleClose = useCallback(() => {
@@ -216,30 +209,131 @@ const StatementImporter = ({ isOpen, onClose }) => {
       setShowPreview(false);
       setSelectedFile(null);
       setProcessingSummary(null);
+      setShowDuplicateModal(false);
+      setDuplicateResults(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     }
   }, [isProcessing, onClose]);
 
+  // Import transactions with duplicate detection
+  const handleImport = useCallback(async () => {
+    if (!previewData?.transactions) return;
+
+    try {
+      setIsProcessing(true);
+      setProcessingStep("Checking for duplicates...");
+
+      // Check for duplicates
+      const results = await checkForDuplicates(previewData.transactions, {
+        dateTolerance: 1,
+        amountTolerance: 0.01,
+        descriptionSimilarityThreshold: 0.8,
+        requireExactCategory: false,
+      });
+
+      setDuplicateResults(results);
+
+      if (results.duplicates.length > 0) {
+        // Show duplicate review modal
+        setShowDuplicateModal(true);
+        setProcessingStep("Duplicates found - review required");
+      } else {
+        // No duplicates, import directly
+        setProcessingStep("Importing transactions...");
+        await addTransactions(previewData.transactions);
+        setProcessingStep("Import completed successfully!");
+
+        // Reset and close after successful import
+        setTimeout(() => {
+          handleClose();
+        }, 1500);
+      }
+    } catch (error) {
+      setError("Failed to import transactions: " + error.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [previewData, checkForDuplicates, addTransactions, handleClose]);
+
+  // Handle duplicate review confirmation
+  const handleDuplicateConfirm = useCallback(
+    async selectedTransactions => {
+      try {
+        setIsProcessing(true);
+        setProcessingStep("Importing selected transactions...");
+
+        await addTransactions(selectedTransactions);
+
+        setProcessingStep("Import completed successfully!");
+        setShowDuplicateModal(false);
+
+        // Reset and close after successful import
+        setTimeout(() => {
+          handleClose();
+        }, 1500);
+      } catch (error) {
+        setError("Failed to import transactions: " + error.message);
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [addTransactions, handleClose]
+  );
+
+  // Handle skipping all duplicates
+  const handleSkipAllDuplicates = useCallback(
+    async nonDuplicates => {
+      try {
+        setIsProcessing(true);
+        setProcessingStep("Importing non-duplicate transactions...");
+
+        await addTransactions(nonDuplicates);
+
+        setProcessingStep("Import completed successfully!");
+        setShowDuplicateModal(false);
+
+        // Reset and close after successful import
+        setTimeout(() => {
+          handleClose();
+        }, 1500);
+      } catch (error) {
+        setError("Failed to import transactions: " + error.message);
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [addTransactions, handleClose]
+  );
+
   // Get confidence color
-  const getConfidenceColor = useCallback((confidence) => {
+  const getConfidenceColor = useCallback(confidence => {
     switch (confidence) {
-      case "high": return "text-green-600 dark:text-green-400";
-      case "medium": return "text-yellow-600 dark:text-yellow-400";
-      case "low": return "text-red-600 dark:text-red-400";
-      default: return "text-gray-600 dark:text-gray-400";
+      case "high":
+        return "text-green-600 dark:text-green-400";
+      case "medium":
+        return "text-yellow-600 dark:text-yellow-400";
+      case "low":
+        return "text-red-600 dark:text-red-400";
+      default:
+        return "text-gray-600 dark:text-gray-400";
     }
   }, []);
 
   // Get quality color
-  const getQualityColor = useCallback((quality) => {
+  const getQualityColor = useCallback(quality => {
     switch (quality) {
-      case "excellent": return "text-green-600 dark:text-green-400";
-      case "good": return "text-blue-600 dark:text-blue-400";
-      case "fair": return "text-yellow-600 dark:text-yellow-400";
-      case "poor": return "text-red-600 dark:text-red-400";
-      default: return "text-gray-600 dark:text-gray-400";
+      case "excellent":
+        return "text-green-600 dark:text-green-400";
+      case "good":
+        return "text-blue-600 dark:text-blue-400";
+      case "fair":
+        return "text-yellow-600 dark:text-yellow-400";
+      case "poor":
+        return "text-red-600 dark:text-red-400";
+      default:
+        return "text-gray-600 dark:text-gray-400";
     }
   }, []);
 
@@ -256,7 +350,8 @@ const StatementImporter = ({ isOpen, onClose }) => {
               Import Financial Documents
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Upload statements, receipts, or invoices to automatically import transactions
+              Upload statements, receipts, or invoices to automatically import
+              transactions
             </p>
           </div>
           <button
@@ -283,13 +378,14 @@ const StatementImporter = ({ isOpen, onClose }) => {
                   <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto">
                     <Upload className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                   </div>
-                  
+
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                       Drop your file here or click to browse
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400">
-                      Support for PDF, CSV, and image files (JPG, PNG, GIF, WebP, HEIC)
+                      Support for PDF, CSV, and image files (JPG, PNG, GIF,
+                      WebP, HEIC)
                     </p>
                   </div>
 
@@ -322,7 +418,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
                       {processingProgress}%
                     </span>
                   </div>
-                  
+
                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div
                       className="bg-blue-600 h-2 rounded-full transition-all duration-300"
@@ -337,8 +433,12 @@ const StatementImporter = ({ isOpen, onClose }) => {
                 <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-red-600 dark:text-red-400 font-medium">Import Error</p>
-                    <p className="text-red-600 dark:text-red-400 text-sm mt-1">{error}</p>
+                    <p className="text-red-600 dark:text-red-400 font-medium">
+                      Import Error
+                    </p>
+                    <p className="text-red-600 dark:text-red-400 text-sm mt-1">
+                      {error}
+                    </p>
                   </div>
                 </div>
               )}
@@ -348,7 +448,9 @@ const StatementImporter = ({ isOpen, onClose }) => {
                 <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center gap-3">
                   {getFileIcon(selectedFile)}
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-white">{selectedFile.name}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {selectedFile.name}
+                    </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {formatFileSize(selectedFile.size)}
                     </p>
@@ -370,32 +472,46 @@ const StatementImporter = ({ isOpen, onClose }) => {
                       </h4>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <span className="text-gray-600 dark:text-gray-400">Document Type:</span>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Document Type:
+                          </span>
                           <span className="ml-2 font-medium text-gray-900 dark:text-white">
                             {processingSummary.documentType}
                           </span>
                         </div>
                         <div>
-                          <span className="text-gray-600 dark:text-gray-400">Source:</span>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Source:
+                          </span>
                           <span className="ml-2 font-medium text-gray-900 dark:text-white">
                             {processingSummary.source}
                           </span>
                         </div>
                         <div>
-                          <span className="text-gray-600 dark:text-gray-400">Transactions Found:</span>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Transactions Found:
+                          </span>
                           <span className="ml-2 font-medium text-gray-900 dark:text-white">
                             {processingSummary.transactionCount}
                           </span>
                         </div>
                         <div>
-                          <span className="text-gray-600 dark:text-gray-400">Confidence:</span>
-                          <span className={`ml-2 font-medium ${getConfidenceColor(processingSummary.confidence)}`}>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Confidence:
+                          </span>
+                          <span
+                            className={`ml-2 font-medium ${getConfidenceColor(processingSummary.confidence)}`}
+                          >
                             {processingSummary.confidence}
                           </span>
                         </div>
                         <div>
-                          <span className="text-gray-600 dark:text-gray-400">Quality:</span>
-                          <span className={`ml-2 font-medium ${getQualityColor(processingSummary.quality)}`}>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Quality:
+                          </span>
+                          <span
+                            className={`ml-2 font-medium ${getQualityColor(processingSummary.quality)}`}
+                          >
                             {processingSummary.quality}
                           </span>
                         </div>
@@ -420,7 +536,11 @@ const StatementImporter = ({ isOpen, onClose }) => {
                     onClick={() => setShowPreview(!showPreview)}
                     className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                   >
-                    {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPreview ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                     {showPreview ? "Hide" : "Show"} Preview
                   </button>
                 </div>
@@ -428,28 +548,40 @@ const StatementImporter = ({ isOpen, onClose }) => {
                 {showPreview && (
                   <div className="max-h-64 overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {previewData.transactions.slice(0, 10).map((transaction, index) => (
-                        <div key={index} className="p-3 flex items-center justify-between">
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {transaction.description}
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {new Date(transaction.date).toLocaleDateString()} • {transaction.category}
-                            </p>
+                      {previewData.transactions
+                        .slice(0, 10)
+                        .map((transaction, index) => (
+                          <div
+                            key={index}
+                            className="p-3 flex items-center justify-between"
+                          >
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {transaction.description}
+                              </p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {new Date(
+                                  transaction.date
+                                ).toLocaleDateString()}{" "}
+                                • {transaction.category}
+                              </p>
+                            </div>
+                            <span
+                              className={`font-medium ${
+                                transaction.amount > 0
+                                  ? "text-green-600 dark:text-green-400"
+                                  : "text-red-600 dark:text-red-400"
+                              }`}
+                            >
+                              {transaction.amount > 0 ? "+" : ""}$
+                              {Math.abs(transaction.amount).toFixed(2)}
+                            </span>
                           </div>
-                          <span className={`font-medium ${
-                            transaction.amount > 0 
-                              ? "text-green-600 dark:text-green-400" 
-                              : "text-red-600 dark:text-red-400"
-                          }`}>
-                            {transaction.amount > 0 ? "+" : ""}${Math.abs(transaction.amount).toFixed(2)}
-                          </span>
-                        </div>
-                      ))}
+                        ))}
                       {previewData.transactions.length > 10 && (
                         <div className="p-3 text-center text-sm text-gray-500 dark:text-gray-400">
-                          +{previewData.transactions.length - 10} more transactions
+                          +{previewData.transactions.length - 10} more
+                          transactions
                         </div>
                       )}
                     </div>
@@ -493,8 +625,19 @@ const StatementImporter = ({ isOpen, onClose }) => {
           )}
         </div>
       </div>
+
+      {/* Duplicate Review Modal */}
+      <DuplicateReviewModal
+        isOpen={showDuplicateModal}
+        onClose={() => setShowDuplicateModal(false)}
+        duplicates={duplicateResults?.duplicates || []}
+        nonDuplicates={duplicateResults?.nonDuplicates || []}
+        onConfirm={handleDuplicateConfirm}
+        onSkipAll={handleSkipAllDuplicates}
+        summary={duplicateResults?.summary}
+      />
     </div>
   );
 };
 
-export default StatementImporter; 
+export default StatementImporter;

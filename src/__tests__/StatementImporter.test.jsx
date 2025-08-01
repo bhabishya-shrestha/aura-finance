@@ -10,6 +10,36 @@ vi.mock("../store", () => ({
   default: vi.fn(),
 }));
 
+// Mock the DuplicateReviewModal component
+vi.mock("../components/DuplicateReviewModal", () => ({
+  default: function MockDuplicateReviewModal({
+    isOpen,
+    onClose,
+    onConfirm,
+    onSkipAll,
+  }) {
+    if (!isOpen) return null;
+
+    return (
+      <div data-testid="duplicate-review-modal">
+        <button
+          onClick={() => onConfirm([{ description: "Selected Transaction" }])}
+        >
+          Confirm Selected
+        </button>
+        <button
+          onClick={() =>
+            onSkipAll([{ description: "Non-duplicate Transaction" }])
+          }
+        >
+          Skip All
+        </button>
+        <button onClick={onClose}>Close Modal</button>
+      </div>
+    );
+  },
+}));
+
 // Mock the Gemini service
 vi.mock("../services/geminiService", () => ({
   default: {
@@ -26,12 +56,17 @@ vi.mock("../utils/statementParser", () => ({
 
 describe("StatementImporter", () => {
   const mockAddTransactions = vi.fn();
+  const mockCheckForDuplicates = vi.fn();
+  const mockAddTransactionsWithDuplicateHandling = vi.fn();
   const mockOnClose = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     useStore.mockReturnValue({
       addTransactions: mockAddTransactions,
+      checkForDuplicates: mockCheckForDuplicates,
+      addTransactionsWithDuplicateHandling:
+        mockAddTransactionsWithDuplicateHandling,
     });
   });
 
@@ -277,6 +312,27 @@ describe("StatementImporter", () => {
       },
     ]);
 
+    // Mock checkForDuplicates to return no duplicates
+    mockCheckForDuplicates.mockResolvedValue({
+      duplicates: [],
+      nonDuplicates: [
+        {
+          id: 1,
+          date: new Date("2024-01-01"),
+          description: "Test Transaction",
+          amount: 100,
+          category: "Other",
+          accountId: 1,
+          selected: true,
+        },
+      ],
+      summary: {
+        total: 1,
+        duplicates: 0,
+        nonDuplicates: 1,
+      },
+    });
+
     render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
 
     const file = new File(["test"], "test.csv", { type: "text/csv" });
@@ -412,6 +468,306 @@ describe("StatementImporter", () => {
 
     await waitFor(() => {
       expect(screen.getByText("API Error")).toBeInTheDocument();
+    });
+  });
+
+  it("checks for duplicates when importing transactions", async () => {
+    const { parseStatement } = await import("../utils/statementParser");
+    parseStatement.mockResolvedValue([
+      {
+        id: 1,
+        date: new Date("2024-01-01"),
+        description: "Test Transaction",
+        amount: 100,
+        category: "Other",
+        accountId: 1,
+        selected: true,
+      },
+    ]);
+
+    // Mock duplicate detection results
+    mockCheckForDuplicates.mockResolvedValue({
+      duplicates: [
+        {
+          newTransaction: {
+            date: new Date("2024-01-01"),
+            description: "Test Transaction",
+            amount: 100,
+            category: "Other",
+          },
+          existingTransaction: {
+            id: 1,
+            date: new Date("2024-01-01"),
+            description: "Test Transaction",
+            amount: 100,
+            category: "Other",
+          },
+          confidence: 0.95,
+          matches: {
+            date: true,
+            amount: true,
+            description: true,
+            category: true,
+          },
+        },
+      ],
+      nonDuplicates: [],
+      summary: {
+        total: 1,
+        duplicates: 1,
+        nonDuplicates: 0,
+        duplicatePercentage: 100,
+      },
+    });
+
+    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+
+    const file = new File(["test"], "test.csv", { type: "text/csv" });
+    const input = screen.getByRole("button", { name: "Choose File" });
+
+    fireEvent.click(input);
+
+    const fileInput = document.querySelector('input[type="file"]');
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText("Analysis Results")).toBeInTheDocument();
+    });
+
+    // Click import button
+    const importButton = screen.getByText(/Import \d+ Transactions/);
+    fireEvent.click(importButton);
+
+    await waitFor(() => {
+      expect(mockCheckForDuplicates).toHaveBeenCalled();
+      expect(screen.getByTestId("duplicate-review-modal")).toBeInTheDocument();
+    });
+  });
+
+  it("imports transactions directly when no duplicates found", async () => {
+    const { parseStatement } = await import("../utils/statementParser");
+    parseStatement.mockResolvedValue([
+      {
+        id: 1,
+        date: new Date("2024-01-01"),
+        description: "Test Transaction",
+        amount: 100,
+        category: "Other",
+        accountId: 1,
+        selected: true,
+      },
+    ]);
+
+    // Mock no duplicates found
+    mockCheckForDuplicates.mockResolvedValue({
+      duplicates: [],
+      nonDuplicates: [
+        {
+          date: new Date("2024-01-01"),
+          description: "Test Transaction",
+          amount: 100,
+          category: "Other",
+        },
+      ],
+      summary: {
+        total: 1,
+        duplicates: 0,
+        nonDuplicates: 1,
+        duplicatePercentage: 0,
+      },
+    });
+
+    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+
+    const file = new File(["test"], "test.csv", { type: "text/csv" });
+    const input = screen.getByRole("button", { name: "Choose File" });
+
+    fireEvent.click(input);
+
+    const fileInput = document.querySelector('input[type="file"]');
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText("Analysis Results")).toBeInTheDocument();
+    });
+
+    // Click import button
+    const importButton = screen.getByText(/Import \d+ Transactions/);
+    fireEvent.click(importButton);
+
+    await waitFor(() => {
+      expect(mockCheckForDuplicates).toHaveBeenCalled();
+      expect(mockAddTransactions).toHaveBeenCalled();
+      expect(
+        screen.queryByTestId("duplicate-review-modal")
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it("handles duplicate review confirmation", async () => {
+    const { parseStatement } = await import("../utils/statementParser");
+    parseStatement.mockResolvedValue([
+      {
+        id: 1,
+        date: new Date("2024-01-01"),
+        description: "Test Transaction",
+        amount: 100,
+        category: "Other",
+        accountId: 1,
+        selected: true,
+      },
+    ]);
+
+    // Mock duplicate detection results
+    mockCheckForDuplicates.mockResolvedValue({
+      duplicates: [
+        {
+          newTransaction: {
+            date: new Date("2024-01-01"),
+            description: "Test Transaction",
+            amount: 100,
+            category: "Other",
+          },
+          existingTransaction: {
+            id: 1,
+            date: new Date("2024-01-01"),
+            description: "Test Transaction",
+            amount: 100,
+            category: "Other",
+          },
+          confidence: 0.95,
+          matches: {
+            date: true,
+            amount: true,
+            description: true,
+            category: true,
+          },
+        },
+      ],
+      nonDuplicates: [],
+      summary: {
+        total: 1,
+        duplicates: 1,
+        nonDuplicates: 0,
+        duplicatePercentage: 100,
+      },
+    });
+
+    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+
+    const file = new File(["test"], "test.csv", { type: "text/csv" });
+    const input = screen.getByRole("button", { name: "Choose File" });
+
+    fireEvent.click(input);
+
+    const fileInput = document.querySelector('input[type="file"]');
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText("Analysis Results")).toBeInTheDocument();
+    });
+
+    // Click import button to trigger duplicate check
+    const importButton = screen.getByText(/Import \d+ Transactions/);
+    fireEvent.click(importButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("duplicate-review-modal")).toBeInTheDocument();
+    });
+
+    // Click confirm selected in duplicate modal
+    const confirmButton = screen.getByText("Confirm Selected");
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(mockAddTransactions).toHaveBeenCalled();
+    });
+  });
+
+  it("handles skipping all duplicates", async () => {
+    const { parseStatement } = await import("../utils/statementParser");
+    parseStatement.mockResolvedValue([
+      {
+        id: 1,
+        date: new Date("2024-01-01"),
+        description: "Test Transaction",
+        amount: 100,
+        category: "Other",
+        accountId: 1,
+        selected: true,
+      },
+    ]);
+
+    // Mock duplicate detection results with non-duplicates
+    mockCheckForDuplicates.mockResolvedValue({
+      duplicates: [
+        {
+          newTransaction: {
+            date: new Date("2024-01-01"),
+            description: "Duplicate Transaction",
+            amount: 100,
+            category: "Other",
+          },
+          existingTransaction: {
+            id: 1,
+            date: new Date("2024-01-01"),
+            description: "Duplicate Transaction",
+            amount: 100,
+            category: "Other",
+          },
+          confidence: 0.95,
+          matches: {
+            date: true,
+            amount: true,
+            description: true,
+            category: true,
+          },
+        },
+      ],
+      nonDuplicates: [
+        {
+          date: new Date("2024-01-02"),
+          description: "Non-duplicate Transaction",
+          amount: 50,
+          category: "Other",
+        },
+      ],
+      summary: {
+        total: 2,
+        duplicates: 1,
+        nonDuplicates: 1,
+        duplicatePercentage: 50,
+      },
+    });
+
+    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+
+    const file = new File(["test"], "test.csv", { type: "text/csv" });
+    const input = screen.getByRole("button", { name: "Choose File" });
+
+    fireEvent.click(input);
+
+    const fileInput = document.querySelector('input[type="file"]');
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText("Analysis Results")).toBeInTheDocument();
+    });
+
+    // Click import button to trigger duplicate check
+    const importButton = screen.getByText(/Import \d+ Transactions/);
+    fireEvent.click(importButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("duplicate-review-modal")).toBeInTheDocument();
+    });
+
+    // Click skip all in duplicate modal
+    const skipButton = screen.getByText("Skip All");
+    fireEvent.click(skipButton);
+
+    await waitFor(() => {
+      expect(mockAddTransactions).toHaveBeenCalled();
     });
   });
 });
