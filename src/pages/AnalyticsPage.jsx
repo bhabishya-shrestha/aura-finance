@@ -326,7 +326,7 @@ const AnalyticsPage = () => {
           title="Net Worth"
           value={getNetWorth()}
           subtitle="Total assets minus liabilities"
-          icon={Target}
+          icon={DollarSign}
           color="purple"
         />
         <MetricCard
