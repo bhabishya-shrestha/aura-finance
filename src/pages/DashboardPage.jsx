@@ -129,7 +129,9 @@ const DashboardPage = ({ onPageChange }) => {
 
         {/* Recent Transactions Card */}
         <div className="xl:col-span-1">
-          <RecentTransactions onViewAllTransactions={handleViewAllTransactions} />
+          <RecentTransactions
+            onViewAllTransactions={handleViewAllTransactions}
+          />
         </div>
       </div>
 

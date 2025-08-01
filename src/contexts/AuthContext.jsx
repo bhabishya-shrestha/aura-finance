@@ -285,13 +285,18 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       // First try to sign out with global scope
-      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      const { error } = await supabase.auth.signOut({ scope: "global" });
 
       if (error) {
         // If global scope fails, try local scope
-        if (error.message.includes('403') || error.message.includes('Forbidden')) {
-          const { error: localError } = await supabase.auth.signOut({ scope: 'local' });
-          
+        if (
+          error.message.includes("403") ||
+          error.message.includes("Forbidden")
+        ) {
+          const { error: localError } = await supabase.auth.signOut({
+            scope: "local",
+          });
+
           if (localError) {
             return { success: false, error: localError.message };
           }

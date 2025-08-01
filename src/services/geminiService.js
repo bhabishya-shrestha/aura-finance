@@ -558,10 +558,12 @@ IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside t
         if (amount === 0) {
           const description = (transaction.description || "").toLowerCase();
           // Skip interest charges, fees, or other $0 transactions
-          if (description.includes("interest") || 
-              description.includes("fee") || 
-              description.includes("charge") ||
-              description.includes("adjustment")) {
+          if (
+            description.includes("interest") ||
+            description.includes("fee") ||
+            description.includes("charge") ||
+            description.includes("adjustment")
+          ) {
             return false;
           }
         }
