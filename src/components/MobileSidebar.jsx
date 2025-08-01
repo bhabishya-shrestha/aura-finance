@@ -96,7 +96,7 @@ const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        className={`fixed top-14 left-0 h-[calc(100vh-3.5rem)] w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-50 lg:hidden ${
+        className={`fixed top-14 left-0 h-[calc(100vh-3.5rem)] w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transform smooth-transition-slow z-50 lg:hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -104,11 +104,21 @@ const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-lg">A</span>
+              <span className="text-white font-semibold text-lg">
+                {(
+                  user?.user_metadata?.full_name ||
+                  user?.email?.split("@")[0] ||
+                  "U"
+                )
+                  .charAt(0)
+                  .toUpperCase()}
+              </span>
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Aura Finance
+                {user?.user_metadata?.full_name ||
+                  user?.email?.split("@")[0] ||
+                  "User"}
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {user?.email}

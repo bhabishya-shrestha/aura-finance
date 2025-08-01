@@ -1,12 +1,18 @@
 import React, { useState } from "react";
 import { Bell, LogOut, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import auraLogo from "../assets/aura-finance.png";
 
-const MobileHeader = ({ onMenuToggle, currentPage, onPageChange, onCloseMobileSidebar }) => {
+const MobileHeader = ({
+  onMenuToggle,
+  currentPage,
+  onPageChange,
+  onCloseMobileSidebar,
+}) => {
   const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  
+
   // Mock notifications data - in a real app, this would come from a store or API
   const hasNewNotifications = false;
 
@@ -57,11 +63,11 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange, onCloseMobileSi
         <div className="flex items-center gap-3">
           <button
             onClick={onMenuToggle}
-            className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 smooth-transition flex items-center justify-center"
             aria-label="Toggle menu"
           >
             <svg
-              className="w-6 h-6"
+              className="w-5 h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -74,10 +80,19 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange, onCloseMobileSi
               />
             </svg>
           </button>
-          {/* Page title - hidden on smaller screens to reduce redundancy */}
-          <h1 className="hidden sm:block text-lg font-semibold text-gray-900 dark:text-white">
-            {getPageTitle(currentPage)}
-          </h1>
+          {/* Logo and title */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
+              <img
+                src={auraLogo}
+                alt="Aura Finance"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Aura Finance
+            </h1>
+          </div>
         </div>
 
         {/* Right side - Notifications and user menu */}
@@ -98,7 +113,7 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange, onCloseMobileSi
 
             {/* Notifications dropdown */}
             {showNotifications && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 animate-fade-in">
                 <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                     Notifications
@@ -127,7 +142,7 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange, onCloseMobileSi
 
             {/* User dropdown */}
             {showUserMenu && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+              <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 animate-fade-in">
                 {/* User info */}
                 <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-3">
