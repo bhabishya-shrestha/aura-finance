@@ -95,8 +95,6 @@ const ReportsPage = () => {
     return icons[categoryName] || DollarSign;
   };
 
-
-
   const handleExportReport = () => {
     const exportData = {
       period: selectedPeriod,
@@ -141,15 +139,10 @@ const ReportsPage = () => {
   };
 
   const renderOverviewReport = () => {
-    const periodData = getCurrentPeriodData();
-    const totalIncome = periodData
-      .filter(t => t.amount > 0)
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-    const totalExpenses = periodData
-      .filter(t => t.amount < 0)
-      .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
-    const netIncome = totalIncome - totalExpenses;
-    const { categoryBreakdown } = reportData;
+    const { incomeVsSpending, categoryBreakdown } = reportData;
+    const totalIncome = incomeVsSpending.income || 0;
+    const totalExpenses = incomeVsSpending.spending || 0;
+    const netIncome = incomeVsSpending.net || 0;
 
     return (
       <div className="space-y-6">
