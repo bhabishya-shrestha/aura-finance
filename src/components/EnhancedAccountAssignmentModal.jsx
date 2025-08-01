@@ -24,6 +24,11 @@ import {
   Heart,
   GraduationCap,
   Briefcase,
+  Edit3,
+  CheckSquare,
+  Square,
+  Users,
+  Settings,
 } from "lucide-react";
 import useStore from "../store";
 
@@ -49,6 +54,10 @@ const EnhancedAccountAssignmentModal = ({
   const [expandedTransactions, setExpandedTransactions] = useState(new Set());
   const [suggestedAccounts, setSuggestedAccounts] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedTransactions, setSelectedTransactions] = useState(new Set());
+  const [editingSuggestion, setEditingSuggestion] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Account type icons mapping
   const accountTypeIcons = {
@@ -73,6 +82,17 @@ const EnhancedAccountAssignmentModal = ({
     default: DollarSign,
   };
 
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // Initialize selected accounts when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -81,6 +101,7 @@ const EnhancedAccountAssignmentModal = ({
         initialSelection[transaction.id] = transaction.accountId || null;
       });
       setSelectedAccounts(initialSelection);
+      setSelectedTransactions(new Set());
 
       // Pre-fill new account data if account info was detected
       if (detectedAccountInfo) {
@@ -433,6 +454,72 @@ const EnhancedAccountAssignmentModal = ({
     }));
   };
 
+  // Bulk selection functions
+  const handleSelectTransaction = transactionId => {
+    setSelectedTransactions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(transactionId)) {
+        newSet.delete(transactionId);
+      } else {
+        newSet.add(transactionId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedTransactions.size === transactions.length) {
+      setSelectedTransactions(new Set());
+    } else {
+      setSelectedTransactions(new Set(transactions.map(t => t.id)));
+    }
+  };
+
+  const handleBulkAssign = accountId => {
+    const updatedSelection = { ...selectedAccounts };
+    selectedTransactions.forEach(transactionId => {
+      updatedSelection[transactionId] = accountId;
+    });
+    setSelectedAccounts(updatedSelection);
+    setSelectedTransactions(new Set());
+  };
+
+  // AI suggestion functions
+  const handleCreateFromSuggestion = suggestion => {
+    setEditingSuggestion(suggestion);
+    setShowEditModal(true);
+  };
+
+  const handleEditSuggestion = editedSuggestion => {
+    // Create account from edited suggestion
+    const accountData = {
+      name: editedSuggestion.name,
+      type: editedSuggestion.type,
+      balance: 0,
+    };
+
+    addAccount(accountData).then(newAccount => {
+      // Auto-assign transactions that match this suggestion
+      const updatedSelection = { ...selectedAccounts };
+      transactions.forEach(transaction => {
+        const description = (transaction.description || "").toLowerCase();
+        const institution = editedSuggestion.name.toLowerCase();
+
+        // Assign if transaction description contains institution name or matches pattern
+        if (
+          description.includes(institution.split(" ")[0]) ||
+          description.includes(editedSuggestion.type)
+        ) {
+          updatedSelection[transaction.id] = newAccount.id;
+        }
+      });
+
+      setSelectedAccounts(updatedSelection);
+      setShowEditModal(false);
+      setEditingSuggestion(null);
+    });
+  };
+
   const toggleTransactionExpansion = transactionId => {
     setExpandedTransactions(prev => {
       const newSet = new Set(prev);
@@ -470,29 +557,43 @@ const EnhancedAccountAssignmentModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50">
+      <div
+        className={`bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full h-full max-h-[95vh] flex flex-col ${
+          isMobile ? "max-w-full" : "max-w-6xl"
+        }`}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">
               Assign Transactions to Accounts
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              {transactions.length} transactions to organize
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              {transactions.length} transaction
+              {transactions.length !== 1 ? "s" : ""} to organize
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
           >
-            <X className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex h-[calc(90vh-140px)]">
+        {/* Content */}
+        <div
+          className={`flex-1 flex overflow-hidden ${
+            isMobile ? "flex-col" : "flex-row"
+          }`}
+        >
           {/* Left Column - Account Selection */}
-          <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 p-6 overflow-y-auto">
+          <div
+            className={`${
+              isMobile ? "w-full h-1/2 border-b" : "w-1/3 border-r"
+            } border-gray-200 dark:border-gray-700 p-4 sm:p-6 overflow-y-auto flex-shrink-0`}
+          >
             <div className="mb-6">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
                 Available Accounts
@@ -566,14 +667,14 @@ const EnhancedAccountAssignmentModal = ({
                     <Sparkles className="w-4 h-4 text-yellow-500" />
                     AI Suggestions
                   </h4>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {/* Gemini AI Account Suggestions */}
                     {accountSuggestions.map((suggestion, index) => (
                       <div
                         key={`gemini-${index}`}
                         className="p-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20"
                       >
-                        <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center justify-between mb-2">
                           <p className="font-medium text-gray-900 dark:text-white">
                             {suggestion.name}
                           </p>
@@ -581,21 +682,32 @@ const EnhancedAccountAssignmentModal = ({
                             {formatAccountType(suggestion.type)}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                           {suggestion.reason}
                         </p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-blue-200 dark:bg-blue-800 rounded-full h-2">
-                            <div
-                              className="bg-blue-500 h-2 rounded-full"
-                              style={{
-                                width: `${suggestion.confidence * 100}%`,
-                              }}
-                            />
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 flex-1">
+                            <div className="flex-1 bg-blue-200 dark:bg-blue-800 rounded-full h-2">
+                              <div
+                                className="bg-blue-500 h-2 rounded-full"
+                                style={{
+                                  width: `${suggestion.confidence * 100}%`,
+                                }}
+                              />
+                            </div>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {Math.round(suggestion.confidence * 100)}%
+                            </span>
                           </div>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {Math.round(suggestion.confidence * 100)}%
-                          </span>
+                          <button
+                            onClick={() =>
+                              handleCreateFromSuggestion(suggestion)
+                            }
+                            className="ml-3 px-3 py-1.5 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            Create & Edit
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -606,24 +718,40 @@ const EnhancedAccountAssignmentModal = ({
                         key={`local-${index}`}
                         className="p-3 rounded-lg border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20"
                       >
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {suggestion.name}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {suggestion.name}
+                          </p>
+                          <span className="text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-800 px-2 py-1 rounded">
+                            {formatAccountType(suggestion.type)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                           {suggestion.reason}
                         </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <div className="flex-1 bg-yellow-200 dark:bg-yellow-800 rounded-full h-2">
-                            <div
-                              className="bg-yellow-500 h-2 rounded-full"
-                              style={{
-                                width: `${suggestion.confidence * 100}%`,
-                              }}
-                            />
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 flex-1">
+                            <div className="flex-1 bg-yellow-200 dark:bg-yellow-800 rounded-full h-2">
+                              <div
+                                className="bg-yellow-500 h-2 rounded-full"
+                                style={{
+                                  width: `${suggestion.confidence * 100}%`,
+                                }}
+                              />
+                            </div>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {Math.round(suggestion.confidence * 100)}%
+                            </span>
                           </div>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {Math.round(suggestion.confidence * 100)}%
-                          </span>
+                          <button
+                            onClick={() =>
+                              handleCreateFromSuggestion(suggestion)
+                            }
+                            className="ml-3 px-3 py-1.5 bg-yellow-500 text-white text-xs rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-1"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            Create & Edit
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -634,41 +762,117 @@ const EnhancedAccountAssignmentModal = ({
           </div>
 
           {/* Right Column - Transaction Assignment */}
-          <div className="flex-1 p-6 overflow-y-auto">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-              Transactions to Import
-            </h3>
+          <div
+            className={`flex-1 p-4 sm:p-6 overflow-y-auto ${
+              isMobile ? "h-1/2" : ""
+            }`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                Transactions to Import
+              </h3>
 
-            <div className="space-y-4">
+              {/* Bulk Selection Controls */}
+              {selectedTransactions.size > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                    {selectedTransactions.size} selected
+                  </span>
+                  <button
+                    onClick={() => setSelectedTransactions(new Set())}
+                    className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Bulk Selection Header */}
+            <div className="flex items-center gap-2 mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <input
+                type="checkbox"
+                checked={
+                  selectedTransactions.size === transactions.length &&
+                  transactions.length > 0
+                }
+                onChange={handleSelectAll}
+                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Select All Transactions
+              </span>
+            </div>
+
+            {/* Bulk Assignment Controls */}
+            {selectedTransactions.size > 0 && (
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    {selectedTransactions.size} transaction
+                    {selectedTransactions.size !== 1 ? "s" : ""} selected
+                  </span>
+                  <button
+                    onClick={() => setSelectedTransactions(new Set())}
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {filteredAccounts.slice(0, 3).map(account => (
+                    <button
+                      key={account.id}
+                      onClick={() => handleBulkAssign(account.id)}
+                      className="px-3 py-1.5 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1"
+                    >
+                      <Users className="w-3 h-3" />
+                      Assign to {account.name}
+                    </button>
+                  ))}
+                  {filteredAccounts.length > 3 && (
+                    <button
+                      onClick={() => setShowCreateAccount(true)}
+                      className="px-3 py-1.5 bg-green-500 text-white text-xs rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Create New Account
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
               {Object.entries(groupedTransactions).map(([groupId, group]) => (
                 <div
                   key={groupId}
                   className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden"
                 >
                   {/* Group Header */}
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                  <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="text-blue-500">
+                      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                        <div className="text-blue-500 flex-shrink-0">
                           {group.account ? (
                             getAccountIcon(group.account)
                           ) : (
-                            <AlertCircle className="w-5 h-5" />
+                            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                           )}
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 dark:text-white truncate text-sm sm:text-base">
                             {group.account
                               ? group.account.name
                               : "Uncategorized"}
                           </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                             {group.transactions.length} transaction
                             {group.transactions.length !== 1 ? "s" : ""} •{" "}
                             {formatCurrency(group.totalAmount)}
                           </p>
                           {group.suggestion && (
-                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 truncate">
                               AI Suggestion: {group.suggestion.reason}
                             </p>
                           )}
@@ -677,7 +881,7 @@ const EnhancedAccountAssignmentModal = ({
                       {group.account && (
                         <button
                           onClick={() => assignGroupToAccount(group.account.id)}
-                          className="px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                          className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex-shrink-0"
                         >
                           Assign All
                         </button>
@@ -693,19 +897,37 @@ const EnhancedAccountAssignmentModal = ({
                         transaction.id
                       );
                       const assignedAccount = selectedAccounts[transaction.id];
+                      const isSelected = selectedTransactions.has(
+                        transaction.id
+                      );
 
                       return (
-                        <div key={transaction.id} className="p-4">
+                        <div
+                          key={transaction.id}
+                          className={`p-3 sm:p-4 ${
+                            isSelected ? "bg-blue-50 dark:bg-blue-900/20" : ""
+                          }`}
+                        >
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <div className="text-gray-500">
+                            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                              {/* Checkbox for bulk selection */}
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() =>
+                                  handleSelectTransaction(transaction.id)
+                                }
+                                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 flex-shrink-0"
+                              />
+
+                              <div className="text-gray-500 flex-shrink-0">
                                 <CategoryIcon className="w-4 h-4" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-gray-900 dark:text-white truncate">
+                                <p className="font-medium text-gray-900 dark:text-white truncate text-sm sm:text-base">
                                   {transaction.description}
                                 </p>
-                                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                                   <Calendar className="w-3 h-3" />
                                   {new Date(
                                     transaction.date
@@ -722,10 +944,10 @@ const EnhancedAccountAssignmentModal = ({
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 sm:gap-3">
                               <div className="text-right">
                                 <p
-                                  className={`font-semibold ${
+                                  className={`font-semibold text-sm sm:text-base ${
                                     transaction.amount > 0
                                       ? "text-green-600 dark:text-green-400"
                                       : "text-red-600 dark:text-red-400"
@@ -744,7 +966,7 @@ const EnhancedAccountAssignmentModal = ({
                                 onClick={() =>
                                   toggleTransactionExpansion(transaction.id)
                                 }
-                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex-shrink-0"
                               >
                                 {isExpanded ? (
                                   <ChevronUp className="w-4 h-4 text-gray-500" />
@@ -916,6 +1138,87 @@ const EnhancedAccountAssignmentModal = ({
                   className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isProcessing ? "Creating..." : "Create Account"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Suggestion Modal */}
+        {showEditModal && editingSuggestion && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-60">
+            <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Edit Account Suggestion
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Account Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editingSuggestion.name}
+                    onChange={e =>
+                      setEditingSuggestion(prev => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter account name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Account Type
+                  </label>
+                  <select
+                    value={editingSuggestion.type}
+                    onChange={e =>
+                      setEditingSuggestion(prev => ({
+                        ...prev,
+                        type: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="checking">Checking Account</option>
+                    <option value="savings">Savings Account</option>
+                    <option value="credit">Credit Card</option>
+                    <option value="investment">Investment Account</option>
+                    <option value="loan">Loan Account</option>
+                  </select>
+                </div>
+
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>AI Suggestion:</strong> {editingSuggestion.reason}
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                    Confidence: {Math.round(editingSuggestion.confidence * 100)}%
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingSuggestion(null);
+                  }}
+                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleEditSuggestion(editingSuggestion)}
+                  disabled={!editingSuggestion.name || isProcessing}
+                  className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isProcessing ? "Creating..." : "Create & Auto-Assign"}
                 </button>
               </div>
             </div>
