@@ -143,8 +143,8 @@ class GeminiService {
       const base64Data = await this.fileToBase64(file);
       const mimeType = this.getMimeType(file);
 
-      // Professional-grade prompt for financial document analysis
-      const prompt = `You are a professional financial document analyzer. Analyze this document and extract all financial transaction information with high accuracy.
+      // Professional-grade prompt for financial document analysis with enhanced account detection
+      const prompt = `You are a professional financial document analyzer. Analyze this document and extract all financial transaction information with high accuracy, including account information.
 
 DOCUMENT ANALYSIS INSTRUCTIONS:
 
@@ -156,20 +156,27 @@ DOCUMENT ANALYSIS INSTRUCTIONS:
    - Investment Statement
    - Other financial document
 
-2. **Transaction Extraction**: Extract ALL transactions with the following details:
+2. **Account Information Detection**: Extract account details:
+   - Bank/Institution name (from logos, headers, or text)
+   - Account type (checking, savings, credit, investment, loan)
+   - Account number (if visible, mask sensitive parts)
+   - Account holder name (if present)
+   - Statement period or date range
+
+3. **Transaction Extraction**: Extract ALL transactions with the following details:
    - Date (YYYY-MM-DD format)
    - Description/Merchant name
    - Amount (positive for income, negative for expenses)
    - Transaction type (income/expense)
    - Category (if identifiable)
 
-3. **Data Quality**: Ensure:
+4. **Data Quality**: Ensure:
    - All amounts are numeric values
    - Dates are in valid format
    - Descriptions are meaningful and complete
    - No duplicate transactions
 
-4. **Special Handling**:
+5. **Special Handling**:
    - For bank statements: Look for transaction lists, activity sections
    - For receipts: Extract line items and totals
    - For invoices: Include tax, fees, and line items
@@ -181,24 +188,48 @@ RESPONSE FORMAT (JSON only):
   "documentType": "string (e.g., 'Bank Statement', 'Receipt', 'Invoice')",
   "source": "string (e.g., 'Bank of America', 'Walmart', 'Netflix')",
   "confidence": "high|medium|low",
+  "accountInfo": {
+    "institution": "string (bank or financial institution name)",
+    "accountType": "string (checking, savings, credit, investment, loan)",
+    "accountName": "string (suggested account name based on institution and type)",
+    "accountNumber": "string (masked if visible, otherwise null)",
+    "statementPeriod": "string (if available)",
+    "confidence": "number (0-1, confidence in account detection)"
+  },
   "transactions": [
     {
       "date": "YYYY-MM-DD",
       "description": "string",
       "amount": number (positive for income, negative for expense),
       "type": "income|expense",
-      "category": "string (optional)"
+      "category": "string (optional)",
+      "suggestedAccount": "string (suggested account name based on transaction patterns)"
     }
   ],
   "summary": {
     "totalIncome": number,
     "totalExpenses": number,
     "netAmount": number,
-    "transactionCount": number
+    "transactionCount": number,
+    "accountSuggestions": [
+      {
+        "name": "string (suggested account name)",
+        "type": "string (account type)",
+        "reason": "string (why this account is suggested)",
+        "confidence": "number (0-1)"
+      }
+    ]
   },
   "notes": "string (any important observations or warnings)",
   "processingQuality": "excellent|good|fair|poor"
 }
+
+ACCOUNT DETECTION GUIDELINES:
+- Look for bank names, institution logos, or account numbers
+- Analyze transaction patterns to suggest account types
+- Use institution names to suggest account names (e.g., "Chase Checking", "Bank of America Savings")
+- Consider transaction amounts and frequency for account type detection
+- Provide multiple account suggestions with confidence scores
 
 IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside the JSON structure.`;
 
@@ -542,7 +573,7 @@ IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside t
     return "Other";
   }
 
-  // Enhanced conversion to transaction format
+  // Enhanced conversion to transaction format with account information
   convertToTransactions(geminiResponse) {
     if (
       !geminiResponse.transactions ||
@@ -559,7 +590,7 @@ IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside t
       category:
         transaction.category ||
         this.categorizeTransaction(transaction.description),
-      accountId: 1,
+      accountId: null, // Will be assigned during account assignment
       selected: true,
       type: transaction.type === "income" ? "income" : "expense",
       source: "gemini-ocr",
@@ -567,10 +598,13 @@ IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside t
       processingQuality: geminiResponse.processingQuality || "fair",
       documentType: geminiResponse.documentType || "Unknown",
       originalSource: geminiResponse.source || "Unknown",
+      // Enhanced account information
+      suggestedAccount: transaction.suggestedAccount || null,
+      accountInfo: geminiResponse.accountInfo || null,
     }));
   }
 
-  // Get processing summary for user feedback
+  // Get processing summary for user feedback with account information
   getProcessingSummary(geminiResponse) {
     const transactionCount = geminiResponse.transactions?.length || 0;
     const confidence = geminiResponse.confidence || "low";
@@ -584,6 +618,15 @@ IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside t
       source: geminiResponse.source || "Unknown",
       notes: geminiResponse.notes || "",
       summary: geminiResponse.summary || null,
+      // Enhanced account information
+      accountInfo: geminiResponse.accountInfo || null,
+      accountSuggestions: geminiResponse.summary?.accountSuggestions || [],
+      detectedAccount: geminiResponse.accountInfo ? {
+        name: geminiResponse.accountInfo.accountName,
+        type: geminiResponse.accountInfo.accountType,
+        institution: geminiResponse.accountInfo.institution,
+        confidence: geminiResponse.accountInfo.confidence,
+      } : null,
     };
   }
 }

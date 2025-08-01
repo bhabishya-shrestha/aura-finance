@@ -217,12 +217,12 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       setDuplicateResults(null);
       setIsEditingSummary(false);
       setEditableSummary(null);
-      
+
       // Call onImportComplete if provided
       if (onImportComplete) {
         onImportComplete();
       }
-      
+
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -472,11 +472,14 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
               {isProcessing && (
                 <div className="space-y-6">
                   <div className="text-center">
-                    <div className="relative inline-block">
-                      <div className="w-16 h-16 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin mx-auto mb-4"></div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-pulse" />
-                      </div>
+                    <div className="relative inline-block mb-4">
+                      {/* Enhanced animated loading spinner */}
+                      <div
+                        className="w-16 h-16 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full shadow-lg"
+                        style={{ animation: "spin 1s linear infinite" }}
+                      ></div>
+                      {/* Pulsing ring effect */}
+                      <div className="absolute inset-0 w-16 h-16 border-2 border-blue-400/30 rounded-full animate-ping"></div>
                     </div>
 
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -821,6 +824,8 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         onClose={() => setShowAccountAssignment(false)}
         transactions={previewData?.transactions || []}
         accounts={accounts || []}
+        detectedAccountInfo={previewData?.summary?.detectedAccount || null}
+        accountSuggestions={previewData?.summary?.accountSuggestions || []}
         onComplete={handleAccountAssignmentComplete}
       />
     </div>

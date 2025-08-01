@@ -33,6 +33,7 @@ const EnhancedAccountAssignmentModal = ({
   transactions,
   accounts = [],
   detectedAccountInfo = null,
+  accountSuggestions = [],
   onComplete,
 }) => {
   const { addAccount } = useStore();
@@ -479,16 +480,51 @@ const EnhancedAccountAssignmentModal = ({
               </div>
 
               {/* AI Suggestions */}
-              {suggestedAccounts.length > 0 && (
+              {(suggestedAccounts.length > 0 ||
+                accountSuggestions.length > 0) && (
                 <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                   <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-yellow-500" />
                     AI Suggestions
                   </h4>
                   <div className="space-y-2">
+                    {/* Gemini AI Account Suggestions */}
+                    {accountSuggestions.map((suggestion, index) => (
+                      <div
+                        key={`gemini-${index}`}
+                        className="p-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {suggestion.name}
+                          </p>
+                          <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded">
+                            {suggestion.type}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          {suggestion.reason}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-blue-200 dark:bg-blue-800 rounded-full h-2">
+                            <div
+                              className="bg-blue-500 h-2 rounded-full"
+                              style={{
+                                width: `${suggestion.confidence * 100}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {Math.round(suggestion.confidence * 100)}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Local AI Suggestions */}
                     {suggestedAccounts.map((suggestion, index) => (
                       <div
-                        key={index}
+                        key={`local-${index}`}
                         className="p-3 rounded-lg border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20"
                       >
                         <p className="font-medium text-gray-900 dark:text-white">
