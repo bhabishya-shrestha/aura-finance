@@ -16,9 +16,10 @@ import { parseStatement } from "../utils/statementParser";
 import geminiService from "../services/geminiService";
 import useStore from "../store";
 import DuplicateReviewModal from "./DuplicateReviewModal";
+import SmartTransactionReview from "./SmartTransactionReview";
 
 const StatementImporter = ({ isOpen, onClose }) => {
-  const { addTransactions, checkForDuplicates } = useStore();
+  const { addTransactions, checkForDuplicates, addAccount } = useStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
   const [processingStep, setProcessingStep] = useState("");
@@ -29,6 +30,8 @@ const StatementImporter = ({ isOpen, onClose }) => {
   const [processingSummary, setProcessingSummary] = useState(null);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateResults, setDuplicateResults] = useState(null);
+  const [showSmartReview, setShowSmartReview] = useState(false);
+  const [processedTransactions, setProcessedTransactions] = useState([]);
   const fileInputRef = useRef(null);
 
   // Enhanced file validation
@@ -152,10 +155,9 @@ const StatementImporter = ({ isOpen, onClose }) => {
         setProcessingStep("Analysis complete!");
         setProcessingSummary(summary);
 
-        // Auto-show preview for small transaction sets
-        if (transactions.length <= 10) {
-          setShowPreview(true);
-        }
+        // Show smart review for all transaction sets
+        setProcessedTransactions(transactions);
+        setShowSmartReview(true);
       } catch (err) {
         setError(err.message);
         setProcessingProgress(0);
@@ -208,6 +210,8 @@ const StatementImporter = ({ isOpen, onClose }) => {
       setProcessingSummary(null);
       setShowDuplicateModal(false);
       setDuplicateResults(null);
+      setShowSmartReview(false);
+      setProcessedTransactions([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -254,30 +258,47 @@ const StatementImporter = ({ isOpen, onClose }) => {
     }
   }, [previewData, checkForDuplicates, addTransactions, handleClose]);
 
-  // Handle duplicate review confirmation
-  const handleDuplicateConfirm = useCallback(
-    async selectedTransactions => {
-      try {
-        setIsProcessing(true);
-        setProcessingStep("Importing selected transactions...");
+  // Handle smart review confirmation
+  const handleSmartReviewConfirm = async finalTransactions => {
+    try {
+      // Check for duplicates
+      const duplicateResults = await checkForDuplicates(finalTransactions);
 
-        await addTransactions(selectedTransactions);
-
-        setProcessingStep("Import completed successfully!");
-        setShowDuplicateModal(false);
-
-        // Reset and close after successful import
-        setTimeout(() => {
-          handleClose();
-        }, 1500);
-      } catch (error) {
-        setError("Failed to import transactions: " + error.message);
-      } finally {
-        setIsProcessing(false);
+      if (duplicateResults.duplicates.length > 0) {
+        setDuplicateResults(duplicateResults);
+        setShowDuplicateModal(true);
+        setShowSmartReview(false);
+      } else {
+        // Add transactions directly
+        await addTransactions(finalTransactions);
+        handleSuccess();
       }
-    },
-    [addTransactions, handleClose]
-  );
+    } catch (error) {
+      setError("Failed to import transactions: " + error.message);
+    }
+  };
+
+  // Handle account creation from smart review
+  const handleAddAccount = async accountData => {
+    try {
+      await addAccount(accountData);
+      // Refresh the smart review with updated accounts
+      setShowSmartReview(false);
+      setTimeout(() => setShowSmartReview(true), 100);
+    } catch (error) {
+      setError("Failed to add account: " + error.message);
+    }
+  };
+
+  // Handle duplicate review confirmation
+  const handleDuplicateConfirm = async selectedTransactions => {
+    try {
+      await addTransactions(selectedTransactions);
+      handleSuccess();
+    } catch (error) {
+      setError("Failed to import transactions: " + error.message);
+    }
+  };
 
   // Handle skipping all duplicates
   const handleSkipAllDuplicates = useCallback(
@@ -333,6 +354,18 @@ const StatementImporter = ({ isOpen, onClose }) => {
         return "text-gray-600 dark:text-gray-400";
     }
   }, []);
+
+  // Handle success
+  const handleSuccess = () => {
+    setShowSmartReview(false);
+    setShowDuplicateModal(false);
+    setPreviewData(null);
+    setProcessedTransactions([]);
+    setSelectedFile(null);
+    setProcessingSummary(null);
+    setError("");
+    onClose();
+  };
 
   // Don't render if not open
   if (!isOpen) return null;
@@ -633,6 +666,31 @@ const StatementImporter = ({ isOpen, onClose }) => {
         onSkipAll={handleSkipAllDuplicates}
         summary={duplicateResults?.summary}
       />
+
+      {/* Smart Transaction Review Modal */}
+      {showSmartReview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Smart Transaction Review
+              </h2>
+              <button
+                onClick={() => setShowSmartReview(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <SmartTransactionReview
+              transactions={processedTransactions}
+              onConfirm={handleSmartReviewConfirm}
+              onCancel={() => setShowSmartReview(false)}
+              onAddAccount={handleAddAccount}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Bell, LogOut, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -6,6 +6,16 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange }) => {
   const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+
+  // Check for new notifications
+  useEffect(() => {
+    // TODO: Implement actual notification logic
+    // For now, we'll simulate no notifications
+    setNotifications([]);
+  }, []);
+
+  const hasNewNotifications = notifications.length > 0;
 
   const getPageTitle = page => {
     const titles = {
@@ -83,7 +93,9 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange }) => {
             >
               <Bell className="w-5 h-5" />
               {/* Notification badge */}
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              {hasNewNotifications && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              )}
             </button>
 
             {/* Notifications dropdown */}

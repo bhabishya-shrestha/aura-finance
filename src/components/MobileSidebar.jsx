@@ -64,6 +64,7 @@ const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
         className={`fixed top-0 left-0 h-full w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-50 lg:hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
+        style={{ paddingTop: "3.5rem" }} // Add top padding to account for mobile header
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
