@@ -1,4 +1,4 @@
-// Gemini API service for OCR and image analysis
+// Enhanced Gemini API service for professional document analysis
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
@@ -55,42 +55,50 @@ class GeminiService {
     this.dailyRequestCount++;
   }
 
-  // Validate file size and type
+  // Enhanced file validation with better error messages
   validateFile(file) {
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 20 * 1024 * 1024; // Increased to 20MB for better support
     const allowedTypes = [
       "image/jpeg",
       "image/png",
       "image/gif",
       "image/webp",
+      "image/heic",
+      "image/heif",
       "application/pdf",
+      "text/csv",
     ];
 
     if (file.size > maxSize) {
-      throw new Error("File size too large. Maximum 10MB allowed.");
+      throw new Error("File size too large. Maximum 20MB allowed.");
     }
 
     if (!allowedTypes.includes(file.type)) {
       throw new Error(
-        "File type not supported. Please upload an image (JPG, PNG, GIF, WebP) or PDF."
+        "File type not supported. Please upload an image (JPG, PNG, GIF, WebP, HEIC) or PDF."
       );
     }
   }
 
-  // Convert file to base64
+  // Convert file to base64 with better error handling
   async fileToBase64(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
-        const base64 = reader.result.split(",")[1];
-        resolve(base64);
+        try {
+          const base64 = reader.result.split(",")[1];
+          resolve(base64);
+        } catch (error) {
+          reject(new Error("Failed to process file. Please try again."));
+        }
       };
-      reader.onerror = error => reject(error);
+      reader.onerror = () =>
+        reject(new Error("Failed to read file. Please try again."));
     });
   }
 
-  // Get MIME type for file
+  // Get MIME type for file with enhanced support
   getMimeType(file) {
     if (file.type) {
       return file.type;
@@ -104,16 +112,18 @@ class GeminiService {
       png: "image/png",
       gif: "image/gif",
       webp: "image/webp",
+      heic: "image/heic",
+      heif: "image/heif",
       pdf: "application/pdf",
+      csv: "text/csv",
     };
 
     return mimeTypes[extension] || "image/jpeg";
   }
 
-  // Analyze image and extract transaction data
+  // Enhanced document analysis with professional-grade prompts
   async analyzeImage(file) {
     if (!this.apiKey) {
-      // Return a fallback response instead of throwing an error
       return {
         documentType: "Unknown",
         source: "Manual Entry Required",
@@ -133,35 +143,64 @@ class GeminiService {
       const base64Data = await this.fileToBase64(file);
       const mimeType = this.getMimeType(file);
 
-      const prompt = `Analyze this financial document image and extract transaction information. 
+      // Professional-grade prompt for financial document analysis
+      const prompt = `You are a professional financial document analyzer. Analyze this document and extract all financial transaction information with high accuracy.
 
-Please identify the type of document (receipt, bank statement, credit card statement, etc.) and extract all transaction details including:
+DOCUMENT ANALYSIS INSTRUCTIONS:
 
-1. Document type and source (e.g., "Bank of America Statement", "Walmart Receipt")
-2. Transaction date(s)
-3. Merchant/description
-4. Amount(s)
-5. Transaction type (income/expense)
-6. Any additional relevant information
+1. **Document Type Identification**: First, identify the type of document:
+   - Bank Statement (checking, savings, credit card)
+   - Receipt (retail, restaurant, service)
+   - Invoice (business, personal)
+   - Credit Card Statement
+   - Investment Statement
+   - Other financial document
 
-Format the response as JSON with the following structure:
+2. **Transaction Extraction**: Extract ALL transactions with the following details:
+   - Date (YYYY-MM-DD format)
+   - Description/Merchant name
+   - Amount (positive for income, negative for expenses)
+   - Transaction type (income/expense)
+   - Category (if identifiable)
+
+3. **Data Quality**: Ensure:
+   - All amounts are numeric values
+   - Dates are in valid format
+   - Descriptions are meaningful and complete
+   - No duplicate transactions
+
+4. **Special Handling**:
+   - For bank statements: Look for transaction lists, activity sections
+   - For receipts: Extract line items and totals
+   - For invoices: Include tax, fees, and line items
+   - Handle multiple currencies if present
+   - Preserve transaction order
+
+RESPONSE FORMAT (JSON only):
 {
-  "documentType": "string",
-  "source": "string", 
+  "documentType": "string (e.g., 'Bank Statement', 'Receipt', 'Invoice')",
+  "source": "string (e.g., 'Bank of America', 'Walmart', 'Netflix')",
+  "confidence": "high|medium|low",
   "transactions": [
     {
       "date": "YYYY-MM-DD",
       "description": "string",
-      "amount": number,
+      "amount": number (positive for income, negative for expense),
       "type": "income|expense",
-      "category": "string"
+      "category": "string (optional)"
     }
   ],
-  "confidence": "high|medium|low",
-  "notes": "string"
+  "summary": {
+    "totalIncome": number,
+    "totalExpenses": number,
+    "netAmount": number,
+    "transactionCount": number
+  },
+  "notes": "string (any important observations or warnings)",
+  "processingQuality": "excellent|good|fair|poor"
 }
 
-If you cannot extract specific transaction data, provide as much information as possible about what you can see in the document.`;
+IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside the JSON structure.`;
 
       const requestBody = {
         contents: [
@@ -178,10 +217,10 @@ If you cannot extract specific transaction data, provide as much information as 
           },
         ],
         generationConfig: {
-          temperature: 0.1,
+          temperature: 0.1, // Low temperature for consistent results
           topK: 32,
           topP: 1,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 4096, // Increased for better responses
         },
         safetySettings: [
           {
@@ -230,149 +269,280 @@ If you cannot extract specific transaction data, provide as much information as 
 
       const responseText = data.candidates[0].content.parts[0].text;
 
-      // Try to parse JSON from the response
+      // Enhanced JSON parsing with better error handling
       try {
+        // Try to extract JSON from the response
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          return JSON.parse(jsonMatch[0]);
+          const parsedResponse = JSON.parse(jsonMatch[0]);
+
+          // Validate the response structure
+          if (
+            !parsedResponse.transactions ||
+            !Array.isArray(parsedResponse.transactions)
+          ) {
+            throw new Error("Invalid response structure from AI analysis");
+          }
+
+          return parsedResponse;
         }
       } catch (parseError) {
-        // Failed to parse JSON from Gemini response - using fallback
+        // If JSON parsing fails, try to extract information from text
+        return this.extractFromText(responseText);
       }
 
       // Fallback: return structured data from text
-      return {
-        documentType: "Unknown",
-        source: "Unknown",
-        transactions: [],
-        confidence: "low",
-        notes: responseText,
-        rawResponse: responseText,
-      };
+      return this.extractFromText(responseText);
     } catch (error) {
-      throw new Error(`Failed to analyze image: ${error.message}`);
+      throw new Error(`Failed to analyze document: ${error.message}`);
     }
   }
 
-  // Categorize transaction based on description
+  // Fallback method to extract information from text when JSON parsing fails
+  extractFromText(text) {
+    const lines = text.split("\n").filter(line => line.trim());
+    const transactions = [];
+
+    // Simple pattern matching for common transaction formats
+    const patterns = [
+      /(\d{1,2}\/\d{1,2}\/\d{4})\s+([^$]+?)\s+([-]?\$?[\d,]+\.?\d*)/gi,
+      /(\d{1,2}-\d{1,2}-\d{4})\s+([^$]+?)\s+([-]?\$?[\d,]+\.?\d*)/gi,
+      /([A-Za-z]{3}\s+\d{1,2},?\s+\d{4})\s+([^$]+?)\s+([-]?\$?[\d,]+\.?\d*)/gi,
+    ];
+
+    for (const line of lines) {
+      for (const pattern of patterns) {
+        const matches = [...line.matchAll(pattern)];
+        for (const match of matches) {
+          const [, dateStr, description, amountStr] = match;
+
+          try {
+            const cleanAmount = parseFloat(amountStr.replace(/[$,]/g, ""));
+            const date = this.parseDate(dateStr);
+
+            if (!isNaN(cleanAmount) && cleanAmount !== 0 && date) {
+              transactions.push({
+                date: date.toISOString().split("T")[0],
+                description: description.trim(),
+                amount: cleanAmount,
+                type: cleanAmount > 0 ? "income" : "expense",
+                category: this.categorizeTransaction(description.trim()),
+              });
+            }
+          } catch (error) {
+            // Skip invalid entries
+            continue;
+          }
+        }
+      }
+    }
+
+    return {
+      documentType: "Unknown",
+      source: "Text Analysis",
+      transactions: transactions,
+      confidence: "low",
+      notes: "Extracted using text analysis fallback method",
+      processingQuality: "fair",
+    };
+  }
+
+  // Enhanced date parsing
+  parseDate(dateStr) {
+    try {
+      // Handle various date formats
+      if (dateStr.includes("/")) {
+        const [month, day, year] = dateStr.split("/");
+        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      }
+
+      if (dateStr.includes("-")) {
+        const [month, day, year] = dateStr.split("-");
+        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      }
+
+      // Handle "Jan 15, 2024" format
+      const date = new Date(dateStr);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  // Enhanced transaction categorization
   categorizeTransaction(description) {
     if (!description) return "Other";
 
     const desc = description.toLowerCase();
 
-    // Groceries
-    if (
-      desc.includes("grocery") ||
-      desc.includes("supermarket") ||
-      desc.includes("food") ||
-      desc.includes("market") ||
-      desc.includes("safeway") ||
-      desc.includes("kroger") ||
-      desc.includes("whole foods") ||
-      desc.includes("trader joe") ||
-      desc.includes("walmart")
-    ) {
-      return "Groceries";
-    }
+    // Enhanced categorization with more merchants and patterns
+    const categories = {
+      Groceries: [
+        "grocery",
+        "supermarket",
+        "food",
+        "market",
+        "safeway",
+        "kroger",
+        "whole foods",
+        "trader joe",
+        "walmart",
+        "target",
+        "costco",
+        "sams club",
+        "albertsons",
+        "publix",
+        "wegmans",
+        "shoprite",
+        "stop & shop",
+      ],
+      Restaurants: [
+        "restaurant",
+        "cafe",
+        "dining",
+        "pizza",
+        "burger",
+        "mcdonald",
+        "starbucks",
+        "subway",
+        "chipotle",
+        "panera",
+        "olive garden",
+        "applebees",
+        "chili",
+        "taco bell",
+        "kfc",
+        "dominos",
+        "papa johns",
+      ],
+      Transport: [
+        "gas",
+        "fuel",
+        "uber",
+        "lyft",
+        "taxi",
+        "parking",
+        "shell",
+        "exxon",
+        "chevron",
+        "bp",
+        "mobil",
+        "valero",
+        "speedway",
+        "public transit",
+        "metro",
+        "bus",
+        "train",
+        "airline",
+        "delta",
+        "united",
+      ],
+      Utilities: [
+        "electric",
+        "water",
+        "internet",
+        "phone",
+        "at&t",
+        "verizon",
+        "comcast",
+        "spectrum",
+        "cox",
+        "xfinity",
+        "gas company",
+        "utility",
+      ],
+      Shopping: [
+        "amazon",
+        "target",
+        "shop",
+        "store",
+        "best buy",
+        "home depot",
+        "lowes",
+        "macy",
+        "nordstrom",
+        "kohl",
+        "marshalls",
+        "tj maxx",
+        "ross",
+        "burlington",
+        "old navy",
+        "gap",
+        "h&m",
+        "zara",
+      ],
+      Income: [
+        "deposit",
+        "salary",
+        "payroll",
+        "income",
+        "direct deposit",
+        "transfer in",
+        "refund",
+        "reimbursement",
+        "bonus",
+        "commission",
+      ],
+      Entertainment: [
+        "netflix",
+        "spotify",
+        "movie",
+        "theater",
+        "game",
+        "hulu",
+        "disney",
+        "youtube",
+        "prime",
+        "hbo",
+        "peacock",
+        "paramount",
+        "concert",
+        "show",
+        "ticket",
+        "amazon prime",
+      ],
+      Healthcare: [
+        "pharmacy",
+        "medical",
+        "doctor",
+        "hospital",
+        "cvs",
+        "walgreens",
+        "rite aid",
+        "insurance",
+        "copay",
+        "deductible",
+        "prescription",
+      ],
+      Housing: [
+        "rent",
+        "mortgage",
+        "home",
+        "apartment",
+        "lease",
+        "property",
+        "maintenance",
+        "repair",
+        "furniture",
+        "ikea",
+        "wayfair",
+      ],
+    };
 
-    // Restaurants
-    if (
-      desc.includes("restaurant") ||
-      desc.includes("cafe") ||
-      desc.includes("dining") ||
-      desc.includes("pizza") ||
-      desc.includes("burger") ||
-      desc.includes("mcdonald") ||
-      desc.includes("starbucks") ||
-      desc.includes("subway")
-    ) {
-      return "Restaurants";
-    }
-
-    // Transport
-    if (
-      desc.includes("gas") ||
-      desc.includes("fuel") ||
-      desc.includes("uber") ||
-      desc.includes("lyft") ||
-      desc.includes("taxi") ||
-      desc.includes("parking") ||
-      desc.includes("shell") ||
-      desc.includes("exxon") ||
-      desc.includes("chevron")
-    ) {
-      return "Transport";
-    }
-
-    // Utilities
-    if (
-      desc.includes("electric") ||
-      desc.includes("water") ||
-      desc.includes("internet") ||
-      desc.includes("phone") ||
-      desc.includes("at&t") ||
-      desc.includes("verizon") ||
-      desc.includes("comcast")
-    ) {
-      return "Utilities";
-    }
-
-    // Shopping
-    if (
-      desc.includes("amazon") ||
-      desc.includes("target") ||
-      desc.includes("shop") ||
-      desc.includes("store") ||
-      desc.includes("best buy") ||
-      desc.includes("home depot") ||
-      desc.includes("lowes")
-    ) {
-      return "Shopping";
-    }
-
-    // Income
-    if (
-      desc.includes("deposit") ||
-      desc.includes("salary") ||
-      desc.includes("payroll") ||
-      desc.includes("income") ||
-      desc.includes("direct deposit") ||
-      desc.includes("transfer in")
-    ) {
-      return "Income";
-    }
-
-    // Entertainment
-    if (
-      desc.includes("netflix") ||
-      desc.includes("spotify") ||
-      desc.includes("movie") ||
-      desc.includes("theater") ||
-      desc.includes("game") ||
-      desc.includes("hulu") ||
-      desc.includes("disney") ||
-      desc.includes("youtube")
-    ) {
-      return "Entertainment";
-    }
-
-    // Healthcare
-    if (
-      desc.includes("pharmacy") ||
-      desc.includes("medical") ||
-      desc.includes("doctor") ||
-      desc.includes("hospital") ||
-      desc.includes("cvs") ||
-      desc.includes("walgreens") ||
-      desc.includes("rite aid")
-    ) {
-      return "Healthcare";
+    for (const [category, keywords] of Object.entries(categories)) {
+      if (keywords.some(keyword => desc.includes(keyword))) {
+        return category;
+      }
     }
 
     return "Other";
   }
 
-  // Convert Gemini response to transaction format
+  // Enhanced conversion to transaction format
   convertToTransactions(geminiResponse) {
     if (
       !geminiResponse.transactions ||
@@ -394,7 +564,27 @@ If you cannot extract specific transaction data, provide as much information as 
       type: transaction.type === "income" ? "income" : "expense",
       source: "gemini-ocr",
       confidence: geminiResponse.confidence || "low",
+      processingQuality: geminiResponse.processingQuality || "fair",
+      documentType: geminiResponse.documentType || "Unknown",
+      originalSource: geminiResponse.source || "Unknown",
     }));
+  }
+
+  // Get processing summary for user feedback
+  getProcessingSummary(geminiResponse) {
+    const transactionCount = geminiResponse.transactions?.length || 0;
+    const confidence = geminiResponse.confidence || "low";
+    const quality = geminiResponse.processingQuality || "fair";
+
+    return {
+      transactionCount,
+      confidence,
+      quality,
+      documentType: geminiResponse.documentType || "Unknown",
+      source: geminiResponse.source || "Unknown",
+      notes: geminiResponse.notes || "",
+      summary: geminiResponse.summary || null,
+    };
   }
 }
 

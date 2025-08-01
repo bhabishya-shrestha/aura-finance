@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import db from "./database";
 import { tokenManager } from "./services/localAuth";
+import { findDuplicateTransactions } from "./utils/duplicateDetector";
 
 const useStore = create((set, get) => ({
   // State
@@ -156,6 +157,96 @@ const useStore = create((set, get) => ({
         // eslint-disable-next-line no-console
         console.error("Error adding transactions:", error);
       }
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Check for duplicate transactions
+  checkForDuplicates: async (newTransactions, options = {}) => {
+    try {
+      set({ isLoading: true });
+
+      // Get current user's transactions
+      const token = tokenManager.getToken();
+      let existingTransactions = [];
+
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          const userId = payload.userId;
+          existingTransactions = await db.transactions
+            .where("userId")
+            .equals(userId)
+            .toArray();
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.error("Error parsing token:", error);
+          }
+        }
+      } else {
+        // Fallback to all transactions for demo
+        existingTransactions = await db.transactions.toArray();
+      }
+
+      // Find duplicates
+      const duplicateResults = findDuplicateTransactions(
+        newTransactions,
+        existingTransactions,
+        options
+      );
+
+      return duplicateResults;
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.error("Error checking for duplicates:", error);
+      }
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Add transactions with duplicate handling
+  addTransactionsWithDuplicateHandling: async (
+    transactions,
+    selectedDuplicates = []
+  ) => {
+    try {
+      set({ isLoading: true });
+
+      // Filter out duplicates that weren't selected
+      const transactionsToAdd = transactions.filter(transaction => {
+        // If it's a duplicate transaction object (has duplicate info), check if it was selected
+        if (transaction.newTransaction) {
+          return selectedDuplicates.includes(transaction.newTransaction);
+        }
+        // If it's a regular transaction, add it
+        return true;
+      });
+
+      // Extract the actual transaction data
+      const finalTransactions = transactionsToAdd.map(transaction => {
+        return transaction.newTransaction || transaction;
+      });
+
+      await get().addTransactions(finalTransactions);
+
+      return {
+        success: true,
+        addedCount: finalTransactions.length,
+      };
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.error(
+          "Error adding transactions with duplicate handling:",
+          error
+        );
+      }
+      throw error;
     } finally {
       set({ isLoading: false });
     }
