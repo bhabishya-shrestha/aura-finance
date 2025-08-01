@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Menu,
-  Bell,
-  Sun,
-  Moon,
-  Sparkles,
-  User,
-  LogOut,
-  Settings,
-} from "lucide-react";
+import { Menu, Bell, Sun, Moon, Sparkles } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import SearchBar from "./SearchBar";
@@ -32,8 +23,10 @@ const Header = ({ showMenuButton = false, onMenuToggle }) => {
   const handleLogout = async () => {
     try {
       await logout();
+      setShowUserMenu(false);
     } catch (error) {
-      console.error("Logout error:", error);
+      // Handle logout error silently
+      setShowUserMenu(false);
     }
   };
 

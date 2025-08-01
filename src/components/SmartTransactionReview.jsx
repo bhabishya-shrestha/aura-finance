@@ -1,18 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-  CheckCircle,
-  AlertCircle,
-  Plus,
-  X,
-  CreditCard,
-  Building2,
-  ArrowRight,
-  Info,
-} from "lucide-react";
-import {
-  processTransactions,
-  generateAccountSuggestions,
-} from "../utils/transactionProcessor";
+import { CheckCircle, AlertCircle, Plus, X, ArrowRight } from "lucide-react";
+import { processTransactions } from "../utils/transactionProcessor";
 import useStore from "../store";
 
 const SmartTransactionReview = ({
@@ -24,12 +12,11 @@ const SmartTransactionReview = ({
   const { accounts, loadAccounts } = useStore();
   const [processedData, setProcessedData] = useState(null);
   const [selectedSuggestions, setSelectedSuggestions] = useState([]);
-  const [showAccountForm, setShowAccountForm] = useState(false);
   const [newAccount, setNewAccount] = useState({
     name: "",
     type: "checking",
     last4Digits: "",
-    balance: 0,
+    bankName: "",
   });
 
   useEffect(() => {
@@ -56,15 +43,14 @@ const SmartTransactionReview = ({
   };
 
   const handleAddAccount = () => {
-    if (newAccount.name.trim()) {
+    if (newAccount.name && newAccount.type) {
       onAddAccount(newAccount);
       setNewAccount({
         name: "",
         type: "checking",
         last4Digits: "",
-        balance: 0,
+        bankName: "",
       });
-      setShowAccountForm(false);
     }
   };
 
@@ -98,8 +84,8 @@ const SmartTransactionReview = ({
           Smart Transaction Review
         </h2>
         <p className="text-gray-600 dark:text-gray-400">
-          We've analyzed your transactions and found some smart matches and
-          suggestions
+          We&apos;ve detected potential duplicate transactions. Please review
+          and select which ones to import.
         </p>
       </div>
 
@@ -198,7 +184,7 @@ const SmartTransactionReview = ({
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             We found transactions that might belong to new accounts. Select
-            which ones you'd like to create:
+            which ones you&apos;d like to create:
           </p>
 
           <div className="space-y-3">
@@ -310,8 +296,8 @@ const SmartTransactionReview = ({
             Transactions Needing Review ({processedData.unmatched.length})
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            These transactions couldn't be automatically categorized. They'll be
-            added to "Unknown" category.
+            These transactions couldn&apos;t be automatically categorized.
+            They&apos;ll be added to &quot;Unknown&quot; category.
           </p>
           <div className="space-y-3">
             {processedData.unmatched.map((transaction, index) => (

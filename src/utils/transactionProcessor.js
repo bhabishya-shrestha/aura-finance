@@ -354,7 +354,7 @@ export const generateAccountSuggestions = transactions => {
   }
 
   return Object.entries(bankCounts)
-    .filter(([_, count]) => count >= 2) // Only suggest if we have multiple transactions
+    .filter(([, count]) => count >= 2) // Only suggest if we have multiple transactions
     .map(([key, count]) => {
       const [bankName, last4] = key.split("-");
       return {

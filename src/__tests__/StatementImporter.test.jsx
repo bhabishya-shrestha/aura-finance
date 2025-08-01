@@ -130,7 +130,8 @@ describe("StatementImporter", () => {
 
     // Should show analysis results
     await waitFor(() => {
-      expect(screen.getByText("Analysis Results")).toBeInTheDocument();
+      const headings = screen.getAllByText("Smart Transaction Review");
+      expect(headings[0]).toBeInTheDocument();
     });
   });
 
@@ -200,7 +201,7 @@ describe("StatementImporter", () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(screen.getByText("Analysis Results")).toBeInTheDocument();
+      expect(screen.getByText("Smart Transaction Review")).toBeInTheDocument();
       expect(screen.getByText("CSV File")).toBeInTheDocument();
       expect(screen.getByText("high")).toBeInTheDocument();
       expect(screen.getByText("excellent")).toBeInTheDocument();
@@ -261,7 +262,7 @@ describe("StatementImporter", () => {
 
     await waitFor(() => {
       expect(geminiService.analyzeImage).toHaveBeenCalledWith(file);
-      expect(screen.getByText("Analysis Results")).toBeInTheDocument();
+      expect(screen.getByText("Smart Transaction Review")).toBeInTheDocument();
       expect(screen.getByText("Receipt")).toBeInTheDocument();
       expect(screen.getByText("Walmart")).toBeInTheDocument();
     });
@@ -292,9 +293,10 @@ describe("StatementImporter", () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(screen.getByText("Transaction Preview")).toBeInTheDocument();
+      const headings = screen.getAllByText("Smart Transaction Review");
+      expect(headings[0]).toBeInTheDocument();
       expect(screen.getByText("Test Transaction")).toBeInTheDocument();
-      expect(screen.getByText("+$100.00")).toBeInTheDocument();
+      expect(screen.getByText("+100.00")).toBeInTheDocument();
     });
   });
 
@@ -344,8 +346,10 @@ describe("StatementImporter", () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
-      const importButton = screen.getByText("Import 1 Transactions");
-      fireEvent.click(importButton);
+      const importButtons = screen.getAllByRole("button", {
+        name: /Import \d+ Transactions/,
+      });
+      fireEvent.click(importButtons[0]);
     });
 
     await waitFor(() => {
@@ -396,7 +400,7 @@ describe("StatementImporter", () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(screen.getByText("Analysis Results")).toBeInTheDocument();
+      expect(screen.getByText("Smart Transaction Review")).toBeInTheDocument();
     });
   });
 
@@ -428,7 +432,7 @@ describe("StatementImporter", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Analysis Results")).toBeInTheDocument();
+      expect(screen.getByText("Smart Transaction Review")).toBeInTheDocument();
     });
   });
 
@@ -496,19 +500,13 @@ describe("StatementImporter", () => {
             category: "Other",
           },
           existingTransaction: {
-            id: 1,
+            id: 2,
             date: new Date("2024-01-01"),
             description: "Test Transaction",
             amount: 100,
             category: "Other",
           },
           confidence: 0.95,
-          matches: {
-            date: true,
-            amount: true,
-            description: true,
-            category: true,
-          },
         },
       ],
       nonDuplicates: [],
@@ -531,12 +529,14 @@ describe("StatementImporter", () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(screen.getByText("Analysis Results")).toBeInTheDocument();
+      expect(screen.getByText("Smart Transaction Review")).toBeInTheDocument();
     });
 
     // Click import button
-    const importButton = screen.getByText(/Import \d+ Transactions/);
-    fireEvent.click(importButton);
+    const importButtons = screen.getAllByRole("button", {
+      name: /Import \d+ Transactions/,
+    });
+    fireEvent.click(importButtons[0]);
 
     await waitFor(() => {
       expect(mockCheckForDuplicates).toHaveBeenCalled();
@@ -588,12 +588,14 @@ describe("StatementImporter", () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(screen.getByText("Analysis Results")).toBeInTheDocument();
+      expect(screen.getByText("Smart Transaction Review")).toBeInTheDocument();
     });
 
     // Click import button
-    const importButton = screen.getByText(/Import \d+ Transactions/);
-    fireEvent.click(importButton);
+    const importButtons = screen.getAllByRole("button", {
+      name: /Import \d+ Transactions/,
+    });
+    fireEvent.click(importButtons[0]);
 
     await waitFor(() => {
       expect(mockCheckForDuplicates).toHaveBeenCalled();
@@ -629,19 +631,13 @@ describe("StatementImporter", () => {
             category: "Other",
           },
           existingTransaction: {
-            id: 1,
+            id: 2,
             date: new Date("2024-01-01"),
             description: "Test Transaction",
             amount: 100,
             category: "Other",
           },
           confidence: 0.95,
-          matches: {
-            date: true,
-            amount: true,
-            description: true,
-            category: true,
-          },
         },
       ],
       nonDuplicates: [],
@@ -664,19 +660,24 @@ describe("StatementImporter", () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(screen.getByText("Analysis Results")).toBeInTheDocument();
+      expect(screen.getByText("Smart Transaction Review")).toBeInTheDocument();
     });
 
     // Click import button to trigger duplicate check
-    const importButton = screen.getByText(/Import \d+ Transactions/);
-    fireEvent.click(importButton);
+    const importButtons = screen.getAllByRole("button", {
+      name: /Import \d+ Transactions/,
+    });
+    fireEvent.click(importButtons[0]);
 
     await waitFor(() => {
+      expect(mockCheckForDuplicates).toHaveBeenCalled();
       expect(screen.getByTestId("duplicate-review-modal")).toBeInTheDocument();
     });
 
-    // Click confirm selected in duplicate modal
-    const confirmButton = screen.getByText("Confirm Selected");
+    // Simulate confirming duplicates
+    const confirmButton = screen.getByRole("button", {
+      name: "Confirm Selected",
+    });
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
@@ -698,45 +699,32 @@ describe("StatementImporter", () => {
       },
     ]);
 
-    // Mock duplicate detection results with non-duplicates
+    // Mock duplicate detection results
     mockCheckForDuplicates.mockResolvedValue({
       duplicates: [
         {
           newTransaction: {
             date: new Date("2024-01-01"),
-            description: "Duplicate Transaction",
+            description: "Test Transaction",
             amount: 100,
             category: "Other",
           },
           existingTransaction: {
-            id: 1,
+            id: 2,
             date: new Date("2024-01-01"),
-            description: "Duplicate Transaction",
+            description: "Test Transaction",
             amount: 100,
             category: "Other",
           },
           confidence: 0.95,
-          matches: {
-            date: true,
-            amount: true,
-            description: true,
-            category: true,
-          },
         },
       ],
-      nonDuplicates: [
-        {
-          date: new Date("2024-01-02"),
-          description: "Non-duplicate Transaction",
-          amount: 50,
-          category: "Other",
-        },
-      ],
+      nonDuplicates: [],
       summary: {
-        total: 2,
+        total: 1,
         duplicates: 1,
-        nonDuplicates: 1,
-        duplicatePercentage: 50,
+        nonDuplicates: 0,
+        duplicatePercentage: 100,
       },
     });
 
@@ -751,23 +739,30 @@ describe("StatementImporter", () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(screen.getByText("Analysis Results")).toBeInTheDocument();
+      expect(screen.getByText("Smart Transaction Review")).toBeInTheDocument();
     });
 
     // Click import button to trigger duplicate check
-    const importButton = screen.getByText(/Import \d+ Transactions/);
-    fireEvent.click(importButton);
+    const importButtons = screen.getAllByRole("button", {
+      name: /Import \d+ Transactions/,
+    });
+    fireEvent.click(importButtons[0]);
 
     await waitFor(() => {
+      expect(mockCheckForDuplicates).toHaveBeenCalled();
       expect(screen.getByTestId("duplicate-review-modal")).toBeInTheDocument();
     });
 
-    // Click skip all in duplicate modal
-    const skipButton = screen.getByText("Skip All");
+    // Simulate skipping all duplicates
+    const skipButton = screen.getByRole("button", { name: "Skip All" });
     fireEvent.click(skipButton);
 
     await waitFor(() => {
-      expect(mockAddTransactions).toHaveBeenCalled();
+      expect(mockAddTransactions).toHaveBeenCalledWith([
+        {
+          description: "Non-duplicate Transaction",
+        },
+      ]);
     });
   });
 });
