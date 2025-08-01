@@ -24,6 +24,21 @@ const ReportsPage = () => {
   const { transactions, loadTransactions } = useStore();
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [selectedReport, setSelectedReport] = useState("overview");
+  const [reportData, setReportData] = useState({
+    categoryBreakdown: [],
+    monthlyTrends: [],
+  });
+
+  // Update report data when transactions change
+  useEffect(() => {
+    const categoryBreakdown = calculateCategoryBreakdown();
+    const monthlyTrends = calculateMonthlyTrends();
+
+    setReportData({
+      categoryBreakdown,
+      monthlyTrends,
+    });
+  }, [transactions]);
 
   useEffect(() => {
     loadTransactions();
@@ -70,11 +85,11 @@ const ReportsPage = () => {
 
   const calculateCategoryBreakdown = () => {
     const periodData = getCurrentPeriodData();
-    const expenses = periodData.filter(t => t.type === "expense");
+    const expenses = periodData.filter(t => t.amount < 0); // Negative amounts are expenses
 
     const categoryMap = {};
     expenses.forEach(transaction => {
-      const category = transaction.category?.name || "Uncategorized";
+      const category = transaction.category || "Uncategorized";
       if (!categoryMap[category]) {
         categoryMap[category] = 0;
       }
@@ -108,11 +123,11 @@ const ReportsPage = () => {
       });
 
       const income = monthTransactions
-        .filter(t => t.type === "income")
+        .filter(t => t.amount > 0) // Positive amounts are income
         .reduce((sum, t) => sum + (t.amount || 0), 0);
 
       const expenses = monthTransactions
-        .filter(t => t.type === "expense")
+        .filter(t => t.amount < 0) // Negative amounts are expenses
         .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
 
       months.push({
@@ -135,14 +150,14 @@ const ReportsPage = () => {
       data: {
         overview: {
           totalIncome: getCurrentPeriodData()
-            .filter(t => t.type === "income")
+            .filter(t => t.amount > 0)
             .reduce((sum, t) => sum + (t.amount || 0), 0),
           totalExpenses: getCurrentPeriodData()
-            .filter(t => t.type === "expense")
+            .filter(t => t.amount < 0)
             .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0),
-          categoryBreakdown: calculateCategoryBreakdown(),
+          categoryBreakdown: reportData.categoryBreakdown,
         },
-        monthlyTrends: calculateMonthlyTrends(),
+        monthlyTrends: reportData.monthlyTrends,
       },
     };
 
@@ -173,13 +188,13 @@ const ReportsPage = () => {
   const renderOverviewReport = () => {
     const periodData = getCurrentPeriodData();
     const totalIncome = periodData
-      .filter(t => t.type === "income")
+      .filter(t => t.amount > 0)
       .reduce((sum, t) => sum + (t.amount || 0), 0);
     const totalExpenses = periodData
-      .filter(t => t.type === "expense")
+      .filter(t => t.amount < 0)
       .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
     const netIncome = totalIncome - totalExpenses;
-    const categoryBreakdown = calculateCategoryBreakdown();
+    const { categoryBreakdown } = reportData;
 
     return (
       <div className="space-y-6">
@@ -283,7 +298,7 @@ const ReportsPage = () => {
   };
 
   const renderExpenseAnalysis = () => {
-    const categoryBreakdown = calculateCategoryBreakdown();
+    const { categoryBreakdown } = reportData;
 
     return (
       <div className="space-y-6">
@@ -332,7 +347,7 @@ const ReportsPage = () => {
   };
 
   const renderMonthlyTrends = () => {
-    const monthlyData = calculateMonthlyTrends();
+    const { monthlyTrends: monthlyData } = reportData;
 
     return (
       <div className="space-y-6">
@@ -426,7 +441,7 @@ const ReportsPage = () => {
               className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm"
             >
               <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Export Report</span>
+              <span className="text-white font-medium">Export Report</span>
             </button>
           </div>
         </div>

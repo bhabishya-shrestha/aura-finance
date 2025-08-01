@@ -141,8 +141,34 @@ const useStore = create((set, get) => ({
         }
       }
 
+      // Filter out $0 transactions that are likely fees, adjustments, or interest charges
+      const filteredTransactions = transactions.filter(transaction => {
+        const amount = parseFloat(transaction.amount) || 0;
+        
+        if (amount === 0) {
+          const description = (transaction.description || "").toLowerCase();
+          const skipPatterns = [
+            "interest", 
+            "fee", 
+            "charge", 
+            "adjustment", 
+            "credit",
+            "cash advance",
+            "balance transfer",
+            "finance charge",
+            "late fee",
+            "overdraft",
+            "service charge"
+          ];
+          
+          return !skipPatterns.some(pattern => description.includes(pattern));
+        }
+        
+        return true;
+      });
+
       // Add userId to transactions
-      const transactionsWithUser = transactions.map(transaction => ({
+      const transactionsWithUser = filteredTransactions.map(transaction => ({
         ...transaction,
         userId: userId || transaction.userId || null,
       }));

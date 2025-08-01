@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -24,6 +24,24 @@ import useStore from "../store";
 const AnalyticsPage = () => {
   const { transactions, getNetWorth } = useStore();
   const [timeRange, setTimeRange] = useState("month");
+  const [analyticsData, setAnalyticsData] = useState({
+    spendingByCategory: [],
+    monthlySpending: [],
+    incomeVsSpending: [],
+  });
+
+  // Update analytics data when transactions change
+  useEffect(() => {
+    const spendingByCategory = getSpendingByCategory();
+    const monthlySpending = getMonthlySpending();
+    const incomeVsSpending = getIncomeVsSpending();
+
+    setAnalyticsData({
+      spendingByCategory,
+      monthlySpending,
+      incomeVsSpending,
+    });
+  }, [transactions]);
 
   const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
@@ -91,9 +109,7 @@ const AnalyticsPage = () => {
     ];
   };
 
-  const spendingByCategory = getSpendingByCategory();
-  const monthlySpending = getMonthlySpending();
-  const incomeVsSpending = getIncomeVsSpending();
+  const { spendingByCategory, monthlySpending, incomeVsSpending } = analyticsData;
 
   const COLORS = [
     "#0088FE",
@@ -231,15 +247,17 @@ const AnalyticsPage = () => {
                 <Tooltip
                   formatter={value => formatCurrency(value)}
                   contentStyle={{
-                    backgroundColor: "rgba(0, 0, 0, 0.9)",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    backgroundColor: "rgba(255, 255, 255, 0.95)",
+                    border: "1px solid rgba(0, 0, 0, 0.1)",
                     borderRadius: "8px",
-                    color: "white",
+                    color: "rgba(0, 0, 0, 0.9)",
                     fontSize: "14px",
                     padding: "8px 12px",
+                    boxShadow:
+                      "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
                   }}
                   labelStyle={{
-                    color: "white",
+                    color: "rgba(0, 0, 0, 0.9)",
                     fontWeight: "bold",
                   }}
                 />
@@ -265,12 +283,14 @@ const AnalyticsPage = () => {
               <Tooltip
                 formatter={value => formatCurrency(value)}
                 contentStyle={{
-                  backgroundColor: "rgba(0, 0, 0, 0.9)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  backgroundColor: "rgba(255, 255, 255, 0.95)",
+                  border: "1px solid rgba(0, 0, 0, 0.1)",
                   borderRadius: "8px",
-                  color: "white",
+                  color: "rgba(0, 0, 0, 0.9)",
                   fontSize: "14px",
                   padding: "8px 12px",
+                  boxShadow:
+                    "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
                 }}
               />
               <Bar dataKey="spending" fill="#00f2fe" />
@@ -295,12 +315,14 @@ const AnalyticsPage = () => {
             <Tooltip
               formatter={value => formatCurrency(value)}
               contentStyle={{
-                backgroundColor: "rgba(0, 0, 0, 0.9)",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
+                backgroundColor: "rgba(255, 255, 255, 0.95)",
+                border: "1px solid rgba(0, 0, 0, 0.1)",
                 borderRadius: "8px",
-                color: "white",
+                color: "rgba(0, 0, 0, 0.9)",
                 fontSize: "14px",
                 padding: "8px 12px",
+                boxShadow:
+                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
               }}
             />
             <Bar dataKey="amount" fill="#8884d8" />

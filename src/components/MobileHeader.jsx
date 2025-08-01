@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import { Bell, LogOut, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
-const MobileHeader = ({ onMenuToggle, currentPage, onPageChange }) => {
+const MobileHeader = ({ onMenuToggle, currentPage, onPageChange, onCloseMobileSidebar }) => {
   const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  
+  // Mock notifications data - in a real app, this would come from a store or API
+  const hasNewNotifications = false;
 
   const getPageTitle = page => {
     const titles = {
@@ -41,6 +44,10 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange }) => {
   const toggleUserMenu = () => {
     setShowUserMenu(!showUserMenu);
     setShowNotifications(false); // Close notifications if open
+    // Close mobile sidebar if it's open
+    if (onCloseMobileSidebar) {
+      onCloseMobileSidebar();
+    }
   };
 
   return (
@@ -67,7 +74,8 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange }) => {
               />
             </svg>
           </button>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+          {/* Page title - hidden on smaller screens to reduce redundancy */}
+          <h1 className="hidden sm:block text-lg font-semibold text-gray-900 dark:text-white">
             {getPageTitle(currentPage)}
           </h1>
         </div>
@@ -78,12 +86,14 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange }) => {
           <div className="relative">
             <button
               onClick={toggleNotifications}
-              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
+              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative flex items-center justify-center"
               aria-label="Notifications"
             >
               <Bell className="w-5 h-5" />
-              {/* Notification badge */}
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              {/* Notification badge - only show if there are notifications */}
+              {hasNewNotifications && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              )}
             </button>
 
             {/* Notifications dropdown */}

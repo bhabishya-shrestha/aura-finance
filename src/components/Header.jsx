@@ -4,10 +4,23 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import SearchBar from "./SearchBar";
 
-const Header = ({ onMenuToggle, showMenuButton = false }) => {
+const Header = ({
+  onMenuToggle,
+  showMenuButton = false,
+  onCloseMobileSidebar,
+}) => {
   const { user, logout } = useAuth();
   const { toggleTheme, currentTheme } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // Mock notifications data - in a real app, this would come from a store or API
+  const notifications = [];
+  const hasNewNotifications = false;
+
+  const toggleNotifications = () => {
+    setShowNotifications(!showNotifications);
+  };
 
   const handleLogout = async () => {
     try {
@@ -66,13 +79,53 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
           </button>
 
           {/* Notifications */}
-          <button
-            className="relative p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 flex-shrink-0"
-            aria-label="Notifications"
-          >
-            <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-400" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          <div className="relative">
+            <button
+              onClick={toggleNotifications}
+              className="relative p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 flex-shrink-0"
+              aria-label="Notifications"
+            >
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-400" />
+              {hasNewNotifications && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              )}
+            </button>
+
+            {/* Notifications Dropdown */}
+            {showNotifications && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                <div className="p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                    Notifications
+                  </h3>
+                  {notifications.length === 0 ? (
+                    <div className="text-center py-4">
+                      <Bell className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        No new notifications
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {notifications.map((notification, index) => (
+                        <div
+                          key={index}
+                          className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                        >
+                          <p className="text-sm text-gray-900 dark:text-white">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {notification.time}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* User Profile */}
           {user && (
@@ -89,7 +142,13 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
               </div>
               <div className="relative">
                 <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  onClick={() => {
+                    setShowUserMenu(!showUserMenu);
+                    // Close mobile sidebar if it's open
+                    if (onCloseMobileSidebar) {
+                      onCloseMobileSidebar();
+                    }
+                  }}
                   onMouseEnter={() => setShowUserMenu(true)}
                   className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium hover:scale-105 transition-all duration-200 shadow-sm flex-shrink-0"
                   aria-label="User menu"
