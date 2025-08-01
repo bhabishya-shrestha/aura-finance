@@ -33,7 +33,7 @@ export const cleanupTestData = async () => {
       .where("description")
       .anyOf(["Grocery Store", "Gas Station", "Salary Deposit"])
       .toArray();
-    
+
     if (testTransactions.length > 0) {
       await db.transactions.bulkDelete(testTransactions.map(t => t.id));
     }
@@ -41,9 +41,13 @@ export const cleanupTestData = async () => {
     // Remove test accounts
     const testAccounts = await db.accounts
       .where("name")
-      .anyOf(["Bank of America Checking", "Bank of America Credit Card", "Savings Account"])
+      .anyOf([
+        "Bank of America Checking",
+        "Bank of America Credit Card",
+        "Savings Account",
+      ])
       .toArray();
-    
+
     if (testAccounts.length > 0) {
       await db.accounts.bulkDelete(testAccounts.map(a => a.id));
     }

@@ -83,10 +83,10 @@ const DashboardPage = ({ onPageChange }) => {
   const { isLoading } = useAuth();
   const [error, setError] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  
+
   // Get analytics data from store
   const { getQuickAnalytics } = useStore();
-  const quickAnalytics = getQuickAnalytics('month');
+  const quickAnalytics = getQuickAnalytics("month");
 
   // Defensive: Always set modal closed on mount
   useEffect(() => {
@@ -107,9 +107,7 @@ const DashboardPage = ({ onPageChange }) => {
   }, []);
 
   // Debug: Log modal state on every render
-      useEffect(() => {
-   
-    }, [isImportModalOpen]);
+  useEffect(() => {}, [isImportModalOpen]);
 
   const handleImportClick = () => {
     try {

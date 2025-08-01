@@ -383,15 +383,15 @@ const ReportsPage = () => {
             </p>
           </div>
 
-                     <div className="flex flex-col sm:flex-row gap-3">
-             <button
-               onClick={handleExportReport}
-               className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm w-full sm:w-auto"
-             >
-               <Download className="w-4 h-4" />
-               <span className="text-white font-medium">Export Report</span>
-             </button>
-           </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleExportReport}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm w-full sm:w-auto"
+            >
+              <Download className="w-4 h-4" />
+              <span className="text-white font-medium">Export Report</span>
+            </button>
+          </div>
         </div>
       </div>
 

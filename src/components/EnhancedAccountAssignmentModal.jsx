@@ -127,7 +127,7 @@ const EnhancedAccountAssignmentModal = ({
 
       setShowCreateAccount(false);
     } catch (error) {
-              // Error creating account
+      // Error creating account
     }
   };
 

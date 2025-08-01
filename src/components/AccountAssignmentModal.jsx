@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { X, Plus, Check, AlertCircle, Building2, CreditCard, PiggyBank } from "lucide-react";
+import {
+  X,
+  Plus,
+  Check,
+  AlertCircle,
+  Building2,
+  CreditCard,
+  PiggyBank,
+} from "lucide-react";
 import useStore from "../store";
 
-const AccountAssignmentModal = ({ 
-  isOpen, 
-  onClose, 
-  transactions, 
+const AccountAssignmentModal = ({
+  isOpen,
+  onClose,
+  transactions,
   detectedAccountInfo = null,
-  onComplete 
+  onComplete,
 }) => {
   const { accounts, addAccount } = useStore();
   const [selectedAccountId, setSelectedAccountId] = useState(null);
@@ -15,7 +23,7 @@ const AccountAssignmentModal = ({
   const [newAccountData, setNewAccountData] = useState({
     name: "",
     type: "checking",
-    balance: 0
+    balance: 0,
   });
 
   useEffect(() => {
@@ -24,7 +32,7 @@ const AccountAssignmentModal = ({
       setNewAccountData({
         name: detectedAccountInfo.name || "",
         type: detectedAccountInfo.type || "checking",
-        balance: detectedAccountInfo.balance || 0
+        balance: detectedAccountInfo.balance || 0,
       });
     }
   }, [isOpen, detectedAccountInfo]);
@@ -35,7 +43,7 @@ const AccountAssignmentModal = ({
       setSelectedAccountId(newAccount.id);
       setShowCreateAccount(false);
     } catch (error) {
-              // Error creating account
+      // Error creating account
     }
   };
 
@@ -44,9 +52,9 @@ const AccountAssignmentModal = ({
       // Assign all transactions to the selected account
       const updatedTransactions = transactions.map(transaction => ({
         ...transaction,
-        accountId: selectedAccountId
+        accountId: selectedAccountId,
       }));
-      
+
       onComplete(updatedTransactions);
       onClose();
     }
@@ -55,7 +63,7 @@ const AccountAssignmentModal = ({
   const accountTypeIcons = {
     checking: Building2,
     savings: PiggyBank,
-    credit: CreditCard
+    credit: CreditCard,
   };
 
   if (!isOpen) return null;
@@ -87,7 +95,8 @@ const AccountAssignmentModal = ({
                     Account Detected
                   </h3>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    We found account information in your document. Would you like to create a new account or assign to an existing one?
+                    We found account information in your document. Would you
+                    like to create a new account or assign to an existing one?
                   </p>
                 </div>
               </div>
@@ -101,7 +110,8 @@ const AccountAssignmentModal = ({
             </h3>
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                <span className="font-medium">{transactions.length}</span> transactions ready to import
+                <span className="font-medium">{transactions.length}</span>{" "}
+                transactions ready to import
               </p>
             </div>
           </div>
@@ -111,31 +121,34 @@ const AccountAssignmentModal = ({
             <h3 className="font-medium text-gray-900 dark:text-white mb-3">
               Choose Account
             </h3>
-            
-                                    {/* Existing Accounts */}
+
+            {/* Existing Accounts */}
             {accounts.length > 0 ? (
               <div className="space-y-2 mb-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   Existing Accounts:
                 </p>
                 {accounts.map(account => {
-                  const IconComponent = accountTypeIcons[account.type] || Building2;
+                  const IconComponent =
+                    accountTypeIcons[account.type] || Building2;
                   return (
                     <button
                       key={account.id}
                       onClick={() => setSelectedAccountId(account.id)}
                       className={`w-full p-3 rounded-lg border transition-all duration-200 text-left ${
                         selectedAccountId === account.id
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${
-                          selectedAccountId === account.id
-                            ? 'bg-blue-100 dark:bg-blue-900/40'
-                            : 'bg-gray-100 dark:bg-gray-700'
-                        }`}>
+                        <div
+                          className={`p-2 rounded-lg ${
+                            selectedAccountId === account.id
+                              ? "bg-blue-100 dark:bg-blue-900/40"
+                              : "bg-gray-100 dark:bg-gray-700"
+                          }`}
+                        >
                           <IconComponent className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                         </div>
                         <div className="flex-1">
@@ -143,7 +156,8 @@ const AccountAssignmentModal = ({
                             {account.name}
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                            {account.type} • {account.balance >= 0 ? '+' : ''}${account.balance.toFixed(2)}
+                            {account.type} • {account.balance >= 0 ? "+" : ""}$
+                            {account.balance.toFixed(2)}
                           </p>
                         </div>
                         {selectedAccountId === account.id && (
@@ -163,7 +177,8 @@ const AccountAssignmentModal = ({
                       No Existing Accounts
                     </h4>
                     <p className="text-sm text-blue-700 dark:text-blue-300">
-                      You don&apos;t have any accounts yet. Let&apos;s create one for your transactions.
+                      You don&apos;t have any accounts yet. Let&apos;s create
+                      one for your transactions.
                     </p>
                   </div>
                 </div>
@@ -194,7 +209,12 @@ const AccountAssignmentModal = ({
                     <input
                       type="text"
                       value={newAccountData.name}
-                      onChange={(e) => setNewAccountData({...newAccountData, name: e.target.value})}
+                      onChange={e =>
+                        setNewAccountData({
+                          ...newAccountData,
+                          name: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="e.g., Bank of America Checking"
                     />
@@ -205,7 +225,12 @@ const AccountAssignmentModal = ({
                     </label>
                     <select
                       value={newAccountData.type}
-                      onChange={(e) => setNewAccountData({...newAccountData, type: e.target.value})}
+                      onChange={e =>
+                        setNewAccountData({
+                          ...newAccountData,
+                          type: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="checking">Checking</option>
@@ -221,7 +246,12 @@ const AccountAssignmentModal = ({
                       type="number"
                       step="0.01"
                       value={newAccountData.balance}
-                      onChange={(e) => setNewAccountData({...newAccountData, balance: parseFloat(e.target.value) || 0})}
+                      onChange={e =>
+                        setNewAccountData({
+                          ...newAccountData,
+                          balance: parseFloat(e.target.value) || 0,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="0.00"
                     />
@@ -268,4 +298,4 @@ const AccountAssignmentModal = ({
   );
 };
 
-export default AccountAssignmentModal; 
+export default AccountAssignmentModal;

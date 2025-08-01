@@ -801,7 +801,6 @@ const StatementImporter = ({ isOpen, onClose }) => {
         onClose={() => setShowAccountAssignment(false)}
         transactions={previewData?.transactions || []}
         accounts={accounts || []}
-
         onComplete={handleAccountAssignmentComplete}
       />
     </div>
