@@ -36,6 +36,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   const [editableSummary, setEditableSummary] = useState(null);
   const [isEditingSummary, setIsEditingSummary] = useState(false);
   const [showAccountAssignment, setShowAccountAssignment] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const fileInputRef = useRef(null);
 
   // Smooth progress animation
@@ -185,10 +186,13 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         setProcessingStep("Analysis complete!");
         setProcessingSummary(summary);
 
-        // Auto-show preview for small transaction sets
-        if (transactions.length <= 10) {
-          setShowPreview(true);
-        }
+        // Show 100% for a moment before transitioning
+        setTimeout(() => {
+          // Auto-show preview for small transaction sets
+          if (transactions.length <= 10) {
+            setShowPreview(true);
+          }
+        }, 1000); // Show 100% for 1 second
       } catch (err) {
         setError(err.message);
         setProcessingProgress(0);
@@ -231,19 +235,9 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   // Reset and close
   const handleClose = useCallback(() => {
     if (isProcessing) {
-      // Show confirmation dialog if processing
-      if (
-        window.confirm(
-          "Processing is in progress. Are you sure you want to cancel?"
-        )
-      ) {
-        setIsProcessing(false);
-        setProcessingProgress(0);
-        setDisplayProgress(0);
-        setProcessingStep("");
-      } else {
-        return; // User cancelled the confirmation
-      }
+      // Show custom confirmation dialog if processing
+      setShowCancelConfirm(true);
+      return;
     }
 
     onClose();
@@ -269,6 +263,20 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       fileInputRef.current.value = "";
     }
   }, [isProcessing, onClose, onImportComplete]);
+
+  // Handle cancel confirmation
+  const handleCancelConfirm = useCallback(() => {
+    setIsProcessing(false);
+    setProcessingProgress(0);
+    setDisplayProgress(0);
+    setProcessingStep("");
+    setShowCancelConfirm(false);
+    onClose();
+  }, [onClose]);
+
+  const handleCancelCancel = useCallback(() => {
+    setShowCancelConfirm(false);
+  }, []);
 
   // Import transactions with duplicate detection
   const handleImport = useCallback(async () => {
@@ -864,6 +872,46 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         accountSuggestions={previewData?.summary?.accountSuggestions || []}
         onComplete={handleAccountAssignmentComplete}
       />
+
+      {/* Cancel Confirmation Dialog */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Cancel Import?
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Processing is in progress
+                </p>
+              </div>
+            </div>
+            
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
+              Are you sure you want to cancel the import process? This action cannot be undone.
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelCancel}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Continue Processing
+              </button>
+              <button
+                onClick={handleCancelConfirm}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Cancel Import
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
