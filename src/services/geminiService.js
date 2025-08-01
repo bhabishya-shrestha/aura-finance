@@ -17,7 +17,7 @@ class GeminiService {
 
     if (!this.apiKey) {
       console.warn(
-        "Gemini API key not found. Please set VITE_GEMINI_API_KEY in your environment variables."
+        "Gemini API key not found. AI-powered document analysis will be disabled. Set VITE_GEMINI_API_KEY in your environment variables to enable this feature."
       );
     }
   }
@@ -115,7 +115,15 @@ class GeminiService {
   // Analyze image and extract transaction data
   async analyzeImage(file) {
     if (!this.apiKey) {
-      throw new Error("Gemini API key not configured");
+      // Return a fallback response instead of throwing an error
+      return {
+        documentType: "Unknown",
+        source: "Manual Entry Required",
+        transactions: [],
+        confidence: "low",
+        notes: "AI analysis is disabled. Please manually enter transaction details.",
+        error: "API_KEY_MISSING"
+      };
     }
 
     // Apply security checks

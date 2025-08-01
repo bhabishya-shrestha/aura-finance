@@ -174,10 +174,10 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
-      const { data, error } = await supabase.auth.signIn(
-        credentials.email,
-        credentials.password
-      );
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
+      });
 
       if (error) {
         dispatch({
@@ -210,14 +210,16 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: AUTH_ACTIONS.REGISTER_START });
 
-      const { data, error } = await supabase.auth.signUp(
-        userData.email,
-        userData.password,
-        {
-          name: userData.name,
-          email: userData.email,
+      const { data, error } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            name: userData.name,
+            full_name: userData.name,
+          }
         }
-      );
+      });
 
       if (error) {
         dispatch({

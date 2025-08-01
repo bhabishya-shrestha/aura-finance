@@ -105,12 +105,12 @@ const AnalyticsPage = () => {
   ];
 
   return (
-    <div className="flex-1 p-6">
+    <div className="flex-1 p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 lg:mb-8">
         <div>
-          <h1 className="text-3xl font-bold gradient-text">Analytics</h1>
-          <p className="text-muted-gray mt-1">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold gradient-text">Analytics</h1>
+          <p className="text-muted-gray mt-1 text-sm lg:text-base">
             Financial insights and spending analysis
           </p>
         </div>
@@ -118,7 +118,7 @@ const AnalyticsPage = () => {
           <select
             value={timeRange}
             onChange={e => setTimeRange(e.target.value)}
-            className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal"
+            className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal text-sm lg:text-base"
           >
             <option value="month">This Month</option>
             <option value="quarter">This Quarter</option>
@@ -128,24 +128,24 @@ const AnalyticsPage = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="glass-card p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
+        <div className="glass-card p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-muted-gray text-sm">Total Net Worth</p>
-              <p className="text-2xl font-bold text-soft-white">
+              <p className="text-muted-gray text-sm lg:text-base">Total Net Worth</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-soft-white">
                 {formatCurrency(getNetWorth())}
               </p>
             </div>
-            <TrendingUp className="w-8 h-8 text-green-400" />
+            <TrendingUp className="w-6 h-6 lg:w-8 lg:h-8 text-green-400" />
           </div>
         </div>
 
-        <div className="glass-card p-6">
+        <div className="glass-card p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-muted-gray text-sm">Total Income</p>
-              <p className="text-2xl font-bold text-green-400">
+              <p className="text-muted-gray text-sm lg:text-base">Total Income</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-400">
                 {formatCurrency(
                   transactions
                     .filter(t => t.amount > 0)
@@ -153,15 +153,15 @@ const AnalyticsPage = () => {
                 )}
               </p>
             </div>
-            <DollarSign className="w-8 h-8 text-green-400" />
+            <DollarSign className="w-6 h-6 lg:w-8 lg:h-8 text-green-400" />
           </div>
         </div>
 
-        <div className="glass-card p-6">
+        <div className="glass-card p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-muted-gray text-sm">Total Spending</p>
-              <p className="text-2xl font-bold text-red-400">
+              <p className="text-muted-gray text-sm lg:text-base">Total Spending</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-400">
                 {formatCurrency(
                   transactions
                     .filter(t => t.amount < 0)
@@ -169,71 +169,79 @@ const AnalyticsPage = () => {
                 )}
               </p>
             </div>
-            <TrendingDown className="w-8 h-8 text-red-400" />
+            <TrendingDown className="w-6 h-6 lg:w-8 lg:h-8 text-red-400" />
           </div>
         </div>
 
-        <div className="glass-card p-6">
+        <div className="glass-card p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-muted-gray text-sm">Total Transactions</p>
-              <p className="text-2xl font-bold text-soft-white">
+              <p className="text-muted-gray text-sm lg:text-base">Total Transactions</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-soft-white">
                 {transactions.length}
               </p>
             </div>
-            <Calendar className="w-8 h-8 text-blue-400" />
+            <Calendar className="w-6 h-6 lg:w-8 lg:h-8 text-blue-400" />
           </div>
         </div>
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 mb-6 lg:mb-8">
         {/* Spending by Category */}
-        <div className="glass-card p-6">
-          <h3 className="text-xl font-semibold text-soft-white mb-4 flex items-center gap-2">
-            <PieChartIcon className="w-5 h-5" />
+        <div className="glass-card p-4 sm:p-6 lg:p-8">
+          <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-soft-white mb-4 lg:mb-6 flex items-center gap-2">
+            <PieChartIcon className="w-5 h-5 lg:w-6 lg:h-6" />
             Spending by Category
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={spendingByCategory}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ category, percentage }) => {
-                  // Only show label if percentage is significant
-                  if (percentage < 5) return null;
-                  return `${category}\n${percentage.toFixed(1)}%`;
-                }}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="amount"
-              >
-                {spendingByCategory.map((entry, index) => (
-                  <Cell
-                    key={`cell-${entry.category}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={value => formatCurrency(value)}
-                contentStyle={{
-                  backgroundColor: "rgba(0, 0, 0, 0.8)",
-                  border: "none",
-                  borderRadius: "8px",
-                  color: "white",
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="relative">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={spendingByCategory}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ category, percentage }) => {
+                    // Only show label if percentage is significant and readable
+                    if (percentage < 8) return null;
+                    return `${category}\n${percentage.toFixed(1)}%`;
+                  }}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="amount"
+                >
+                  {spendingByCategory.map((entry, index) => (
+                    <Cell
+                      key={`cell-${entry.category}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={value => formatCurrency(value)}
+                  contentStyle={{
+                    backgroundColor: "rgba(0, 0, 0, 0.9)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    borderRadius: "8px",
+                    color: "white",
+                    fontSize: "14px",
+                    padding: "8px 12px",
+                  }}
+                  labelStyle={{
+                    color: "white",
+                    fontWeight: "bold",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Monthly Spending Trend */}
-        <div className="glass-card p-6">
-          <h3 className="text-xl font-semibold text-soft-white mb-4 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
+        <div className="glass-card p-4 sm:p-6 lg:p-8">
+          <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-soft-white mb-4 lg:mb-6 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 lg:w-6 lg:h-6" />
             Monthly Spending Trend
           </h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -242,9 +250,19 @@ const AnalyticsPage = () => {
                 strokeDasharray="3 3"
                 stroke="rgba(255,255,255,0.1)"
               />
-              <XAxis dataKey="month" stroke="#a1a1a1" />
-              <YAxis stroke="#a1a1a1" />
-              <Tooltip formatter={value => formatCurrency(value)} />
+              <XAxis dataKey="month" stroke="#a1a1a1" fontSize={12} />
+              <YAxis stroke="#a1a1a1" fontSize={12} />
+              <Tooltip 
+                formatter={value => formatCurrency(value)}
+                contentStyle={{
+                  backgroundColor: "rgba(0, 0, 0, 0.9)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  borderRadius: "8px",
+                  color: "white",
+                  fontSize: "14px",
+                  padding: "8px 12px",
+                }}
+              />
               <Bar dataKey="spending" fill="#00f2fe" />
             </BarChart>
           </ResponsiveContainer>
@@ -252,8 +270,8 @@ const AnalyticsPage = () => {
       </div>
 
       {/* Income vs Spending */}
-      <div className="glass-card p-6">
-        <h3 className="text-xl font-semibold text-soft-white mb-4">
+      <div className="glass-card p-4 sm:p-6 lg:p-8 mb-6 lg:mb-8">
+        <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-soft-white mb-4 lg:mb-6">
           Income vs Spending
         </h3>
         <ResponsiveContainer width="100%" height={300}>
@@ -262,46 +280,54 @@ const AnalyticsPage = () => {
               strokeDasharray="3 3"
               stroke="rgba(255,255,255,0.1)"
             />
-            <XAxis dataKey="type" stroke="#a1a1a1" />
-            <YAxis stroke="#a1a1a1" />
-            <Tooltip formatter={value => formatCurrency(value)} />
+            <XAxis dataKey="type" stroke="#a1a1a1" fontSize={12} />
+            <YAxis stroke="#a1a1a1" fontSize={12} />
+            <Tooltip 
+              formatter={value => formatCurrency(value)}
+              contentStyle={{
+                backgroundColor: "rgba(0, 0, 0, 0.9)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                borderRadius: "8px",
+                color: "white",
+                fontSize: "14px",
+                padding: "8px 12px",
+              }}
+            />
             <Bar dataKey="amount" fill="#8884d8" />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
       {/* Top Spending Categories */}
-      <div className="mt-8">
-        <div className="glass-card p-6">
-          <h3 className="text-xl font-semibold text-soft-white mb-4">
-            Top Spending Categories
-          </h3>
-          <div className="space-y-4">
-            {spendingByCategory.slice(0, 5).map((item, index) => (
-              <div
-                key={item.category}
-                className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  />
-                  <span className="text-soft-white font-medium">
-                    {item.category}
-                  </span>
+      <div className="glass-card p-4 sm:p-6 lg:p-8">
+        <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-soft-white mb-4 lg:mb-6">
+          Top Spending Categories
+        </h3>
+        <div className="space-y-3 lg:space-y-4">
+          {spendingByCategory.slice(0, 5).map((item, index) => (
+            <div
+              key={item.category}
+              className="flex items-center justify-between p-3 lg:p-4 bg-white/5 rounded-lg"
+            >
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div
+                  className="w-4 h-4 lg:w-5 lg:h-5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                />
+                <span className="text-soft-white font-medium truncate">
+                  {item.category}
+                </span>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <div className="text-soft-white font-semibold text-sm lg:text-base">
+                  {formatCurrency(item.amount)}
                 </div>
-                <div className="text-right">
-                  <div className="text-soft-white font-semibold">
-                    {formatCurrency(item.amount)}
-                  </div>
-                  <div className="text-muted-gray text-sm">
-                    {item.percentage.toFixed(1)}%
-                  </div>
+                <div className="text-muted-gray text-xs lg:text-sm">
+                  {item.percentage.toFixed(1)}%
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

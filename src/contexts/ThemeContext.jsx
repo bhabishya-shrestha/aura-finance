@@ -64,10 +64,11 @@ export const ThemeProvider = ({ children }) => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const handleChange = e => {
-      setSystemTheme(e.matches ? "dark" : "light");
-      // If theme is set to 'auto', update the actual theme
-      if (theme === "auto") {
-        setTheme(e.matches ? "dark" : "light");
+      const newSystemTheme = e.matches ? "dark" : "light";
+      setSystemTheme(newSystemTheme);
+      // If theme is set to 'system', update the actual theme
+      if (theme === "system") {
+        setTheme(newSystemTheme);
       }
     };
 
@@ -80,7 +81,7 @@ export const ThemeProvider = ({ children }) => {
   };
 
   const setThemeMode = mode => {
-    if (mode === "auto") {
+    if (mode === "system") {
       setTheme(systemTheme);
     } else {
       setTheme(mode);
@@ -88,7 +89,7 @@ export const ThemeProvider = ({ children }) => {
   };
 
   const getCurrentTheme = () => {
-    if (theme === "auto") {
+    if (theme === "system") {
       return systemTheme;
     }
     return theme;
