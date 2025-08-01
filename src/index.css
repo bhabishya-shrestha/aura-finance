@@ -86,6 +86,17 @@
   }
 }
 
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Animation Classes */
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
@@ -105,6 +116,23 @@
 
 .animate-bounce-in {
   animation: bounceIn 0.6s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.animate-fade-in-up:nth-child(1) {
+  animation-delay: 0ms;
+}
+.animate-fade-in-up:nth-child(2) {
+  animation-delay: 100ms;
+}
+.animate-fade-in-up:nth-child(3) {
+  animation-delay: 200ms;
+}
+.animate-fade-in-up:nth-child(4) {
+  animation-delay: 300ms;
 }
 
 /* Smooth Transitions */
