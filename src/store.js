@@ -368,6 +368,48 @@ const useStore = create((set, get) => ({
       .filter(t => t.accountId === accountId)
       .reduce((total, transaction) => total + transaction.amount, 0);
   },
+
+  // Reset all user data
+  resetUserData: async () => {
+    try {
+      set({ isLoading: true });
+      const token = tokenManager.getToken();
+      let userId = null;
+
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          userId = payload.userId;
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.error("Error parsing token:", error);
+          }
+        }
+      }
+
+      if (userId) {
+        // Delete all user's transactions and accounts
+        await db.transactions.where("userId").equals(userId).delete();
+        await db.accounts.where("userId").equals(userId).delete();
+      } else {
+        // For demo mode, clear all data
+        await db.transactions.clear();
+        await db.accounts.clear();
+      }
+
+      // Reset store state
+      set({ transactions: [], accounts: [] });
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.error("Error resetting user data:", error);
+      }
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 }));
 
 export default useStore;
