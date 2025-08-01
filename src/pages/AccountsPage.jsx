@@ -83,7 +83,7 @@ const AccountsPage = () => {
       });
       setShowAddModal(false);
     } catch (error) {
-      console.error("Error adding account:", error);
+      // Error handled silently - user can try again
     }
   };
 
@@ -100,8 +100,12 @@ const AccountsPage = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 lg:mb-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold gradient-text">Accounts</h1>
-          <p className="text-muted-gray mt-1 text-sm lg:text-base">Manage your financial accounts</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold gradient-text">
+            Accounts
+          </h1>
+          <p className="text-muted-gray mt-1 text-sm lg:text-base">
+            Manage your financial accounts
+          </p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}

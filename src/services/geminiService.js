@@ -16,9 +16,7 @@ class GeminiService {
     };
 
     if (!this.apiKey) {
-      console.warn(
-        "Gemini API key not found. AI-powered document analysis will be disabled. Set VITE_GEMINI_API_KEY in your environment variables to enable this feature."
-      );
+      // Gemini API key not found - AI features will be disabled
     }
   }
 
@@ -121,8 +119,9 @@ class GeminiService {
         source: "Manual Entry Required",
         transactions: [],
         confidence: "low",
-        notes: "AI analysis is disabled. Please manually enter transaction details.",
-        error: "API_KEY_MISSING"
+        notes:
+          "AI analysis is disabled. Please manually enter transaction details.",
+        error: "API_KEY_MISSING",
       };
     }
 
@@ -238,7 +237,7 @@ If you cannot extract specific transaction data, provide as much information as 
           return JSON.parse(jsonMatch[0]);
         }
       } catch (parseError) {
-        console.warn("Failed to parse JSON from Gemini response:", parseError);
+        // Failed to parse JSON from Gemini response - using fallback
       }
 
       // Fallback: return structured data from text
@@ -251,7 +250,6 @@ If you cannot extract specific transaction data, provide as much information as 
         rawResponse: responseText,
       };
     } catch (error) {
-      console.error("Gemini API error:", error);
       throw new Error(`Failed to analyze image: ${error.message}`);
     }
   }
