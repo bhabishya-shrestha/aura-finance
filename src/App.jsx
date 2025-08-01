@@ -107,6 +107,7 @@ const AppLayout = () => {
           onMenuToggle={toggleMobileSidebar}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
+          onCloseMobileSidebar={closeMobileSidebar}
         />
 
         {/* Page Content */}

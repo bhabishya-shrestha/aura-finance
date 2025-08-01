@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Bell, LogOut, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
-const MobileHeader = ({ onMenuToggle, currentPage, onPageChange }) => {
+const MobileHeader = ({ onMenuToggle, currentPage, onPageChange, onCloseMobileSidebar }) => {
   const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -44,6 +44,10 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange }) => {
   const toggleUserMenu = () => {
     setShowUserMenu(!showUserMenu);
     setShowNotifications(false); // Close notifications if open
+    // Close mobile sidebar if it's open
+    if (onCloseMobileSidebar) {
+      onCloseMobileSidebar();
+    }
   };
 
   return (
