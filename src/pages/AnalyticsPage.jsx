@@ -109,7 +109,9 @@ const AnalyticsPage = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 lg:mb-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold gradient-text">Analytics</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold gradient-text">
+            Analytics
+          </h1>
           <p className="text-muted-gray mt-1 text-sm lg:text-base">
             Financial insights and spending analysis
           </p>
@@ -132,7 +134,9 @@ const AnalyticsPage = () => {
         <div className="glass-card p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-muted-gray text-sm lg:text-base">Total Net Worth</p>
+              <p className="text-muted-gray text-sm lg:text-base">
+                Total Net Worth
+              </p>
               <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-soft-white">
                 {formatCurrency(getNetWorth())}
               </p>
@@ -144,7 +148,9 @@ const AnalyticsPage = () => {
         <div className="glass-card p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-muted-gray text-sm lg:text-base">Total Income</p>
+              <p className="text-muted-gray text-sm lg:text-base">
+                Total Income
+              </p>
               <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-400">
                 {formatCurrency(
                   transactions
@@ -160,7 +166,9 @@ const AnalyticsPage = () => {
         <div className="glass-card p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-muted-gray text-sm lg:text-base">Total Spending</p>
+              <p className="text-muted-gray text-sm lg:text-base">
+                Total Spending
+              </p>
               <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-400">
                 {formatCurrency(
                   transactions
@@ -176,7 +184,9 @@ const AnalyticsPage = () => {
         <div className="glass-card p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-muted-gray text-sm lg:text-base">Total Transactions</p>
+              <p className="text-muted-gray text-sm lg:text-base">
+                Total Transactions
+              </p>
               <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-soft-white">
                 {transactions.length}
               </p>
@@ -252,7 +262,7 @@ const AnalyticsPage = () => {
               />
               <XAxis dataKey="month" stroke="#a1a1a1" fontSize={12} />
               <YAxis stroke="#a1a1a1" fontSize={12} />
-              <Tooltip 
+              <Tooltip
                 formatter={value => formatCurrency(value)}
                 contentStyle={{
                   backgroundColor: "rgba(0, 0, 0, 0.9)",
@@ -282,7 +292,7 @@ const AnalyticsPage = () => {
             />
             <XAxis dataKey="type" stroke="#a1a1a1" fontSize={12} />
             <YAxis stroke="#a1a1a1" fontSize={12} />
-            <Tooltip 
+            <Tooltip
               formatter={value => formatCurrency(value)}
               contentStyle={{
                 backgroundColor: "rgba(0, 0, 0, 0.9)",

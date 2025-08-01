@@ -243,8 +243,8 @@ describe("AuthContext", () => {
             data: {
               name: "Test User",
               full_name: "Test User",
-            }
-          }
+            },
+          },
         });
       });
     });
@@ -356,7 +356,7 @@ describe("AuthContext", () => {
 
       // Simulate auth state change
       let authStateCallback;
-      mockOnAuthStateChange.mockImplementation((callback) => {
+      mockOnAuthStateChange.mockImplementation(callback => {
         authStateCallback = callback;
         return {
           data: { subscription: { unsubscribe: vi.fn() } },
@@ -379,7 +379,9 @@ describe("AuthContext", () => {
       }
 
       await waitFor(() => {
-        expect(screen.getByTestId("user")).toHaveTextContent("test@example.com");
+        expect(screen.getByTestId("user")).toHaveTextContent(
+          "test@example.com"
+        );
         expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
       });
 

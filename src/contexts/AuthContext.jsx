@@ -217,8 +217,8 @@ export const AuthProvider = ({ children }) => {
           data: {
             name: userData.name,
             full_name: userData.name,
-          }
-        }
+          },
+        },
       });
 
       if (error) {
