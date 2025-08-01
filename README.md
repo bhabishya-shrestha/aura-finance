@@ -230,4 +230,5 @@ For support and questions:
 ---
 
 **Aura Finance** - Making personal finance management beautiful and intelligent. 💰✨
+
 # Trigger CI/CD re-run
