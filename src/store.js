@@ -234,16 +234,203 @@ const useStore = create((set, get) => ({
   deleteAccount: async accountId => {
     try {
       set({ isLoading: true });
-      // Delete all transactions associated with this account
-      await db.transactions.where("accountId").equals(accountId).delete();
-      // Delete the account
       await db.accounts.delete(accountId);
-      // Reload both transactions and accounts to update the UI
-      await get().loadTransactions();
+      // Reload accounts to update the UI
       await get().loadAccounts();
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Error deleting account:", error);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Update an account
+  updateAccount: async (accountId, updates) => {
+    try {
+      set({ isLoading: true });
+      await db.accounts.update(accountId, updates);
+      // Reload accounts to update the UI
+      await get().loadAccounts();
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error updating account:", error);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Clear all data for the current user
+  clearUserData: async () => {
+    try {
+      set({ isLoading: true });
+      const token = tokenManager.getToken();
+      let userId = null;
+
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          userId = payload.userId;
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.error("Error parsing token:", error);
+          }
+        }
+      }
+
+      if (userId) {
+        // Delete all transactions for the user
+        await db.transactions.where("userId").equals(userId).delete();
+        // Delete all accounts for the user
+        await db.accounts.where("userId").equals(userId).delete();
+      } else {
+        // For demo mode, clear all data
+        await db.transactions.clear();
+        await db.accounts.clear();
+      }
+
+      // Reset state
+      set({ 
+        transactions: [], 
+        accounts: [], 
+        parsedTransactions: [] 
+      });
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.error("Error clearing user data:", error);
+      }
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Clear all data (admin function - use with caution)
+  clearAllData: async () => {
+    try {
+      set({ isLoading: true });
+      
+      // Clear all data from the database
+      await db.transactions.clear();
+      await db.accounts.clear();
+      
+      // Reset state
+      set({ 
+        transactions: [], 
+        accounts: [], 
+        parsedTransactions: [] 
+      });
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.error("Error clearing all data:", error);
+      }
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Export user data
+  exportUserData: async () => {
+    try {
+      set({ isLoading: true });
+      const token = tokenManager.getToken();
+      let userId = null;
+
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          userId = payload.userId;
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.error("Error parsing token:", error);
+          }
+        }
+      }
+
+      let userTransactions = [];
+      let userAccounts = [];
+
+      if (userId) {
+        userTransactions = await db.transactions.where("userId").equals(userId).toArray();
+        userAccounts = await db.accounts.where("userId").equals(userId).toArray();
+      } else {
+        // For demo mode, export all data
+        userTransactions = await db.transactions.toArray();
+        userAccounts = await db.accounts.toArray();
+      }
+
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        transactions: userTransactions,
+        accounts: userAccounts,
+        version: "1.0"
+      };
+
+      return exportData;
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.error("Error exporting user data:", error);
+      }
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Import user data
+  importUserData: async (importData) => {
+    try {
+      set({ isLoading: true });
+      const token = tokenManager.getToken();
+      let userId = null;
+
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          userId = payload.userId;
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.error("Error parsing token:", error);
+          }
+        }
+      }
+
+      // Validate import data
+      if (!importData.transactions || !importData.accounts) {
+        throw new Error("Invalid import data format");
+      }
+
+      // Add userId to imported data
+      const transactionsWithUser = importData.transactions.map(transaction => ({
+        ...transaction,
+        userId: userId || transaction.userId || null,
+      }));
+
+      const accountsWithUser = importData.accounts.map(account => ({
+        ...account,
+        userId: userId || account.userId || null,
+      }));
+
+      // Import the data
+      await db.transactions.bulkAdd(transactionsWithUser);
+      await db.accounts.bulkAdd(accountsWithUser);
+
+      // Reload data to update the UI
+      await get().loadTransactions();
+      await get().loadAccounts();
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.error("Error importing user data:", error);
+      }
+      throw error;
     } finally {
       set({ isLoading: false });
     }

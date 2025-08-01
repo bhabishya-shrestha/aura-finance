@@ -133,18 +133,19 @@ class GeminiService {
       const base64Data = await this.fileToBase64(file);
       const mimeType = this.getMimeType(file);
 
-      const prompt = `Analyze this financial document image and extract transaction information. 
+      const prompt = `Analyze this financial document (receipt, bank statement, credit card statement, etc.) and extract transaction information.
 
-Please identify the type of document (receipt, bank statement, credit card statement, etc.) and extract all transaction details including:
+IMPORTANT: Respond with ONLY valid JSON. Do not include any markdown formatting, code blocks, or additional text.
 
+Extract the following information:
 1. Document type and source (e.g., "Bank of America Statement", "Walmart Receipt")
-2. Transaction date(s)
+2. Transaction date(s) in YYYY-MM-DD format
 3. Merchant/description
-4. Amount(s)
+4. Amount(s) as numbers (positive for income, negative for expenses)
 5. Transaction type (income/expense)
 6. Any additional relevant information
 
-Format the response as JSON with the following structure:
+Return the data in this exact JSON structure:
 {
   "documentType": "string",
   "source": "string", 
@@ -161,7 +162,7 @@ Format the response as JSON with the following structure:
   "notes": "string"
 }
 
-If you cannot extract specific transaction data, provide as much information as possible about what you can see in the document.`;
+If you cannot extract specific transaction data, return an empty transactions array but provide as much information as possible about what you can see in the document.`;
 
       const requestBody = {
         contents: [
@@ -230,24 +231,77 @@ If you cannot extract specific transaction data, provide as much information as 
 
       const responseText = data.candidates[0].content.parts[0].text;
 
-      // Try to parse JSON from the response
+      // Enhanced JSON parsing with multiple fallback strategies
+      let parsedResponse = null;
+
+      // Strategy 1: Try to parse the entire response as JSON
+      try {
+        parsedResponse = JSON.parse(responseText.trim());
+        if (parsedResponse && typeof parsedResponse === 'object') {
+          return parsedResponse;
+        }
+      } catch (parseError) {
+        // Continue to next strategy
+      }
+
+      // Strategy 2: Look for JSON code blocks (```json ... ```)
+      try {
+        const jsonBlockMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonBlockMatch) {
+          parsedResponse = JSON.parse(jsonBlockMatch[1].trim());
+          if (parsedResponse && typeof parsedResponse === 'object') {
+            return parsedResponse;
+          }
+        }
+      } catch (parseError) {
+        // Continue to next strategy
+      }
+
+      // Strategy 3: Look for JSON object in the text
       try {
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          return JSON.parse(jsonMatch[0]);
+          parsedResponse = JSON.parse(jsonMatch[0]);
+          if (parsedResponse && typeof parsedResponse === 'object') {
+            return parsedResponse;
+          }
         }
       } catch (parseError) {
-        // Failed to parse JSON from Gemini response - using fallback
+        // Continue to fallback
       }
 
-      // Fallback: return structured data from text
+      // Strategy 4: Try to extract and parse JSON from the response
+      try {
+        // Remove any markdown formatting
+        let cleanText = responseText
+          .replace(/```json/g, '')
+          .replace(/```/g, '')
+          .trim();
+        
+        // Find the first { and last } to extract JSON
+        const firstBrace = cleanText.indexOf('{');
+        const lastBrace = cleanText.lastIndexOf('}');
+        
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          const jsonString = cleanText.substring(firstBrace, lastBrace + 1);
+          parsedResponse = JSON.parse(jsonString);
+          if (parsedResponse && typeof parsedResponse === 'object') {
+            return parsedResponse;
+          }
+        }
+      } catch (parseError) {
+        // Continue to fallback
+      }
+
+      // Fallback: return structured data from text with error information
       return {
         documentType: "Unknown",
         source: "Unknown",
         transactions: [],
         confidence: "low",
-        notes: responseText,
+        notes: `Failed to parse AI response. Raw response: ${responseText.substring(0, 200)}...`,
         rawResponse: responseText,
+        parseError: true,
       };
     } catch (error) {
       throw new Error(`Failed to analyze image: ${error.message}`);
