@@ -113,6 +113,10 @@ const useStore = create((set, get) => ({
       };
 
       await db.transactions.add(transactionWithUser);
+      
+      // Clear analytics cache to ensure fresh data
+      analyticsService.clearCache();
+      
       // Reload transactions to update the UI
       await get().loadTransactions();
     } catch (error) {
@@ -179,6 +183,10 @@ const useStore = create((set, get) => ({
       }));
 
       await db.transactions.bulkAdd(transactionsWithUser);
+      
+      // Clear analytics cache to ensure fresh data
+      analyticsService.clearCache();
+      
       // Reload transactions to update the UI
       await get().loadTransactions();
       set({ parsedTransactions: [] });

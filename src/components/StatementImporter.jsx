@@ -18,7 +18,7 @@ import useStore from "../store";
 import DuplicateReviewModal from "./DuplicateReviewModal";
 import EnhancedAccountAssignmentModal from "./EnhancedAccountAssignmentModal";
 
-const StatementImporter = ({ isOpen, onClose }) => {
+const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   const { addTransactions, checkForDuplicates, accounts } = useStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
@@ -217,11 +217,17 @@ const StatementImporter = ({ isOpen, onClose }) => {
       setDuplicateResults(null);
       setIsEditingSummary(false);
       setEditableSummary(null);
+      
+      // Call onImportComplete if provided
+      if (onImportComplete) {
+        onImportComplete();
+      }
+      
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     }
-  }, [isProcessing, onClose]);
+  }, [isProcessing, onClose, onImportComplete]);
 
   // Import transactions with duplicate detection
   const handleImport = useCallback(async () => {
@@ -331,10 +337,23 @@ const StatementImporter = ({ isOpen, onClose }) => {
         setIsProcessing(true);
         setProcessingStep("Importing transactions...");
 
-        await addTransactions(transactionsWithAccount);
+        // Ensure all transactions have account assignments
+        const validatedTransactions = transactionsWithAccount.map(
+          transaction => ({
+            ...transaction,
+            accountId: transaction.accountId || null,
+          })
+        );
+
+        await addTransactions(validatedTransactions);
 
         setProcessingStep("Import completed successfully!");
         setShowAccountAssignment(false);
+
+        // Call onImportComplete if provided
+        if (onImportComplete) {
+          onImportComplete();
+        }
 
         // Reset and close after successful import
         setTimeout(() => {
@@ -479,12 +498,13 @@ const StatementImporter = ({ isOpen, onClose }) => {
                       </span>
                     </div>
 
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-700 ease-out relative"
+                        className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 h-3 rounded-full transition-all duration-1000 ease-out relative"
                         style={{ width: `${processingProgress}%` }}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/50 via-transparent to-blue-600/50 animate-pulse"></div>
                       </div>
                     </div>
 

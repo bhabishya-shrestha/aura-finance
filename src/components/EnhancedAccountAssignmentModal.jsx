@@ -9,6 +9,21 @@ import {
   ChevronDown,
   ChevronUp,
   Search,
+  Sparkles,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Calendar,
+  MapPin,
+  Smartphone,
+  ShoppingBag,
+  Car,
+  Home,
+  Utensils,
+  Plane,
+  Heart,
+  GraduationCap,
+  Briefcase,
 } from "lucide-react";
 import useStore from "../store";
 
@@ -31,6 +46,31 @@ const EnhancedAccountAssignmentModal = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [expandedTransactions, setExpandedTransactions] = useState(new Set());
+  const [suggestedAccounts, setSuggestedAccounts] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Account type icons mapping
+  const accountTypeIcons = {
+    checking: Building2,
+    savings: PiggyBank,
+    credit: CreditCard,
+    investment: PiggyBank,
+    loan: CreditCard,
+  };
+
+  // Category icons for better transaction identification
+  const categoryIcons = {
+    food: Utensils,
+    transportation: Car,
+    shopping: ShoppingBag,
+    travel: Plane,
+    healthcare: Heart,
+    education: GraduationCap,
+    work: Briefcase,
+    home: Home,
+    entertainment: Smartphone,
+    default: DollarSign,
+  };
 
   // Initialize selected accounts when modal opens
   useEffect(() => {
@@ -49,25 +89,150 @@ const EnhancedAccountAssignmentModal = ({
           balance: detectedAccountInfo.balance || 0,
         });
       }
+
+      // Generate AI-powered account suggestions
+      generateAccountSuggestions();
     }
   }, [isOpen, transactions, detectedAccountInfo]);
 
-  const suggestAccountForTransaction = (transaction, accounts) => {
-    const description = transaction.description?.toLowerCase() || "";
+  // Enhanced AI-powered account suggestion algorithm
+  const generateAccountSuggestions = () => {
+    const suggestions = [];
+    const transactionTexts = transactions.map(t =>
+      `${t.description || ""} ${t.category || ""}`.toLowerCase()
+    );
 
-    // Simple heuristic: look for account names in transaction description
+    // Analyze transaction patterns to suggest account types
+    const patterns = {
+      banking: ["bank", "checking", "savings", "deposit", "withdrawal"],
+      credit: ["credit", "card", "visa", "mastercard", "amex"],
+      investment: ["investment", "stock", "fund", "portfolio", "trading"],
+      loan: ["loan", "mortgage", "payment", "interest"],
+    };
+
+    // Detect account type from transaction patterns
+    let detectedType = "checking";
+    for (const [type, keywords] of Object.entries(patterns)) {
+      if (
+        keywords.some(keyword =>
+          transactionTexts.some(text => text.includes(keyword))
+        )
+      ) {
+        detectedType = type === "banking" ? "checking" : type;
+        break;
+      }
+    }
+
+    // Generate suggested account names based on transaction content
+    const commonMerchants = new Set();
+    transactions.forEach(t => {
+      const description = t.description || "";
+      const words = description.split(" ").filter(word => word.length > 3);
+      words.forEach(word => {
+        if (word.match(/^[A-Z]/) && !word.includes(".")) {
+          commonMerchants.add(word);
+        }
+      });
+    });
+
+    // Create suggestions based on detected patterns
+    if (commonMerchants.size > 0) {
+      const merchantNames = Array.from(commonMerchants).slice(0, 3);
+      suggestions.push({
+        name: `${merchantNames[0]} Account`,
+        type: detectedType,
+        confidence: 0.8,
+        reason: `Based on transactions with ${merchantNames.join(", ")}`,
+      });
+    }
+
+    // Suggest based on transaction amounts and frequency
+    const avgAmount =
+      transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0) /
+      transactions.length;
+    if (avgAmount > 1000) {
+      suggestions.push({
+        name: "High-Value Account",
+        type: detectedType,
+        confidence: 0.7,
+        reason: "High average transaction amounts",
+      });
+    }
+
+    // Suggest based on transaction categories
+    const categories = new Set(
+      transactions.map(t => t.category).filter(Boolean)
+    );
+    if (categories.size > 0) {
+      const categoryList = Array.from(categories).slice(0, 2);
+      suggestions.push({
+        name: `${categoryList[0]} Account`,
+        type: detectedType,
+        confidence: 0.6,
+        reason: `Based on categories: ${categoryList.join(", ")}`,
+      });
+    }
+
+    setSuggestedAccounts(suggestions);
+  };
+
+  // Enhanced account suggestion for transactions
+  const suggestAccountForTransaction = (transaction, accounts) => {
+    const description = (transaction.description || "").toLowerCase();
+    const category = (transaction.category || "").toLowerCase();
+
+    // First, try to match existing accounts by name
     if (!accounts || !Array.isArray(accounts)) {
       return null;
     }
 
     for (const account of accounts) {
       const accountName = account.name.toLowerCase();
+      const accountType = account.type.toLowerCase();
+
+      // Direct name matching
       if (
         description.includes(accountName) ||
-        description.includes(account.type) ||
-        (account.name.includes("Bank") && description.includes("bank"))
+        accountName.includes(description.split(" ")[0])
       ) {
-        return account;
+        return { account, confidence: 0.9, reason: "Direct name match" };
+      }
+
+      // Type matching
+      if (description.includes(accountType) || category.includes(accountType)) {
+        return { account, confidence: 0.7, reason: "Type match" };
+      }
+
+      // Bank name matching
+      if (accountName.includes("bank") && description.includes("bank")) {
+        return { account, confidence: 0.8, reason: "Bank name match" };
+      }
+    }
+
+    // If no direct match, try to suggest based on transaction patterns
+    const patterns = {
+      food: ["restaurant", "cafe", "food", "dining", "meal"],
+      transportation: ["uber", "lyft", "gas", "fuel", "parking", "transit"],
+      shopping: ["amazon", "walmart", "target", "store", "shop"],
+      travel: ["hotel", "airline", "booking", "travel"],
+      healthcare: ["doctor", "pharmacy", "medical", "health"],
+      entertainment: ["netflix", "spotify", "movie", "game"],
+    };
+
+    for (const [pattern, keywords] of Object.entries(patterns)) {
+      if (keywords.some(keyword => description.includes(keyword))) {
+        // Look for accounts that might be used for this type of spending
+        const relevantAccounts = accounts.filter(
+          acc =>
+            acc.type === "credit" || acc.name.toLowerCase().includes(pattern)
+        );
+        if (relevantAccounts.length > 0) {
+          return {
+            account: relevantAccounts[0],
+            confidence: 0.6,
+            reason: `Pattern match: ${pattern}`,
+          };
+        }
       }
     }
 
@@ -88,96 +253,131 @@ const EnhancedAccountAssignmentModal = ({
     });
   }, [accounts, searchTerm, filterType]);
 
-  // Group transactions by suggested account
+  // Enhanced transaction grouping with AI suggestions
   const groupedTransactions = useMemo(() => {
     const groups = {};
 
     transactions.forEach(transaction => {
       // Try to suggest account based on transaction description
-      const suggestedAccount = suggestAccountForTransaction(
-        transaction,
-        accounts
-      );
-      const key = suggestedAccount ? suggestedAccount.id : "uncategorized";
+      const suggestion = suggestAccountForTransaction(transaction, accounts);
+      const key = suggestion ? suggestion.account.id : "uncategorized";
 
       if (!groups[key]) {
         groups[key] = {
-          account: suggestedAccount,
+          account: suggestion?.account,
+          suggestion: suggestion,
           transactions: [],
+          totalAmount: 0,
         };
       }
       groups[key].transactions.push(transaction);
+      groups[key].totalAmount += Math.abs(transaction.amount);
     });
 
-    return groups;
+    // Sort groups by total amount (most significant first)
+    const sortedGroups = Object.entries(groups).sort(
+      ([, a], [, b]) => b.totalAmount - a.totalAmount
+    );
+
+    return Object.fromEntries(sortedGroups);
   }, [transactions, accounts]);
+
+  // Get category icon for transaction
+  const getCategoryIcon = transaction => {
+    const description = (transaction.description || "").toLowerCase();
+    const category = (transaction.category || "").toLowerCase();
+
+    const iconMap = {
+      food: Utensils,
+      restaurant: Utensils,
+      transportation: Car,
+      travel: Plane,
+      shopping: ShoppingBag,
+      entertainment: Smartphone,
+      healthcare: Heart,
+      education: GraduationCap,
+      work: Briefcase,
+      home: Home,
+    };
+
+    // Try to match by category first
+    for (const [key, Icon] of Object.entries(iconMap)) {
+      if (category.includes(key) || description.includes(key)) {
+        return Icon;
+      }
+    }
+
+    return categoryIcons.default;
+  };
 
   const handleCreateAccount = async () => {
     try {
+      setIsProcessing(true);
       const newAccount = await addAccount(newAccountData);
 
-      // Assign all unassigned transactions to the new account
+      // Assign all uncategorized transactions to the new account
       const updatedSelection = { ...selectedAccounts };
-      transactions.forEach(transaction => {
-        if (!selectedAccounts[transaction.id]) {
-          updatedSelection[transaction.id] = newAccount.id;
+      Object.entries(groupedTransactions).forEach(([groupId, group]) => {
+        if (groupId === "uncategorized" || !group.account) {
+          group.transactions.forEach(transaction => {
+            updatedSelection[transaction.id] = newAccount.id;
+          });
         }
       });
-      setSelectedAccounts(updatedSelection);
 
+      setSelectedAccounts(updatedSelection);
       setShowCreateAccount(false);
     } catch (error) {
-      // Error creating account
+      console.error("Error creating account:", error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
+  const assignGroupToAccount = accountId => {
+    const updatedSelection = { ...selectedAccounts };
+    Object.entries(groupedTransactions).forEach(([groupId, group]) => {
+      if (groupId === accountId) {
+        group.transactions.forEach(transaction => {
+          updatedSelection[transaction.id] = accountId;
+        });
+      }
+    });
+    setSelectedAccounts(updatedSelection);
+  };
+
+  const assignTransactionToAccount = (transactionId, accountId) => {
+    setSelectedAccounts(prev => ({
+      ...prev,
+      [transactionId]: accountId,
+    }));
+  };
+
+  const toggleTransactionExpansion = transactionId => {
+    setExpandedTransactions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(transactionId)) {
+        newSet.delete(transactionId);
+      } else {
+        newSet.add(transactionId);
+      }
+      return newSet;
+    });
+  };
+
   const handleComplete = () => {
-    // Check if all transactions have been assigned
-    const unassignedTransactions = transactions.filter(
-      t => !selectedAccounts[t.id]
-    );
-
-    if (unassignedTransactions.length > 0) {
-      alert(
-        `Please assign all ${unassignedTransactions.length} remaining transactions to accounts.`
-      );
-      return;
-    }
-
-    // Update transactions with selected accounts
     const updatedTransactions = transactions.map(transaction => ({
       ...transaction,
-      accountId: selectedAccounts[transaction.id],
+      accountId: selectedAccounts[transaction.id] || transaction.accountId,
     }));
 
     onComplete(updatedTransactions);
     onClose();
   };
 
-  const toggleTransactionExpansion = transactionId => {
-    const newExpanded = new Set(expandedTransactions);
-    if (newExpanded.has(transactionId)) {
-      newExpanded.delete(transactionId);
-    } else {
-      newExpanded.add(transactionId);
-    }
-    setExpandedTransactions(newExpanded);
-  };
-
-  const assignGroupToAccount = accountId => {
-    const updatedSelection = { ...selectedAccounts };
-    transactions.forEach(transaction => {
-      if (!selectedAccounts[transaction.id]) {
-        updatedSelection[transaction.id] = accountId;
-      }
-    });
-    setSelectedAccounts(updatedSelection);
-  };
-
-  const accountTypeIcons = {
-    checking: Building2,
-    savings: PiggyBank,
-    credit: CreditCard,
+  const getAccountIcon = account => {
+    const IconComponent = accountTypeIcons[account.type] || Building2;
+    return <IconComponent className="w-4 h-4" />;
   };
 
   const formatCurrency = amount => {
@@ -189,60 +389,37 @@ const EnhancedAccountAssignmentModal = ({
 
   if (!isOpen) return null;
 
-  const assignedCount = Object.values(selectedAccounts).filter(
-    id => id !== null
-  ).length;
-  const totalCount = transactions.length;
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Assign Transactions to Accounts
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {assignedCount} of {totalCount} transactions assigned
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            </button>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Assign Transactions to Accounts
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              {transactions.length} transactions to organize
+            </p>
           </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            <X className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+          </button>
+        </div>
 
-          {/* Detected Account Info */}
-          {detectedAccountInfo && (
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                    Account Detected
-                  </h3>
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                    We found account information in your document. You can
-                    create a new account or assign to existing ones.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column - Account Selection */}
-            <div>
-              <h3 className="font-medium text-gray-900 dark:text-white mb-4">
+        <div className="flex h-[calc(90vh-140px)]">
+          {/* Left Column - Account Selection */}
+          <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 p-6 overflow-y-auto">
+            <div className="mb-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
                 Available Accounts
               </h3>
 
               {/* Search and Filter */}
-              <div className="mb-4 space-y-2">
+              <div className="space-y-3 mb-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -250,165 +427,120 @@ const EnhancedAccountAssignmentModal = ({
                     placeholder="Search accounts..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
+
                 <select
                   value={filterType}
                   onChange={e => setFilterType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Types</option>
                   <option value="checking">Checking</option>
                   <option value="savings">Savings</option>
-                  <option value="credit">Credit Card</option>
+                  <option value="credit">Credit</option>
+                  <option value="investment">Investment</option>
                 </select>
               </div>
 
               {/* Existing Accounts */}
-              {filteredAccounts.length > 0 ? (
-                <div className="space-y-2 mb-4">
-                  {filteredAccounts.map(account => {
-                    const IconComponent =
-                      accountTypeIcons[account.type] || Building2;
-                    return (
-                      <button
-                        key={account.id}
-                        onClick={() => assignGroupToAccount(account.id)}
-                        className="w-full p-3 rounded-lg border transition-all duration-200 text-left hover:border-blue-300 dark:hover:border-blue-600 border-gray-200 dark:border-gray-600"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
-                            <IconComponent className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {account.name}
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                              {account.type} • {account.balance >= 0 ? "+" : ""}
-                              {formatCurrency(account.balance)}
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                    No accounts found matching your search.
-                  </p>
-                </div>
-              )}
+              <div className="space-y-2">
+                {filteredAccounts.map(account => (
+                  <div
+                    key={account.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                    onClick={() => assignGroupToAccount(account.id)}
+                  >
+                    <div className="text-blue-500">
+                      {getAccountIcon(account)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-white truncate">
+                        {account.name}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
+                        {account.type}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
               {/* Create New Account */}
-              {!showCreateAccount ? (
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => setShowCreateAccount(true)}
-                  className="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                 >
-                  <div className="flex items-center justify-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    <span>Create New Account</span>
-                  </div>
+                  <Plus className="w-4 h-4" />
+                  Create New Account
                 </button>
-              ) : (
-                <div className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-3">
-                    New Account Details
+              </div>
+
+              {/* AI Suggestions */}
+              {suggestedAccounts.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-yellow-500" />
+                    AI Suggestions
                   </h4>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Account Name
-                      </label>
-                      <input
-                        type="text"
-                        value={newAccountData.name}
-                        onChange={e =>
-                          setNewAccountData({
-                            ...newAccountData,
-                            name: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="e.g., Bank of America Checking"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Account Type
-                      </label>
-                      <select
-                        value={newAccountData.type}
-                        onChange={e =>
-                          setNewAccountData({
-                            ...newAccountData,
-                            type: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  <div className="space-y-2">
+                    {suggestedAccounts.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        className="p-3 rounded-lg border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20"
                       >
-                        <option value="checking">Checking</option>
-                        <option value="savings">Savings</option>
-                        <option value="credit">Credit Card</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Current Balance
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={newAccountData.balance}
-                        onChange={e =>
-                          setNewAccountData({
-                            ...newAccountData,
-                            balance: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={handleCreateAccount}
-                      disabled={!newAccountData.name.trim()}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Create Account
-                    </button>
-                    <button
-                      onClick={() => setShowCreateAccount(false)}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      Cancel
-                    </button>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {suggestion.name}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {suggestion.reason}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="flex-1 bg-yellow-200 dark:bg-yellow-800 rounded-full h-2">
+                            <div
+                              className="bg-yellow-500 h-2 rounded-full"
+                              style={{
+                                width: `${suggestion.confidence * 100}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {Math.round(suggestion.confidence * 100)}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Right Column - Transaction Assignment */}
-            <div>
-              <h3 className="font-medium text-gray-900 dark:text-white mb-4">
-                Transactions to Import
-              </h3>
+          {/* Right Column - Transaction Assignment */}
+          <div className="flex-1 p-6 overflow-y-auto">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+              Transactions to Import
+            </h3>
 
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {Object.entries(groupedTransactions).map(([groupId, group]) => (
-                  <div
-                    key={groupId}
-                    className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden"
-                  >
-                    {/* Group Header */}
-                    <div className="p-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                      <div className="flex items-center justify-between">
+            <div className="space-y-4">
+              {Object.entries(groupedTransactions).map(([groupId, group]) => (
+                <div
+                  key={groupId}
+                  className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden"
+                >
+                  {/* Group Header */}
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="text-blue-500">
+                          {group.account ? (
+                            getAccountIcon(group.account)
+                          ) : (
+                            <AlertCircle className="w-5 h-5" />
+                          )}
+                        </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">
                             {group.account
@@ -417,63 +549,89 @@ const EnhancedAccountAssignmentModal = ({
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {group.transactions.length} transaction
-                            {group.transactions.length !== 1 ? "s" : ""}
+                            {group.transactions.length !== 1 ? "s" : ""} •{" "}
+                            {formatCurrency(group.totalAmount)}
                           </p>
+                          {group.suggestion && (
+                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                              AI Suggestion: {group.suggestion.reason}
+                            </p>
+                          )}
                         </div>
-                        {group.account && (
-                          <button
-                            onClick={() =>
-                              assignGroupToAccount(group.account.id)
-                            }
-                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                          >
-                            Assign All
-                          </button>
-                        )}
                       </div>
+                      {group.account && (
+                        <button
+                          onClick={() => assignGroupToAccount(group.account.id)}
+                          className="px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                          Assign All
+                        </button>
+                      )}
                     </div>
+                  </div>
 
-                    {/* Transactions in Group */}
-                    <div className="divide-y divide-gray-200 dark:divide-gray-600">
-                      {group.transactions.map(transaction => (
-                        <div key={transaction.id} className="p-3">
+                  {/* Transactions in Group */}
+                  <div className="divide-y divide-gray-200 dark:divide-gray-600">
+                    {group.transactions.map(transaction => {
+                      const CategoryIcon = getCategoryIcon(transaction);
+                      const isExpanded = expandedTransactions.has(
+                        transaction.id
+                      );
+                      const assignedAccount = selectedAccounts[transaction.id];
+
+                      return (
+                        <div key={transaction.id} className="p-4">
                           <div className="flex items-center justify-between">
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-gray-900 dark:text-white truncate">
-                                {transaction.description}
-                              </p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {new Date(
-                                  transaction.date
-                                ).toLocaleDateString()}{" "}
-                                • {formatCurrency(transaction.amount)}
-                              </p>
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className="text-gray-500">
+                                <CategoryIcon className="w-4 h-4" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 dark:text-white truncate">
+                                  {transaction.description}
+                                </p>
+                                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                  <Calendar className="w-3 h-3" />
+                                  {new Date(
+                                    transaction.date
+                                  ).toLocaleDateString()}
+                                  {transaction.category && (
+                                    <>
+                                      <span>•</span>
+                                      <span className="capitalize">
+                                        {transaction.category}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 ml-4">
-                              <select
-                                value={selectedAccounts[transaction.id] || ""}
-                                onChange={e =>
-                                  setSelectedAccounts({
-                                    ...selectedAccounts,
-                                    [transaction.id]: e.target.value || null,
-                                  })
-                                }
-                                className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              >
-                                <option value="">Select Account</option>
-                                {accounts.map(account => (
-                                  <option key={account.id} value={account.id}>
-                                    {account.name}
-                                  </option>
-                                ))}
-                              </select>
+
+                            <div className="flex items-center gap-3">
+                              <div className="text-right">
+                                <p
+                                  className={`font-semibold ${
+                                    transaction.amount > 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {formatCurrency(Math.abs(transaction.amount))}
+                                </p>
+                                {assignedAccount && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    Assigned
+                                  </p>
+                                )}
+                              </div>
+
                               <button
                                 onClick={() =>
                                   toggleTransactionExpansion(transaction.id)
                                 }
-                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors"
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
                               >
-                                {expandedTransactions.has(transaction.id) ? (
+                                {isExpanded ? (
                                   <ChevronUp className="w-4 h-4 text-gray-500" />
                                 ) : (
                                   <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -482,57 +640,172 @@ const EnhancedAccountAssignmentModal = ({
                             </div>
                           </div>
 
-                          {/* Expanded Transaction Details */}
-                          {expandedTransactions.has(transaction.id) && (
-                            <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                              <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                  <p className="text-gray-500 dark:text-gray-400">
-                                    Category
-                                  </p>
-                                  <p className="font-medium text-gray-900 dark:text-white">
-                                    {transaction.category || "Uncategorized"}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-gray-500 dark:text-gray-400">
-                                    Type
-                                  </p>
-                                  <p className="font-medium text-gray-900 dark:text-white">
-                                    {transaction.amount > 0
-                                      ? "Income"
-                                      : "Expense"}
-                                  </p>
-                                </div>
+                          {/* Expanded Details */}
+                          {isExpanded && (
+                            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                  Assign to:
+                                </span>
+                                {assignedAccount && (
+                                  <div className="flex items-center gap-2 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-sm">
+                                    <CheckCircle className="w-3 h-3" />
+                                    {
+                                      accounts.find(
+                                        a => a.id === assignedAccount
+                                      )?.name
+                                    }
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                {filteredAccounts.slice(0, 4).map(account => (
+                                  <button
+                                    key={account.id}
+                                    onClick={() =>
+                                      assignTransactionToAccount(
+                                        transaction.id,
+                                        account.id
+                                      )
+                                    }
+                                    className={`flex items-center gap-2 p-2 rounded border text-sm transition-colors ${
+                                      selectedAccounts[transaction.id] ===
+                                      account.id
+                                        ? "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300"
+                                        : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    }`}
+                                  >
+                                    {getAccountIcon(account)}
+                                    <span className="truncate">
+                                      {account.name}
+                                    </span>
+                                  </button>
+                                ))}
                               </div>
                             </div>
                           )}
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+        {/* Footer */}
+        <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            {Object.values(selectedAccounts).filter(Boolean).length} of{" "}
+            {transactions.length} transactions assigned
+          </div>
+          <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleComplete}
-              disabled={assignedCount < totalCount}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={
+                Object.values(selectedAccounts).filter(Boolean).length === 0
+              }
+              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Import {assignedCount} Transaction{assignedCount !== 1 ? "s" : ""}
+              Complete Import
             </button>
           </div>
         </div>
+
+        {/* Create Account Modal */}
+        {showCreateAccount && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-60">
+            <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Create New Account
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Account Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newAccountData.name}
+                    onChange={e =>
+                      setNewAccountData(prev => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter account name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Account Type
+                  </label>
+                  <select
+                    value={newAccountData.type}
+                    onChange={e =>
+                      setNewAccountData(prev => ({
+                        ...prev,
+                        type: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="checking">Checking</option>
+                    <option value="savings">Savings</option>
+                    <option value="credit">Credit</option>
+                    <option value="investment">Investment</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Initial Balance
+                  </label>
+                  <input
+                    type="number"
+                    value={newAccountData.balance}
+                    onChange={e =>
+                      setNewAccountData(prev => ({
+                        ...prev,
+                        balance: parseFloat(e.target.value) || 0,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0.00"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowCreateAccount(false)}
+                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateAccount}
+                  disabled={!newAccountData.name || isProcessing}
+                  className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isProcessing ? "Creating..." : "Create Account"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

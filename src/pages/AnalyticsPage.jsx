@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -10,6 +10,16 @@ import {
   PieChart,
   Pie,
   Cell,
+  LineChart,
+  Line,
+  Area,
+  AreaChart,
+  ComposedChart,
+  Legend,
+  RadialBarChart,
+  RadialBar,
+  ScatterChart,
+  Scatter,
 } from "recharts";
 import {
   TrendingUp,
@@ -18,6 +28,16 @@ import {
   Calendar,
   PieChart as PieChartIcon,
   BarChart3,
+  LineChart as LineChartIcon,
+  Target,
+  Activity,
+  CreditCard,
+  PiggyBank,
+  Building2,
+  ArrowUpRight,
+  ArrowDownRight,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import useStore from "../store";
 
@@ -31,9 +51,12 @@ const AnalyticsPage = () => {
     getTopSpendingCategories,
     getAverageDailySpending,
     getQuickAnalytics,
+    transactions,
   } = useStore();
 
   const [timeRange, setTimeRange] = useState("month");
+  const [selectedView, setSelectedView] = useState("overview");
+  const [showDetailedCharts, setShowDetailedCharts] = useState(false);
   const [analyticsData, setAnalyticsData] = useState({
     spendingByCategory: [],
     monthlySpending: [],
@@ -50,6 +73,31 @@ const AnalyticsPage = () => {
     },
   });
 
+  // Enhanced color palette for professional charts
+  const CHART_COLORS = {
+    primary: "#3B82F6",
+    secondary: "#10B981",
+    accent: "#F59E0B",
+    danger: "#EF4444",
+    purple: "#8B5CF6",
+    pink: "#EC4899",
+    indigo: "#6366F1",
+    teal: "#14B8A6",
+    orange: "#F97316",
+    gray: "#6B7280",
+    success: "#22C55E",
+    warning: "#EAB308",
+  };
+
+  const GRADIENT_COLORS = [
+    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+    "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+    "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+    "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+    "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
+  ];
+
   // Update analytics data when time range changes
   useEffect(() => {
     const spendingByCategory = getSpendingByCategory(timeRange);
@@ -58,7 +106,7 @@ const AnalyticsPage = () => {
     );
     const incomeVsSpending = getIncomeVsSpending(timeRange);
     const spendingTrends = getSpendingTrends(12);
-    const topCategories = getTopSpendingCategories(timeRange, 5);
+    const topCategories = getTopSpendingCategories(timeRange, 8);
     const avgDailySpending = getAverageDailySpending(timeRange);
     const quickAnalytics = getQuickAnalytics(timeRange);
 
@@ -89,39 +137,175 @@ const AnalyticsPage = () => {
     }).format(amount);
   };
 
+  const formatPercentage = value => {
+    return `${value >= 0 ? "+" : ""}${value.toFixed(1)}%`;
+  };
+
   const {
     spendingByCategory,
     monthlySpending,
     incomeVsSpending,
+    spendingTrends,
     quickAnalytics,
   } = analyticsData;
 
-  const COLORS = [
-    "#0088FE",
-    "#00C49F",
-    "#FFBB28",
-    "#FF8042",
-    "#8884D8",
-    "#82CA9D",
-  ];
+  // Enhanced data processing for better visualizations
+  const enhancedSpendingData = useMemo(() => {
+    return spendingByCategory.map((item, index) => ({
+      ...item,
+      fill: Object.values(CHART_COLORS)[
+        index % Object.keys(CHART_COLORS).length
+      ],
+      gradient: GRADIENT_COLORS[index % GRADIENT_COLORS.length],
+    }));
+  }, [spendingByCategory]);
+
+  const enhancedMonthlyData = useMemo(() => {
+    return monthlySpending.map((item, index) => ({
+      ...item,
+      month: new Date(item.month).toLocaleDateString("en-US", {
+        month: "short",
+      }),
+      trend:
+        index > 0
+          ? ((item.spending - monthlySpending[index - 1].spending) /
+              monthlySpending[index - 1].spending) *
+            100
+          : 0,
+    }));
+  }, [monthlySpending]);
+
+  const spendingVsIncomeData = useMemo(() => {
+    return [
+      {
+        name: "Income",
+        amount: incomeVsSpending.income,
+        fill: CHART_COLORS.success,
+        type: "income",
+      },
+      {
+        name: "Spending",
+        amount: incomeVsSpending.spending,
+        fill: CHART_COLORS.danger,
+        type: "spending",
+      },
+    ];
+  }, [incomeVsSpending]);
+
+  // Custom tooltip component for better UX
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+    formatter = formatCurrency,
+  }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+          <p className="font-semibold text-gray-900 dark:text-white mb-2">
+            {label}
+          </p>
+          {payload.map((entry, index) => (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {entry.name}: {formatter(entry.value)}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Enhanced metric card component
+  const MetricCard = ({
+    title,
+    value,
+    subtitle,
+    icon: Icon,
+    trend,
+    color = "blue",
+    className = "",
+  }) => {
+    const colorClasses = {
+      blue: "text-blue-500 bg-blue-50 dark:bg-blue-900/20",
+      green: "text-green-500 bg-green-50 dark:bg-green-900/20",
+      red: "text-red-500 bg-red-50 dark:bg-red-900/20",
+      purple: "text-purple-500 bg-purple-50 dark:bg-purple-900/20",
+      orange: "text-orange-500 bg-orange-50 dark:bg-orange-900/20",
+    };
+
+    return (
+      <div className={`glass-card p-6 ${className}`}>
+        <div className="flex items-center justify-between mb-4">
+          <div className={`p-3 rounded-xl ${colorClasses[color]}`}>
+            <Icon className="w-6 h-6" />
+          </div>
+          {trend !== undefined && (
+            <div
+              className={`flex items-center text-sm font-medium ${
+                trend >= 0 ? "text-green-500" : "text-red-500"
+              }`}
+            >
+              {trend >= 0 ? (
+                <ArrowUpRight className="w-4 h-4 mr-1" />
+              ) : (
+                <ArrowDownRight className="w-4 h-4 mr-1" />
+              )}
+              {formatPercentage(trend)}
+            </div>
+          )}
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+            {typeof value === "number" ? formatCurrency(value) : value}
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
+          {subtitle && (
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+              {subtitle}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex-1 p-4 sm:p-6 lg:p-8">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 lg:mb-8">
+      {/* Enhanced Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold gradient-text">
-            Analytics
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold gradient-text">
+            Financial Analytics
           </h1>
-          <p className="text-muted-gray mt-1 text-sm lg:text-base">
-            Financial insights and spending analysis
+          <p className="text-muted-gray mt-2 text-base lg:text-lg">
+            Comprehensive insights into your financial patterns and trends
           </p>
         </div>
-        <div className="flex gap-2">
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* View Toggle */}
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            {["overview", "detailed"].map(view => (
+              <button
+                key={view}
+                onClick={() => setSelectedView(view)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  selectedView === view
+                    ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                {view === "overview" ? "Overview" : "Detailed"}
+              </button>
+            ))}
+          </div>
+
+          {/* Time Range Selector */}
           <select
             value={timeRange}
             onChange={e => setTimeRange(e.target.value)}
-            className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-soft-white focus:outline-none focus:border-teal text-sm lg:text-base"
+            className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="month">This Month</option>
             <option value="quarter">This Quarter</option>
@@ -130,213 +314,261 @@ const AnalyticsPage = () => {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
-        <div className="glass-card p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-gray text-sm lg:text-base">
-                Total Net Worth
-              </p>
-              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-soft-white">
-                {formatCurrency(getNetWorth())}
-              </p>
-            </div>
-            <TrendingUp className="w-6 h-6 lg:w-8 lg:h-8 text-green-400" />
-          </div>
-        </div>
-
-        <div className="glass-card p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-gray text-sm lg:text-base">
-                Total Income
-              </p>
-              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-400">
-                {formatCurrency(incomeVsSpending.income)}
-              </p>
-            </div>
-            <DollarSign className="w-6 h-6 lg:w-8 lg:h-8 text-green-400" />
-          </div>
-        </div>
-
-        <div className="glass-card p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-gray text-sm lg:text-base">
-                Total Spending
-              </p>
-              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-400">
-                {formatCurrency(incomeVsSpending.spending)}
-              </p>
-            </div>
-            <TrendingDown className="w-6 h-6 lg:w-8 lg:h-8 text-red-400" />
-          </div>
-        </div>
-
-        <div className="glass-card p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-gray text-sm lg:text-base">
-                Total Transactions
-              </p>
-              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-soft-white">
-                {quickAnalytics.transactionCount}
-              </p>
-            </div>
-            <Calendar className="w-6 h-6 lg:w-8 lg:h-8 text-blue-400" />
-          </div>
-        </div>
+      {/* Enhanced Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        <MetricCard
+          title="Net Worth"
+          value={getNetWorth()}
+          subtitle="Total assets minus liabilities"
+          icon={Target}
+          color="purple"
+        />
+        <MetricCard
+          title="Total Income"
+          value={incomeVsSpending.income}
+          subtitle={`${quickAnalytics.transactionCount} transactions`}
+          icon={TrendingUp}
+          trend={quickAnalytics.spendingTrend}
+          color="green"
+        />
+        <MetricCard
+          title="Total Spending"
+          value={incomeVsSpending.spending}
+          subtitle="All expenses this period"
+          icon={TrendingDown}
+          trend={-quickAnalytics.spendingTrend}
+          color="red"
+        />
+        <MetricCard
+          title="Net Savings"
+          value={quickAnalytics.netSavings}
+          subtitle="Income minus spending"
+          icon={PiggyBank}
+          color="blue"
+        />
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 mb-6 lg:mb-8">
-        {/* Spending by Category */}
-        <div className="glass-card p-4 sm:p-6 lg:p-8">
-          <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-soft-white mb-4 lg:mb-6 flex items-center gap-2">
-            <PieChartIcon className="w-5 h-5 lg:w-6 lg:h-6" />
-            Spending by Category
-          </h3>
-          <div className="relative">
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={spendingByCategory}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ category, percentage }) => {
-                    // Only show label if percentage is significant and readable
-                    if (percentage < 8) return null;
-                    return `${category}\n${percentage.toFixed(1)}%`;
-                  }}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="amount"
-                >
-                  {spendingByCategory.map((entry, index) => (
-                    <Cell
-                      key={`cell-${entry.category}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={value => formatCurrency(value)}
-                  contentStyle={{
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    border: "1px solid rgba(0, 0, 0, 0.1)",
-                    borderRadius: "8px",
-                    color: "rgba(0, 0, 0, 0.9)",
-                    fontSize: "14px",
-                    padding: "8px 12px",
-                    boxShadow:
-                      "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                  }}
-                  labelStyle={{
-                    color: "rgba(0, 0, 0, 0.9)",
-                    fontWeight: "bold",
-                  }}
+      {selectedView === "overview" ? (
+        <>
+          {/* Enhanced Charts Grid */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+            {/* Income vs Spending Comparison */}
+            <div className="glass-card p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Income vs Spending
+                </h3>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Income
+                  </span>
+                  <div className="w-3 h-3 rounded-full bg-red-500 ml-4"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Spending
+                  </span>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <ComposedChart data={spendingVsIncomeData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(156, 163, 175, 0.2)"
+                  />
+                  <XAxis dataKey="name" stroke="#6B7280" fontSize={12} />
+                  <YAxis stroke="#6B7280" fontSize={12} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="amount" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Spending by Category - Enhanced Pie Chart */}
+            <div className="glass-card p-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                Spending by Category
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={enhancedSpendingData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="amount"
+                    label={({ category, percentage }) =>
+                      percentage > 5
+                        ? `${category}\n${percentage.toFixed(1)}%`
+                        : ""
+                    }
+                    labelLine={false}
+                  >
+                    {enhancedSpendingData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Monthly Spending Trend - Enhanced */}
+          <div className="glass-card p-6 mb-8">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+              Monthly Spending Trend
+            </h3>
+            <ResponsiveContainer width="100%" height={400}>
+              <AreaChart data={enhancedMonthlyData}>
+                <defs>
+                  <linearGradient
+                    id="spendingGradient"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.1} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(156, 163, 175, 0.2)"
                 />
-              </PieChart>
+                <XAxis dataKey="month" stroke="#6B7280" fontSize={12} />
+                <YAxis stroke="#6B7280" fontSize={12} />
+                <Tooltip content={<CustomTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="spending"
+                  stroke="#3B82F6"
+                  strokeWidth={3}
+                  fill="url(#spendingGradient)"
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </>
+      ) : (
+        <>
+          {/* Detailed Analytics View */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+            {/* Spending Trends Over Time */}
+            <div className="glass-card p-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                Spending Trends
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={spendingTrends}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(156, 163, 175, 0.2)"
+                  />
+                  <XAxis dataKey="period" stroke="#6B7280" fontSize={12} />
+                  <YAxis stroke="#6B7280" fontSize={12} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line
+                    type="monotone"
+                    dataKey="spending"
+                    stroke="#3B82F6"
+                    strokeWidth={3}
+                    dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: "#3B82F6", strokeWidth: 2 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
 
-        {/* Monthly Spending Trend */}
-        <div className="glass-card p-4 sm:p-6 lg:p-8">
-          <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-soft-white mb-4 lg:mb-6 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 lg:w-6 lg:h-6" />
-            Monthly Spending Trend
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={monthlySpending}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(255,255,255,0.1)"
-              />
-              <XAxis dataKey="month" stroke="#a1a1a1" fontSize={12} />
-              <YAxis stroke="#a1a1a1" fontSize={12} />
-              <Tooltip
-                formatter={value => formatCurrency(value)}
-                contentStyle={{
-                  backgroundColor: "rgba(255, 255, 255, 0.95)",
-                  border: "1px solid rgba(0, 0, 0, 0.1)",
-                  borderRadius: "8px",
-                  color: "rgba(0, 0, 0, 0.9)",
-                  fontSize: "14px",
-                  padding: "8px 12px",
-                  boxShadow:
-                    "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                }}
-              />
-              <Bar dataKey="spending" fill="#00f2fe" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Income vs Spending */}
-      <div className="glass-card p-4 sm:p-6 lg:p-8 mb-6 lg:mb-8">
-        <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-soft-white mb-4 lg:mb-6">
-          Income vs Spending
-        </h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={incomeVsSpending}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="rgba(255,255,255,0.1)"
-            />
-            <XAxis dataKey="type" stroke="#a1a1a1" fontSize={12} />
-            <YAxis stroke="#a1a1a1" fontSize={12} />
-            <Tooltip
-              formatter={value => formatCurrency(value)}
-              contentStyle={{
-                backgroundColor: "rgba(255, 255, 255, 0.95)",
-                border: "1px solid rgba(0, 0, 0, 0.1)",
-                borderRadius: "8px",
-                color: "rgba(0, 0, 0, 0.9)",
-                fontSize: "14px",
-                padding: "8px 12px",
-                boxShadow:
-                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-              }}
-            />
-            <Bar dataKey="amount" fill="#8884d8" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Top Spending Categories */}
-      <div className="glass-card p-4 sm:p-6 lg:p-8">
-        <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-soft-white mb-4 lg:mb-6">
-          Top Spending Categories
-        </h3>
-        <div className="space-y-3 lg:space-y-4">
-          {spendingByCategory.slice(0, 5).map((item, index) => (
-            <div
-              key={item.category}
-              className="flex items-center justify-between p-3 lg:p-4 bg-white/5 rounded-lg"
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div
-                  className="w-4 h-4 lg:w-5 lg:h-5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                />
-                <span className="text-soft-white font-medium truncate">
-                  {item.category}
-                </span>
+            {/* Top Spending Categories - Enhanced */}
+            <div className="glass-card p-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                Top Spending Categories
+              </h3>
+              <div className="space-y-4">
+                {enhancedSpendingData.slice(0, 6).map((item, index) => (
+                  <div
+                    key={item.category}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <div
+                        className="w-4 h-4 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: item.fill }}
+                      />
+                      <span className="text-gray-900 dark:text-white font-medium truncate">
+                        {item.category}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-gray-900 dark:text-white font-semibold">
+                        {formatCurrency(item.amount)}
+                      </div>
+                      <div className="text-gray-500 dark:text-gray-400 text-sm">
+                        {item.percentage.toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="text-right flex-shrink-0">
-                <div className="text-soft-white font-semibold text-sm lg:text-base">
-                  {formatCurrency(item.amount)}
+            </div>
+          </div>
+
+          {/* Transaction Distribution Analysis */}
+          <div className="glass-card p-6 mb-8">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+              Transaction Distribution
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-500 mb-2">
+                  {transactions.filter(t => t.amount > 0).length}
                 </div>
-                <div className="text-muted-gray text-xs lg:text-sm">
-                  {item.percentage.toFixed(1)}%
+                <div className="text-gray-600 dark:text-gray-400">
+                  Income Transactions
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-red-500 mb-2">
+                  {transactions.filter(t => t.amount < 0).length}
+                </div>
+                <div className="text-gray-600 dark:text-gray-400">
+                  Expense Transactions
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-500 mb-2">
+                  {formatCurrency(avgDailySpending)}
+                </div>
+                <div className="text-gray-600 dark:text-gray-400">
+                  Average Daily Spending
                 </div>
               </div>
             </div>
-          ))}
+          </div>
+        </>
+      )}
+
+      {/* Quick Actions */}
+      <div className="glass-card p-6">
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          Quick Actions
+        </h3>
+        <div className="flex flex-wrap gap-4">
+          <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+            <Eye className="w-4 h-4" />
+            Export Report
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+            <Activity className="w-4 h-4" />
+            Generate Insights
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
+            <Target className="w-4 h-4" />
+            Set Budget Goals
+          </button>
         </div>
       </div>
     </div>

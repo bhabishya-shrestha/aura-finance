@@ -1,160 +1,94 @@
 # Changelog
 
-All notable changes to Aura Finance will be documented in this file.
+All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - 2025-01-01
-
-### Added
-
-- **Enhanced Mobile Experience**: Optimized mobile navigation and responsive design
-- **Improved PDF Import**: Enhanced PDF parsing with better error handling and validation
-- **Professional Versioning**: Implemented proper semantic versioning and release procedures
-- **Mobile UI Fixes**: Fixed squished bottom navigation and touch interaction issues
-
-### Fixed
-
-- **Mobile Navigation**: Resolved bottom navigation bar spacing and touch target issues
-- **PDF Import Validation**: Improved PDF file validation and error messaging
-- **Responsive Design**: Enhanced mobile layout for better usability on small screens
-- **Touch Interactions**: Optimized touch targets and gesture handling for mobile devices
-
-### Technical Improvements
-
-- **Error Handling**: Better error messages for PDF import failures
-- **Mobile Optimization**: Improved responsive breakpoints and mobile-first design
-- **Code Quality**: Enhanced component safety and mobile accessibility
-- **Performance**: Optimized mobile rendering and touch response
-
 ## [Unreleased]
 
-### Planned
-
-- Advanced analytics and charts
-- Export functionality (CSV/PDF)
-- Budget tracking features
-- Goal setting and monitoring
-- Performance optimizations
-
-## [1.0.1] - 2025-01-01
-
 ### Added
-
-- **OAuth Authentication**: Complete GitHub and Google OAuth integration
-- **OAuth Setup Scripts**: Automated OAuth configuration scripts
-- **Mobile Optimization**: iPhone 15 Pro and responsive mobile layouts
-- **User Interface Fixes**: Proper Supabase user object handling
-
-### Fixed
-
-- **Authentication Flow**: Fixed user.name references in Header and Sidebar components
-- **OAuth Callback**: Improved error handling in AuthCallbackPage
-- **Mobile Responsiveness**: Enhanced mobile layout and touch interactions
-- **User Display**: Safe fallbacks for user display names from OAuth providers
-
-### Technical Improvements
-
-- **OAuth Scripts**: Added configure-oauth.js, setup-oauth.js, verify-oauth.js
-- **Error Handling**: Better error messages and fallback states
-- **Mobile UX**: Optimized for iPhone 15 Pro and modern mobile devices
-- **Code Quality**: Improved component safety and error boundaries
-
-## [1.0.0] - 2025-07-27
-
-### Added
-
-- **Initial Release**: Complete personal finance dashboard
-- **Authentication**: Supabase Auth with email/password and OAuth 2.0
-- **OAuth Providers**: GitHub and Google OAuth integration
-- **Session Persistence**: Automatic session management and persistence
-- **Database**: PostgreSQL with Row Level Security (RLS)
-- **User Management**: Secure user isolation and data protection
-- **Account Management**: Multiple account types (checking, savings, credit, investment)
-- **Transaction Tracking**: Full CRUD operations for transactions
-- **Category Management**: Custom categories with colors and icons
-- **Net Worth Calculation**: Real-time net worth tracking
-- **Data Import**: CSV and PDF statement import with OCR
-- **Responsive Design**: Mobile-first design with dark mode
-- **Real-time Sync**: Automatic data synchronization across devices
-- **Security**: Comprehensive RLS policies and secure authentication
-- **Routing**: React Router with protected routes and OAuth callbacks
-
-### Technical Features
-
-- **Frontend**: React 18 with Vite
-- **Styling**: Tailwind CSS with custom design system
-- **State Management**: Zustand for lightweight state
-- **Database**: Supabase PostgreSQL with real-time subscriptions
-- **Deployment**: Vercel hosting with custom domain
-- **Testing**: Vitest and React Testing Library setup
-- **Code Quality**: ESLint, Prettier, and comprehensive linting rules
-
-### Infrastructure
-
-- **Hosting**: Vercel (free tier)
-- **Database**: Supabase (free tier)
-- **Domain**: aura-finance-tool.vercel.app
-- **Cost**: $0/month (free tiers)
-
-## [0.2.0] - 2025-07-27
-
-### Added
-
-- **Supabase Integration**: Migrated from local-first to cloud architecture
-- **Database Schema**: Complete PostgreSQL schema with RLS policies
-- **Authentication System**: Supabase Auth integration
-- **Real-time Features**: Live data synchronization
-- **Deployment**: Production deployment on Vercel
-- **Security**: Comprehensive security documentation and practices
+- Enhanced Analytics Dashboard with professional charts and visualizations
+- AI-powered account assignment suggestions during transaction import
+- Improved loading bar animations with better visual feedback
+- Enhanced transaction grouping and categorization in import flow
+- Real-time analytics refresh when transactions are imported
+- Professional chart components with custom tooltips and gradients
+- Detailed analytics view with transaction distribution analysis
+- Quick actions panel for analytics export and insights
 
 ### Changed
+- Completely redesigned Analytics page with modern UI/UX
+- Enhanced account assignment modal with better transaction organization
+- Improved import flow to ensure all transactions are properly assigned to accounts
+- Updated loading animations to work consistently across web and mobile layouts
+- Enhanced transaction categorization with visual icons and better grouping
+- Improved analytics data refresh mechanism to ensure real-time updates
 
-- **Architecture**: From local-first to cloud-first approach
-- **Database**: From IndexedDB to PostgreSQL
-- **Authentication**: From local auth to Supabase Auth
-- **Deployment**: From local-only to production deployment
+### Fixed
+- Analytics not updating when transactions are imported from empty accounts
+- Loading bar animation issues on web layouts
+- Transactions being assigned to "uncategorized" account by default
+- Analytics cache not being cleared when new transactions are added
+- Import flow not properly handling account assignment for all transactions
 
-### Removed
+### Technical
+- Added analytics cache clearing mechanism in store
+- Enhanced account suggestion algorithm with pattern matching
+- Improved transaction grouping with AI-powered suggestions
+- Added comprehensive error handling for import flow
+- Enhanced UI components with better accessibility and responsiveness
 
-- **Local Database**: Removed Dexie.js IndexedDB setup
-- **Backend Server**: Removed Express.js backend
-- **Docker Setup**: Removed Docker configuration
-- **Local Development Scripts**: Simplified development workflow
-
-## [0.1.0] - 2025-07-27
+## [1.1.0] - 2025-01-28
 
 ### Added
+- Google Gemini AI integration for intelligent document analysis
+- Support for image file uploads (JPG, PNG, GIF, WebP) in addition to CSV and PDF
+- AI-powered OCR and smart document detection
+- Intelligent parsing with confidence scoring
+- Enhanced duplicate detection with configurable thresholds
+- Comprehensive transaction categorization
+- Professional-grade document processing pipeline
 
-- **Initial Setup**: React + Vite project structure
-- **UI Components**: Modern design system with Tailwind CSS
-- **Local Database**: IndexedDB setup with Dexie.js
-- **Basic Features**: Account and transaction management
-- **Import System**: CSV and PDF statement parsing
-- **Testing Setup**: Vitest and React Testing Library
-- **Code Quality**: ESLint and Prettier configuration
+### Changed
+- Enhanced StatementImporter with AI-powered capabilities
+- Improved file validation and error handling
+- Updated UI to reflect new AI-powered features
+- Enhanced processing feedback with detailed progress tracking
 
----
+### Technical
+- Added Gemini AI service with rate limiting and validation
+- Implemented comprehensive error handling and fallback mechanisms
+- Enhanced file processing pipeline with multiple format support
+- Added extensive unit tests for AI service functionality
 
-## Version History
+## [1.0.0] - 2025-01-26
 
-- **1.0.0**: Production-ready personal finance dashboard
-- **0.2.0**: Cloud migration and deployment
-- **0.1.0**: Initial local-first prototype
+### Added
+- Initial release of Aura Finance
+- User authentication system with JWT tokens
+- Transaction management with CRUD operations
+- Account management with balance tracking
+- Statement import functionality for CSV and PDF files
+- Basic analytics and reporting features
+- Responsive design with mobile support
+- Dark mode support
+- Professional Apple-inspired UI design
 
-## Release Process
+### Features
+- Dashboard with net worth tracking
+- Transaction history and categorization
+- Account balance management
+- Statement import from various file formats
+- Basic financial analytics and charts
+- User authentication and data persistence
+- Responsive mobile-first design
 
-1. **Development**: Features developed in `main` branch
-2. **Testing**: Local and staging testing
-3. **Version Bump**: Update version in `package.json`
-4. **Changelog**: Document changes in `CHANGELOG.md`
-5. **Git Tag**: Create version tag
-6. **Deploy**: Deploy to production
-7. **Release**: Create GitHub release
-
-## Semantic Versioning
-
-- **MAJOR**: Breaking changes (1.0.0 → 2.0.0)
-- **MINOR**: New features, backward compatible (1.0.0 → 1.1.0)
-- **PATCH**: Bug fixes, backward compatible (1.0.0 → 1.0.1)
+### Technical
+- React 18 with Vite build system
+- Zustand for state management
+- Dexie.js for IndexedDB storage
+- Tailwind CSS for styling
+- Lucide React for icons
+- Comprehensive test suite with Vitest
+- ESLint and Prettier for code quality
