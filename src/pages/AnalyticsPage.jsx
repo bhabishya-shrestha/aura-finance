@@ -147,6 +147,7 @@ const AnalyticsPage = () => {
     incomeVsSpending,
     spendingTrends,
     quickAnalytics,
+    avgDailySpending,
   } = analyticsData;
 
   // Enhanced data processing for better visualizations
