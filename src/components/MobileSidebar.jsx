@@ -33,26 +33,26 @@ const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
   }, [isOpen]);
 
   // Touch event handlers for swipe gestures
-  const onTouchStart = (e) => {
+  const onTouchStart = e => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
   };
 
-  const onTouchMove = (e) => {
+  const onTouchMove = e => {
     setTouchEnd(e.targetTouches[0].clientX);
   };
 
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
-    
+
     // Close sidebar on left swipe (swipe left to close)
     if (isLeftSwipe) {
       onClose();
     }
-    
+
     // Reset touch states
     setTouchStart(null);
     setTouchEnd(null);
@@ -114,9 +114,6 @@ const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
                 {user?.email}
               </p>
             </div>
-          </div>
-          <div className="text-xs text-gray-400 dark:text-gray-500">
-            Swipe left to close
           </div>
         </div>
 
