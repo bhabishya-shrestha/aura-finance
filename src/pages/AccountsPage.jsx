@@ -15,8 +15,13 @@ import {
 import useStore from "../store";
 
 const AccountsPage = () => {
-  const { accounts, getAccountBalance, getTransactionsByAccount, addAccount, updateAccountBalance } =
-    useStore();
+  const {
+    accounts,
+    getAccountBalance,
+    getTransactionsByAccount,
+    addAccount,
+    updateAccountBalance,
+  } = useStore();
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -104,14 +109,14 @@ const AccountsPage = () => {
     setNewBalance(currentBalance.toString());
   };
 
-  const handleSaveBalance = async (accountId) => {
+  const handleSaveBalance = async accountId => {
     try {
       const balance = parseFloat(newBalance);
       if (isNaN(balance)) {
         alert("Please enter a valid balance amount");
         return;
       }
-      
+
       await updateAccountBalance(accountId, balance);
       setEditingBalance(null);
       setNewBalance("");
@@ -277,7 +282,7 @@ const AccountsPage = () => {
                       <div className="flex items-center gap-2">
                         {editingBalance !== account.id && (
                           <button
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
                               handleEditBalance(account.id, balance);
                             }}
@@ -288,51 +293,54 @@ const AccountsPage = () => {
                           </button>
                         )}
                         <div className="text-right flex-shrink-0">
-                        {editingBalance === account.id ? (
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={newBalance}
-                              onChange={(e) => setNewBalance(e.target.value)}
-                              className="w-20 sm:w-24 px-2 py-1 text-sm border border-white/20 rounded bg-white/10 text-soft-white"
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                  handleSaveBalance(account.id);
-                                }
-                              }}
-                            />
-                            <button
-                              onClick={() => handleSaveBalance(account.id)}
-                              className="p-1 hover:bg-green-500/20 rounded text-green-400"
-                            >
-                              <Save className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={handleCancelEdit}
-                              className="p-1 hover:bg-gray-500/20 rounded text-gray-400"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ) : (
-                          <>
-                            <p
-                              className={`font-semibold text-sm lg:text-base ${
-                                balance >= 0 ? "text-green-400" : "text-red-400"
-                              }`}
-                            >
-                              {formatCurrency(balance)}
-                            </p>
-                            <div className="flex items-center gap-1 mt-1">
-                              {balance >= 0 ? (
-                                <TrendingUp className="w-3 h-3 text-green-400" />
-                              ) : (
-                                <TrendingDown className="w-3 h-3 text-red-400" />
-                              )}
+                          {editingBalance === account.id ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={newBalance}
+                                onChange={e => setNewBalance(e.target.value)}
+                                className="w-20 sm:w-24 px-2 py-1 text-sm border border-white/20 rounded bg-white/10 text-soft-white"
+                                onKeyPress={e => {
+                                  if (e.key === "Enter") {
+                                    handleSaveBalance(account.id);
+                                  }
+                                }}
+                              />
+                              <button
+                                onClick={() => handleSaveBalance(account.id)}
+                                className="p-1 hover:bg-green-500/20 rounded text-green-400"
+                              >
+                                <Save className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={handleCancelEdit}
+                                className="p-1 hover:bg-gray-500/20 rounded text-gray-400"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
                             </div>
-                          </>
-                        )}
+                          ) : (
+                            <>
+                              <p
+                                className={`font-semibold text-sm lg:text-base ${
+                                  balance >= 0
+                                    ? "text-green-400"
+                                    : "text-red-400"
+                                }`}
+                              >
+                                {formatCurrency(balance)}
+                              </p>
+                              <div className="flex items-center gap-1 mt-1">
+                                {balance >= 0 ? (
+                                  <TrendingUp className="w-3 h-3 text-green-400" />
+                                ) : (
+                                  <TrendingDown className="w-3 h-3 text-red-400" />
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
