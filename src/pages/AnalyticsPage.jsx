@@ -24,6 +24,24 @@ import useStore from "../store";
 const AnalyticsPage = () => {
   const { transactions, getNetWorth } = useStore();
   const [timeRange, setTimeRange] = useState("month");
+  const [analyticsData, setAnalyticsData] = useState({
+    spendingByCategory: [],
+    monthlySpending: [],
+    incomeVsSpending: [],
+  });
+
+  // Update analytics data when transactions change
+  useEffect(() => {
+    const spendingByCategory = getSpendingByCategory();
+    const monthlySpending = getMonthlySpending();
+    const incomeVsSpending = getIncomeVsSpending();
+
+    setAnalyticsData({
+      spendingByCategory,
+      monthlySpending,
+      incomeVsSpending,
+    });
+  }, [transactions]);
 
   const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
@@ -91,9 +109,7 @@ const AnalyticsPage = () => {
     ];
   };
 
-  const spendingByCategory = getSpendingByCategory();
-  const monthlySpending = getMonthlySpending();
-  const incomeVsSpending = getIncomeVsSpending();
+  const { spendingByCategory, monthlySpending, incomeVsSpending } = analyticsData;
 
   const COLORS = [
     "#0088FE",

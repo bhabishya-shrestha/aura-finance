@@ -67,7 +67,8 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange }) => {
               />
             </svg>
           </button>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+          {/* Page title - hidden on smaller screens to reduce redundancy */}
+          <h1 className="hidden sm:block text-lg font-semibold text-gray-900 dark:text-white">
             {getPageTitle(currentPage)}
           </h1>
         </div>
