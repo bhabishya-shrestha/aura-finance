@@ -41,7 +41,7 @@ const EnhancedAccountAssignmentModal = ({
   accountSuggestions = [],
   onComplete,
 }) => {
-  const { addAccount } = useStore();
+  const { addAccount, updateTransaction } = useStore();
   const [selectedAccounts, setSelectedAccounts] = useState({});
   const [showCreateAccount, setShowCreateAccount] = useState(false);
   const [newAccountData, setNewAccountData] = useState({
@@ -57,6 +57,9 @@ const EnhancedAccountAssignmentModal = ({
   const [selectedTransactions, setSelectedTransactions] = useState(new Set());
   const [editingSuggestion, setEditingSuggestion] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [showTransactionEditModal, setShowTransactionEditModal] =
+    useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   // Account type icons mapping
@@ -520,6 +523,64 @@ const EnhancedAccountAssignmentModal = ({
     });
   };
 
+  // Transaction editing functions
+  const handleEditTransaction = transaction => {
+    setEditingTransaction({
+      ...transaction,
+      originalAmount: transaction.amount,
+      originalType: transaction.type,
+    });
+    setShowTransactionEditModal(true);
+  };
+
+  const handleSaveTransactionEdit = async () => {
+    if (!editingTransaction) return;
+
+    try {
+      setIsProcessing(true);
+      
+      // Update the transaction in the store
+      await updateTransaction(editingTransaction.id, {
+        description: editingTransaction.description,
+        amount: editingTransaction.amount,
+        type: editingTransaction.type,
+        category: editingTransaction.category,
+        date: editingTransaction.date
+      });
+
+      setShowTransactionEditModal(false);
+      setEditingTransaction(null);
+    } catch (error) {
+      console.error("Error updating transaction:", error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleTransactionTypeChange = newType => {
+    if (!editingTransaction) return;
+
+    let newAmount = editingTransaction.originalAmount;
+
+    // Adjust amount based on type change
+    if (newType === "income" && editingTransaction.originalType === "expense") {
+      // Change from expense to income - make amount positive
+      newAmount = Math.abs(editingTransaction.originalAmount);
+    } else if (
+      newType === "expense" &&
+      editingTransaction.originalType === "income"
+    ) {
+      // Change from income to expense - make amount negative
+      newAmount = -Math.abs(editingTransaction.originalAmount);
+    }
+
+    setEditingTransaction(prev => ({
+      ...prev,
+      type: newType,
+      amount: newAmount,
+    }));
+  };
+
   const toggleTransactionExpansion = transactionId => {
     setExpandedTransactions(prev => {
       const newSet = new Set(prev);
@@ -963,6 +1024,13 @@ const EnhancedAccountAssignmentModal = ({
                               </div>
 
                               <button
+                                onClick={() => handleEditTransaction(transaction)}
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex-shrink-0"
+                                title="Edit transaction"
+                              >
+                                <Edit3 className="w-4 h-4 text-gray-500" />
+                              </button>
+                              <button
                                 onClick={() =>
                                   toggleTransactionExpansion(transaction.id)
                                 }
@@ -1198,7 +1266,8 @@ const EnhancedAccountAssignmentModal = ({
                     <strong>AI Suggestion:</strong> {editingSuggestion.reason}
                   </p>
                   <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                    Confidence: {Math.round(editingSuggestion.confidence * 100)}%
+                    Confidence: {Math.round(editingSuggestion.confidence * 100)}
+                    %
                   </p>
                 </div>
               </div>
@@ -1219,6 +1288,171 @@ const EnhancedAccountAssignmentModal = ({
                   className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isProcessing ? "Creating..." : "Create & Auto-Assign"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Transaction Edit Modal */}
+        {showTransactionEditModal && editingTransaction && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-60">
+            <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Edit Transaction
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Description
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTransaction.description || ""}
+                    onChange={e =>
+                      setEditingTransaction(prev => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Transaction description"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Transaction Type
+                  </label>
+                  <select
+                    value={editingTransaction.type}
+                    onChange={e => handleTransactionTypeChange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="income">Income</option>
+                    <option value="expense">Expense</option>
+                    <option value="refund">Refund</option>
+                    <option value="transfer">Transfer</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Amount
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      value={Math.abs(editingTransaction.amount).toFixed(2)}
+                      onChange={e => {
+                        const value = parseFloat(e.target.value) || 0;
+                        const sign = editingTransaction.type === 'expense' ? -1 : 1;
+                        setEditingTransaction(prev => ({
+                          ...prev,
+                          amount: value * sign
+                        }));
+                      }}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTransaction.category || ""}
+                    onChange={e =>
+                      setEditingTransaction(prev => ({
+                        ...prev,
+                        category: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Transaction category"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    value={editingTransaction.date}
+                    onChange={e =>
+                      setEditingTransaction(prev => ({
+                        ...prev,
+                        date: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Preview */}
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Preview:
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {editingTransaction.description || "Transaction"}
+                    </span>
+                    <span className={`font-semibold ${
+                      editingTransaction.amount > 0
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}>
+                      {formatCurrency(Math.abs(editingTransaction.amount))}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      editingTransaction.type === 'income' 
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                        : editingTransaction.type === 'expense'
+                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                        : editingTransaction.type === 'refund'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                        : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300'
+                    }`}>
+                      {editingTransaction.type.charAt(0).toUpperCase() + editingTransaction.type.slice(1)}
+                    </span>
+                    {editingTransaction.category && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {editingTransaction.category}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowTransactionEditModal(false);
+                    setEditingTransaction(null);
+                  }}
+                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveTransactionEdit}
+                  disabled={!editingTransaction.description || isProcessing}
+                  className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isProcessing ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </div>
