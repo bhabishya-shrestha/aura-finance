@@ -19,7 +19,7 @@ import DuplicateReviewModal from "./DuplicateReviewModal";
 import EnhancedAccountAssignmentModal from "./EnhancedAccountAssignmentModal";
 
 const StatementImporter = ({ isOpen, onClose }) => {
-  const { addTransactions, checkForDuplicates } = useStore();
+  const { addTransactions, checkForDuplicates, accounts } = useStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
   const [processingStep, setProcessingStep] = useState("");
@@ -801,6 +801,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
         isOpen={showAccountAssignment}
         onClose={() => setShowAccountAssignment(false)}
         transactions={previewData?.transactions || []}
+        accounts={accounts || []}
         detectedAccountInfo={detectedAccountInfo}
         onComplete={handleAccountAssignmentComplete}
       />

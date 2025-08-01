@@ -18,10 +18,11 @@ const EnhancedAccountAssignmentModal = ({
   isOpen,
   onClose,
   transactions,
+  accounts = [],
   detectedAccountInfo = null,
   onComplete,
 }) => {
-  const { accounts, addAccount } = useStore();
+  const { addAccount } = useStore();
   const [selectedAccounts, setSelectedAccounts] = useState({});
   const [showCreateAccount, setShowCreateAccount] = useState(false);
   const [newAccountData, setNewAccountData] = useState({
@@ -53,8 +54,33 @@ const EnhancedAccountAssignmentModal = ({
     }
   }, [isOpen, transactions, detectedAccountInfo]);
 
+  const suggestAccountForTransaction = (transaction, accounts) => {
+    const description = transaction.description?.toLowerCase() || "";
+
+    // Simple heuristic: look for account names in transaction description
+    if (!accounts || !Array.isArray(accounts)) {
+      return null;
+    }
+
+    for (const account of accounts) {
+      const accountName = account.name.toLowerCase();
+      if (
+        description.includes(accountName) ||
+        description.includes(account.type) ||
+        (account.name.includes("Bank") && description.includes("bank"))
+      ) {
+        return account;
+      }
+    }
+
+    return null;
+  };
+
   // Filter accounts based on search and type
   const filteredAccounts = useMemo(() => {
+    if (!accounts || !Array.isArray(accounts)) {
+      return [];
+    }
     return accounts.filter(account => {
       const matchesSearch = account.name
         .toLowerCase()
@@ -87,24 +113,6 @@ const EnhancedAccountAssignmentModal = ({
 
     return groups;
   }, [transactions, accounts]);
-
-  const suggestAccountForTransaction = (transaction, accounts) => {
-    const description = transaction.description?.toLowerCase() || "";
-
-    // Simple heuristic: look for account names in transaction description
-    for (const account of accounts) {
-      const accountName = account.name.toLowerCase();
-      if (
-        description.includes(accountName) ||
-        description.includes(account.type) ||
-        (account.name.includes("Bank") && description.includes("bank"))
-      ) {
-        return account;
-      }
-    }
-
-    return null;
-  };
 
   const handleCreateAccount = async () => {
     try {
