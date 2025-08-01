@@ -213,17 +213,73 @@ const SettingsPage = ({ onPageChange }) => {
     switch (activeTab) {
       case "general":
         return (
-          <div className="space-y-8">
+          <div className="p-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                General Settings
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Configure your basic preferences and regional settings
+              </p>
+            </div>
+
+            {/* Settings */}
+            <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  General Settings
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  Configure your basic preferences and regional settings
-                </p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Currency
+                </label>
+                <select
+                  value={settings.currency || "USD"}
+                  onChange={e => updateSetting("currency", e.target.value)}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                >
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                  <option value="CAD">CAD (C$)</option>
+                  <option value="AUD">AUD (A$)</option>
+                  <option value="JPY">JPY (¥)</option>
+                </select>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Date Format
+                </label>
+                <select
+                  value={settings.dateFormat || "MM/DD/YYYY"}
+                  onChange={e => updateSetting("dateFormat", e.target.value)}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                >
+                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                  <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Language
+                </label>
+                <select
+                  value={settings.language || "en"}
+                  onChange={e => updateSetting("language", e.target.value)}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                >
+                  <option value="en">English</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                  <option value="de">Deutsch</option>
+                  <option value="it">Italiano</option>
+                  <option value="pt">Português</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={handleSaveSettings}
                 disabled={isSaving}
@@ -232,82 +288,6 @@ const SettingsPage = ({ onPageChange }) => {
                 <Save className="w-4 h-4" />
                 {isSaving ? "Saving..." : "Save Changes"}
               </button>
-            </div>
-
-            {/* Currency & Formatting */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden animate-scale-in hover-lift">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-blue-600" />
-                  Currency & Formatting
-                </h3>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Currency
-                    </label>
-                    <select
-                      value={settings.currency || "USD"}
-                      onChange={e => updateSetting("currency", e.target.value)}
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                    >
-                      <option value="USD">USD ($)</option>
-                      <option value="EUR">EUR (€)</option>
-                      <option value="GBP">GBP (£)</option>
-                      <option value="CAD">CAD (C$)</option>
-                      <option value="AUD">AUD (A$)</option>
-                      <option value="JPY">JPY (¥)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Date Format
-                    </label>
-                    <select
-                      value={settings.dateFormat || "MM/DD/YYYY"}
-                      onChange={e =>
-                        updateSetting("dateFormat", e.target.value)
-                      }
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                    >
-                      <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                      <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                      <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Language & Region */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden animate-scale-in hover-lift">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                  <Globe className="w-5 h-5 text-green-600" />
-                  Language & Region
-                </h3>
-              </div>
-              <div className="p-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Language
-                  </label>
-                  <select
-                    value={settings.language || "en"}
-                    onChange={e => updateSetting("language", e.target.value)}
-                    className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                  >
-                    <option value="en">English</option>
-                    <option value="es">Español</option>
-                    <option value="fr">Français</option>
-                    <option value="de">Deutsch</option>
-                    <option value="it">Italiano</option>
-                    <option value="pt">Português</option>
-                  </select>
-                </div>
-              </div>
             </div>
           </div>
         );
@@ -498,10 +478,10 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "appearance":
         return (
-          <div className="space-y-8">
+          <div className="p-6">
             {/* Header */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Appearance Settings
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -510,72 +490,58 @@ const SettingsPage = ({ onPageChange }) => {
             </div>
 
             {/* Theme Selection */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                  <Palette className="w-5 h-5 text-purple-600" />
-                  Theme
-                </h3>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <button
-                    onClick={() => setTheme("light")}
-                    className={`p-6 rounded-xl border-2 smooth-transition hover:scale-105 ${
-                      currentTheme === "light"
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                    }`}
-                  >
-                    <Sun className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
-                    <div className="text-center">
-                      <div className="font-semibold text-gray-900 dark:text-white">
-                        Light
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Clean and bright
-                      </div>
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Theme
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  onClick={() => setTheme("light")}
+                  className={`p-4 rounded-lg border-2 smooth-transition hover:scale-105 ${
+                    currentTheme === "light"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
+                >
+                  <Sun className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
+                  <div className="text-center">
+                    <div className="font-medium text-gray-900 dark:text-white text-sm">
+                      Light
                     </div>
-                  </button>
+                  </div>
+                </button>
 
-                  <button
-                    onClick={() => setTheme("dark")}
-                    className={`p-6 rounded-xl border-2 smooth-transition hover:scale-105 ${
-                      currentTheme === "dark"
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                    }`}
-                  >
-                    <Moon className="w-12 h-12 text-blue-500 mx-auto mb-3" />
-                    <div className="text-center">
-                      <div className="font-semibold text-gray-900 dark:text-white">
-                        Dark
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Easy on the eyes
-                      </div>
+                <button
+                  onClick={() => setTheme("dark")}
+                  className={`p-4 rounded-lg border-2 smooth-transition hover:scale-105 ${
+                    currentTheme === "dark"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
+                >
+                  <Moon className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                  <div className="text-center">
+                    <div className="font-medium text-gray-900 dark:text-white text-sm">
+                      Dark
                     </div>
-                  </button>
+                  </div>
+                </button>
 
-                  <button
-                    onClick={() => setTheme("system")}
-                    className={`p-6 rounded-xl border-2 smooth-transition hover:scale-105 ${
-                      currentTheme === "system"
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                    }`}
-                  >
-                    <Monitor className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-                    <div className="text-center">
-                      <div className="font-semibold text-gray-900 dark:text-white">
-                        System
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Follows your OS
-                      </div>
+                <button
+                  onClick={() => setTheme("system")}
+                  className={`p-4 rounded-lg border-2 smooth-transition hover:scale-105 ${
+                    currentTheme === "system"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
+                >
+                  <Monitor className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                  <div className="text-center">
+                    <div className="font-medium text-gray-900 dark:text-white text-sm">
+                      System
                     </div>
-                  </button>
-                </div>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
@@ -873,22 +839,22 @@ const SettingsPage = ({ onPageChange }) => {
       </div>
 
       {/* Desktop Layout */}
-      <div className="hidden lg:block p-6 lg:p-8 max-w-7xl mx-auto">
+      <div className="hidden lg:block p-6 lg:p-8 max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white">
             Settings
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">
-            Manage your account preferences and application settings
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Customize your Aura Finance experience
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Sidebar Navigation */}
           <div className="lg:col-span-1">
-            <nav className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 sticky top-8 animate-slide-in-left">
-              <div className="space-y-2">
+            <nav className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sticky top-8 animate-slide-in-left">
+              <div className="space-y-1">
                 {settingsSections.map(section => {
                   const Icon = section.icon;
                   const isActive = activeTab === section.id;
@@ -897,25 +863,28 @@ const SettingsPage = ({ onPageChange }) => {
                     <button
                       key={section.id}
                       onClick={() => setActiveTab(section.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 group ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 group ${
                         isActive
                           ? getColorClasses(section.color, true)
                           : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                       }`}
                     >
                       <Icon
-                        className={`w-5 h-5 transition-all duration-200 ${
+                        className={`w-4 h-4 transition-all duration-200 ${
                           isActive
-                            ? getColorClasses(section.color)
-                            : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                            ? section.color === 'blue' ? "text-blue-600 dark:text-blue-400"
+                              : section.color === 'green' ? "text-green-600 dark:text-green-400"
+                              : section.color === 'red' ? "text-red-600 dark:text-red-400"
+                              : section.color === 'purple' ? "text-purple-600 dark:text-purple-400"
+                              : section.color === 'orange' ? "text-orange-600 dark:text-orange-400"
+                              : section.color === 'indigo' ? "text-indigo-600 dark:text-indigo-400"
+                              : "text-blue-600 dark:text-blue-400"
+                            : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300"
                         }`}
                       />
-                      <div className="flex-1">
-                        <div className="font-medium">{section.label}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {section.description}
-                        </div>
-                      </div>
+                      <span className="font-medium text-sm">
+                        {section.label}
+                      </span>
                     </button>
                   );
                 })}
@@ -924,8 +893,10 @@ const SettingsPage = ({ onPageChange }) => {
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-3 animate-slide-in-right">
-            {renderSectionContent()}
+          <div className="lg:col-span-2 animate-slide-in-right">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              {renderSectionContent()}
+            </div>
           </div>
         </div>
       </div>

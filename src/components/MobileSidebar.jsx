@@ -15,6 +15,68 @@ const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
 
+  // Generate personalized greeting based on time and user info
+  const getPersonalizedGreeting = () => {
+    const hour = new Date().getHours();
+    const userName =
+      user?.user_metadata?.full_name?.split(" ")[0] ||
+      user?.email?.split("@")[0] ||
+      "there";
+
+    let timeGreeting = "";
+    if (hour < 12) {
+      timeGreeting = "Good morning";
+    } else if (hour < 17) {
+      timeGreeting = "Good afternoon";
+    } else {
+      timeGreeting = "Good evening";
+    }
+
+    // Add some variety to the greetings
+    const greetings = [
+      `${timeGreeting}, ${userName}!`,
+      `${timeGreeting}, ${userName}! 👋`,
+      `Hello ${userName}! ✨`,
+      `Welcome back, ${userName}!`,
+      `Hey ${userName}! 💫`,
+      `${timeGreeting}, ${userName}! 🌟`,
+    ];
+
+    // Use a simple hash of the date to get consistent daily greeting
+    const today = new Date().toDateString();
+    const hash = today.split("").reduce((a, b) => {
+      a = (a << 5) - a + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+
+    return greetings[Math.abs(hash) % greetings.length];
+  };
+
+  // Generate daily motivational message
+  const getDailyMessage = () => {
+    const messages = [
+      "Ready to manage your finances?",
+      "Your financial future starts today!",
+      "Smart choices, bright future! 💰",
+      "Every transaction counts! 📊",
+      "Building wealth, one step at a time!",
+      "Your money, your control! 💪",
+      "Financial freedom awaits! 🚀",
+      "Track, plan, succeed! 📈",
+      "Your financial journey continues!",
+      "Making money work for you! 💎",
+    ];
+
+    // Use a different hash for the message to get variety
+    const today = new Date().toDateString();
+    const hash = today.split("").reduce((a, b) => {
+      a = (a << 7) - a + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+
+    return messages[Math.abs(hash) % messages.length];
+  };
+
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
 
@@ -100,30 +162,15 @@ const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-lg">
-                {(
-                  user?.user_metadata?.full_name ||
-                  user?.email?.split("@")[0] ||
-                  "U"
-                )
-                  .charAt(0)
-                  .toUpperCase()}
-              </span>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {user?.user_metadata?.full_name ||
-                  user?.email?.split("@")[0] ||
-                  "User"}
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {user?.email}
-              </p>
-            </div>
+        {/* Greeting Section */}
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white leading-tight">
+              {getPersonalizedGreeting()}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+              {getDailyMessage()}
+            </p>
           </div>
         </div>
 
