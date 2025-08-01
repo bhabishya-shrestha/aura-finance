@@ -95,7 +95,11 @@ const AppLayout = () => {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header - Desktop only */}
         <div className="hidden lg:block">
-          <Header onMenuToggle={toggleMobileSidebar} showMenuButton={true} />
+          <Header
+            onMenuToggle={toggleMobileSidebar}
+            showMenuButton={true}
+            onCloseMobileSidebar={closeMobileSidebar}
+          />
         </div>
 
         {/* Mobile Header */}
@@ -108,12 +112,16 @@ const AppLayout = () => {
         {/* Page Content */}
         <main className="flex-1 overflow-auto lg:pb-0 pt-14 lg:pt-0">
           <div className="w-full h-full">
-            {currentPage === "dashboard" && <DashboardPage onPageChange={setCurrentPage} />}
+            {currentPage === "dashboard" && (
+              <DashboardPage onPageChange={setCurrentPage} />
+            )}
             {currentPage === "accounts" && <AccountsPage />}
             {currentPage === "analytics" && <AnalyticsPage />}
             {currentPage === "transactions" && <TransactionsPage />}
             {currentPage === "reports" && <ReportsPage />}
-            {currentPage === "settings" && <SettingsPage />}
+            {currentPage === "settings" && (
+              <SettingsPage onPageChange={setCurrentPage} />
+            )}
           </div>
         </main>
       </div>

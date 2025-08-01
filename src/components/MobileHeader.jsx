@@ -6,6 +6,9 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange }) => {
   const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  
+  // Mock notifications data - in a real app, this would come from a store or API
+  const hasNewNotifications = false;
 
   const getPageTitle = page => {
     const titles = {
@@ -83,8 +86,10 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange }) => {
               aria-label="Notifications"
             >
               <Bell className="w-5 h-5" />
-              {/* Notification badge */}
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              {/* Notification badge - only show if there are notifications */}
+              {hasNewNotifications && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              )}
             </button>
 
             {/* Notifications dropdown */}

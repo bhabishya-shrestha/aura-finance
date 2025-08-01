@@ -4,12 +4,16 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import SearchBar from "./SearchBar";
 
-const Header = ({ onMenuToggle, showMenuButton = false }) => {
+const Header = ({
+  onMenuToggle,
+  showMenuButton = false,
+  onCloseMobileSidebar,
+}) => {
   const { user, logout } = useAuth();
   const { toggleTheme, currentTheme } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  
+
   // Mock notifications data - in a real app, this would come from a store or API
   const notifications = [];
   const hasNewNotifications = false;
@@ -138,7 +142,13 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
               </div>
               <div className="relative">
                 <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  onClick={() => {
+                    setShowUserMenu(!showUserMenu);
+                    // Close mobile sidebar if it's open
+                    if (onCloseMobileSidebar) {
+                      onCloseMobileSidebar();
+                    }
+                  }}
                   onMouseEnter={() => setShowUserMenu(true)}
                   className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium hover:scale-105 transition-all duration-200 shadow-sm flex-shrink-0"
                   aria-label="User menu"

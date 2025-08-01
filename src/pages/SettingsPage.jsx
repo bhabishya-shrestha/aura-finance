@@ -24,7 +24,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import useStore from "../store";
 
-const SettingsPage = () => {
+const SettingsPage = ({ onPageChange }) => {
   const {
     settings,
     updateSetting,
@@ -673,8 +673,16 @@ const SettingsPage = () => {
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setActiveTab("general")}
-              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => {
+                if (activeTab === "general") {
+                  // If we're on general settings, go back to previous page
+                  onPageChange && onPageChange("dashboard");
+                } else {
+                  // If we're in a sub-section, go back to general settings
+                  setActiveTab("general");
+                }
+              }}
+              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
