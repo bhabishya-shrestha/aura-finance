@@ -61,7 +61,7 @@ const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-50 lg:hidden ${
+        className={`fixed top-14 left-0 h-[calc(100vh-3.5rem)] w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-50 lg:hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

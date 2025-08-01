@@ -106,7 +106,7 @@ const AppLayout = () => {
         />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto lg:pb-0 pt-14 lg:pt-0 lg:mt-0">
+        <main className="flex-1 overflow-auto lg:pb-0 pt-14 lg:pt-0">
           <div className="w-full h-full">
             {currentPage === "dashboard" && <DashboardPage onPageChange={setCurrentPage} />}
             {currentPage === "accounts" && <AccountsPage />}
