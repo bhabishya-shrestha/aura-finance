@@ -78,7 +78,7 @@ const MobileHeader = ({ onMenuToggle, currentPage, onPageChange }) => {
           <div className="relative">
             <button
               onClick={toggleNotifications}
-              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
+              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative flex items-center justify-center"
               aria-label="Notifications"
             >
               <Bell className="w-5 h-5" />

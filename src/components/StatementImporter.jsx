@@ -248,8 +248,10 @@ const StatementImporter = ({ isOpen, onClose }) => {
         setProcessingStep("Duplicates found - review required");
       } else {
         // Check if transactions need account assignment
-        const transactionsWithoutAccount = previewData.transactions.filter(t => !t.accountId);
-        
+        const transactionsWithoutAccount = previewData.transactions.filter(
+          t => !t.accountId
+        );
+
         if (transactionsWithoutAccount.length > 0) {
           // Show account assignment modal
           setShowAccountAssignment(true);
@@ -325,16 +327,16 @@ const StatementImporter = ({ isOpen, onClose }) => {
 
   // Handle account assignment completion
   const handleAccountAssignmentComplete = useCallback(
-    async (transactionsWithAccount) => {
+    async transactionsWithAccount => {
       try {
         setIsProcessing(true);
         setProcessingStep("Importing transactions...");
-        
+
         await addTransactions(transactionsWithAccount);
-        
+
         setProcessingStep("Import completed successfully!");
         setShowAccountAssignment(false);
-        
+
         // Reset and close after successful import
         setTimeout(() => {
           handleClose();
@@ -467,7 +469,8 @@ const StatementImporter = ({ isOpen, onClose }) => {
                     </p>
                   </div>
 
-                  <div className="space-y-3">
+                  {/* Processing Steps Indicator */}
+                  <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Progress
@@ -477,47 +480,46 @@ const StatementImporter = ({ isOpen, onClose }) => {
                       </span>
                     </div>
 
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out relative"
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-700 ease-out relative"
                         style={{ width: `${processingProgress}%` }}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Processing Steps Indicator */}
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div
-                      className={`text-center p-2 rounded-lg transition-colors ${
-                        processingProgress >= 10
-                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                      }`}
-                    >
-                      <div className="font-medium">File Validation</div>
-                      <div className="text-xs opacity-75">Step 1</div>
-                    </div>
-                    <div
-                      className={`text-center p-2 rounded-lg transition-colors ${
-                        processingProgress >= 40
-                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                      }`}
-                    >
-                      <div className="font-medium">AI Analysis</div>
-                      <div className="text-xs opacity-75">Step 2</div>
-                    </div>
-                    <div
-                      className={`text-center p-2 rounded-lg transition-colors ${
-                        processingProgress >= 90
-                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                      }`}
-                    >
-                      <div className="font-medium">Finalizing</div>
-                      <div className="text-xs opacity-75">Step 3</div>
+                    <div className="grid grid-cols-3 gap-3 text-xs">
+                      <div
+                        className={`text-center p-3 rounded-lg transition-all duration-500 ${
+                          processingProgress >= 15
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm"
+                            : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                        }`}
+                      >
+                        <div className="font-medium">File Validation</div>
+                        <div className="text-xs opacity-75 mt-1">Step 1</div>
+                      </div>
+                      <div
+                        className={`text-center p-3 rounded-lg transition-all duration-500 ${
+                          processingProgress >= 50
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm"
+                            : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                        }`}
+                      >
+                        <div className="font-medium">AI Analysis</div>
+                        <div className="text-xs opacity-75 mt-1">Step 2</div>
+                      </div>
+                      <div
+                        className={`text-center p-3 rounded-lg transition-all duration-500 ${
+                          processingProgress >= 85
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm"
+                            : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                        }`}
+                      >
+                        <div className="font-medium">Finalizing</div>
+                        <div className="text-xs opacity-75 mt-1">Step 3</div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -620,7 +622,7 @@ const StatementImporter = ({ isOpen, onClose }) => {
                                   source: e.target.value,
                                 })
                               }
-                              className="ml-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="ml-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent max-w-full"
                             />
                           ) : (
                             <span className="ml-2 font-medium text-gray-900 dark:text-white">

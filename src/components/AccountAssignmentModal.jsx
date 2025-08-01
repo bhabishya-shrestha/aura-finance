@@ -112,8 +112,8 @@ const AccountAssignmentModal = ({
               Choose Account
             </h3>
             
-            {/* Existing Accounts */}
-            {accounts.length > 0 && (
+                                    {/* Existing Accounts */}
+            {accounts.length > 0 ? (
               <div className="space-y-2 mb-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   Existing Accounts:
@@ -153,6 +153,20 @@ const AccountAssignmentModal = ({
                     </button>
                   );
                 })}
+              </div>
+            ) : (
+              <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                      No Existing Accounts
+                    </h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      You don't have any accounts yet. Let's create one for your transactions.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
