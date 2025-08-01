@@ -25,8 +25,6 @@ import {
   ArrowDownRight,
   ChevronDown,
   ChevronUp,
-  Download,
-  RefreshCw,
 } from "lucide-react";
 import useStore from "../store";
 
@@ -210,23 +208,23 @@ const AnalyticsPage = () => {
         {/* Animated background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-xl" />
 
-        <div className="relative bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1">
+        <div className="relative bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1">
           {/* Icon with gradient background */}
           <div
-            className={`inline-flex p-2 sm:p-3 rounded-lg bg-gradient-to-br ${colorClasses[color]} text-white mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300`}
+            className={`inline-flex p-2 sm:p-3 rounded-lg bg-gradient-to-br ${colorClasses[color]} text-white mb-2 sm:mb-3 lg:mb-4 group-hover:scale-110 transition-transform duration-300`}
           >
             <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
 
           {/* Value with animated counter */}
           <div className="mb-2">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300">
+            <p className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300">
               {typeof value === "number" ? formatCurrency(value) : value}
             </p>
           </div>
 
           {/* Title and subtitle */}
-          <div className="mb-3">
+          <div className="mb-2 sm:mb-3">
             <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
               {title}
             </p>
@@ -279,8 +277,8 @@ const AnalyticsPage = () => {
       <div
         className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 ${className}`}
       >
-        <div className="p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <div className="p-3 sm:p-4 lg:p-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
               {title}
             </h3>
@@ -324,7 +322,7 @@ const AnalyticsPage = () => {
 
         <div className="relative p-4 sm:p-6 lg:p-8">
           {/* Header content */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg text-white">
@@ -340,15 +338,15 @@ const AnalyticsPage = () => {
               </p>
             </div>
 
-            {/* Enhanced controls */}
-            <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
+            {/* Enhanced controls - Mobile optimized */}
+            <div className="flex flex-col gap-3 flex-shrink-0 w-full sm:w-auto">
               {/* View Toggle with enhanced styling */}
-              <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm">
+              <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-full sm:w-auto">
                 {["overview", "detailed"].map(view => (
                   <button
                     key={view}
                     onClick={() => setSelectedView(view)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       selectedView === view
                         ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                         : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -360,27 +358,17 @@ const AnalyticsPage = () => {
               </div>
 
               {/* Enhanced Time Range Selector */}
-              <div className="relative">
+              <div className="relative w-full sm:w-auto">
                 <select
                   value={timeRange}
                   onChange={e => setTimeRange(e.target.value)}
-                  className="appearance-none px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm pr-10"
+                  className="appearance-none w-full sm:w-auto px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm pr-10"
                 >
                   <option value="month">This Month</option>
                   <option value="quarter">This Quarter</option>
                   <option value="year">This Year</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex gap-2">
-                <button className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm">
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-                <button className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm">
-                  <Download className="w-4 h-4" />
-                </button>
               </div>
             </div>
           </div>
@@ -390,7 +378,7 @@ const AnalyticsPage = () => {
       {/* Main content with enhanced spacing */}
       <div className="px-4 sm:px-6 lg:px-8 pb-8">
         {/* Enhanced Summary Cards with staggered animations */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
           <MetricCard
             title="Net Worth"
             value={getNetWorth()}
@@ -434,7 +422,7 @@ const AnalyticsPage = () => {
         {selectedView === "overview" ? (
           <>
             {/* Enhanced Charts Grid */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 xl:gap-8 mb-4 sm:mb-6 lg:mb-8">
               {/* Income vs Spending Comparison */}
               <ChartContainer title="Income vs Spending" expandable>
                 <ResponsiveContainer width="100%" height="100%">
@@ -589,7 +577,7 @@ const AnalyticsPage = () => {
         ) : (
           <>
             {/* Detailed Analytics View */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 xl:gap-8 mb-4 sm:mb-6 lg:mb-8">
               {/* Spending Trends Over Time */}
               <ChartContainer title="Spending Trends" expandable>
                 <ResponsiveContainer width="100%" height="100%">
@@ -667,9 +655,9 @@ const AnalyticsPage = () => {
             {/* Transaction Distribution Analysis */}
             <ChartContainer
               title="Transaction Distribution"
-              className="mb-6 sm:mb-8"
+              className="mb-4 sm:mb-6 lg:mb-8"
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                 <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-green-200 dark:border-green-800">
                   <div className="text-3xl sm:text-4xl font-bold text-green-600 dark:text-green-400 mb-2">
                     {transactions.filter(t => t.amount > 0).length}
