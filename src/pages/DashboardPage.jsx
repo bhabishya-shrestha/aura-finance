@@ -6,7 +6,7 @@ import AddTransaction from "../components/AddTransaction";
 import StatementImporter from "../components/StatementImporter";
 import { useAuth } from "../contexts/AuthContext";
 
-const DashboardPage = () => {
+const DashboardPage = ({ onPageChange }) => {
   const { isLoading } = useAuth();
   const [error, setError] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -40,6 +40,12 @@ const DashboardPage = () => {
       setIsImportModalOpen(true);
     } catch (err) {
       setError(err.message);
+    }
+  };
+
+  const handleViewAllTransactions = () => {
+    if (onPageChange) {
+      onPageChange("transactions");
     }
   };
 
@@ -123,7 +129,7 @@ const DashboardPage = () => {
 
         {/* Recent Transactions Card */}
         <div className="xl:col-span-1">
-          <RecentTransactions />
+          <RecentTransactions onViewAllTransactions={handleViewAllTransactions} />
         </div>
       </div>
 

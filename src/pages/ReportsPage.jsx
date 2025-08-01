@@ -423,10 +423,10 @@ const ReportsPage = () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleExportReport}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 shadow-sm font-medium"
             >
               <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Export Report</span>
+              <span>Export Report</span>
             </button>
           </div>
         </div>

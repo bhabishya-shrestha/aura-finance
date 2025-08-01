@@ -1,21 +1,44 @@
-import React, { useState } from "react";
-import { Sparkles, Bell, Menu, Sun, Moon } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+import React, { useState, useEffect } from "react";
+import {
+  Menu,
+  Bell,
+  Sun,
+  Moon,
+  Sparkles,
+  User,
+  LogOut,
+  Settings,
+} from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 import SearchBar from "./SearchBar";
 
-const Header = ({ onMenuToggle, showMenuButton = false }) => {
+const Header = ({ showMenuButton = false, onMenuToggle }) => {
+  const { currentTheme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
-  const { toggleTheme, currentTheme } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+
+  // Check for new notifications
+  useEffect(() => {
+    // TODO: Implement actual notification logic
+    // For now, we'll simulate no notifications
+    setNotifications([]);
+  }, []);
+
+  const hasNewNotifications = notifications.length > 0;
 
   const handleLogout = async () => {
     try {
       await logout();
-      setShowUserMenu(false);
     } catch (error) {
-      // Error handled silently - user will be redirected to login
+      console.error("Logout error:", error);
     }
+  };
+
+  const toggleNotifications = () => {
+    setShowNotifications(!showNotifications);
   };
 
   return (
@@ -67,11 +90,14 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
 
           {/* Notifications */}
           <button
+            onClick={toggleNotifications}
             className="relative p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 flex-shrink-0"
             aria-label="Notifications"
           >
             <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-400" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            {hasNewNotifications && (
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            )}
           </button>
 
           {/* User Profile */}

@@ -284,15 +284,30 @@ export const AuthProvider = ({ children }) => {
   // Logout
   const logout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      // First try to sign out with global scope
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
 
       if (error) {
-        return { success: false, error: error.message };
+        // If global scope fails, try local scope
+        if (error.message.includes('403') || error.message.includes('Forbidden')) {
+          console.warn('Global signout failed, trying local scope:', error.message);
+          const { error: localError } = await supabase.auth.signOut({ scope: 'local' });
+          
+          if (localError) {
+            console.error('Local signout also failed:', localError.message);
+            return { success: false, error: localError.message };
+          }
+        } else {
+          return { success: false, error: error.message };
+        }
       }
 
       dispatch({ type: AUTH_ACTIONS.LOGOUT });
       return { success: true };
     } catch (error) {
+      console.error('Logout error:', error);
+      // Even if there's an error, we should still clear the local state
+      dispatch({ type: AUTH_ACTIONS.LOGOUT });
       return { success: false, error: error.message };
     }
   };

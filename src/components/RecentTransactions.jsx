@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Calendar,
   DollarSign,
@@ -7,11 +7,12 @@ import {
   Save,
   X,
   Tag,
+  ArrowRight,
 } from "lucide-react";
 import useStore from "../store";
 import { CATEGORIES } from "../utils/statementParser";
 
-const RecentTransactions = () => {
+const RecentTransactions = ({ onViewAllTransactions }) => {
   const { getRecentTransactions, deleteTransaction, updateTransaction } =
     useStore();
   const recentTransactions = getRecentTransactions();
@@ -263,8 +264,12 @@ const RecentTransactions = () => {
 
       {recentTransactions.length > 0 && (
         <div className="mt-4 pt-3 sm:pt-4 border-t border-apple-glass-300/30">
-          <button className="w-full py-2 px-3 sm:px-4 bg-apple-glass-200/40 hover:bg-apple-glass-300/50 transition-all duration-200 rounded-apple-lg text-primary text-sm backdrop-blur-apple-sm">
-            View All Transactions
+          <button 
+            onClick={onViewAllTransactions}
+            className="w-full py-2 px-3 sm:px-4 bg-apple-glass-200/40 hover:bg-apple-glass-300/50 transition-all duration-200 rounded-apple-lg text-primary text-sm backdrop-blur-apple-sm flex items-center justify-center gap-2"
+          >
+            <span>View All Transactions</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       )}

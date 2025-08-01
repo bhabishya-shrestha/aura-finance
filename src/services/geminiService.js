@@ -551,23 +551,39 @@ IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside t
       return [];
     }
 
-    return geminiResponse.transactions.map((transaction, index) => ({
-      id: Date.now() + index,
-      date: new Date(transaction.date || new Date()),
-      description: transaction.description || "Unknown transaction",
-      amount: parseFloat(transaction.amount) || 0,
-      category:
-        transaction.category ||
-        this.categorizeTransaction(transaction.description),
-      accountId: 1,
-      selected: true,
-      type: transaction.type === "income" ? "income" : "expense",
-      source: "gemini-ocr",
-      confidence: geminiResponse.confidence || "low",
-      processingQuality: geminiResponse.processingQuality || "fair",
-      documentType: geminiResponse.documentType || "Unknown",
-      originalSource: geminiResponse.source || "Unknown",
-    }));
+    return geminiResponse.transactions
+      .filter(transaction => {
+        const amount = parseFloat(transaction.amount) || 0;
+        // Filter out $0 transactions, especially interest charges
+        if (amount === 0) {
+          const description = (transaction.description || "").toLowerCase();
+          // Skip interest charges, fees, or other $0 transactions
+          if (description.includes("interest") || 
+              description.includes("fee") || 
+              description.includes("charge") ||
+              description.includes("adjustment")) {
+            return false;
+          }
+        }
+        return true;
+      })
+      .map((transaction, index) => ({
+        id: Date.now() + index,
+        date: new Date(transaction.date || new Date()),
+        description: transaction.description || "Unknown transaction",
+        amount: parseFloat(transaction.amount) || 0,
+        category:
+          transaction.category ||
+          this.categorizeTransaction(transaction.description),
+        accountId: 1,
+        selected: true,
+        type: transaction.type === "income" ? "income" : "expense",
+        source: "gemini-ocr",
+        confidence: geminiResponse.confidence || "low",
+        processingQuality: geminiResponse.processingQuality || "fair",
+        documentType: geminiResponse.documentType || "Unknown",
+        originalSource: geminiResponse.source || "Unknown",
+      }));
   }
 
   // Get processing summary for user feedback
