@@ -29,8 +29,6 @@ import {
   PieChart as PieChartIcon,
   BarChart3,
   LineChart as LineChartIcon,
-  Target,
-  Activity,
   CreditCard,
   PiggyBank,
   Building2,
@@ -605,30 +603,6 @@ const AnalyticsPage = () => {
           </div>
         </>
       )}
-
-      {/* Quick Actions with better responsive design */}
-      <div className="glass-card p-4 sm:p-5 lg:p-6">
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">
-          Quick Actions
-        </h3>
-        <div className="flex flex-wrap gap-2 sm:gap-4">
-          <button className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base">
-            <Eye className="w-4 h-4" />
-            <span className="hidden sm:inline">Export Report</span>
-            <span className="sm:hidden">Export</span>
-          </button>
-          <button className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm sm:text-base">
-            <Activity className="w-4 h-4" />
-            <span className="hidden sm:inline">Generate Insights</span>
-            <span className="sm:hidden">Insights</span>
-          </button>
-          <button className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm sm:text-base">
-            <Target className="w-4 h-4" />
-            <span className="hidden sm:inline">Set Budget Goals</span>
-            <span className="sm:hidden">Budget</span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
