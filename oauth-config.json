@@ -1,10 +1,5 @@
 {
   "environments": {
-    "development": {
-      "name": "Development",
-      "url": "http://localhost:5173",
-      "callback": "http://localhost:5173/auth/callback"
-    },
     "staging": {
       "name": "Staging",
       "url": "https://aura-finance-app.vercel.app",
@@ -17,12 +12,6 @@
     }
   },
   "setupInstructions": {
-    "development": [
-      "1. Go to Supabase Dashboard > Authentication > URL Configuration",
-      "2. Set Site URL to: http://localhost:5173",
-      "3. Add Redirect URLs: http://localhost:5173/auth/callback",
-      "4. Save configuration"
-    ],
     "staging": [
       "1. Go to Supabase Dashboard > Authentication > URL Configuration",
       "2. Set Site URL to: https://aura-finance-app.vercel.app",
@@ -35,5 +24,6 @@
       "3. Add Redirect URLs: https://aura-finance-tool.vercel.app/auth/callback",
       "4. Save configuration"
     ]
-  }
+  },
+  "note": "Local development OAuth testing is not available due to Supabase configuration constraints. OAuth testing is performed in staging environment only."
 }

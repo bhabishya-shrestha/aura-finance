@@ -33,7 +33,6 @@
     "demo:setup": "node scripts/create-demo-account.js",
     "demo:info": "echo \"Demo Account: test@gmail.com / demo123\" && echo \"Demo URL: https://aura-finance-tool.vercel.app/auth\"",
     "oauth:setup": "node scripts/setup-oauth.cjs",
-    "oauth:setup-env": "node scripts/setup-oauth-env.cjs",
     "oauth:configure": "node scripts/configure-oauth.cjs",
     "oauth:verify": "node scripts/verify-oauth.cjs",
     "deploy:staging": "vercel --prod --target staging",

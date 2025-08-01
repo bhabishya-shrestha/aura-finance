@@ -33,7 +33,7 @@ git push origin feature/your-feature-name
 gh pr create --base develop --title "feat: your feature title"
 ```
 
-### 2. Development Testing (MANDATORY)
+### 2. Local Testing (MANDATORY - No OAuth)
 ```bash
 # Run local tests before pushing
 npm run test:local
@@ -42,17 +42,20 @@ npm run build
 npm run test:build
 ```
 
+**Note**: Local testing excludes OAuth functionality due to Supabase configuration constraints.
+
 ### 3. PR Process
 1. **Create PR to `develop`** (not main)
 2. **All CI/CD checks must pass**
 3. **Code review required**
-4. **Local testing verification**
+4. **Local testing verification** (excluding OAuth)
 5. **Merge to `develop`**
 
-### 4. Staging Deployment
+### 4. Staging Deployment & Testing
 - `develop` branch automatically deploys to `aura-finance-app.vercel.app`
-- Test in staging environment
-- Verify OAuth and all integrations work
+- **MANDATORY**: Test in staging environment
+- **MANDATORY**: Verify OAuth and all integrations work
+- **MANDATORY**: Test all features and user flows
 
 ### 5. Production Release
 ```bash
@@ -67,9 +70,9 @@ gh pr create --base main --title "release: v1.x.x"
 
 ## 🧪 Testing Requirements
 
-### Local Testing (MANDATORY)
+### Local Testing (MANDATORY - Excludes OAuth)
 ```bash
-# Complete test suite
+# Complete test suite (excluding OAuth)
 npm run test:local
 
 # Individual test categories
@@ -78,6 +81,13 @@ npm run test:integration
 npm run test:e2e
 npm run test:security
 ```
+
+### Staging Testing (MANDATORY)
+- **OAuth Authentication**: Test login/logout flows
+- **All Features**: Dashboard, transactions, analytics, settings
+- **Mobile Responsiveness**: Test on different screen sizes
+- **Performance**: Page load times and responsiveness
+- **Error Handling**: Test error scenarios and edge cases
 
 ### CI/CD Pipeline
 - **Linting**: ESLint + Prettier
@@ -88,14 +98,14 @@ npm run test:security
 
 ## 🔧 Environment Configuration
 
-### Development Environment
+### Development Environment (Local)
 ```bash
-# Local development
+# Local development (OAuth disabled)
 VITE_APP_ENV=development
 VITE_APP_URL=http://localhost:5173
-VITE_SUPABASE_URL=your_dev_supabase_url
-VITE_SUPABASE_ANON_KEY=your_dev_anon_key
-VITE_GEMINI_API_KEY=your_dev_gemini_key
+VITE_SUPABASE_URL=your_prod_supabase_url
+VITE_SUPABASE_ANON_KEY=your_prod_anon_key
+VITE_GEMINI_API_KEY=your_prod_gemini_key
 ```
 
 ### Staging Environment
@@ -103,9 +113,9 @@ VITE_GEMINI_API_KEY=your_dev_gemini_key
 # Staging (develop branch)
 VITE_APP_ENV=staging
 VITE_APP_URL=https://aura-finance-app.vercel.app
-VITE_SUPABASE_URL=your_staging_supabase_url
-VITE_SUPABASE_ANON_KEY=your_staging_anon_key
-VITE_GEMINI_API_KEY=your_staging_gemini_key
+VITE_SUPABASE_URL=your_prod_supabase_url
+VITE_SUPABASE_ANON_KEY=your_prod_anon_key
+VITE_GEMINI_API_KEY=your_prod_gemini_key
 ```
 
 ### Production Environment
@@ -121,11 +131,10 @@ VITE_GEMINI_API_KEY=your_prod_gemini_key
 ## 🔐 OAuth Configuration
 
 ### Supabase OAuth Setup
-Each environment must have separate OAuth configurations:
+Due to Supabase configuration constraints, OAuth is only tested in staging and production:
 
-1. **Development**: `http://localhost:5173/auth/callback`
-2. **Staging**: `https://aura-finance-app.vercel.app/auth/callback`
-3. **Production**: `https://aura-finance-tool.vercel.app/auth/callback`
+1. **Staging**: `https://aura-finance-app.vercel.app/auth/callback`
+2. **Production**: `https://aura-finance-tool.vercel.app/auth/callback`
 
 ### OAuth Management Scripts
 ```bash
@@ -136,7 +145,6 @@ npm run oauth:setup
 npm run oauth:verify
 
 # Configure OAuth for specific environment
-npm run oauth:configure --env=development
 npm run oauth:configure --env=staging
 npm run oauth:configure --env=production
 ```
@@ -162,7 +170,7 @@ npm run deploy:rollback
 ## 📋 Quality Gates
 
 ### Pre-PR Requirements
-- [ ] All tests pass locally
+- [ ] All tests pass locally (excluding OAuth)
 - [ ] Linting passes
 - [ ] Build succeeds
 - [ ] Security audit clean
@@ -177,19 +185,19 @@ npm run deploy:rollback
 - [ ] Documentation updated
 
 ### Pre-Production Requirements
-- [ ] Staging testing completed
-- [ ] OAuth verified in staging
-- [ ] All integrations tested
-- [ ] Performance testing passed
-- [ ] Security audit completed
+- [ ] **MANDATORY**: Staging testing completed
+- [ ] **MANDATORY**: OAuth verified in staging
+- [ ] **MANDATORY**: All integrations tested
+- [ ] **MANDATORY**: Performance testing passed
+- [ ] **MANDATORY**: Security audit completed
 
 ## 🛠️ Development Scripts
 
 ### Essential Scripts
 ```bash
 # Development
-npm run dev                    # Start development server
-npm run test:local            # Run all local tests
+npm run dev                    # Start development server (OAuth disabled)
+npm run test:local            # Run all local tests (excluding OAuth)
 npm run lint                  # Run linting
 npm run build                 # Build for production
 npm run preview               # Preview production build
@@ -214,25 +222,26 @@ npm run deploy:rollback       # Rollback deployment
 
 ## 🚨 Critical Issues & Solutions
 
-### 1. Merge Conflicts
+### 1. OAuth Local Testing Limitation
+- **Issue**: Cannot modify Supabase callback URLs for localhost
+- **Solution**: OAuth testing only in staging environment
+- **Workflow**: Local development → Staging testing → Production release
+
+### 2. Merge Conflicts
 - **Solution**: Always rebase on latest develop before creating PR
 - **Command**: `git rebase develop`
 
-### 2. Missing CI/CD Checks
+### 3. Missing CI/CD Checks
 - **Solution**: Ensure all workflows are properly configured
 - **Verification**: Check `.github/workflows/` directory
 
-### 3. Dev Branch Workflow
+### 4. Dev Branch Workflow
 - **Solution**: All features go to `develop` first, then `main`
 - **Process**: Feature → Develop → Staging → Main → Production
 
-### 4. Local Testing
-- **Solution**: MANDATORY local testing before any push
+### 5. Local Testing
+- **Solution**: MANDATORY local testing before any push (excluding OAuth)
 - **Script**: `npm run test:local`
-
-### 5. OAuth Configuration
-- **Solution**: Separate OAuth configs for each environment
-- **Management**: Use OAuth setup scripts
 
 ## 📊 Monitoring & Alerts
 
@@ -306,10 +315,9 @@ npm run deploy:rollback       # Rollback deployment
 ```bash
 # Setup development environment
 npm install
-npm run oauth:setup
 npm run test:local
 
-# Start development
+# Start development (OAuth disabled)
 npm run dev
 
 # Create feature
@@ -325,4 +333,8 @@ gh pr create --base develop --title "feat: your feature"
 
 ---
 
-**⚠️ IMPORTANT**: This pipeline is MANDATORY for all development work. No exceptions. 
+**⚠️ IMPORTANT**: 
+- OAuth testing is ONLY performed in staging environment
+- Local development excludes OAuth functionality
+- All features must be tested in staging before production release
+- This pipeline is MANDATORY for all development work. No exceptions. 
