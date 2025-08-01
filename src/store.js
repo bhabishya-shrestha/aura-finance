@@ -113,10 +113,10 @@ const useStore = create((set, get) => ({
       };
 
       await db.transactions.add(transactionWithUser);
-      
+
       // Clear analytics cache to ensure fresh data
       analyticsService.clearCache();
-      
+
       // Reload transactions to update the UI
       await get().loadTransactions();
     } catch (error) {
@@ -183,10 +183,10 @@ const useStore = create((set, get) => ({
       }));
 
       await db.transactions.bulkAdd(transactionsWithUser);
-      
+
       // Clear analytics cache to ensure fresh data
       analyticsService.clearCache();
-      
+
       // Reload transactions to update the UI
       await get().loadTransactions();
       set({ parsedTransactions: [] });
@@ -346,6 +346,9 @@ const useStore = create((set, get) => ({
 
       const accountWithUser = {
         ...accountData,
+        initialBalance: accountData.balance || 0,
+        balance: accountData.balance || 0,
+        lastBalanceUpdate: new Date().toISOString(),
         userId: userId || accountData.userId || null,
       };
 
@@ -400,12 +403,57 @@ const useStore = create((set, get) => ({
     return transactions.filter(t => t.accountId === accountId);
   },
 
-  // Calculate account balance
+  // Calculate account balance (includes initial balance and manual adjustments)
   getAccountBalance: accountId => {
-    const { transactions } = get();
-    return transactions
+    const { transactions, accounts } = get();
+    const account = accounts.find(a => a.id === accountId);
+    if (!account) return 0;
+
+    // Get the base balance (initial balance + manual adjustments)
+    const baseBalance = account.balance || account.initialBalance || 0;
+
+    // Add transaction amounts
+    const transactionBalance = transactions
       .filter(t => t.accountId === accountId)
       .reduce((total, transaction) => total + transaction.amount, 0);
+
+    return baseBalance + transactionBalance;
+  },
+
+  // Update account balance manually
+  updateAccountBalance: async (accountId, newBalance) => {
+    try {
+      set({ isLoading: true });
+
+      // Get current account
+      const account = get().accounts.find(a => a.id === accountId);
+      if (!account) {
+        throw new Error("Account not found");
+      }
+
+      // Calculate the adjustment needed
+      const currentBalance = get().getAccountBalance(accountId);
+      const adjustment = newBalance - currentBalance;
+
+      // Update the account's base balance
+      await db.accounts.update(accountId, {
+        balance: (account.balance || account.initialBalance || 0) + adjustment,
+        lastBalanceUpdate: new Date().toISOString(),
+      });
+
+      // Clear analytics cache to ensure fresh data
+      analyticsService.clearCache();
+
+      // Reload accounts to update the UI
+      await get().loadAccounts();
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("Error updating account balance:", error);
+      }
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
   // Analytics methods using the analytics service

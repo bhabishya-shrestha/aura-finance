@@ -1,15 +1,33 @@
 import React, { useState } from "react";
-import { CreditCard, Wallet, PiggyBank, Plus, Trash2, X } from "lucide-react";
+import {
+  CreditCard,
+  Wallet,
+  PiggyBank,
+  Plus,
+  Trash2,
+  X,
+  Edit3,
+  Save,
+  X as CloseIcon,
+} from "lucide-react";
 import useStore from "../store";
 
 const Accounts = () => {
-  const { accounts, addAccount, deleteAccount, getAccountBalance } = useStore();
+  const {
+    accounts,
+    addAccount,
+    deleteAccount,
+    getAccountBalance,
+    updateAccountBalance,
+  } = useStore();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newAccount, setNewAccount] = useState({
     name: "",
     type: "checking",
     balance: 0,
   });
+  const [editingBalance, setEditingBalance] = useState(null);
+  const [newBalance, setNewBalance] = useState("");
 
   const getAccountIcon = type => {
     switch (type) {
@@ -73,6 +91,35 @@ const Accounts = () => {
     }
   };
 
+  const handleEditBalance = (accountId, currentBalance) => {
+    setEditingBalance(accountId);
+    setNewBalance(currentBalance.toString());
+  };
+
+  const handleSaveBalance = async accountId => {
+    try {
+      const balance = parseFloat(newBalance);
+      if (isNaN(balance)) {
+        alert("Please enter a valid balance amount");
+        return;
+      }
+
+      await updateAccountBalance(accountId, balance);
+      setEditingBalance(null);
+      setNewBalance("");
+    } catch (error) {
+      alert("Error updating balance. Please try again.");
+      if (import.meta.env.DEV) {
+        console.error("Error updating balance:", error);
+      }
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingBalance(null);
+    setNewBalance("");
+  };
+
   return (
     <>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition-shadow">
@@ -103,11 +150,48 @@ const Accounts = () => {
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                  <div className="text-right">
-                    <p className="text-primary font-semibold text-sm sm:text-base">
-                      {formatCurrency(balance)}
-                    </p>
-                  </div>
+                  {editingBalance === account.id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={newBalance}
+                        onChange={e => setNewBalance(e.target.value)}
+                        className="w-20 sm:w-24 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        onKeyPress={e => {
+                          if (e.key === "Enter") {
+                            handleSaveBalance(account.id);
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => handleSaveBalance(account.id)}
+                        className="p-1 sm:p-1.5 hover:bg-green-500/20 rounded transition-all duration-200 text-green-600 dark:text-green-400"
+                      >
+                        <Save className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="p-1 sm:p-1.5 hover:bg-gray-500/20 rounded transition-all duration-200 text-gray-600 dark:text-gray-400"
+                      >
+                        <CloseIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-right">
+                      <p className="text-primary font-semibold text-sm sm:text-base">
+                        {formatCurrency(balance)}
+                      </p>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => handleEditBalance(account.id, balance)}
+                    className="p-1 sm:p-1.5 hover:bg-blue-500/20 rounded transition-all duration-200 text-blue-600 dark:text-blue-400"
+                    title="Edit Balance"
+                  >
+                    <Edit3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </button>
 
                   <button
                     onClick={() =>
