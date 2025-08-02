@@ -401,14 +401,14 @@ const parseDateWithContext = (dateStr, options = {}) => {
     // Additional validation based on context
     if (statementStartDate && statementEndDate) {
       if (parsedDate < statementStartDate || parsedDate > statementEndDate) {
-        console.warn(
-          `Date ${parsedDate.toISOString()} is outside statement period ${statementStartDate.toISOString()} - ${statementEndDate.toISOString()}`
-        );
+        // console.warn(
+        //   `Date ${parsedDate.toISOString()} is outside statement period ${statementStartDate.toISOString()} - ${statementEndDate.toISOString()}`
+        // );
       }
     }
 
     if (!allowFutureDates && parsedDate > new Date()) {
-      console.warn(`Future date detected: ${parsedDate.toISOString()}`);
+      // console.warn(`Future date detected: ${parsedDate.toISOString()}`);
     }
 
     return parsedDate;

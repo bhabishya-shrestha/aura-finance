@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import {
   X,
   Plus,
@@ -306,32 +312,32 @@ const EnhancedAccountAssignmentModal = ({
   }, [isOpen, transactions]);
 
   // Enhanced account suggestion for transactions (simple function to avoid circular dependencies)
-  const suggestAccountForTransaction = (
-    transaction,
-    accountsToUse = localAccounts
-  ) => {
-    const relevantAccounts = accountsToUse.filter(
-      account =>
-        (account &&
-          account.name &&
-          account.name
-            .toLowerCase()
-            .includes(transaction.description.toLowerCase())) ||
-        (account && account.type === transaction.category)
-    );
+  const suggestAccountForTransaction = useCallback(
+    (transaction, accountsToUse = localAccounts) => {
+      const relevantAccounts = accountsToUse.filter(
+        account =>
+          (account &&
+            account.name &&
+            account.name
+              .toLowerCase()
+              .includes(transaction.description.toLowerCase())) ||
+          (account && account.type === transaction.category)
+      );
 
-    if (relevantAccounts.length > 0) {
-      return relevantAccounts[0];
-    }
+      if (relevantAccounts.length > 0) {
+        return relevantAccounts[0];
+      }
 
-    // Fallback: suggest based on transaction type
-    return accountsToUse.filter(account => {
-      if (!account) return false;
-      if (transaction.amount > 0 && account.type === "checking") return true;
-      if (transaction.amount < 0 && account.type === "credit") return true;
-      return false;
-    })[0];
-  };
+      // Fallback: suggest based on transaction type
+      return accountsToUse.filter(account => {
+        if (!account) return false;
+        if (transaction.amount > 0 && account.type === "checking") return true;
+        if (transaction.amount < 0 && account.type === "credit") return true;
+        return false;
+      })[0];
+    },
+    [localAccounts]
+  );
 
   // Filter accounts based on search and type
   const filteredAccounts = useMemo(() => {
@@ -387,7 +393,12 @@ const EnhancedAccountAssignmentModal = ({
     );
 
     return Object.fromEntries(sortedGroups);
-  }, [localTransactions, localAccounts, selectedAccounts]);
+  }, [
+    localTransactions,
+    localAccounts,
+    selectedAccounts,
+    suggestAccountForTransaction,
+  ]);
 
   // Get category icon for transaction
   const getCategoryIcon = transaction => {
@@ -469,7 +480,8 @@ const EnhancedAccountAssignmentModal = ({
       setSelectedAccounts(updatedSelection);
       setShowCreateAccount(false);
     } catch (error) {
-      console.error("Error creating account:", error);
+      // Error creating account - could be logged to error reporting service
+      // console.error("Error creating account:", error);
     } finally {
       setIsProcessing(false);
     }
@@ -603,7 +615,6 @@ const EnhancedAccountAssignmentModal = ({
 
       // Auto-assign transactions that match this suggestion
       const updatedSelection = { ...selectedAccounts };
-      let assignedCount = 0;
 
       localTransactions.forEach(transaction => {
         const description = (transaction.description || "").toLowerCase();
@@ -615,7 +626,6 @@ const EnhancedAccountAssignmentModal = ({
           (editedSuggestion.type && description.includes(editedSuggestion.type))
         ) {
           updatedSelection[transaction.id] = newAccount.id;
-          assignedCount++;
         }
       });
 
@@ -624,11 +634,12 @@ const EnhancedAccountAssignmentModal = ({
       setEditingSuggestion(null);
 
       // Show success feedback
-      console.log(
-        `Created account "${editedSuggestion.name}" and assigned ${assignedCount} transactions`
-      );
+      // console.log(
+      //   `Created account "${editedSuggestion.name}" and assigned ${assignedCount} transactions`
+      // );
     } catch (error) {
-      console.error("Error creating account:", error);
+      // Error creating account - could be logged to error reporting service
+      // console.error("Error creating account:", error);
     } finally {
       setIsProcessing(false);
     }
@@ -734,7 +745,8 @@ const EnhancedAccountAssignmentModal = ({
       onComplete(updatedTransactions);
       onClose();
     } catch (error) {
-      console.error("Error saving transaction assignments:", error);
+      // Error saving transaction assignments - could be logged to error reporting service
+      // console.error("Error saving transaction assignments:", error);
       // You might want to show an error message to the user here
     } finally {
       setIsProcessing(false);
@@ -1674,7 +1686,8 @@ const EnhancedAccountAssignmentModal = ({
                 <p className="text-xs text-purple-800 dark:text-purple-200">
                   <strong>Note:</strong> This will update the year for all
                   selected transactions while preserving the month and day. For
-                  example, "06/21" will become "06/21/{batchYear}".
+                  example, &quot;06/21&quot; will become &quot;06/21/{batchYear}
+                  &quot;.
                 </p>
               </div>
             </div>

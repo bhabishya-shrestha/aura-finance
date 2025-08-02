@@ -67,7 +67,7 @@ const AppLayout = () => {
     loadAccounts();
 
     isInitialized.current = true;
-  }, []); // Empty dependency array - only run once
+  }, [loadTransactions, loadAccounts]); // Include dependencies
 
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);

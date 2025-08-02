@@ -222,60 +222,63 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         setIsProcessing(false);
       }
     },
-    [importOptions]
+    [importOptions, applyImportOptionsToTransactions]
   );
 
   // Apply import options to transactions
-  const applyImportOptionsToTransactions = transactions => {
-    return transactions
-      .map(transaction => {
-        let updatedTransaction = { ...transaction };
+  const applyImportOptionsToTransactions = useCallback(
+    transactions => {
+      return transactions
+        .map(transaction => {
+          let updatedTransaction = { ...transaction };
 
-        // Apply user-specified year if provided
-        if (importOptions.userSpecifiedYear && transaction.date) {
-          const currentDate = new Date(transaction.date);
-          const updatedDate = new Date(
-            importOptions.userSpecifiedYear,
-            currentDate.getMonth(),
-            currentDate.getDate()
-          );
-          updatedTransaction.date = updatedDate;
-        }
-
-        // Filter by statement period if provided
-        if (
-          importOptions.statementStartDate ||
-          importOptions.statementEndDate
-        ) {
-          const transactionDate = new Date(updatedTransaction.date);
-          const startDate = importOptions.statementStartDate
-            ? new Date(importOptions.statementStartDate)
-            : null;
-          const endDate = importOptions.statementEndDate
-            ? new Date(importOptions.statementEndDate)
-            : null;
-
-          if (startDate && transactionDate < startDate) {
-            return null; // Filter out transactions before start date
+          // Apply user-specified year if provided
+          if (importOptions.userSpecifiedYear && transaction.date) {
+            const currentDate = new Date(transaction.date);
+            const updatedDate = new Date(
+              importOptions.userSpecifiedYear,
+              currentDate.getMonth(),
+              currentDate.getDate()
+            );
+            updatedTransaction.date = updatedDate;
           }
-          if (endDate && transactionDate > endDate) {
-            return null; // Filter out transactions after end date
-          }
-        }
 
-        // Filter future dates if not allowed
-        if (!importOptions.allowFutureDates && transaction.date) {
-          const transactionDate = new Date(transaction.date);
-          const now = new Date();
-          if (transactionDate > now) {
-            return null; // Filter out future transactions
-          }
-        }
+          // Filter by statement period if provided
+          if (
+            importOptions.statementStartDate ||
+            importOptions.statementEndDate
+          ) {
+            const transactionDate = new Date(updatedTransaction.date);
+            const startDate = importOptions.statementStartDate
+              ? new Date(importOptions.statementStartDate)
+              : null;
+            const endDate = importOptions.statementEndDate
+              ? new Date(importOptions.statementEndDate)
+              : null;
 
-        return updatedTransaction;
-      })
-      .filter(Boolean); // Remove null transactions
-  };
+            if (startDate && transactionDate < startDate) {
+              return null; // Filter out transactions before start date
+            }
+            if (endDate && transactionDate > endDate) {
+              return null; // Filter out transactions after end date
+            }
+          }
+
+          // Filter future dates if not allowed
+          if (!importOptions.allowFutureDates && transaction.date) {
+            const transactionDate = new Date(transaction.date);
+            const now = new Date();
+            if (transactionDate > now) {
+              return null; // Filter out future transactions
+            }
+          }
+
+          return updatedTransaction;
+        })
+        .filter(Boolean); // Remove null transactions
+    },
+    [importOptions]
+  );
 
   const handleFileSelect = useCallback(
     event => {
@@ -435,7 +438,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           <Calendar className="w-4 h-4 inline mr-1" />
-                          Year for Ambiguous Dates (e.g., "06/21")
+                          Year for Ambiguous Dates (e.g., &quot;06/21&quot;)
                         </label>
                         <div className="flex items-center gap-3">
                           <input
@@ -565,10 +568,13 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                             Smart Date Detection:
                           </p>
                           <ul className="space-y-1">
-                            <li>• "06/21" → June 21st, 2024 (current year)</li>
                             <li>
-                              • "12/25" → December 25th, 2023 (previous year if
-                              in future)
+                              • &quot;06/21&quot; → June 21st, 2024 (current
+                              year)
+                            </li>
+                            <li>
+                              • &quot;12/25&quot; → December 25th, 2023
+                              (previous year if in future)
                             </li>
                             <li>
                               • Statement period helps determine correct year

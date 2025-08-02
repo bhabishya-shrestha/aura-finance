@@ -104,7 +104,7 @@ const DashboardPage = ({ onPageChange }) => {
         setIsAccountAssignmentModalOpen(true);
         setIsImportModalOpen(false);
       } catch (error) {
-        console.error("Error importing transactions:", error);
+        // console.error("Error importing transactions:", error);
         setError("Failed to import transactions. Please try again.");
       }
     } else {

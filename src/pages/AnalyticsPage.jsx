@@ -53,7 +53,7 @@ const AnalyticsDataProvider = ({ children }) => {
       const saved = localStorage.getItem("aura-finance-timeRange");
       return saved || "week";
     } catch (error) {
-      console.warn("Could not load saved time range:", error);
+      // console.warn("Could not load saved time range:", error);
       return "week";
     }
   };
@@ -70,7 +70,7 @@ const AnalyticsDataProvider = ({ children }) => {
       // Force refresh cache when time range changes
       analyticsService.forceRefresh();
     } catch (error) {
-      console.warn("Could not save time range:", error);
+      // console.warn("Could not save time range:", error);
     }
   }, []);
 
@@ -88,7 +88,7 @@ const AnalyticsDataProvider = ({ children }) => {
 
     // Professional data validation
     if (!Array.isArray(transactions)) {
-      console.error("Invalid transactions data:", transactions);
+      // console.error("Invalid transactions data:", transactions);
       setIsAnalyticsLoading(false);
       return getEmptyAnalyticsData();
     }
@@ -109,11 +109,11 @@ const AnalyticsDataProvider = ({ children }) => {
     );
 
     if (validTransactions.length !== transactions.length) {
-      console.warn("Data consistency issue:", {
-        totalTransactions: transactions.length,
-        validTransactions: validTransactions.length,
-        invalidTransactions: transactions.length - validTransactions.length,
-      });
+      // console.warn("Data consistency issue:", {
+      //   totalTransactions: transactions.length,
+      //   validTransactions: validTransactions.length,
+      //   invalidTransactions: transactions.length - validTransactions.length,
+      // });
     }
 
     // Get all analytics data in a single batch calculation
@@ -180,33 +180,33 @@ const AnalyticsDataProvider = ({ children }) => {
     setIsAnalyticsLoading(false);
 
     // Professional debug logging
-    if (import.meta.env.DEV) {
-      console.log("Analytics data calculation:", {
-        timeRange,
-        transactionCount: transactions.length,
-        validTransactionCount: validTransactions.length,
-        needsRecalculation,
-        calculationTime: Date.now(),
-        dataSummary: {
-          spendingByCategory: enhancedSpendingData.length,
-          monthlySpending: enhancedMonthlyData.length,
-          spendingTrends: data.spendingTrends.length,
-          hasIncomeVsSpending:
-            !!data.incomeVsSpending.income || !!data.incomeVsSpending.spending,
-          quickAnalytics: data.quickAnalytics,
-        },
-        dataConsistency: {
-          totalTransactions: transactions.length,
-          validTransactions: validTransactions.length,
-          dataIntegrity: validTransactions.length === transactions.length,
-        },
-      });
-    }
+    // if (import.meta.env.DEV) {
+    //   console.log("Analytics data calculation:", {
+    //     timeRange,
+    //     transactionCount: transactions.length,
+    //     validTransactionCount: validTransactions.length,
+    //     needsRecalculation,
+    //     calculationTime: Date.now(),
+    //     dataSummary: {
+    //       spendingByCategory: enhancedSpendingData.length,
+    //       monthlySpending: enhancedMonthlyData.length,
+    //       spendingTrends: data.spendingTrends.length,
+    //       hasIncomeVsSpending:
+    //         !!data.incomeVsSpending.income || !!data.incomeVsSpending.spending,
+    //       quickAnalytics: data.quickAnalytics,
+    //     },
+    //     dataConsistency: {
+    //       totalTransactions: transactions.length,
+    //       validTransactions: validTransactions.length,
+    //       dataIntegrity: validTransactions.length === transactions.length,
+    //     },
+    //   });
+    // }
 
     return result;
   }, [
     timeRange,
-    transactions.length,
+    transactions,
     lastTransactionCount,
     isAnalyticsLoading,
     getAllAnalytics,
@@ -444,22 +444,22 @@ const SpendingTrendsChart = React.memo(({ data }) => {
   }, []);
 
   // Debug logging
-  console.log("SpendingTrendsChart received data:", {
-    data,
-    dataLength: data?.length,
-    hasData: data?.some(item => item.spending > 0),
-    sampleData: data?.slice(0, 3),
-    // Add detailed analysis of the data
-    allSpendingValues: data?.map(item => ({
-      period: item.period,
-      spending: item.spending,
-      income: item.income,
-      net: item.net,
-      transactionCount: item.transactionCount,
-    })),
-    totalSpending: data?.reduce((sum, item) => sum + item.spending, 0),
-    totalIncome: data?.reduce((sum, item) => sum + item.income, 0),
-  });
+  // console.log("SpendingTrendsChart received data:", {
+  //   data,
+  //   dataLength: data?.length,
+  //   hasData: data?.some(item => item.spending > 0),
+  //   sampleData: data?.slice(0, 3),
+  //   // Add detailed analysis of the data
+  //   allSpendingValues: data?.map(item => ({
+  //     period: item.period,
+  //     spending: item.spending,
+  //     income: item.income,
+  //     net: item.net,
+  //     transactionCount: item.transactionCount,
+  //   })),
+  //   totalSpending: data?.reduce((sum, item) => sum + item.spending, 0),
+  //   totalIncome: data?.reduce((sum, item) => sum + item.income, 0),
+  // });
 
   if (!data || !data.length) return <EmptyChartState />;
 

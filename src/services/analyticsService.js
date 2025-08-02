@@ -32,7 +32,7 @@ class AnalyticsService {
 
   // Force refresh cache
   forceRefresh() {
-    console.log("Force refreshing analytics cache");
+    // console.log("Force refreshing analytics cache");
     this.clearCache();
   }
 
@@ -85,13 +85,13 @@ class AnalyticsService {
 
     // Debug logging
     if (import.meta.env.DEV) {
-      console.log(`Analytics calculation for ${fullCacheKey}:`, {
-        transactionCount: transactions.length,
-        transactionHash,
-        result: result,
-        hasData: Array.isArray(result) ? result.length > 0 : result !== 0,
-        calculationTime: Date.now() - this.lastCalculationTime,
-      });
+      // console.log(`Analytics calculation for ${fullCacheKey}:`, {
+      //   transactionCount: transactions.length,
+      //   transactionHash,
+      //   result: result,
+      //   hasData: Array.isArray(result) ? result.length > 0 : result !== 0,
+      //   calculationTime: Date.now() - this.lastCalculationTime,
+      // });
     }
 
     this.cache.set(fullCacheKey, {
@@ -110,12 +110,12 @@ class AnalyticsService {
   filterTransactionsByTimeRange(transactions, timeRange) {
     // Input validation
     if (!Array.isArray(transactions)) {
-      console.warn("Invalid transactions input:", transactions);
+      // console.warn("Invalid transactions input:", transactions);
       return [];
     }
 
     if (!timeRange || typeof timeRange !== "string") {
-      console.warn("Invalid timeRange input:", timeRange);
+      // console.warn("Invalid timeRange input:", timeRange);
       return transactions;
     }
 
@@ -150,7 +150,7 @@ class AnalyticsService {
     const filteredTransactions = transactions.filter(transaction => {
       // Validate transaction structure
       if (!transaction || typeof transaction !== "object") {
-        console.warn("Invalid transaction object:", transaction);
+        // console.warn("Invalid transaction object:", transaction);
         return false;
       }
 
@@ -167,12 +167,12 @@ class AnalyticsService {
 
       // Check if the date is valid
       if (isNaN(transactionDate.getTime())) {
-        console.warn(
-          "Invalid transaction date:",
-          transaction.date,
-          "for transaction:",
-          transaction
-        );
+        // console.warn(
+        //   "Invalid transaction date:",
+        //   transaction.date,
+        //   "for transaction:",
+        //   transaction
+        // );
         return false;
       }
 
@@ -181,36 +181,36 @@ class AnalyticsService {
 
     // Professional debug logging
     if (import.meta.env.DEV) {
-      console.log(`Filtered transactions for ${timeRange}:`, {
-        totalTransactions: transactions.length,
-        filteredCount: filteredTransactions.length,
-        startDate: startDate.toISOString(),
-        endDate: now.toISOString(),
-        sampleTransaction:
-          filteredTransactions.length > 0 ? filteredTransactions[0] : null,
-        sampleTransactionDates: transactions.slice(0, 3).map(t => ({
-          id: t.id,
-          date: t.date,
-          dateType: typeof t.date,
-          isDateObject: t.date instanceof Date,
-          parsedDate: new Date(t.date),
-          parsedDateValid: !isNaN(new Date(t.date).getTime()),
-        })),
-        validationSummary: {
-          validTransactions: filteredTransactions.length,
-          invalidTransactions:
-            transactions.length - filteredTransactions.length,
-          dateRange: `${startDate.toLocaleDateString()} - ${now.toLocaleDateString()}`,
-        },
-      });
+      // console.log(`Filtered transactions for ${timeRange}:`, {
+      //   totalTransactions: transactions.length,
+      //   filteredCount: filteredTransactions.length,
+      //   startDate: startDate.toISOString(),
+      //   endDate: now.toISOString(),
+      //   sampleTransaction:
+      //     filteredTransactions.length > 0 ? filteredTransactions[0] : null,
+      //   sampleTransactionDates: transactions.slice(0, 3).map(t => ({
+      //     id: t.id,
+      //     date: t.date,
+      //     dateType: typeof t.date,
+      //     isDateObject: t.date instanceof Date,
+      //     parsedDate: new Date(t.date),
+      //     parsedDateValid: !isNaN(new Date(t.date).getTime()),
+      //   })),
+      //   validationSummary: {
+      //     validTransactions: filteredTransactions.length,
+      //     invalidTransactions:
+      //       transactions.length - filteredTransactions.length,
+      //     dateRange: `${startDate.toLocaleDateString()} - ${now.toLocaleDateString()}`,
+      //   },
+      // });
     }
 
     // Fallback: if no transactions match the time range, return all transactions
     // This ensures charts show data even if date filtering doesn't work
     if (filteredTransactions.length === 0 && transactions.length > 0) {
-      console.warn(
-        `No transactions found for time range '${timeRange}', falling back to all transactions`
-      );
+      // console.warn(
+      //   `No transactions found for time range '${timeRange}', falling back to all transactions`
+      // );
       return transactions;
     }
 
@@ -331,10 +331,10 @@ class AnalyticsService {
             }
 
             if (isNaN(transactionDate.getTime())) {
-              console.warn(
-                "Invalid date in monthly spending calculation:",
-                transaction.date
-              );
+              // console.warn(
+              //   "Invalid date in monthly spending calculation:",
+              //   transaction.date
+              // );
               return;
             }
 
@@ -366,10 +366,10 @@ class AnalyticsService {
             }
 
             if (isNaN(transactionDate.getTime())) {
-              console.warn(
-                "Invalid date in monthly spending calculation:",
-                transaction.date
-              );
+              // console.warn(
+              //   "Invalid date in monthly spending calculation:",
+              //   transaction.date
+              // );
               return;
             }
 
@@ -487,40 +487,40 @@ class AnalyticsService {
         const now = new Date();
 
         // Determine period type and count based on time range
-        let periods, periodType, startDate, endDate;
+        let periods, periodType, startDate;
 
         switch (timeRange) {
           case "week":
             periods = 7;
             periodType = "day";
             startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            endDate = now;
+            // endDate = now; // Not used in this context
             break;
           case "month":
             periods = 4; // 4 weeks
             periodType = "week";
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            endDate = now;
+            // endDate = now; // Not used in this context
             break;
           case "quarter": {
             periods = 3;
             periodType = "month";
             const currentQuarter = Math.floor(now.getMonth() / 3);
             startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
-            endDate = now;
+            // endDate = now; // Not used in this context
             break;
           }
           case "year":
             periods = 12;
             periodType = "month";
             startDate = new Date(now.getFullYear(), 0, 1);
-            endDate = now;
+            // endDate = now; // Not used in this context
             break;
           default:
             periods = 6;
             periodType = "month";
             startDate = new Date(now.getTime() - 6 * 30 * 24 * 60 * 60 * 1000);
-            endDate = now;
+          // endDate = now; // Not used in this context
         }
 
         // Generate periods
@@ -568,7 +568,7 @@ class AnalyticsService {
           }
 
           // Filter transactions for this period
-          const periodTransactions = transactions.filter((t, idx) => {
+          const periodTransactions = transactions.filter(t => {
             let transactionDate;
             if (typeof t.date === "string") {
               transactionDate = new Date(t.date);
@@ -580,10 +580,10 @@ class AnalyticsService {
             }
 
             if (isNaN(transactionDate.getTime())) {
-              console.warn(
-                "Invalid date in spending trends calculation:",
-                t.date
-              ); // Log the invalid date
+              // console.warn(
+              //   "Invalid date in spending trends calculation:",
+              //   t.date
+              // ); // Log the invalid date
               return false;
             }
 
@@ -591,22 +591,22 @@ class AnalyticsService {
               transactionDate >= periodStart && transactionDate <= periodEnd;
 
             // Debug logging for first few transactions
-            if (import.meta.env.DEV && idx < 3) {
-              // Log for first 3 transactions in each period
-              console.log("Period filtering debug:", {
-                periodLabel,
-                periodStart: periodStart.toISOString(),
-                periodEnd: periodEnd.toISOString(),
-                transactionDate: transactionDate.toISOString(),
-                isInPeriod,
-                transaction: {
-                  id: t.id,
-                  amount: t.amount,
-                  date: t.date,
-                  category: t.category,
-                },
-              });
-            }
+            // if (import.meta.env.DEV && idx < 3) {
+            //   // Log for first 3 transactions in each period
+            //   console.log("Period filtering debug:", {
+            //     periodLabel,
+            //     periodStart: periodStart.toISOString(),
+            //     periodEnd: periodEnd.toISOString(),
+            //     transactionDate: transactionDate.toISOString(),
+            //     isInPeriod,
+            //     transaction: {
+            //       id: t.id,
+            //       amount: t.amount,
+            //       date: t.date,
+            //       category: t.category,
+            //     },
+            //   });
+            // }
 
             return isInPeriod;
           });
@@ -629,39 +629,39 @@ class AnalyticsService {
         }
 
         // Professional debug logging
-        if (import.meta.env.DEV) {
-          console.log("Spending trends calculation:", {
-            timeRange,
-            periods,
-            periodType,
-            startDate: startDate.toISOString(),
-            endDate: endDate.toISOString(),
-            trendsCount: trends.length,
-            trends: trends,
-            hasData: trends.some(t => t.spending > 0 || t.income > 0),
-            totalTransactions: transactions.length,
-            sampleTransaction: transactions.length > 0 ? transactions[0] : null,
-            sampleTrend: trends.length > 0 ? trends[0] : null,
-            allPeriodsHaveData: trends.every(
-              t => t.spending > 0 || t.income > 0
-            ),
-            periodsWithData: trends.filter(t => t.spending > 0 || t.income > 0)
-              .length,
-            // Add detailed transaction analysis
-            transactionSample: transactions.slice(0, 5).map(t => ({
-              id: t.id,
-              amount: t.amount,
-              date: t.date,
-              category: t.category,
-              parsedDate: new Date(t.date),
-              isValidDate: !isNaN(new Date(t.date).getTime()),
-              isInRange: (() => {
-                const date = new Date(t.date);
-                return date >= startDate && date <= endDate;
-              })(),
-            })),
-          });
-        }
+        // if (import.meta.env.DEV) {
+        //   console.log("Spending trends calculation:", {
+        //     timeRange,
+        //     periods,
+        //     periodType,
+        //     startDate: startDate.toISOString(),
+        //     endDate: endDate.toISOString(),
+        //     trendsCount: trends.length,
+        //     trends: trends,
+        //     hasData: trends.some(t => t.spending > 0 || t.income > 0),
+        //     totalTransactions: transactions.length,
+        //     sampleTransaction: transactions.length > 0 ? transactions[0] : null,
+        //     sampleTrend: trends.length > 0 ? trends[0] : null,
+        //     allPeriodsHaveData: trends.every(
+        //       t => t.spending > 0 || t.income > 0
+        //     ),
+        //     periodsWithData: trends.filter(t => t.spending > 0 || t.income > 0)
+        //       .length,
+        //     // Add detailed transaction analysis
+        //     transactionSample: transactions.slice(0, 5).map(t => ({
+        //       id: t.id,
+        //       amount: t.amount,
+        //       date: t.date,
+        //       category: t.category,
+        //       parsedDate: new Date(t.date),
+        //       isValidDate: !isNaN(new Date(t.date).getTime()),
+        //       isInRange: (() => {
+        //         const date = new Date(t.date);
+        //         return date >= startDate && date <= endDate;
+        //       })(),
+        //     })),
+        //   });
+        // }
 
         return trends;
       },
@@ -744,16 +744,16 @@ class AnalyticsService {
         );
 
         // Professional debug logging
-        if (import.meta.env.DEV) {
-          console.log(`Batch analytics calculation for ${timeRange}:`, {
-            transactionCount: transactions.length,
-            filteredCount: filteredTransactions.length,
-            hasData: filteredTransactions.length > 0,
-            sampleTransaction:
-              filteredTransactions.length > 0 ? filteredTransactions[0] : null,
-            dateRange: timeRange === "all" ? "All time" : `${timeRange} period`,
-          });
-        }
+        // if (import.meta.env.DEV) {
+        //   console.log(`Batch analytics calculation for ${timeRange}:`, {
+        //     transactionCount: transactions.length,
+        //     filteredCount: filteredTransactions.length,
+        //     hasData: filteredTransactions.length > 0,
+        //     sampleTransaction:
+        //       filteredTransactions.length > 0 ? filteredTransactions[0] : null,
+        //     dateRange: timeRange === "all" ? "All time" : `${timeRange} period`,
+        //   });
+        // }
 
         // Calculate all analytics using the same filtered transaction set
         const spendingByCategory = this.calculateSpendingByCategory(
