@@ -59,6 +59,7 @@ describe("StatementImporter", () => {
   const mockCheckForDuplicates = vi.fn();
   const mockAddTransactionsWithDuplicateHandling = vi.fn();
   const mockOnClose = vi.fn();
+  const mockOnImportComplete = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -71,7 +72,13 @@ describe("StatementImporter", () => {
   });
 
   it("renders when open", () => {
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     expect(screen.getByText("Import Financial Documents")).toBeInTheDocument();
     expect(
@@ -82,7 +89,13 @@ describe("StatementImporter", () => {
   });
 
   it("does not render when closed", () => {
-    render(<StatementImporter isOpen={false} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={false}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     expect(
       screen.queryByText("Import Financial Documents")
@@ -90,7 +103,13 @@ describe("StatementImporter", () => {
   });
 
   it("shows file upload area", () => {
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     expect(
       screen.getByText("Drop your file here or click to browse")
@@ -117,7 +136,13 @@ describe("StatementImporter", () => {
       },
     ]);
 
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const file = new File(["test"], "test.csv", { type: "text/csv" });
     const input = screen.getByRole("button", { name: "Choose File" });
@@ -135,7 +160,13 @@ describe("StatementImporter", () => {
   });
 
   it("validates file size", async () => {
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     // Create a file larger than 20MB
     const largeFile = new File(["x".repeat(21 * 1024 * 1024)], "large.csv", {
@@ -156,7 +187,13 @@ describe("StatementImporter", () => {
   });
 
   it("validates file type", async () => {
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const invalidFile = new File(["test"], "test.txt", { type: "text/plain" });
     const input = screen.getByRole("button", { name: "Choose File" });
@@ -189,7 +226,13 @@ describe("StatementImporter", () => {
       },
     ]);
 
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const file = new File(["test"], "test.csv", { type: "text/csv" });
     const input = screen.getByRole("button", { name: "Choose File" });
@@ -249,7 +292,13 @@ describe("StatementImporter", () => {
       notes: "Successfully extracted transaction data",
     });
 
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const file = new File(["test"], "receipt.jpg", { type: "image/jpeg" });
     const input = screen.getByRole("button", { name: "Choose File" });
@@ -281,7 +330,13 @@ describe("StatementImporter", () => {
       },
     ]);
 
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const file = new File(["test"], "test.csv", { type: "text/csv" });
     const input = screen.getByRole("button", { name: "Choose File" });
@@ -340,7 +395,13 @@ describe("StatementImporter", () => {
       },
     });
 
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const file = new File(["test"], "test.csv", { type: "text/csv" });
     const input = screen.getByRole("button", { name: "Choose File" });
