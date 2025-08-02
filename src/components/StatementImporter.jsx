@@ -98,6 +98,61 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
     }
   };
 
+  // Apply import options to transactions
+  const applyImportOptionsToTransactions = useCallback(
+    transactions => {
+      return transactions
+        .map(transaction => {
+          let updatedTransaction = { ...transaction };
+
+          // Apply user-specified year if provided
+          if (importOptions.userSpecifiedYear && transaction.date) {
+            const currentDate = new Date(transaction.date);
+            const updatedDate = new Date(
+              importOptions.userSpecifiedYear,
+              currentDate.getMonth(),
+              currentDate.getDate()
+            );
+            updatedTransaction.date = updatedDate;
+          }
+
+          // Filter by statement period if provided
+          if (
+            importOptions.statementStartDate ||
+            importOptions.statementEndDate
+          ) {
+            const transactionDate = new Date(updatedTransaction.date);
+            const startDate = importOptions.statementStartDate
+              ? new Date(importOptions.statementStartDate)
+              : null;
+            const endDate = importOptions.statementEndDate
+              ? new Date(importOptions.statementEndDate)
+              : null;
+
+            if (startDate && transactionDate < startDate) {
+              return null; // Filter out transactions before start date
+            }
+            if (endDate && transactionDate > endDate) {
+              return null; // Filter out transactions after end date
+            }
+          }
+
+          // Filter future dates if not allowed
+          if (!importOptions.allowFutureDates && transaction.date) {
+            const transactionDate = new Date(transaction.date);
+            const now = new Date();
+            if (transactionDate > now) {
+              return null; // Filter out future transactions
+            }
+          }
+
+          return updatedTransaction;
+        })
+        .filter(Boolean); // Remove null transactions
+    },
+    [importOptions]
+  );
+
   // Enhanced file processing with better progress tracking
   const processFile = useCallback(
     async file => {
@@ -208,6 +263,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         setParsedTransactions(transactions);
         setProcessingSummary(summary);
         setShowAllTransactions(true);
+        setIsProcessing(false);
 
         setProcessingProgress(100);
         setProcessingStep("Import complete!");
@@ -223,61 +279,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       }
     },
     [importOptions, applyImportOptionsToTransactions]
-  );
-
-  // Apply import options to transactions
-  const applyImportOptionsToTransactions = useCallback(
-    transactions => {
-      return transactions
-        .map(transaction => {
-          let updatedTransaction = { ...transaction };
-
-          // Apply user-specified year if provided
-          if (importOptions.userSpecifiedYear && transaction.date) {
-            const currentDate = new Date(transaction.date);
-            const updatedDate = new Date(
-              importOptions.userSpecifiedYear,
-              currentDate.getMonth(),
-              currentDate.getDate()
-            );
-            updatedTransaction.date = updatedDate;
-          }
-
-          // Filter by statement period if provided
-          if (
-            importOptions.statementStartDate ||
-            importOptions.statementEndDate
-          ) {
-            const transactionDate = new Date(updatedTransaction.date);
-            const startDate = importOptions.statementStartDate
-              ? new Date(importOptions.statementStartDate)
-              : null;
-            const endDate = importOptions.statementEndDate
-              ? new Date(importOptions.statementEndDate)
-              : null;
-
-            if (startDate && transactionDate < startDate) {
-              return null; // Filter out transactions before start date
-            }
-            if (endDate && transactionDate > endDate) {
-              return null; // Filter out transactions after end date
-            }
-          }
-
-          // Filter future dates if not allowed
-          if (!importOptions.allowFutureDates && transaction.date) {
-            const transactionDate = new Date(transaction.date);
-            const now = new Date();
-            if (transactionDate > now) {
-              return null; // Filter out future transactions
-            }
-          }
-
-          return updatedTransaction;
-        })
-        .filter(Boolean); // Remove null transactions
-    },
-    [importOptions]
   );
 
   const handleFileSelect = useCallback(
@@ -694,6 +695,14 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
             {/* Results */}
             {showAllTransactions && !isProcessing && (
               <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+                    Analysis Results
+                  </h2>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Review and select transactions to import
+                  </p>
+                </div>
                 {/* Summary */}
                 {processingSummary && (
                   <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
@@ -837,7 +846,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                       onClick={handleImportAll}
                       className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                     >
-                      Import All ({parsedTransactions.length})
+                      Import {parsedTransactions.length} Transactions
                     </button>
                   </div>
                 </div>
