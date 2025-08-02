@@ -364,10 +364,7 @@ const EnhancedAccountAssignmentModal = ({
         suggestion = null; // No suggestion since it's manually assigned
       } else {
         // No manual assignment - use AI suggestion
-        suggestion = suggestAccountForTransaction(
-          transaction,
-          localAccounts
-        );
+        suggestion = suggestAccountForTransaction(transaction, localAccounts);
         account = suggestion;
         key = suggestion ? suggestion.id : "uncategorized";
       }
@@ -441,7 +438,14 @@ const EnhancedAccountAssignmentModal = ({
         throw new Error("Account data is missing or invalid");
       }
 
-      const newAccount = await addAccount(newAccountData);
+      // Clean the account data before sending to database
+      const cleanAccountData = {
+        name: newAccountData.name.trim(),
+        type: newAccountData.type || "checking",
+        balance: parseFloat(newAccountData.balance) || 0,
+      };
+
+      const newAccount = await addAccount(cleanAccountData);
 
       // Validate that the account was created successfully
       if (!newAccount || !newAccount.id) {
@@ -572,9 +576,15 @@ const EnhancedAccountAssignmentModal = ({
     try {
       setIsProcessing(true);
 
-      // Create account from edited suggestion
+      // Validate and clean account data
+      const accountName = editedSuggestion.name.trim();
+      if (!accountName) {
+        throw new Error("Account name cannot be empty");
+      }
+
+      // Create account from edited suggestion - only include valid database fields
       const accountData = {
-        name: editedSuggestion.name,
+        name: accountName,
         type: editedSuggestion.type || "checking",
         balance: 0,
       };
@@ -697,14 +707,14 @@ const EnhancedAccountAssignmentModal = ({
   const handleComplete = async () => {
     try {
       setIsProcessing(true);
-      
+
       // Update each transaction with its assigned account
-      const updatePromises = localTransactions.map(async (transaction) => {
+      const updatePromises = localTransactions.map(async transaction => {
         const assignedAccountId = selectedAccounts[transaction.id];
         if (assignedAccountId && assignedAccountId !== transaction.accountId) {
           // Only update if the account assignment has changed
           await updateTransaction(transaction.id, {
-            accountId: assignedAccountId
+            accountId: assignedAccountId,
           });
         }
       });
@@ -1074,7 +1084,8 @@ const EnhancedAccountAssignmentModal = ({
                             <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 truncate">
                               AI Suggestion: {group.suggestion.reason}
                             </p>
-                          ) : group.account && selectedAccounts[group.transactions[0]?.id] ? (
+                          ) : group.account &&
+                            selectedAccounts[group.transactions[0]?.id] ? (
                             <p className="text-xs text-green-600 dark:text-green-400 mt-1 truncate">
                               ✓ Manually Assigned
                             </p>

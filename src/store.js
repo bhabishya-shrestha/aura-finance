@@ -345,7 +345,14 @@ const useStore = create((set, get) => ({
       }
 
       // Check for duplicate account names
-      const existingAccounts = await db.accounts.where("userId").equals(userId || null).toArray();
+      let existingAccounts = [];
+      if (userId) {
+        existingAccounts = await db.accounts.where("userId").equals(userId).toArray();
+      } else {
+        // If no userId, get all accounts (for demo/fallback)
+        existingAccounts = await db.accounts.toArray();
+      }
+      
       const duplicateAccount = existingAccounts.find(account => 
         account.name.toLowerCase().trim() === accountData.name.toLowerCase().trim()
       );
