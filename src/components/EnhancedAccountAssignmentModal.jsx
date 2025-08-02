@@ -353,16 +353,28 @@ const EnhancedAccountAssignmentModal = ({
     const groups = {};
 
     localTransactions.forEach(transaction => {
-      // Try to suggest account based on transaction description
-      const suggestion = suggestAccountForTransaction(
-        transaction,
-        localAccounts
-      );
-      const key = suggestion ? suggestion.id : "uncategorized";
+      // Check if transaction has been manually assigned to an account
+      const assignedAccountId = selectedAccounts[transaction.id];
+      let key, account, suggestion;
+
+      if (assignedAccountId) {
+        // Transaction has been manually assigned - use the assigned account
+        account = localAccounts.find(acc => acc?.id === assignedAccountId);
+        key = assignedAccountId;
+        suggestion = null; // No suggestion since it's manually assigned
+      } else {
+        // No manual assignment - use AI suggestion
+        suggestion = suggestAccountForTransaction(
+          transaction,
+          localAccounts
+        );
+        account = suggestion;
+        key = suggestion ? suggestion.id : "uncategorized";
+      }
 
       if (!groups[key]) {
         groups[key] = {
-          account: suggestion,
+          account: account,
           suggestion: suggestion,
           transactions: [],
           totalAmount: 0,
@@ -378,7 +390,7 @@ const EnhancedAccountAssignmentModal = ({
     );
 
     return Object.fromEntries(sortedGroups);
-  }, [localTransactions, localAccounts]);
+  }, [localTransactions, localAccounts, selectedAccounts]);
 
   // Get category icon for transaction
   const getCategoryIcon = transaction => {
@@ -443,11 +455,10 @@ const EnhancedAccountAssignmentModal = ({
 
       // Assign all uncategorized transactions to the new account
       const updatedSelection = { ...selectedAccounts };
-      Object.entries(groupedTransactions).forEach(([groupId, group]) => {
-        if (groupId === "uncategorized" || !group.account) {
-          group.transactions.forEach(transaction => {
-            updatedSelection[transaction.id] = newAccount.id;
-          });
+      localTransactions.forEach(transaction => {
+        // Only assign transactions that haven't been assigned yet
+        if (!selectedAccounts[transaction.id]) {
+          updatedSelection[transaction.id] = newAccount.id;
         }
       });
 
@@ -1032,11 +1043,15 @@ const EnhancedAccountAssignmentModal = ({
                             {group.transactions.length !== 1 ? "s" : ""} •{" "}
                             {formatCurrency(group.totalAmount)}
                           </p>
-                          {group.suggestion && (
+                          {group.suggestion ? (
                             <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 truncate">
                               AI Suggestion: {group.suggestion.reason}
                             </p>
-                          )}
+                          ) : group.account && selectedAccounts[group.transactions[0]?.id] ? (
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-1 truncate">
+                              ✓ Manually Assigned
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                       {group.account && (
