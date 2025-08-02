@@ -45,7 +45,7 @@ const useStore = create((set, get) => ({
       }
 
       // Clear analytics cache when transactions are loaded
-      analyticsService.clearCache();
+      // analyticsService.forceRefresh(); // Removed - not needed with batch calculations
       set({ transactions });
     } catch (error) {
       // Error handling - in production, this would use a proper error notification system
@@ -76,7 +76,7 @@ const useStore = create((set, get) => ({
       }
 
       // Clear analytics cache when accounts are loaded
-      analyticsService.clearCache();
+      // analyticsService.forceRefresh(); // Removed - not needed with batch calculations
       set({ accounts });
     } catch (error) {
       // Error handling - in production, this would use a proper error notification system
@@ -115,7 +115,7 @@ const useStore = create((set, get) => ({
       await db.transactions.add(transactionWithUser);
 
       // Clear analytics cache to ensure fresh data
-      analyticsService.clearCache();
+      analyticsService.forceRefresh();
 
       // Reload transactions to update the UI
       await get().loadTransactions();
@@ -185,7 +185,7 @@ const useStore = create((set, get) => ({
       await db.transactions.bulkAdd(transactionsWithUser);
 
       // Clear analytics cache to ensure fresh data
-      analyticsService.clearCache();
+      analyticsService.forceRefresh();
 
       // Reload transactions to update the UI
       await get().loadTransactions();
@@ -344,6 +344,30 @@ const useStore = create((set, get) => ({
         }
       }
 
+      // Check for duplicate account names
+      let existingAccounts = [];
+      if (userId) {
+        existingAccounts = await db.accounts
+          .where("userId")
+          .equals(userId)
+          .toArray();
+      } else {
+        // If no userId, get all accounts (for demo/fallback)
+        existingAccounts = await db.accounts.toArray();
+      }
+
+      const duplicateAccount = existingAccounts.find(
+        account =>
+          account.name.toLowerCase().trim() ===
+          accountData.name.toLowerCase().trim()
+      );
+
+      if (duplicateAccount) {
+        throw new Error(
+          `An account with the name "${accountData.name}" already exists. Please choose a different name.`
+        );
+      }
+
       const accountWithUser = {
         ...accountData,
         initialBalance: accountData.balance || 0,
@@ -352,12 +376,20 @@ const useStore = create((set, get) => ({
         userId: userId || accountData.userId || null,
       };
 
-      await db.accounts.add(accountWithUser);
+      const newAccountId = await db.accounts.add(accountWithUser);
+
+      // Get the created account with the generated ID
+      const newAccount = await db.accounts.get(newAccountId);
+
       // Reload accounts to update the UI
       await get().loadAccounts();
+
+      // Return the created account
+      return newAccount;
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Error adding account:", error);
+      throw error; // Re-throw the error so the calling function can handle it
     } finally {
       set({ isLoading: false });
     }
@@ -442,7 +474,7 @@ const useStore = create((set, get) => ({
       });
 
       // Clear analytics cache to ensure fresh data
-      analyticsService.clearCache();
+      analyticsService.forceRefresh();
 
       // Reload accounts to update the UI
       await get().loadAccounts();
@@ -469,6 +501,23 @@ const useStore = create((set, get) => ({
       };
     }
     return analyticsService.calculateQuickAnalytics(transactions, timeRange);
+  },
+
+  // Get all analytics data in a single batch calculation
+  getAllAnalytics: (timeRange = "month") => {
+    const { transactions } = get();
+    if (!transactions || transactions.length === 0) {
+      return {
+        spendingByCategory: [],
+        monthlySpending: [],
+        incomeVsSpending: { income: 0, spending: 0, net: 0 },
+        spendingTrends: [],
+        topCategories: [],
+        avgDailySpending: 0,
+        quickAnalytics: { income: 0, spending: 0, net: 0 },
+      };
+    }
+    return analyticsService.calculateAllAnalytics(transactions, timeRange);
   },
 
   getSpendingByCategory: (timeRange = "month") => {
@@ -516,12 +565,9 @@ const useStore = create((set, get) => ({
     );
   },
 
-  getSpendingTrends: (periods = 12) => {
+  getSpendingTrends: (timeRange = "month") => {
     const { transactions } = get();
-    if (!transactions || transactions.length === 0) {
-      return [];
-    }
-    return analyticsService.calculateSpendingTrends(transactions, periods);
+    return analyticsService.calculateSpendingTrends(transactions, timeRange);
   },
 
   getTopSpendingCategories: (timeRange = "month", limit = 5) => {
@@ -545,6 +591,11 @@ const useStore = create((set, get) => ({
       transactions,
       timeRange
     );
+  },
+
+  // Force refresh analytics data
+  refreshAnalytics: () => {
+    analyticsService.forceRefresh();
   },
 
   // Reset all user data

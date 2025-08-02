@@ -4,7 +4,7 @@ import Accounts from "../components/Accounts";
 import RecentTransactions from "../components/RecentTransactions";
 import AddTransaction from "../components/AddTransaction";
 import StatementImporter from "../components/StatementImporter";
-import { useAuth } from "../contexts/AuthContext";
+import EnhancedAccountAssignmentModal from "../components/EnhancedAccountAssignmentModal";
 import useStore from "../store";
 
 // Quick Analytics Card Component
@@ -80,15 +80,41 @@ const QuickAnalyticsCard = ({
 };
 
 const DashboardPage = ({ onPageChange }) => {
-  const { isLoading } = useAuth();
-  const [error, setError] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  // Get analytics data from store with refresh capability
-  const { getQuickAnalytics, loadTransactions } = useStore();
+  const [isAccountAssignmentModalOpen, setIsAccountAssignmentModalOpen] =
+    useState(false);
+  const [transactionsToAssign, setTransactionsToAssign] = useState([]);
+  const [error, setError] = useState(null);
+  const [isLoading] = useState(false);
+  const { getQuickAnalytics, loadTransactions, accounts, addTransactions } =
+    useStore();
+
+  // Get quick analytics data
   const quickAnalytics = getQuickAnalytics("month");
 
   // Refresh analytics when transactions are imported
-  const handleImportComplete = async () => {
+  const handleImportComplete = async transactions => {
+    if (transactions && transactions.length > 0) {
+      try {
+        // Add transactions to database first
+        await addTransactions(transactions);
+
+        // Then open the assignment modal with the transactions
+        setTransactionsToAssign(transactions);
+        setIsAccountAssignmentModalOpen(true);
+        setIsImportModalOpen(false);
+      } catch (error) {
+        // console.error("Error importing transactions:", error);
+        setError("Failed to import transactions. Please try again.");
+      }
+    } else {
+      await loadTransactions();
+    }
+  };
+
+  const handleAccountAssignmentComplete = async () => {
+    setIsAccountAssignmentModalOpen(false);
+    setTransactionsToAssign([]);
     await loadTransactions();
   };
 
@@ -214,18 +240,18 @@ const DashboardPage = ({ onPageChange }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
             <QuickAnalyticsCard
               title="This Month's Spending"
-              value={quickAnalytics.spending}
-              subtitle={`${quickAnalytics.transactionCount} transactions`}
-              trend={quickAnalytics.spendingTrend}
+              value={quickAnalytics?.spending || 0}
+              subtitle={`${quickAnalytics?.transactionCount || 0} transactions`}
+              trend={quickAnalytics?.spendingTrend}
             />
             <QuickAnalyticsCard
               title="This Month's Income"
-              value={quickAnalytics.income}
+              value={quickAnalytics?.income || 0}
               subtitle="Total income"
             />
             <QuickAnalyticsCard
               title="Net Savings"
-              value={quickAnalytics.netSavings}
+              value={quickAnalytics?.netSavings || 0}
               subtitle="Income minus spending"
               className="sm:col-span-2 xl:col-span-1"
             />
@@ -239,6 +265,17 @@ const DashboardPage = ({ onPageChange }) => {
         onClose={() => setIsImportModalOpen(false)}
         onImportComplete={handleImportComplete}
       />
+
+      {/* Account Assignment Modal */}
+      {isAccountAssignmentModalOpen && (
+        <EnhancedAccountAssignmentModal
+          isOpen={isAccountAssignmentModalOpen}
+          onClose={() => setIsAccountAssignmentModalOpen(false)}
+          transactions={transactionsToAssign}
+          accounts={accounts}
+          onComplete={handleAccountAssignmentComplete}
+        />
+      )}
     </div>
   );
 };

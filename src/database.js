@@ -4,7 +4,7 @@ import Dexie from "dexie";
 const db = new Dexie("AuraFinanceDB");
 
 // Define database schema
-db.version(2).stores({
+db.version(3).stores({
   users: "++id, email, name, passwordHash, createdAt, updatedAt",
   sessions: "++id, userId, token, expiresAt, createdAt",
   transactions: "++id, date, description, amount, category, accountId, userId",
@@ -53,9 +53,13 @@ export const cleanupTestData = async () => {
       await db.accounts.bulkDelete(testAccounts.map(a => a.id));
     }
   } catch (error) {
-    if (import.meta.env.DEV) {
+    // Only log in development and only if it's not a schema-related error
+    if (import.meta.env.DEV && !error.message?.includes("Schema")) {
       // eslint-disable-next-line no-console
-      console.error("Error cleaning up test data:", error);
+      console.warn(
+        "Note: Some test data cleanup operations were skipped:",
+        error.message
+      );
     }
   }
 };

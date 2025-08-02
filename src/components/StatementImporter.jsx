@@ -1,120 +1,173 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Upload,
-  AlertCircle,
-  X,
-  CheckCircle,
   FileText,
   Image,
-  FileSpreadsheet,
-  Eye,
-  EyeOff,
+  AlertCircle,
+  CheckCircle,
+  X,
+  Settings,
+  Calendar,
   Info,
 } from "lucide-react";
-
 import { parseStatement } from "../utils/statementParser";
 import geminiService from "../services/geminiService";
-import useStore from "../store";
-import DuplicateReviewModal from "./DuplicateReviewModal";
-import EnhancedAccountAssignmentModal from "./EnhancedAccountAssignmentModal";
+
+// Custom scrollbar styles
+const customScrollbarStyles = `
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.8);
+  }
+  
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(75, 85, 99, 0.5);
+  }
+  
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(75, 85, 99, 0.8);
+  }
+  
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+  
+  .dark .custom-scrollbar {
+    scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+  }
+`;
 
 const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
-  const { addTransactions, checkForDuplicates, accounts } = useStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
-  const [processingStep, setProcessingStep] = useState("");
   const [processingProgress, setProcessingProgress] = useState(0);
-  const [displayProgress, setDisplayProgress] = useState(0);
-  const [previewData, setPreviewData] = useState(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [processingStep, setProcessingStep] = useState("");
   const [processingSummary, setProcessingSummary] = useState(null);
-  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
-  const [duplicateResults, setDuplicateResults] = useState(null);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
-  const [editableSummary, setEditableSummary] = useState(null);
-  const [isEditingSummary, setIsEditingSummary] = useState(false);
-  const [showAccountAssignment, setShowAccountAssignment] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const fileInputRef = useRef(null);
-
-  // Smooth progress animation
-  useEffect(() => {
-    if (isProcessing) {
-      const timer = setInterval(() => {
-        setDisplayProgress(prev => {
-          if (prev < processingProgress) {
-            return Math.min(prev + 1, processingProgress);
-          }
-          return prev;
-        });
-      }, 50); // Update every 50ms for smooth animation
-
-      return () => clearInterval(timer);
-    } else {
-      setDisplayProgress(0);
-    }
-  }, [processingProgress, isProcessing]);
+  const [parsedTransactions, setParsedTransactions] = useState([]);
+  const [showImportOptions, setShowImportOptions] = useState(false);
+  const [importOptions, setImportOptions] = useState({
+    userSpecifiedYear: null,
+    statementStartDate: null,
+    statementEndDate: null,
+    allowFutureDates: false,
+    autoDetectYear: true,
+  });
 
   // Enhanced file validation
-  const validateFile = useCallback(file => {
-    const maxSize = 20 * 1024 * 1024; // 20MB
+  const validateFile = file => {
+    if (!file) {
+      throw new Error("Please select a file to import.");
+    }
+
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      throw new Error("File size must be less than 10MB.");
+    }
+
     const allowedTypes = [
+      "text/csv",
+      "application/pdf",
       "image/jpeg",
       "image/png",
       "image/gif",
       "image/webp",
-      "image/heic",
-      "image/heif",
-      "application/pdf",
-      "text/csv",
     ];
 
-    if (file.size > maxSize) {
-      throw new Error("File size too large. Maximum 20MB allowed.");
-    }
-
-    if (!allowedTypes.includes(file.type)) {
+    if (
+      !allowedTypes.includes(file.type) &&
+      !file.name.toLowerCase().endsWith(".csv")
+    ) {
       throw new Error(
-        "Unsupported file format. Please upload an image (JPG, PNG, GIF, WebP, HEIC) or PDF."
+        "Please select a valid file type: CSV, PDF, or image files (JPEG, PNG, GIF, WebP)."
       );
     }
+  };
 
-    return true;
-  }, []);
+  // Apply import options to transactions
+  const applyImportOptionsToTransactions = useCallback(
+    transactions => {
+      return transactions
+        .map(transaction => {
+          let updatedTransaction = { ...transaction };
 
-  // Format file size
-  const formatFileSize = useCallback(bytes => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  }, []);
+          // Apply user-specified year if provided
+          if (importOptions.userSpecifiedYear && transaction.date) {
+            const currentDate = new Date(transaction.date);
+            const updatedDate = new Date(
+              importOptions.userSpecifiedYear,
+              currentDate.getMonth(),
+              currentDate.getDate()
+            );
+            updatedTransaction.date = updatedDate;
+          }
 
-  // Get file type icon
-  const getFileIcon = useCallback(file => {
-    if (file.type.startsWith("image/")) return <Image className="w-5 h-5" />;
-    if (file.type === "application/pdf")
-      return <FileText className="w-5 h-5" />;
-    if (file.type === "text/csv")
-      return <FileSpreadsheet className="w-5 h-5" />;
-    return <FileText className="w-5 h-5" />;
-  }, []);
+          // Filter by statement period if provided
+          if (
+            importOptions.statementStartDate ||
+            importOptions.statementEndDate
+          ) {
+            const transactionDate = new Date(updatedTransaction.date);
+            const startDate = importOptions.statementStartDate
+              ? new Date(importOptions.statementStartDate)
+              : null;
+            const endDate = importOptions.statementEndDate
+              ? new Date(importOptions.statementEndDate)
+              : null;
+
+            if (startDate && transactionDate < startDate) {
+              return null; // Filter out transactions before start date
+            }
+            if (endDate && transactionDate > endDate) {
+              return null; // Filter out transactions after end date
+            }
+          }
+
+          // Filter future dates if not allowed
+          if (!importOptions.allowFutureDates && transaction.date) {
+            const transactionDate = new Date(transaction.date);
+            const now = new Date();
+            if (transactionDate > now) {
+              return null; // Filter out future transactions
+            }
+          }
+
+          return updatedTransaction;
+        })
+        .filter(Boolean); // Remove null transactions
+    },
+    [importOptions]
+  );
 
   // Enhanced file processing with better progress tracking
   const processFile = useCallback(
     async file => {
+      // Reset all states at the beginning
       setIsProcessing(true);
       setError("");
       setProcessingProgress(0);
       setProcessingSummary(null);
       setShowAllTransactions(false);
+      setParsedTransactions([]);
 
       try {
         // Validate file
         validateFile(file);
-        setProcessingProgress(15);
+        setProcessingProgress(10);
         setProcessingStep("Validating file...");
 
         let transactions = [];
@@ -122,12 +175,23 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
 
         // Process based on file type
         if (file.type === "text/csv" || file.name.endsWith(".csv")) {
-          setProcessingProgress(35);
+          setProcessingProgress(25);
           setProcessingStep("Parsing CSV file...");
 
-          transactions = await parseStatement(file);
-          setProcessingProgress(70);
+          // Use import options for date parsing
+          const parsingOptions = {
+            userSpecifiedYear: importOptions.userSpecifiedYear,
+            statementStartDate: importOptions.statementStartDate,
+            statementEndDate: importOptions.statementEndDate,
+            allowFutureDates: importOptions.allowFutureDates,
+          };
+
+          transactions = await parseStatement(file, parsingOptions);
+          setProcessingProgress(60);
           setProcessingStep("Processing transactions...");
+
+          // Apply import options to CSV transactions
+          transactions = applyImportOptionsToTransactions(transactions);
 
           summary = {
             documentType: "CSV File",
@@ -135,13 +199,24 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
             confidence: "high",
             quality: "excellent",
             transactionCount: transactions.length,
+            dateRange:
+              transactions.length > 0
+                ? {
+                    start: new Date(
+                      Math.min(...transactions.map(t => new Date(t.date)))
+                    ),
+                    end: new Date(
+                      Math.max(...transactions.map(t => new Date(t.date)))
+                    ),
+                  }
+                : null,
           };
         } else if (
           file.type === "application/pdf" ||
           file.name.endsWith(".pdf") ||
           file.type.startsWith("image/")
         ) {
-          setProcessingProgress(25);
+          setProcessingProgress(20);
           setProcessingStep("Uploading document...");
 
           setProcessingProgress(40);
@@ -154,6 +229,10 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
 
           if (result.transactions && result.transactions.length > 0) {
             transactions = geminiService.convertToTransactions(result);
+
+            // Apply import options to AI-generated transactions
+            transactions = applyImportOptionsToTransactions(transactions);
+
             summary = geminiService.getProcessingSummary(result);
           } else {
             throw new Error(
@@ -161,758 +240,656 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
             );
           }
         } else {
-          throw new Error(
-            "Unsupported file format. Please upload a CSV, PDF, or image file."
-          );
+          throw new Error("Unsupported file type.");
         }
 
         setProcessingProgress(85);
-        setProcessingStep("Preparing results...");
+        setProcessingStep("Finalizing...");
 
+        // Check if transactions were found before setting states
         if (transactions.length === 0) {
-          throw new Error("No transactions found in the file.");
+          setError("No transactions found in the file.");
+          setIsProcessing(false);
+          setProcessingProgress(0);
+          setProcessingStep("");
+          return;
         }
 
-        // Set preview data
-        setPreviewData({
-          transactions,
-          summary,
-          fileName: file.name,
-          fileSize: formatFileSize(file.size),
-        });
+        // Set the parsed transactions for review
+        setParsedTransactions(transactions);
+        setProcessingSummary(summary);
+        setShowAllTransactions(true);
 
         setProcessingProgress(100);
         setProcessingStep("Analysis complete!");
-        setProcessingSummary(summary);
 
-        // Show 100% for a moment before transitioning
-        setTimeout(() => {
-          // Auto-show preview for small transaction sets
-          if (transactions.length <= 10) {
-            setShowPreview(true);
-          }
-        }, 1000); // Show 100% for 1 second
-      } catch (err) {
-        setError(err.message);
+        // Complete processing
+        setIsProcessing(false);
+      } catch (error) {
+        console.error("Error processing file:", error);
+        setError(
+          error.message || "An error occurred while processing the file."
+        );
         setProcessingProgress(0);
+        setProcessingStep("");
+        setParsedTransactions([]);
+        setProcessingSummary(null);
+        setShowAllTransactions(false);
       } finally {
         setIsProcessing(false);
       }
     },
-    [validateFile, formatFileSize]
+    [importOptions, applyImportOptionsToTransactions]
   );
 
-  // Handle file upload
-  const handleFileUpload = useCallback(
-    async event => {
+  const handleFileSelect = useCallback(
+    event => {
       const file = event.target.files[0];
-      if (!file) return;
-
-      setSelectedFile(file);
-      await processFile(file);
+      if (file && !isProcessing) {
+        // Reset the file input to allow selecting the same file again
+        event.target.value = "";
+        processFile(file);
+      }
     },
-    [processFile]
+    [processFile, isProcessing]
   );
 
-  // Handle drag and drop
-  const handleDrop = useCallback(
-    async event => {
-      event.preventDefault();
-      const file = event.dataTransfer.files[0];
-      if (!file) return;
-
-      setSelectedFile(file);
-      await processFile(file);
-    },
-    [processFile]
-  );
-
-  const handleDragOver = useCallback(event => {
-    event.preventDefault();
-  }, []);
-
-  // Reset and close
-  const handleClose = useCallback(() => {
-    if (isProcessing) {
-      // Show custom confirmation dialog if processing
-      setShowCancelConfirm(true);
-      return;
-    }
-
-    onClose();
-    setError("");
-    setProcessingStep("");
-    setProcessingProgress(0);
-    setPreviewData(null);
-    setShowPreview(false);
-    setShowAllTransactions(false);
-    setSelectedFile(null);
-    setProcessingSummary(null);
-    setShowDuplicateModal(false);
-    setDuplicateResults(null);
-    setIsEditingSummary(false);
-    setEditableSummary(null);
-
-    // Call onImportComplete if provided
-    if (onImportComplete) {
-      onImportComplete();
-    }
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }, [isProcessing, onClose, onImportComplete]);
-
-  // Handle cancel confirmation
-  const handleCancelConfirm = useCallback(() => {
-    setIsProcessing(false);
-    setProcessingProgress(0);
-    setDisplayProgress(0);
-    setProcessingStep("");
-    setShowCancelConfirm(false);
-    onClose();
-  }, [onClose]);
-
-  const handleCancelCancel = useCallback(() => {
-    setShowCancelConfirm(false);
-  }, []);
-
-  // Import transactions with duplicate detection
-  const handleImport = useCallback(async () => {
-    if (!previewData?.transactions) return;
-
+  const handleImportSelected = async () => {
     try {
-      setIsProcessing(true);
-      setProcessingStep("Checking for duplicates...");
+      const selectedTransactions = parsedTransactions.filter(t => t.selected);
 
-      // Check for duplicates
-      const results = await checkForDuplicates(previewData.transactions, {
-        dateTolerance: 1,
-        amountTolerance: 0.01,
-        descriptionSimilarityThreshold: 0.8,
-        requireExactCategory: false,
-      });
-
-      setDuplicateResults(results);
-
-      if (results.duplicates.length > 0) {
-        // Show duplicate review modal
-        setShowDuplicateModal(true);
-        setProcessingStep("Duplicates found - review required");
-      } else {
-        // Check if transactions need account assignment
-        const transactionsWithoutAccount = previewData.transactions.filter(
-          t => !t.accountId
-        );
-
-        if (transactionsWithoutAccount.length > 0) {
-          // Show account assignment modal
-          setShowAccountAssignment(true);
-          setProcessingStep("Account assignment required");
-        } else {
-          // No account assignment needed, import directly
-          setProcessingStep("Importing transactions...");
-          await addTransactions(previewData.transactions);
-          setProcessingStep("Import completed successfully!");
-
-          // Reset and close after successful import
-          setTimeout(() => {
-            handleClose();
-          }, 1500);
-        }
+      if (selectedTransactions.length === 0) {
+        throw new Error("Please select at least one transaction to import.");
       }
+
+      // Instead of importing directly, go to batch assignment
+      onImportComplete(selectedTransactions);
+      resetState();
     } catch (error) {
-      setError("Failed to import transactions: " + error.message);
-    } finally {
-      setIsProcessing(false);
+      console.error("Error importing selected transactions:", error);
+      setError(
+        error.message || "An error occurred while importing transactions."
+      );
     }
-  }, [previewData, checkForDuplicates, addTransactions, handleClose]);
+  };
 
-  // Handle duplicate review confirmation
-  const handleDuplicateConfirm = useCallback(
-    async selectedTransactions => {
-      try {
-        setIsProcessing(true);
-        setProcessingStep("Importing selected transactions...");
-
-        await addTransactions(selectedTransactions);
-
-        setProcessingStep("Import completed successfully!");
-        setShowDuplicateModal(false);
-
-        // Reset and close after successful import
-        setTimeout(() => {
-          handleClose();
-        }, 1500);
-      } catch (error) {
-        setError("Failed to import transactions: " + error.message);
-      } finally {
-        setIsProcessing(false);
+  const handleImportAll = async () => {
+    try {
+      if (parsedTransactions.length === 0) {
+        throw new Error("No transactions to import.");
       }
-    },
-    [addTransactions, handleClose]
-  );
 
-  // Handle skipping all duplicates
-  const handleSkipAllDuplicates = useCallback(
-    async nonDuplicates => {
-      try {
-        setIsProcessing(true);
-        setProcessingStep("Importing non-duplicate transactions...");
-
-        await addTransactions(nonDuplicates);
-
-        setProcessingStep("Import completed successfully!");
-        setShowDuplicateModal(false);
-
-        // Reset and close after successful import
-        setTimeout(() => {
-          handleClose();
-        }, 1500);
-      } catch (error) {
-        setError("Failed to import transactions: " + error.message);
-      } finally {
-        setIsProcessing(false);
-      }
-    },
-    [addTransactions, handleClose]
-  );
-
-  // Handle account assignment completion
-  const handleAccountAssignmentComplete = useCallback(
-    async transactionsWithAccount => {
-      try {
-        setIsProcessing(true);
-        setProcessingStep("Importing transactions...");
-
-        // Ensure all transactions have account assignments
-        const validatedTransactions = transactionsWithAccount.map(
-          transaction => ({
-            ...transaction,
-            accountId: transaction.accountId || null,
-          })
-        );
-
-        await addTransactions(validatedTransactions);
-
-        setProcessingStep("Import completed successfully!");
-        setShowAccountAssignment(false);
-
-        // Call onImportComplete if provided
-        if (onImportComplete) {
-          onImportComplete();
-        }
-
-        // Reset and close after successful import
-        setTimeout(() => {
-          handleClose();
-        }, 1500);
-      } catch (error) {
-        setError("Failed to import transactions: " + error.message);
-      } finally {
-        setIsProcessing(false);
-      }
-    },
-    [addTransactions, handleClose, onImportComplete]
-  );
-
-  // Get confidence color
-  const getConfidenceColor = useCallback(confidence => {
-    switch (confidence) {
-      case "high":
-        return "text-green-600 dark:text-green-400";
-      case "medium":
-        return "text-yellow-600 dark:text-yellow-400";
-      case "low":
-        return "text-red-600 dark:text-red-400";
-      default:
-        return "text-gray-600 dark:text-gray-400";
+      // Instead of importing directly, go to batch assignment
+      onImportComplete(parsedTransactions);
+      resetState();
+    } catch (error) {
+      console.error("Error importing all transactions:", error);
+      setError(
+        error.message || "An error occurred while importing transactions."
+      );
     }
-  }, []);
+  };
 
-  // Get quality color
-  const getQualityColor = useCallback(quality => {
-    switch (quality) {
-      case "excellent":
-        return "text-green-600 dark:text-green-400";
-      case "good":
-        return "text-blue-600 dark:text-blue-400";
-      case "fair":
-        return "text-yellow-600 dark:text-yellow-400";
-      case "poor":
-        return "text-red-600 dark:text-red-400";
-      default:
-        return "text-gray-600 dark:text-gray-400";
+  // Reset state when modal closes or completes
+  const resetState = () => {
+    setIsProcessing(false);
+    setError("");
+    setProcessingProgress(0);
+    setProcessingStep("");
+    setProcessingSummary(null);
+    setShowAllTransactions(false);
+    setParsedTransactions([]);
+    setShowImportOptions(false);
+    setImportOptions({
+      userSpecifiedYear: null,
+      statementStartDate: null,
+      statementEndDate: null,
+      allowFutureDates: false,
+      autoDetectYear: true,
+    });
+  };
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      resetState();
+    } else {
+      // Clean up when modal closes
+      resetState();
     }
-  }, []);
 
-  // Don't render if not open
-  if (!isOpen) return null;
+    // Cleanup function for component unmount
+    return () => {
+      resetState();
+    };
+  }, [isOpen]);
+
+  const toggleTransactionSelection = index => {
+    const updatedTransactions = [...parsedTransactions];
+    updatedTransactions[index].selected = !updatedTransactions[index].selected;
+    setParsedTransactions(updatedTransactions);
+  };
+
+  const toggleAllTransactions = () => {
+    const allSelected = parsedTransactions.every(t => t.selected);
+    const updatedTransactions = parsedTransactions.map(t => ({
+      ...t,
+      selected: !allSelected,
+    }));
+    setParsedTransactions(updatedTransactions);
+  };
+
+  const formatCurrency = amount => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  };
+
+  const formatDate = date => {
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  if (!isOpen) {
+    return null;
+  }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Import Financial Documents
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Upload statements, receipts, or invoices to automatically import
-              transactions
-            </p>
+    <>
+      <style>{customScrollbarStyles}</style>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden custom-scrollbar">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
+                <Upload className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Import Statement
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Upload your bank or credit card statement
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            </button>
           </div>
-          <button
-            onClick={handleClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          </button>
-        </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-auto p-6">
-          {!previewData ? (
-            /* Upload Section */
-            <div className="space-y-6">
-              {/* File Upload Area */}
-              <div
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
-              >
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+            {!isProcessing && !showAllTransactions && (
+              <div className="space-y-6">
+                {/* Import Options - Moved to upload section */}
                 <div className="space-y-4">
-                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto">
-                    <Upload className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                      Import Options
+                    </h3>
+                    <button
+                      onClick={() => setShowImportOptions(!showImportOptions)}
+                      className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      <Settings className="w-4 h-4" />
+                      {showImportOptions ? "Hide Options" : "Show Options"}
+                      {showImportOptions ? (
+                        <span className="text-xs">▼</span>
+                      ) : (
+                        <span className="text-xs">▶</span>
+                      )}
+                    </button>
                   </div>
 
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                      Drop your file here or click to browse
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Support for PDF, CSV, and image files (JPG, PNG, GIF,
-                      WebP, HEIC)
+                  {showImportOptions && (
+                    <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl custom-scrollbar">
+                      {/* Year Specification */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <Calendar className="w-4 h-4 inline mr-1" />
+                          Year for Ambiguous Dates (e.g., &quot;06/21&quot;)
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="number"
+                            min="2000"
+                            max="2030"
+                            value={importOptions.userSpecifiedYear || ""}
+                            onChange={e =>
+                              setImportOptions(prev => ({
+                                ...prev,
+                                userSpecifiedYear: e.target.value
+                                  ? parseInt(e.target.value)
+                                  : null,
+                              }))
+                            }
+                            placeholder="e.g., 2024"
+                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <button
+                            onClick={() =>
+                              setImportOptions(prev => ({
+                                ...prev,
+                                userSpecifiedYear: new Date().getFullYear(),
+                              }))
+                            }
+                            className="px-3 py-2 text-sm bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/40 transition-colors"
+                          >
+                            Current Year
+                          </button>
+                          <button
+                            onClick={() =>
+                              setImportOptions(prev => ({
+                                ...prev,
+                                userSpecifiedYear: null,
+                              }))
+                            }
+                            className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                          >
+                            Auto-detect
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Leave empty to auto-detect based on statement context
+                          and current date
+                        </p>
+                      </div>
+
+                      {/* Statement Period */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Statement Start Date
+                          </label>
+                          <input
+                            type="date"
+                            value={
+                              importOptions.statementStartDate
+                                ? importOptions.statementStartDate
+                                    .toISOString()
+                                    .split("T")[0]
+                                : ""
+                            }
+                            onChange={e =>
+                              setImportOptions(prev => ({
+                                ...prev,
+                                statementStartDate: e.target.value
+                                  ? new Date(e.target.value)
+                                  : null,
+                              }))
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Statement End Date
+                          </label>
+                          <input
+                            type="date"
+                            value={
+                              importOptions.statementEndDate
+                                ? importOptions.statementEndDate
+                                    .toISOString()
+                                    .split("T")[0]
+                                : ""
+                            }
+                            onChange={e =>
+                              setImportOptions(prev => ({
+                                ...prev,
+                                statementEndDate: e.target.value
+                                  ? new Date(e.target.value)
+                                  : null,
+                              }))
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Allow Future Dates */}
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="allowFutureDates"
+                          checked={importOptions.allowFutureDates}
+                          onChange={e =>
+                            setImportOptions(prev => ({
+                              ...prev,
+                              allowFutureDates: e.target.checked,
+                            }))
+                          }
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <label
+                          htmlFor="allowFutureDates"
+                          className="text-sm text-gray-700 dark:text-gray-300"
+                        >
+                          Allow future dates (for pending transactions)
+                        </label>
+                      </div>
+
+                      {/* Info Box */}
+                      <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                        <div className="text-xs text-blue-800 dark:text-blue-200">
+                          <p className="font-medium mb-1">
+                            Smart Date Detection:
+                          </p>
+                          <ul className="space-y-1">
+                            <li>
+                              • &quot;06/21&quot; → June 21st, 2024 (current
+                              year)
+                            </li>
+                            <li>
+                              • &quot;12/25&quot; → December 25th, 2023
+                              (previous year if in future)
+                            </li>
+                            <li>
+                              • Statement period helps determine correct year
+                            </li>
+                            <li>
+                              • Specify year manually for complete control
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* File Upload Area */}
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
+                  <div className="space-y-4">
+                    <div className="flex justify-center">
+                      <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                        <Upload className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                        Upload your statement
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400 mb-4">
+                        Drop your file here or click to browse
+                      </p>
+                      <input
+                        type="file"
+                        accept=".csv,.pdf,.jpg,.jpeg,.png,.gif,.webp"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        id="file-upload"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          document.getElementById("file-upload").click()
+                        }
+                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+                      >
+                        Choose File
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Supported Formats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div className="flex items-center gap-3 mb-2">
+                      <FileText className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        CSV Files
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Bank statements, credit card statements, and transaction
+                      exports
                     </p>
                   </div>
-
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isProcessing}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 transition-all rounded-lg text-white font-medium disabled:cursor-not-allowed"
-                  >
-                    Choose File
-                  </button>
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv,.pdf,.jpg,.jpeg,.png,.gif,.webp,.heic,.heif"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div className="flex items-center gap-3 mb-2">
+                      <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        PDF Files
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Bank statements and credit card statements in PDF format
+                    </p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Image className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        Images
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Screenshots and photos of statements (JPEG, PNG, GIF,
+                      WebP)
+                    </p>
+                  </div>
                 </div>
               </div>
+            )}
 
-              {/* Processing Status */}
-              {isProcessing && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <div className="relative inline-block mb-4">
-                      {/* Simple loading indicator */}
-                      <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                        <div className="w-8 h-8 bg-blue-500 rounded-full animate-pulse"></div>
+            {/* Processing State */}
+            {isProcessing && (
+              <div className="space-y-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                    <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    Processing your statement
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    {processingStep}
+                  </p>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${processingProgress}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    {processingProgress}% complete
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Results */}
+            {showAllTransactions && !isProcessing && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+                    Analysis Results
+                  </h2>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Review and select transactions to import
+                  </p>
+                </div>
+                {/* Summary */}
+                {processingSummary && (
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      <h3 className="font-medium text-green-800 dark:text-green-200">
+                        Import Summary
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <p className="text-green-600 dark:text-green-400 font-medium">
+                          {processingSummary.transactionCount}
+                        </p>
+                        <p className="text-green-700 dark:text-green-300">
+                          Transactions
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-green-600 dark:text-green-400 font-medium">
+                          {processingSummary.confidence}
+                        </p>
+                        <p className="text-green-700 dark:text-green-300">
+                          Confidence
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-green-600 dark:text-green-400 font-medium">
+                          {processingSummary.quality}
+                        </p>
+                        <p className="text-green-700 dark:text-green-300">
+                          Quality
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-green-600 dark:text-green-400 font-medium">
+                          {processingSummary.source}
+                        </p>
+                        <p className="text-green-700 dark:text-green-300">
+                          Source
+                        </p>
                       </div>
                     </div>
+                    {processingSummary.dateRange && (
+                      <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
+                        <p className="text-xs text-green-700 dark:text-green-300">
+                          Date Range:{" "}
+                          {formatDate(processingSummary.dateRange.start)} -{" "}
+                          {formatDate(processingSummary.dateRange.end)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                      Processing Your Document
+                {/* Transaction List */}
+                <div className="space-y-4 custom-scrollbar">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                      Review Transactions
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                      {processingStep}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={toggleAllTransactions}
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                      >
+                        {parsedTransactions.every(t => t.selected)
+                          ? "Deselect All"
+                          : "Select All"}
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Processing Steps Indicator */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Progress
-                      </span>
-                      <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                        {displayProgress}%
-                      </span>
-                    </div>
-
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                  <div className="max-h-96 overflow-y-auto custom-scrollbar space-y-2">
+                    {parsedTransactions.map((transaction, index) => (
                       <div
-                        className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 h-3 rounded-full transition-all duration-1000 ease-out relative"
-                        style={{ width: `${displayProgress}%` }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/50 via-transparent to-blue-600/50 animate-pulse"></div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-3 text-xs">
-                      <div
-                        className={`text-center p-3 rounded-lg transition-all duration-500 ${
-                          displayProgress >= 15
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm"
-                            : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                        key={index}
+                        className={`p-4 rounded-lg border transition-colors cursor-pointer ${
+                          transaction.selected
+                            ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                            : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                         }`}
+                        onClick={() => toggleTransactionSelection(index)}
                       >
-                        <div className="font-medium">File Validation</div>
-                        <div className="text-xs opacity-75 mt-1">Step 1</div>
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="checkbox"
+                            checked={transaction.selected}
+                            onChange={() => toggleTransactionSelection(index)}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                            onClick={e => e.stopPropagation()}
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {transaction.description}
+                              </p>
+                              <p
+                                className={`font-semibold ${
+                                  transaction.amount > 0
+                                    ? "text-green-600 dark:text-green-400"
+                                    : "text-red-600 dark:text-red-400"
+                                }`}
+                              >
+                                {formatCurrency(transaction.amount)}
+                              </p>
+                            </div>
+                            <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                              <span>{formatDate(transaction.date)}</span>
+                              <span className="capitalize">
+                                {transaction.category}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div
-                        className={`text-center p-3 rounded-lg transition-all duration-500 ${
-                          displayProgress >= 50
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm"
-                            : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                        }`}
-                      >
-                        <div className="font-medium">AI Analysis</div>
-                        <div className="text-xs opacity-75 mt-1">Step 2</div>
-                      </div>
-                      <div
-                        className={`text-center p-3 rounded-lg transition-all duration-500 ${
-                          displayProgress >= 85
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 shadow-sm"
-                            : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                        }`}
-                      >
-                        <div className="font-medium">Finalizing</div>
-                        <div className="text-xs opacity-75 mt-1">Step 3</div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
-              )}
 
-              {/* Error Display */}
-              {error && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                {/* Action Buttons */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={onClose}
+                    className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleImportSelected}
+                      disabled={
+                        parsedTransactions.filter(t => t.selected).length === 0
+                      }
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Import Selected (
+                      {parsedTransactions.filter(t => t.selected).length})
+                    </button>
+                    <button
+                      onClick={handleImportAll}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Import {parsedTransactions.length} Transactions
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                   <div>
-                    <p className="text-red-600 dark:text-red-400 font-medium">
+                    <h3 className="font-medium text-red-800 dark:text-red-200">
                       Import Error
-                    </p>
-                    <p className="text-red-600 dark:text-red-400 text-sm mt-1">
+                    </h3>
+                    <p className="text-sm text-red-700 dark:text-red-300 mt-1">
                       {error}
                     </p>
                   </div>
                 </div>
-              )}
-
-              {/* File Info */}
-              {selectedFile && !isProcessing && !error && (
-                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center gap-3">
-                  {getFileIcon(selectedFile)}
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {selectedFile.name}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {formatFileSize(selectedFile.size)}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            /* Preview Section */
-            <div className="space-y-6">
-              {/* Processing Summary */}
-              {processingSummary && (
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-blue-900 dark:text-blue-100">
-                          Analysis Results
-                        </h4>
-                        <button
-                          onClick={() => {
-                            if (isEditingSummary) {
-                              // Save changes
-                              setProcessingSummary(editableSummary);
-                              setIsEditingSummary(false);
-                            } else {
-                              // Start editing
-                              setEditableSummary(processingSummary);
-                              setIsEditingSummary(true);
-                            }
-                          }}
-                          className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-                        >
-                          {isEditingSummary ? "Save" : "Edit"}
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Document Type:
-                          </span>
-                          {isEditingSummary ? (
-                            <input
-                              type="text"
-                              value={editableSummary.documentType}
-                              onChange={e =>
-                                setEditableSummary({
-                                  ...editableSummary,
-                                  documentType: e.target.value,
-                                })
-                              }
-                              className="ml-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          ) : (
-                            <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                              {processingSummary.documentType}
-                            </span>
-                          )}
-                        </div>
-                        <div>
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Source:
-                          </span>
-                          {isEditingSummary ? (
-                            <input
-                              type="text"
-                              value={editableSummary.source}
-                              onChange={e =>
-                                setEditableSummary({
-                                  ...editableSummary,
-                                  source: e.target.value,
-                                })
-                              }
-                              className="ml-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent max-w-full"
-                            />
-                          ) : (
-                            <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                              {processingSummary.source}
-                            </span>
-                          )}
-                        </div>
-                        <div>
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Transactions Found:
-                          </span>
-                          <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                            {processingSummary.transactionCount}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Confidence:
-                          </span>
-                          <span
-                            className={`ml-2 font-medium ${getConfidenceColor(processingSummary.confidence)}`}
-                          >
-                            {processingSummary.confidence}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Quality:
-                          </span>
-                          <span
-                            className={`ml-2 font-medium ${getQualityColor(processingSummary.quality)}`}
-                          >
-                            {processingSummary.quality}
-                          </span>
-                        </div>
-                      </div>
-                      {processingSummary.notes && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                          {processingSummary.notes}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Transaction Preview */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                    Transaction Preview
-                  </h3>
-                  <button
-                    onClick={() => setShowPreview(!showPreview)}
-                    className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-                  >
-                    {showPreview ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                    {showPreview ? "Hide" : "Show"} Preview
-                  </button>
-                </div>
-
-                {showPreview && (
-                  <div className="max-h-64 overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {previewData.transactions
-                        .slice(
-                          0,
-                          showAllTransactions
-                            ? previewData.transactions.length
-                            : 10
-                        )
-                        .map((transaction, index) => (
-                          <div
-                            key={index}
-                            className="p-3 flex items-center justify-between"
-                          >
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900 dark:text-white">
-                                {transaction.description}
-                              </p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {new Date(
-                                  transaction.date
-                                ).toLocaleDateString()}{" "}
-                                • {transaction.category}
-                              </p>
-                            </div>
-                            <span
-                              className={`font-medium ${
-                                transaction.amount > 0
-                                  ? "text-green-600 dark:text-green-400"
-                                  : "text-red-600 dark:text-red-400"
-                              }`}
-                            >
-                              {transaction.amount > 0 ? "+" : ""}$
-                              {Math.abs(transaction.amount).toFixed(2)}
-                            </span>
-                          </div>
-                        ))}
-                      {previewData.transactions.length > 10 && (
-                        <div className="p-3 text-center">
-                          <button
-                            onClick={() =>
-                              setShowAllTransactions(!showAllTransactions)
-                            }
-                            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
-                          >
-                            {showAllTransactions
-                              ? "Show Less"
-                              : `+${previewData.transactions.length - 10} more transactions`}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => {
-                    setPreviewData(null);
-                    setSelectedFile(null);
-                    setProcessingSummary(null);
-                    setShowPreview(false);
-                    setShowAllTransactions(false);
-                    setIsEditingSummary(false);
-                    setEditableSummary(null);
-                  }}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                >
-                  Upload Another File
-                </button>
-                <button
-                  onClick={handleImport}
-                  disabled={isProcessing}
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isProcessing ? (
-                    <>
-                      <div className="w-4 h-4 bg-white rounded-full animate-pulse"></div>
-                      Importing...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      Import {previewData.transactions.length} Transactions
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Duplicate Review Modal */}
-      <DuplicateReviewModal
-        isOpen={showDuplicateModal}
-        onClose={() => setShowDuplicateModal(false)}
-        duplicates={duplicateResults?.duplicates || []}
-        nonDuplicates={duplicateResults?.nonDuplicates || []}
-        onConfirm={handleDuplicateConfirm}
-        onSkipAll={handleSkipAllDuplicates}
-        summary={duplicateResults?.summary}
-      />
-
-      {/* Enhanced Account Assignment Modal */}
-      <EnhancedAccountAssignmentModal
-        isOpen={showAccountAssignment}
-        onClose={() => setShowAccountAssignment(false)}
-        transactions={previewData?.transactions || []}
-        accounts={accounts || []}
-        detectedAccountInfo={previewData?.summary?.detectedAccount || null}
-        accountSuggestions={previewData?.summary?.accountSuggestions || []}
-        onComplete={handleAccountAssignmentComplete}
-      />
-
-      {/* Cancel Confirmation Dialog */}
-      {showCancelConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Cancel Import?
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Processing is in progress
-                </p>
-              </div>
-            </div>
-
-            <p className="text-gray-700 dark:text-gray-300 mb-6">
-              Are you sure you want to cancel the import process? This action
-              cannot be undone.
-            </p>
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleCancelCancel}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                Continue Processing
-              </button>
-              <button
-                onClick={handleCancelConfirm}
-                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
-              >
-                Cancel Import
-              </button>
-            </div>
+            )}
           </div>
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 };
 

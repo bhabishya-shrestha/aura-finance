@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -53,15 +53,21 @@ const AppLayout = () => {
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { loadTransactions, loadAccounts } = useStore();
+  const isInitialized = useRef(false);
 
   useEffect(() => {
+    // Only initialize once
+    if (isInitialized.current) return;
+
     // Initialize database for local storage fallback
     initializeDatabase();
 
     // Load data from local database
     loadTransactions();
     loadAccounts();
-  }, [loadTransactions, loadAccounts]);
+
+    isInitialized.current = true;
+  }, [loadTransactions, loadAccounts]); // Include dependencies
 
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
@@ -225,7 +231,12 @@ const App = () => {
       <ThemeProvider>
         <SettingsProvider>
           <AuthProvider>
-            <Router>
+            <Router
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
               <AppContent />
             </Router>
           </AuthProvider>

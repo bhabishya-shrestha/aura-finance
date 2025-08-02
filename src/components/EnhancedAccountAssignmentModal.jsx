@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import {
   X,
   Plus,
@@ -36,7 +42,7 @@ const EnhancedAccountAssignmentModal = ({
   accountSuggestions = [],
   onComplete,
 }) => {
-  const { addAccount, updateTransaction } = useStore();
+  const { addAccount, updateTransaction, loadTransactions } = useStore();
   const [selectedAccounts, setSelectedAccounts] = useState({});
   const [showCreateAccount, setShowCreateAccount] = useState(false);
   const [newAccountData, setNewAccountData] = useState({
@@ -56,6 +62,10 @@ const EnhancedAccountAssignmentModal = ({
   const [showTransactionEditModal, setShowTransactionEditModal] =
     useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showBatchYearModal, setShowBatchYearModal] = useState(false);
+  const [batchYear, setBatchYear] = useState(new Date().getFullYear());
+  const [localTransactions, setLocalTransactions] = useState([]);
+  const [localAccounts, setLocalAccounts] = useState([]);
 
   // Account type icons mapping
   const accountTypeIcons = {
@@ -91,267 +101,283 @@ const EnhancedAccountAssignmentModal = ({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Initialize selected accounts when modal opens
+  // Track if suggestions have been generated to prevent infinite loops
+  const suggestionsGeneratedRef = useRef(false);
+
+  // Track if local state has been initialized to prevent infinite loops
+  const initializedRef = useRef(false);
+  const lastTransactionsRef = useRef([]);
+  const lastAccountsRef = useRef([]);
+
+  // Single useEffect to handle all initialization when modal opens
   useEffect(() => {
     if (isOpen) {
-      const initialSelection = {};
-      transactions.forEach(transaction => {
-        initialSelection[transaction.id] = transaction.accountId || null;
-      });
-      setSelectedAccounts(initialSelection);
-      setSelectedTransactions(new Set());
+      // Check if transactions or accounts have actually changed
+      const transactionsChanged =
+        JSON.stringify(transactions) !==
+        JSON.stringify(lastTransactionsRef.current);
+      const accountsChanged =
+        JSON.stringify(accounts) !== JSON.stringify(lastAccountsRef.current);
 
-      // Pre-fill new account data if account info was detected
-      if (detectedAccountInfo) {
-        setNewAccountData({
-          name: detectedAccountInfo.name || "",
-          type: detectedAccountInfo.type || "checking",
-          balance: detectedAccountInfo.balance || 0,
+      // Only initialize if not already initialized or if props have changed
+      if (!initializedRef.current || transactionsChanged || accountsChanged) {
+        // Initialize selected accounts
+        const initialSelection = {};
+        transactions.forEach(transaction => {
+          initialSelection[transaction.id] = transaction.accountId || null;
         });
-      }
+        setSelectedAccounts(initialSelection);
+        setSelectedTransactions(new Set());
 
-      // Generate AI-powered account suggestions
-      generateAccountSuggestions();
-    }
-  }, [isOpen, transactions, detectedAccountInfo]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Enhanced AI-powered account suggestion algorithm
-  const generateAccountSuggestions = () => {
-    const suggestions = [];
-    const transactionTexts = transactions.map(t =>
-      `${t.description || ""} ${t.category || ""}`.toLowerCase()
-    );
-
-    // Analyze transaction patterns to suggest account types
-    const patterns = {
-      checking: ["bank", "checking", "deposit", "withdrawal", "debit"],
-      savings: ["savings", "interest", "deposit"],
-      credit: ["credit", "card", "visa", "mastercard", "amex", "discover"],
-      investment: [
-        "investment",
-        "stock",
-        "fund",
-        "portfolio",
-        "trading",
-        "brokerage",
-      ],
-      loan: ["loan", "mortgage", "payment", "interest", "finance"],
-    };
-
-    // Detect account type from transaction patterns
-    let detectedType = "checking";
-    for (const [type, keywords] of Object.entries(patterns)) {
-      if (
-        keywords.some(keyword =>
-          transactionTexts.some(text => text.includes(keyword))
-        )
-      ) {
-        detectedType = type;
-        break;
-      }
-    }
-
-    // Extract institution names from transaction descriptions
-    const institutionPatterns = [
-      /(chase|bank of america|wells fargo|citibank|us bank|pnc|td bank|capital one|american express|discover)/i,
-      /(amazon|walmart|target|costco|home depot|lowes|kroger|safeway|whole foods)/i,
-      /(netflix|spotify|hulu|disney|amazon prime|youtube|google|microsoft|apple)/i,
-    ];
-
-    const detectedInstitutions = new Set();
-    transactions.forEach(t => {
-      const description = t.description || "";
-      institutionPatterns.forEach(pattern => {
-        const match = description.match(pattern);
-        if (match) {
-          detectedInstitutions.add(match[1].toLowerCase());
+        // Initialize local state only if content has changed
+        if (transactionsChanged) {
+          setLocalTransactions([...transactions]);
+          lastTransactionsRef.current = transactions;
         }
-      });
-    });
+        if (accountsChanged) {
+          setLocalAccounts([...accounts]);
+          lastAccountsRef.current = accounts;
+        }
 
-    // Generate financial account suggestions based on detected patterns
-    if (detectedInstitutions.size > 0) {
-      const institutions = Array.from(detectedInstitutions);
+        // Pre-fill new account data if account info was detected
+        if (detectedAccountInfo && detectedAccountInfo.name) {
+          setNewAccountData({
+            name: detectedAccountInfo.name || "",
+            type: detectedAccountInfo.type || "checking",
+            balance: detectedAccountInfo.balance || 0,
+          });
+        }
 
-      // Suggest based on financial institutions
-      const financialInstitutions = institutions.filter(inst =>
-        [
-          "chase",
-          "bank of america",
-          "wells fargo",
-          "citibank",
-          "us bank",
-          "pnc",
-          "td bank",
-          "capital one",
-        ].includes(inst)
+        initializedRef.current = true;
+      }
+    } else {
+      // Reset flags when modal closes
+      suggestionsGeneratedRef.current = false;
+      initializedRef.current = false;
+    }
+  }, [isOpen, transactions, accounts, detectedAccountInfo]);
+
+  // Generate account suggestions when modal opens and transactions change
+  useEffect(() => {
+    if (isOpen && transactions.length > 0 && !suggestionsGeneratedRef.current) {
+      suggestionsGeneratedRef.current = true;
+      const suggestions = [];
+      const transactionTexts = transactions.map(t =>
+        `${t.description || ""} ${t.category || ""}`.toLowerCase()
       );
 
-      if (financialInstitutions.length > 0) {
-        const institution = financialInstitutions[0];
-        const institutionName = institution
-          .split(" ")
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" ");
+      // Analyze transaction patterns to suggest account types
+      const patterns = {
+        checking: ["bank", "checking", "deposit", "withdrawal", "debit"],
+        savings: ["savings", "interest", "deposit"],
+        credit: ["credit", "card", "visa", "mastercard", "amex", "discover"],
+        investment: [
+          "investment",
+          "stock",
+          "fund",
+          "portfolio",
+          "trading",
+          "brokerage",
+        ],
+        loan: ["loan", "mortgage", "payment", "interest", "finance"],
+      };
 
-        suggestions.push({
-          name: `${institutionName} ${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)}`,
-          type: detectedType,
-          confidence: 0.9,
-          reason: `Detected ${institutionName} transactions`,
-        });
-      }
-    }
-
-    // Suggest based on transaction patterns and amounts
-    const avgAmount =
-      transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0) /
-      transactions.length;
-
-    if (avgAmount > 500) {
-      suggestions.push({
-        name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
-        type: detectedType,
-        confidence: 0.7,
-        reason: `Based on ${detectedType} transaction patterns`,
-      });
-    }
-
-    // Suggest based on transaction frequency and types
-    const creditCardPatterns = [
-      "visa",
-      "mastercard",
-      "amex",
-      "discover",
-      "credit",
-    ];
-    const hasCreditCardTransactions = creditCardPatterns.some(pattern =>
-      transactionTexts.some(text => text.includes(pattern))
-    );
-
-    if (hasCreditCardTransactions) {
-      suggestions.push({
-        name: "Credit Card Account",
-        type: "credit",
-        confidence: 0.8,
-        reason: "Detected credit card transactions",
-      });
-    }
-
-    // Suggest based on transaction categories
-    const categories = new Set(
-      transactions.map(t => t.category).filter(Boolean)
-    );
-
-    if (categories.size > 0) {
-      const categoryList = Array.from(categories).slice(0, 2);
-      suggestions.push({
-        name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
-        type: detectedType,
-        confidence: 0.6,
-        reason: `Based on categories: ${categoryList.join(", ")}`,
-      });
-    }
-
-    // Add default suggestion if no specific patterns detected
-    if (suggestions.length === 0) {
-      suggestions.push({
-        name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
-        type: detectedType,
-        confidence: 0.5,
-        reason: "Default account suggestion",
-      });
-    }
-
-    setSuggestedAccounts(suggestions);
-  };
-
-  // Enhanced account suggestion for transactions
-  const suggestAccountForTransaction = (transaction, accounts) => {
-    const description = (transaction.description || "").toLowerCase();
-    const category = (transaction.category || "").toLowerCase();
-
-    // First, try to match existing accounts by name
-    if (!accounts || !Array.isArray(accounts)) {
-      return null;
-    }
-
-    for (const account of accounts) {
-      const accountName = account.name.toLowerCase();
-      const accountType = account.type.toLowerCase();
-
-      // Direct name matching
-      if (
-        description.includes(accountName) ||
-        accountName.includes(description.split(" ")[0])
-      ) {
-        return { account, confidence: 0.9, reason: "Direct name match" };
-      }
-
-      // Type matching
-      if (description.includes(accountType) || category.includes(accountType)) {
-        return { account, confidence: 0.7, reason: "Type match" };
-      }
-
-      // Bank name matching
-      if (accountName.includes("bank") && description.includes("bank")) {
-        return { account, confidence: 0.8, reason: "Bank name match" };
-      }
-    }
-
-    // If no direct match, try to suggest based on transaction patterns and account types
-    const financialPatterns = {
-      credit: ["visa", "mastercard", "amex", "discover", "credit"],
-      checking: ["checking", "debit", "bank", "deposit"],
-      savings: ["savings", "interest", "deposit"],
-      investment: ["investment", "stock", "fund", "brokerage"],
-    };
-
-    for (const [accountType, keywords] of Object.entries(financialPatterns)) {
-      if (keywords.some(keyword => description.includes(keyword))) {
-        // Look for accounts of the matching type
-        const relevantAccounts = accounts.filter(
-          acc => acc.type === accountType
-        );
-        if (relevantAccounts.length > 0) {
-          return {
-            account: relevantAccounts[0],
-            confidence: 0.6,
-            reason: `Pattern match: ${accountType}`,
-          };
+      // Detect account type from transaction patterns
+      let detectedType = "checking";
+      for (const [type, keywords] of Object.entries(patterns)) {
+        if (
+          keywords.some(keyword =>
+            transactionTexts.some(text => text.includes(keyword))
+          )
+        ) {
+          detectedType = type;
+          break;
         }
       }
-    }
 
-    return null;
-  };
+      // Extract institution names from transaction descriptions
+      const institutionPatterns = [
+        /(chase|bank of america|wells fargo|citibank|us bank|pnc|td bank|capital one|american express|discover)/i,
+        /(amazon|walmart|target|costco|home depot|lowes|kroger|safeway|whole foods)/i,
+        /(netflix|spotify|hulu|disney|amazon prime|youtube|google|microsoft|apple)/i,
+      ];
+
+      const detectedInstitutions = new Set();
+      transactions.forEach(t => {
+        const description = t.description || "";
+        institutionPatterns.forEach(pattern => {
+          const match = description.match(pattern);
+          if (match) {
+            detectedInstitutions.add(match[1].toLowerCase());
+          }
+        });
+      });
+
+      // Generate financial account suggestions based on detected patterns
+      if (detectedInstitutions.size > 0) {
+        const institutions = Array.from(detectedInstitutions);
+
+        // Suggest based on financial institutions
+        const financialInstitutions = institutions.filter(inst =>
+          [
+            "chase",
+            "bank of america",
+            "wells fargo",
+            "citibank",
+            "us bank",
+            "pnc",
+            "td bank",
+            "capital one",
+          ].includes(inst)
+        );
+
+        if (financialInstitutions.length > 0) {
+          const institution = financialInstitutions[0];
+          const institutionName = institution
+            .split(" ")
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+
+          suggestions.push({
+            name: `${institutionName} ${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)}`,
+            type: detectedType,
+            confidence: 0.9,
+            reason: `Detected ${institutionName} transactions`,
+          });
+        }
+      }
+
+      // Suggest based on transaction patterns and amounts
+      const avgAmount =
+        transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0) /
+        transactions.length;
+
+      if (avgAmount > 500) {
+        suggestions.push({
+          name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
+          type: detectedType,
+          confidence: 0.7,
+          reason: `Based on ${detectedType} transaction patterns`,
+        });
+      }
+
+      // Suggest based on transaction frequency and types
+      const creditCardPatterns = [
+        "visa",
+        "mastercard",
+        "amex",
+        "discover",
+        "credit",
+      ];
+      const hasCreditCardTransactions = creditCardPatterns.some(pattern =>
+        transactionTexts.some(text => text.includes(pattern))
+      );
+
+      if (hasCreditCardTransactions) {
+        suggestions.push({
+          name: "Credit Card Account",
+          type: "credit",
+          confidence: 0.8,
+          reason: "Detected credit card transactions",
+        });
+      }
+
+      // Suggest based on transaction categories
+      const categories = new Set(
+        transactions.map(t => t.category).filter(Boolean)
+      );
+
+      if (categories.size > 0) {
+        const categoryList = Array.from(categories).slice(0, 2);
+        suggestions.push({
+          name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
+          type: detectedType,
+          confidence: 0.6,
+          reason: `Based on categories: ${categoryList.join(", ")}`,
+        });
+      }
+
+      // Add default suggestion if no specific patterns detected
+      if (suggestions.length === 0) {
+        suggestions.push({
+          name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
+          type: detectedType,
+          confidence: 0.5,
+          reason: "Default account suggestion",
+        });
+      }
+
+      setSuggestedAccounts(suggestions);
+    }
+  }, [isOpen, transactions]);
+
+  // Enhanced account suggestion for transactions (simple function to avoid circular dependencies)
+  const suggestAccountForTransaction = useCallback(
+    (transaction, accountsToUse = localAccounts) => {
+      const relevantAccounts = accountsToUse.filter(
+        account =>
+          (account &&
+            account.name &&
+            account.name
+              .toLowerCase()
+              .includes(transaction.description.toLowerCase())) ||
+          (account && account.type === transaction.category)
+      );
+
+      if (relevantAccounts.length > 0) {
+        return relevantAccounts[0];
+      }
+
+      // Fallback: suggest based on transaction type
+      return accountsToUse.filter(account => {
+        if (!account) return false;
+        if (transaction.amount > 0 && account.type === "checking") return true;
+        if (transaction.amount < 0 && account.type === "credit") return true;
+        return false;
+      })[0];
+    },
+    [localAccounts]
+  );
 
   // Filter accounts based on search and type
   const filteredAccounts = useMemo(() => {
-    if (!accounts || !Array.isArray(accounts)) {
+    if (!localAccounts || !Array.isArray(localAccounts)) {
       return [];
     }
-    return accounts.filter(account => {
+    return localAccounts.filter(account => {
+      if (!account || !account.name) return false;
       const matchesSearch = account.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
       const matchesType = filterType === "all" || account.type === filterType;
       return matchesSearch && matchesType;
     });
-  }, [accounts, searchTerm, filterType]);
+  }, [localAccounts, searchTerm, filterType]);
 
   // Enhanced transaction grouping with AI suggestions
   const groupedTransactions = useMemo(() => {
     const groups = {};
 
-    transactions.forEach(transaction => {
-      // Try to suggest account based on transaction description
-      const suggestion = suggestAccountForTransaction(transaction, accounts);
-      const key = suggestion ? suggestion.account.id : "uncategorized";
+    localTransactions.forEach(transaction => {
+      // Check if transaction has been manually assigned to an account
+      const assignedAccountId = selectedAccounts[transaction.id];
+      let key, account, suggestion;
+
+      if (assignedAccountId) {
+        // Transaction has been manually assigned - use the assigned account
+        account = localAccounts.find(acc => acc?.id === assignedAccountId);
+        key = assignedAccountId;
+        suggestion = null; // No suggestion since it's manually assigned
+      } else {
+        // No manual assignment - use AI suggestion
+        suggestion = suggestAccountForTransaction(transaction, localAccounts);
+        account = suggestion;
+        key = suggestion ? suggestion.id : "uncategorized";
+      }
 
       if (!groups[key]) {
         groups[key] = {
-          account: suggestion?.account,
+          account: account,
           suggestion: suggestion,
           transactions: [],
           totalAmount: 0,
@@ -367,7 +393,12 @@ const EnhancedAccountAssignmentModal = ({
     );
 
     return Object.fromEntries(sortedGroups);
-  }, [transactions, accounts]);
+  }, [
+    localTransactions,
+    localAccounts,
+    selectedAccounts,
+    suggestAccountForTransaction,
+  ]);
 
   // Get category icon for transaction
   const getCategoryIcon = transaction => {
@@ -412,22 +443,45 @@ const EnhancedAccountAssignmentModal = ({
   const handleCreateAccount = async () => {
     try {
       setIsProcessing(true);
-      const newAccount = await addAccount(newAccountData);
+
+      // Safety check to ensure newAccountData is not undefined
+      if (!newAccountData || !newAccountData.name) {
+        throw new Error("Account data is missing or invalid");
+      }
+
+      // Clean the account data before sending to database
+      const cleanAccountData = {
+        name: newAccountData.name.trim(),
+        type: newAccountData.type || "checking",
+        balance: parseFloat(newAccountData.balance) || 0,
+      };
+
+      const newAccount = await addAccount(cleanAccountData);
+
+      // Validate that the account was created successfully
+      if (!newAccount || !newAccount.id) {
+        throw new Error(
+          "Failed to create account - invalid response from addAccount"
+        );
+      }
+
+      // Update local accounts list
+      setLocalAccounts(prev => [...prev, newAccount]);
 
       // Assign all uncategorized transactions to the new account
       const updatedSelection = { ...selectedAccounts };
-      Object.entries(groupedTransactions).forEach(([groupId, group]) => {
-        if (groupId === "uncategorized" || !group.account) {
-          group.transactions.forEach(transaction => {
-            updatedSelection[transaction.id] = newAccount.id;
-          });
+      localTransactions.forEach(transaction => {
+        // Only assign transactions that haven't been assigned yet
+        if (!selectedAccounts[transaction.id]) {
+          updatedSelection[transaction.id] = newAccount.id;
         }
       });
 
       setSelectedAccounts(updatedSelection);
       setShowCreateAccount(false);
     } catch (error) {
-      // Error creating account
+      // Error creating account - could be logged to error reporting service
+      // console.error("Error creating account:", error);
     } finally {
       setIsProcessing(false);
     }
@@ -466,10 +520,10 @@ const EnhancedAccountAssignmentModal = ({
   };
 
   const handleSelectAll = () => {
-    if (selectedTransactions.size === transactions.length) {
+    if (selectedTransactions.size === localTransactions.length) {
       setSelectedTransactions(new Set());
     } else {
-      setSelectedTransactions(new Set(transactions.map(t => t.id)));
+      setSelectedTransactions(new Set(localTransactions.map(t => t.id)));
     }
   };
 
@@ -482,31 +536,94 @@ const EnhancedAccountAssignmentModal = ({
     setSelectedTransactions(new Set());
   };
 
+  // Batch year assignment functions
+  const handleBatchYearAssign = () => {
+    if (selectedTransactions.size === 0) return;
+
+    setLocalTransactions(prevTransactions =>
+      prevTransactions.map(transaction => {
+        if (selectedTransactions.has(transaction.id)) {
+          // Update the year of the transaction date
+          const currentDate = new Date(transaction.date);
+          const updatedDate = new Date(
+            batchYear,
+            currentDate.getMonth(),
+            currentDate.getDate()
+          );
+
+          return {
+            ...transaction,
+            date: updatedDate,
+          };
+        }
+        return transaction;
+      })
+    );
+
+    setShowBatchYearModal(false);
+    setSelectedTransactions(new Set());
+  };
+
+  const handleBatchYearModalOpen = () => {
+    if (selectedTransactions.size === 0) return;
+    setBatchYear(new Date().getFullYear());
+    setShowBatchYearModal(true);
+  };
+
+  const handleBatchYearModalClose = () => {
+    setShowBatchYearModal(false);
+    setBatchYear(new Date().getFullYear());
+  };
+
   // AI suggestion functions
   const handleCreateFromSuggestion = suggestion => {
+    if (!suggestion) return;
     setEditingSuggestion(suggestion);
     setShowEditModal(true);
   };
 
-  const handleEditSuggestion = editedSuggestion => {
-    // Create account from edited suggestion
-    const accountData = {
-      name: editedSuggestion.name,
-      type: editedSuggestion.type,
-      balance: 0,
-    };
+  const handleEditSuggestion = async editedSuggestion => {
+    if (!editedSuggestion || !editedSuggestion.name) return;
 
-    addAccount(accountData).then(newAccount => {
+    try {
+      setIsProcessing(true);
+
+      // Validate and clean account data
+      const accountName = editedSuggestion.name.trim();
+      if (!accountName) {
+        throw new Error("Account name cannot be empty");
+      }
+
+      // Create account from edited suggestion - only include valid database fields
+      const accountData = {
+        name: accountName,
+        type: editedSuggestion.type || "checking",
+        balance: 0,
+      };
+
+      const newAccount = await addAccount(accountData);
+
+      // Validate that the account was created successfully
+      if (!newAccount || !newAccount.id) {
+        throw new Error(
+          "Failed to create account - invalid response from addAccount"
+        );
+      }
+
+      // Update local accounts list
+      setLocalAccounts(prev => [...prev, newAccount]);
+
       // Auto-assign transactions that match this suggestion
       const updatedSelection = { ...selectedAccounts };
-      transactions.forEach(transaction => {
+
+      localTransactions.forEach(transaction => {
         const description = (transaction.description || "").toLowerCase();
-        const institution = editedSuggestion.name.toLowerCase();
+        const institution = (editedSuggestion.name || "").toLowerCase();
 
         // Assign if transaction description contains institution name or matches pattern
         if (
-          description.includes(institution.split(" ")[0]) ||
-          description.includes(editedSuggestion.type)
+          (institution && description.includes(institution.split(" ")[0])) ||
+          (editedSuggestion.type && description.includes(editedSuggestion.type))
         ) {
           updatedSelection[transaction.id] = newAccount.id;
         }
@@ -515,7 +632,17 @@ const EnhancedAccountAssignmentModal = ({
       setSelectedAccounts(updatedSelection);
       setShowEditModal(false);
       setEditingSuggestion(null);
-    });
+
+      // Show success feedback
+      // console.log(
+      //   `Created account "${editedSuggestion.name}" and assigned ${assignedCount} transactions`
+      // );
+    } catch (error) {
+      // Error creating account - could be logged to error reporting service
+      // console.error("Error creating account:", error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Transaction editing functions
@@ -588,17 +715,48 @@ const EnhancedAccountAssignmentModal = ({
     });
   };
 
-  const handleComplete = () => {
-    const updatedTransactions = transactions.map(transaction => ({
-      ...transaction,
-      accountId: selectedAccounts[transaction.id] || transaction.accountId,
-    }));
+  const handleComplete = async () => {
+    try {
+      setIsProcessing(true);
 
-    onComplete(updatedTransactions);
-    onClose();
+      // Update each transaction with its assigned account
+      const updatePromises = localTransactions.map(async transaction => {
+        const assignedAccountId = selectedAccounts[transaction.id];
+        if (assignedAccountId && assignedAccountId !== transaction.accountId) {
+          // Only update if the account assignment has changed
+          await updateTransaction(transaction.id, {
+            accountId: assignedAccountId,
+          });
+        }
+      });
+
+      // Wait for all updates to complete
+      await Promise.all(updatePromises);
+
+      // Reload transactions to reflect changes
+      await loadTransactions();
+
+      // Call the onComplete callback with updated transactions
+      const updatedTransactions = localTransactions.map(transaction => ({
+        ...transaction,
+        accountId: selectedAccounts[transaction.id] || transaction.accountId,
+      }));
+
+      onComplete(updatedTransactions);
+      onClose();
+    } catch (error) {
+      // Error saving transaction assignments - could be logged to error reporting service
+      // console.error("Error saving transaction assignments:", error);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const getAccountIcon = account => {
+    if (!account || !account.type) {
+      return <Building2 className="w-4 h-4" />;
+    }
     const IconComponent = accountTypeIcons[account.type] || Building2;
     return <IconComponent className="w-4 h-4" />;
   };
@@ -626,8 +784,8 @@ const EnhancedAccountAssignmentModal = ({
               Assign Transactions to Accounts
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {transactions.length} transaction
-              {transactions.length !== 1 ? "s" : ""} to organize
+              {localTransactions.length} transaction
+              {localTransactions.length !== 1 ? "s" : ""} to organize
             </p>
           </div>
           <button
@@ -694,10 +852,10 @@ const EnhancedAccountAssignmentModal = ({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 dark:text-white truncate">
-                        {account.name}
+                        {account?.name || "Unnamed Account"}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {formatAccountType(account.type)}
+                        {formatAccountType(account?.type || "checking")}
                       </p>
                     </div>
                   </div>
@@ -849,8 +1007,8 @@ const EnhancedAccountAssignmentModal = ({
               <input
                 type="checkbox"
                 checked={
-                  selectedTransactions.size === transactions.length &&
-                  transactions.length > 0
+                  selectedTransactions.size === localTransactions.length &&
+                  localTransactions.length > 0
                 }
                 onChange={handleSelectAll}
                 className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
@@ -883,9 +1041,16 @@ const EnhancedAccountAssignmentModal = ({
                       className="px-3 py-1.5 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1"
                     >
                       <Users className="w-3 h-3" />
-                      Assign to {account.name}
+                      Assign to {account?.name || "Unnamed Account"}
                     </button>
                   ))}
+                  <button
+                    onClick={handleBatchYearModalOpen}
+                    className="px-3 py-1.5 bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-1"
+                  >
+                    <Calendar className="w-3 h-3" />
+                    Set Year
+                  </button>
                   {filteredAccounts.length > 3 && (
                     <button
                       onClick={() => setShowCreateAccount(true)}
@@ -919,7 +1084,7 @@ const EnhancedAccountAssignmentModal = ({
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 dark:text-white truncate text-sm sm:text-base">
                             {group.account
-                              ? group.account.name
+                              ? group.account?.name || "Unnamed Account"
                               : "Uncategorized"}
                           </p>
                           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
@@ -927,11 +1092,16 @@ const EnhancedAccountAssignmentModal = ({
                             {group.transactions.length !== 1 ? "s" : ""} •{" "}
                             {formatCurrency(group.totalAmount)}
                           </p>
-                          {group.suggestion && (
+                          {group.suggestion ? (
                             <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 truncate">
                               AI Suggestion: {group.suggestion.reason}
                             </p>
-                          )}
+                          ) : group.account &&
+                            selectedAccounts[group.transactions[0]?.id] ? (
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-1 truncate">
+                              ✓ Manually Assigned
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                       {group.account && (
@@ -1053,7 +1223,7 @@ const EnhancedAccountAssignmentModal = ({
                                   <div className="flex items-center gap-2 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-sm">
                                     <CheckCircle className="w-3 h-3" />
                                     {
-                                      accounts.find(
+                                      localAccounts.find(
                                         a => a.id === assignedAccount
                                       )?.name
                                     }
@@ -1080,7 +1250,7 @@ const EnhancedAccountAssignmentModal = ({
                                   >
                                     {getAccountIcon(account)}
                                     <span className="truncate">
-                                      {account.name}
+                                      {account?.name || "Unnamed Account"}
                                     </span>
                                   </button>
                                 ))}
@@ -1101,7 +1271,7 @@ const EnhancedAccountAssignmentModal = ({
         <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="text-sm text-gray-600 dark:text-gray-400">
             {Object.values(selectedAccounts).filter(Boolean).length} of{" "}
-            {transactions.length} transactions assigned
+            {localTransactions.length} transactions assigned
           </div>
           <div className="flex gap-3">
             <button
@@ -1137,7 +1307,7 @@ const EnhancedAccountAssignmentModal = ({
                   </label>
                   <input
                     type="text"
-                    value={newAccountData.name}
+                    value={newAccountData?.name || ""}
                     onChange={e =>
                       setNewAccountData(prev => ({
                         ...prev,
@@ -1154,7 +1324,7 @@ const EnhancedAccountAssignmentModal = ({
                     Account Type
                   </label>
                   <select
-                    value={newAccountData.type}
+                    value={newAccountData?.type || "checking"}
                     onChange={e =>
                       setNewAccountData(prev => ({
                         ...prev,
@@ -1176,7 +1346,7 @@ const EnhancedAccountAssignmentModal = ({
                   </label>
                   <input
                     type="number"
-                    value={newAccountData.balance}
+                    value={newAccountData?.balance || 0}
                     onChange={e =>
                       setNewAccountData(prev => ({
                         ...prev,
@@ -1199,7 +1369,7 @@ const EnhancedAccountAssignmentModal = ({
                 </button>
                 <button
                   onClick={handleCreateAccount}
-                  disabled={!newAccountData.name || isProcessing}
+                  disabled={!newAccountData?.name || isProcessing}
                   className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isProcessing ? "Creating..." : "Create Account"}
@@ -1224,13 +1394,15 @@ const EnhancedAccountAssignmentModal = ({
                   </label>
                   <input
                     type="text"
-                    value={editingSuggestion.name}
-                    onChange={e =>
-                      setEditingSuggestion(prev => ({
-                        ...prev,
-                        name: e.target.value,
-                      }))
-                    }
+                    value={editingSuggestion?.name || ""}
+                    onChange={e => {
+                      if (editingSuggestion) {
+                        setEditingSuggestion(prev => ({
+                          ...prev,
+                          name: e.target.value,
+                        }));
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter account name"
                   />
@@ -1241,13 +1413,15 @@ const EnhancedAccountAssignmentModal = ({
                     Account Type
                   </label>
                   <select
-                    value={editingSuggestion.type}
-                    onChange={e =>
-                      setEditingSuggestion(prev => ({
-                        ...prev,
-                        type: e.target.value,
-                      }))
-                    }
+                    value={editingSuggestion?.type || "checking"}
+                    onChange={e => {
+                      if (editingSuggestion) {
+                        setEditingSuggestion(prev => ({
+                          ...prev,
+                          type: e.target.value,
+                        }));
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="checking">Checking Account</option>
@@ -1260,10 +1434,14 @@ const EnhancedAccountAssignmentModal = ({
 
                 <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                   <p className="text-sm text-blue-800 dark:text-blue-200">
-                    <strong>AI Suggestion:</strong> {editingSuggestion.reason}
+                    <strong>AI Suggestion:</strong>{" "}
+                    {editingSuggestion?.reason || ""}
                   </p>
                   <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                    Confidence: {Math.round(editingSuggestion.confidence * 100)}
+                    Confidence:{" "}
+                    {editingSuggestion
+                      ? Math.round(editingSuggestion.confidence * 100)
+                      : 0}
                     %
                   </p>
                 </div>
@@ -1280,8 +1458,10 @@ const EnhancedAccountAssignmentModal = ({
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleEditSuggestion(editingSuggestion)}
-                  disabled={!editingSuggestion.name || isProcessing}
+                  onClick={() =>
+                    editingSuggestion && handleEditSuggestion(editingSuggestion)
+                  }
+                  disabled={!editingSuggestion?.name || isProcessing}
                   className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isProcessing ? "Creating..." : "Create & Auto-Assign"}
@@ -1462,6 +1642,74 @@ const EnhancedAccountAssignmentModal = ({
           </div>
         )}
       </div>
+
+      {/* Batch Year Assignment Modal */}
+      {showBatchYearModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Batch Year Assignment
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Set the year for {selectedTransactions.size} selected
+                  transaction{selectedTransactions.size !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Year
+                </label>
+                <input
+                  type="number"
+                  min="2000"
+                  max="2030"
+                  value={batchYear}
+                  onChange={e =>
+                    setBatchYear(
+                      parseInt(e.target.value) || new Date().getFullYear()
+                    )
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="e.g., 2024"
+                />
+              </div>
+
+              <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                <p className="text-xs text-purple-800 dark:text-purple-200">
+                  <strong>Note:</strong> This will update the year for all
+                  selected transactions while preserving the month and day. For
+                  example, &quot;06/21&quot; will become &quot;06/21/{batchYear}
+                  &quot;.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleBatchYearModalClose}
+                className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBatchYearAssign}
+                className="flex-1 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+              >
+                Update {selectedTransactions.size} Transaction
+                {selectedTransactions.size !== 1 ? "s" : ""}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
