@@ -156,20 +156,19 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   // Enhanced file processing with better progress tracking
   const processFile = useCallback(
     async file => {
+      // Reset all states at the beginning
       setIsProcessing(true);
       setError("");
       setProcessingProgress(0);
       setProcessingSummary(null);
       setShowAllTransactions(false);
+      setParsedTransactions([]);
 
       try {
         // Validate file
         validateFile(file);
         setProcessingProgress(10);
         setProcessingStep("Validating file...");
-
-        // Add a small delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 300));
 
         let transactions = [];
         let summary = null;
@@ -190,9 +189,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           transactions = await parseStatement(file, parsingOptions);
           setProcessingProgress(60);
           setProcessingStep("Processing transactions...");
-
-          // Add a small delay for better UX
-          await new Promise(resolve => setTimeout(resolve, 200));
 
           // Apply import options to CSV transactions
           transactions = applyImportOptionsToTransactions(transactions);
@@ -223,9 +219,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           setProcessingProgress(20);
           setProcessingStep("Uploading document...");
 
-          // Add a small delay for better UX
-          await new Promise(resolve => setTimeout(resolve, 400));
-
           setProcessingProgress(40);
           setProcessingStep("Analyzing document with AI...");
 
@@ -233,9 +226,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           const result = await geminiService.analyzeImage(file);
           setProcessingProgress(70);
           setProcessingStep("Processing AI results...");
-
-          // Add a small delay for better UX
-          await new Promise(resolve => setTimeout(resolve, 300));
 
           if (result.transactions && result.transactions.length > 0) {
             transactions = geminiService.convertToTransactions(result);
@@ -256,32 +246,35 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         setProcessingProgress(85);
         setProcessingStep("Finalizing...");
 
-        // Add a small delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // Check if transactions were found before setting states
+        if (transactions.length === 0) {
+          setError("No transactions found in the file.");
+          setIsProcessing(false);
+          setProcessingProgress(0);
+          setProcessingStep("");
+          return;
+        }
 
         // Set the parsed transactions for review
         setParsedTransactions(transactions);
         setProcessingSummary(summary);
-
-        // Check if transactions were found
-        if (transactions.length === 0) {
-          setError("No transactions found in the file.");
-          setIsProcessing(false);
-          return;
-        }
-
         setShowAllTransactions(true);
-        setIsProcessing(false);
 
         setProcessingProgress(100);
-        setProcessingStep("Import complete!");
+        setProcessingStep("Analysis complete!");
 
-        // Add a final delay before completing
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Complete processing
+        setIsProcessing(false);
       } catch (error) {
-        setError(error.message);
+        console.error("Error processing file:", error);
+        setError(
+          error.message || "An error occurred while processing the file."
+        );
         setProcessingProgress(0);
         setProcessingStep("");
+        setParsedTransactions([]);
+        setProcessingSummary(null);
+        setShowAllTransactions(false);
       } finally {
         setIsProcessing(false);
       }
@@ -292,11 +285,13 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   const handleFileSelect = useCallback(
     event => {
       const file = event.target.files[0];
-      if (file) {
+      if (file && !isProcessing) {
+        // Reset the file input to allow selecting the same file again
+        event.target.value = "";
         processFile(file);
       }
     },
-    [processFile]
+    [processFile, isProcessing]
   );
 
   const handleImportSelected = async () => {
@@ -311,7 +306,10 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       onImportComplete(selectedTransactions);
       resetState();
     } catch (error) {
-      setError(error.message);
+      console.error("Error importing selected transactions:", error);
+      setError(
+        error.message || "An error occurred while importing transactions."
+      );
     }
   };
 
@@ -325,7 +323,10 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       onImportComplete(parsedTransactions);
       resetState();
     } catch (error) {
-      setError(error.message);
+      console.error("Error importing all transactions:", error);
+      setError(
+        error.message || "An error occurred while importing transactions."
+      );
     }
   };
 
@@ -352,7 +353,15 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   useEffect(() => {
     if (isOpen) {
       resetState();
+    } else {
+      // Clean up when modal closes
+      resetState();
     }
+
+    // Cleanup function for component unmount
+    return () => {
+      resetState();
+    };
   }, [isOpen]);
 
   const toggleTransactionSelection = index => {
