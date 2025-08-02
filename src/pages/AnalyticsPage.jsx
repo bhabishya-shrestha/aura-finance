@@ -39,7 +39,6 @@ const AnalyticsPage = () => {
     getAverageDailySpending,
     getQuickAnalytics,
     transactions,
-    refreshAnalytics,
   } = useStore();
 
   const [timeRange, setTimeRange] = useState("month");
@@ -54,32 +53,28 @@ const AnalyticsPage = () => {
     }));
   };
 
-  // Enhanced data processing with animations
-  const {
-    spendingByCategory,
-    monthlySpending,
-    incomeVsSpending,
-    spendingTrends,
-    netWorthTrend,
-    incomeTrend,
-    spendingTrend,
-    savingsTrend,
-  } = useMemo(() => {
+  // Single source of truth for analytics data - calculated once and memoized properly
+  const analyticsData = useMemo(() => {
+    // Only calculate when timeRange or transactions actually change
+    if (!transactions.length) {
+      return {
+        spendingByCategory: [],
+        monthlySpending: [],
+        incomeVsSpending: { income: 0, spending: 0, net: 0 },
+        spendingTrends: [],
+        netWorthTrend: 0,
+        incomeTrend: 0,
+        spendingTrend: 0,
+        savingsTrend: 0,
+      };
+    }
+
     const GRADIENT_COLORS = [
-      "#667eea", // Blue-purple
-      "#f093fb", // Pink
-      "#4facfe", // Blue
-      "#43e97b", // Green
-      "#fa709a", // Pink-orange
-      "#a8edea", // Light blue-green
-      "#ff9a9e", // Light pink
-      "#fecfef", // Light purple
-      "#fecfef", // Light purple
-      "#ffecd2", // Light orange
-      "#fcb69f", // Peach
-      "#ff9a9e", // Light pink
+      "#667eea", "#f093fb", "#4facfe", "#43e97b", "#fa709a", "#a8edea",
+      "#ff9a9e", "#fecfef", "#ffecd2", "#fcb69f", "#ff9a9e", "#fecfef"
     ];
 
+    // Calculate all analytics data in one pass
     const data = {
       spendingByCategory: getSpendingByCategory(timeRange),
       monthlySpending: getMonthlySpending(timeRange),
@@ -90,28 +85,16 @@ const AnalyticsPage = () => {
       quickAnalytics: getQuickAnalytics(timeRange),
     };
 
-    // Debug logging
-    if (import.meta.env.DEV) {
-      console.log("Analytics data for charts:", {
-        transactionsCount: transactions.length,
-        timeRange,
-        spendingByCategory: data.spendingByCategory,
-        monthlySpending: data.monthlySpending,
-        incomeVsSpending: data.incomeVsSpending,
-        spendingTrends: data.spendingTrends,
-        sampleTransactions: transactions.slice(0, 3),
-      });
-    }
-
-    // Enhanced spending data with gradients and proper colors
+    // Enhanced spending data with proper colors
     const enhancedSpendingData = data.spendingByCategory.map((item, index) => ({
       ...item,
       fill: GRADIENT_COLORS[index % GRADIENT_COLORS.length],
-      percentage:
-        (item.amount / Math.abs(data.incomeVsSpending.spending)) * 100,
+      percentage: data.incomeVsSpending.spending !== 0 
+        ? (item.amount / Math.abs(data.incomeVsSpending.spending)) * 100 
+        : 0,
     }));
 
-    // Enhanced monthly data with smooth curves
+    // Enhanced monthly data
     const enhancedMonthlyData = data.monthlySpending.map(item => ({
       ...item,
       spending: Math.abs(item.spending),
@@ -123,70 +106,43 @@ const AnalyticsPage = () => {
       return ((current - previous) / previous) * 100;
     };
 
+    const currentNetWorth = getNetWorth();
+    const currentIncome = data.incomeVsSpending.income;
+    const currentSpending = Math.abs(data.incomeVsSpending.spending);
+
     return {
       spendingByCategory: enhancedSpendingData,
       monthlySpending: enhancedMonthlyData,
       incomeVsSpending: data.incomeVsSpending,
       spendingTrends: data.spendingTrends,
-      sampleTransactions: transactions.slice(0, 3),
-      // Calculate trends for metric cards
-      netWorthTrend: calculateTrend(getNetWorth(), getNetWorth() * 0.95),
-      incomeTrend: calculateTrend(
-        data.incomeVsSpending.income,
-        data.incomeVsSpending.income * 0.9
-      ),
-      spendingTrend: calculateTrend(
-        Math.abs(data.incomeVsSpending.spending),
-        Math.abs(data.incomeVsSpending.spending) * 0.85
-      ),
+      netWorthTrend: calculateTrend(currentNetWorth, currentNetWorth * 0.95),
+      incomeTrend: calculateTrend(currentIncome, currentIncome * 0.9),
+      spendingTrend: calculateTrend(currentSpending, currentSpending * 0.85),
       savingsTrend: calculateTrend(
-        data.incomeVsSpending.income - Math.abs(data.incomeVsSpending.spending),
-        (data.incomeVsSpending.income -
-          Math.abs(data.incomeVsSpending.spending)) *
-          0.92
+        currentIncome - currentSpending,
+        (currentIncome - currentSpending) * 0.92
       ),
     };
-  }, [
-    timeRange,
-    getSpendingByCategory,
-    getMonthlySpending,
-    getIncomeVsSpending,
-    getSpendingTrends,
-    getTopSpendingCategories,
-    getAverageDailySpending,
-    getQuickAnalytics,
-    transactions,
-    getNetWorth,
-  ]);
+  }, [timeRange, transactions.length]); // Only depend on what actually matters
 
-  // Animation effects and data refresh - consolidated to prevent double-loading
+  // Destructure for cleaner component code
+  const {
+    spendingByCategory,
+    monthlySpending,
+    incomeVsSpending,
+    spendingTrends,
+    netWorthTrend,
+    incomeTrend,
+    spendingTrend,
+    savingsTrend,
+  } = analyticsData;
+
+  // Simple animation effect - no data refresh needed since useMemo handles it
   useEffect(() => {
-    // Trigger animations
     setAnimateCards(true);
-    const animationTimer = setTimeout(() => setAnimateCards(false), 1000);
-
-    // Refresh analytics data only when timeRange or selectedView changes
-    // This prevents unnecessary refreshes on every mount
-    refreshAnalytics();
-
-    // Debug logging for transactions
-    if (import.meta.env.DEV) {
-      console.log("AnalyticsPage - Current transactions:", {
-        count: transactions.length,
-        transactions: transactions.slice(0, 5),
-        sampleDates: transactions.slice(0, 3).map(t => ({
-          id: t.id,
-          date: t.date,
-          dateType: typeof t.date,
-          isDateObject: t.date instanceof Date,
-          description: t.description,
-          amount: t.amount,
-        })),
-      });
-    }
-
-    return () => clearTimeout(animationTimer);
-  }, [timeRange, selectedView, refreshAnalytics, transactions]);
+    const timer = setTimeout(() => setAnimateCards(false), 1000);
+    return () => clearTimeout(timer);
+  }, [timeRange, selectedView]);
 
   // Enhanced utility functions
   const formatCurrency = useCallback(amount => {

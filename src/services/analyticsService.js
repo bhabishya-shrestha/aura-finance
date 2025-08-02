@@ -15,22 +15,11 @@ class AnalyticsService {
     this.lastTransactionCount = 0;
   }
 
-  // Force refresh cache (use sparingly)
+  // Force refresh cache
   forceRefresh() {
-    // Only clear cache if it's been more than 30 seconds since last refresh
-    // This prevents excessive cache clearing during rapid component updates
-    const lastRefresh = this.lastRefreshTime || 0;
-    const timeSinceLastRefresh = Date.now() - lastRefresh;
-    
-    if (timeSinceLastRefresh > 30000) { // 30 seconds
-      this.cache.clear();
-      this.lastRefreshTime = Date.now();
-      
-      if (import.meta.env.DEV) {
-        console.log("Analytics cache cleared (force refresh)");
-      }
-    } else if (import.meta.env.DEV) {
-      console.log("Skipping force refresh - too soon since last refresh");
+    this.cache.clear();
+    if (import.meta.env.DEV) {
+      console.log("Analytics cache cleared");
     }
   }
 
@@ -45,30 +34,19 @@ class AnalyticsService {
   }
 
   // Check if cache is still valid
-  isCacheValid(cacheKey, transactions = []) {
+  isCacheValid(cacheKey) {
     const cached = this.cache.get(cacheKey);
     if (!cached) {
       return false;
     }
 
-    // Check if cache has expired
-    if (Date.now() - cached.timestamp > this.cacheTimeout) {
-      return false;
-    }
-
-    // Check if transaction count has changed significantly (more than 1 transaction)
-    // This prevents unnecessary recalculations for minor changes
-    const transactionCountDiff = Math.abs(transactions.length - this.lastTransactionCount);
-    if (transactionCountDiff > 1) {
-      return false;
-    }
-
-    return true;
+    // Simple cache expiration check
+    return Date.now() - cached.timestamp < this.cacheTimeout;
   }
 
   // Get cached result or calculate new one
   getCachedOrCalculate(cacheKey, calculationFn, transactions = []) {
-    if (this.isCacheValid(cacheKey, transactions)) {
+    if (this.isCacheValid(cacheKey)) {
       return this.cache.get(cacheKey).data;
     }
 
