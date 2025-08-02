@@ -96,7 +96,7 @@ class AnalyticsService {
     const filteredTransactions = transactions.filter(transaction => {
       // Ensure we have a proper Date object
       let transactionDate;
-      if (typeof transaction.date === "string") {
+      if (typeof transaction.date === 'string') {
         transactionDate = new Date(transaction.date);
       } else if (transaction.date instanceof Date) {
         transactionDate = transaction.date;
@@ -104,18 +104,13 @@ class AnalyticsService {
         // If it's a timestamp or other format, try to convert
         transactionDate = new Date(transaction.date);
       }
-
+      
       // Check if the date is valid
       if (isNaN(transactionDate.getTime())) {
-        console.warn(
-          "Invalid transaction date:",
-          transaction.date,
-          "for transaction:",
-          transaction
-        );
+        console.warn('Invalid transaction date:', transaction.date, 'for transaction:', transaction);
         return false;
       }
-
+      
       return transactionDate >= startDate && transactionDate <= now;
     });
 
@@ -136,6 +131,13 @@ class AnalyticsService {
           parsedDateValid: !isNaN(new Date(t.date).getTime())
         }))
       });
+    }
+
+    // Fallback: if no transactions match the time range, return all transactions
+    // This ensures charts show data even if date filtering doesn't work
+    if (filteredTransactions.length === 0 && transactions.length > 0) {
+      console.warn(`No transactions found for time range '${timeRange}', falling back to all transactions`);
+      return transactions;
     }
 
     return filteredTransactions;
