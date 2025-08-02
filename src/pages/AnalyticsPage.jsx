@@ -85,7 +85,7 @@ const AnalyticsPage = () => {
         monthlySpending: data.monthlySpending,
         incomeVsSpending: data.incomeVsSpending,
         spendingTrends: data.spendingTrends,
-        sampleTransactions: transactions.slice(0, 3)
+        sampleTransactions: transactions.slice(0, 3),
       });
     }
 
@@ -103,17 +103,19 @@ const AnalyticsPage = () => {
       spending: Math.abs(item.spending),
     }));
 
-    // Enhanced spending vs income data
+    // Enhanced spending vs income data with proper colors
     const spendingVsIncomeData = [
       {
         name: "Income",
         amount: data.incomeVsSpending.income,
         type: "income",
+        fill: "#10B981", // Green for income
       },
       {
         name: "Spending",
         amount: Math.abs(data.incomeVsSpending.spending),
         type: "spending",
+        fill: "#EF4444", // Red for spending
       },
     ];
 
@@ -145,7 +147,7 @@ const AnalyticsPage = () => {
   // Refresh analytics data when component mounts
   useEffect(() => {
     refreshAnalytics();
-    
+
     // Debug logging for transactions
     if (import.meta.env.DEV) {
       console.log("AnalyticsPage - Current transactions:", {
@@ -157,8 +159,8 @@ const AnalyticsPage = () => {
           dateType: typeof t.date,
           isDateObject: t.date instanceof Date,
           description: t.description,
-          amount: t.amount
-        }))
+          amount: t.amount,
+        })),
       });
     }
   }, [refreshAnalytics, transactions]);
@@ -333,9 +335,9 @@ const AnalyticsPage = () => {
           </div>
           <div
             className={`transition-all duration-300 ease-in-out ${
-              isExpanded 
+              isExpanded
                 ? "h-64 sm:h-72 lg:h-80" // Regular size when expanded (collapsed from mobile default)
-                : "h-32 sm:h-64 lg:h-80"  // Collapsed on mobile, regular on desktop
+                : "h-32 sm:h-64 lg:h-80" // Collapsed on mobile, regular on desktop
             }`}
           >
             {children}
@@ -479,11 +481,7 @@ const AnalyticsPage = () => {
                     <Tooltip content={<CustomTooltip />} />
                     <Bar
                       dataKey="amount"
-                      fill={entry =>
-                        entry.type === "income"
-                          ? "url(#incomeGradient)"
-                          : "url(#spendingGradient)"
-                      }
+                      fill={entry => entry.fill}
                       radius={[8, 8, 0, 0]}
                     />
                   </ComposedChart>
@@ -502,6 +500,7 @@ const AnalyticsPage = () => {
                       outerRadius={90}
                       paddingAngle={5}
                       dataKey="amount"
+                      nameKey="category"
                       label={({ category, percentage }) =>
                         percentage > 5
                           ? `${category}\n${percentage.toFixed(1)}%`

@@ -80,13 +80,24 @@ class AnalyticsService {
         startDate.setDate(now.getDate() - 7);
         break;
       case "month":
-        startDate.setMonth(now.getMonth() - 1);
+        // Use current month (from 1st of current month to now)
+        startDate.setDate(1); // First day of current month
+        startDate.setHours(0, 0, 0, 0);
         break;
       case "quarter":
-        startDate.setMonth(now.getMonth() - 3);
+        // Use current quarter
+        {
+          const currentQuarter = Math.floor(now.getMonth() / 3);
+          startDate.setMonth(currentQuarter * 3);
+          startDate.setDate(1);
+          startDate.setHours(0, 0, 0, 0);
+        }
         break;
       case "year":
-        startDate.setFullYear(now.getFullYear() - 1);
+        // Use current year
+        startDate.setMonth(0);
+        startDate.setDate(1);
+        startDate.setHours(0, 0, 0, 0);
         break;
       case "all":
       default:
@@ -96,7 +107,7 @@ class AnalyticsService {
     const filteredTransactions = transactions.filter(transaction => {
       // Ensure we have a proper Date object
       let transactionDate;
-      if (typeof transaction.date === 'string') {
+      if (typeof transaction.date === "string") {
         transactionDate = new Date(transaction.date);
       } else if (transaction.date instanceof Date) {
         transactionDate = transaction.date;
@@ -104,13 +115,18 @@ class AnalyticsService {
         // If it's a timestamp or other format, try to convert
         transactionDate = new Date(transaction.date);
       }
-      
+
       // Check if the date is valid
       if (isNaN(transactionDate.getTime())) {
-        console.warn('Invalid transaction date:', transaction.date, 'for transaction:', transaction);
+        console.warn(
+          "Invalid transaction date:",
+          transaction.date,
+          "for transaction:",
+          transaction
+        );
         return false;
       }
-      
+
       return transactionDate >= startDate && transactionDate <= now;
     });
 
@@ -121,22 +137,25 @@ class AnalyticsService {
         filteredCount: filteredTransactions.length,
         startDate: startDate.toISOString(),
         endDate: now.toISOString(),
-        sampleTransaction: filteredTransactions.length > 0 ? filteredTransactions[0] : null,
+        sampleTransaction:
+          filteredTransactions.length > 0 ? filteredTransactions[0] : null,
         sampleTransactionDates: transactions.slice(0, 3).map(t => ({
           id: t.id,
           date: t.date,
           dateType: typeof t.date,
           isDateObject: t.date instanceof Date,
           parsedDate: new Date(t.date),
-          parsedDateValid: !isNaN(new Date(t.date).getTime())
-        }))
+          parsedDateValid: !isNaN(new Date(t.date).getTime()),
+        })),
       });
     }
 
     // Fallback: if no transactions match the time range, return all transactions
     // This ensures charts show data even if date filtering doesn't work
     if (filteredTransactions.length === 0 && transactions.length > 0) {
-      console.warn(`No transactions found for time range '${timeRange}', falling back to all transactions`);
+      console.warn(
+        `No transactions found for time range '${timeRange}', falling back to all transactions`
+      );
       return transactions;
     }
 
@@ -251,11 +270,14 @@ class AnalyticsService {
           }
         });
 
-        return Object.values(monthlyData).sort((a, b) => {
-          const [yearA, monthA] = a.month.split("-");
-          const [yearB, monthB] = b.month.split("-");
-          return new Date(yearA, monthA - 1) - new Date(yearB, monthB - 1);
-        });
+        // Convert to array and sort chronologically
+        const sortedData = Object.entries(monthlyData)
+          .sort(([monthKeyA], [monthKeyB]) =>
+            monthKeyA.localeCompare(monthKeyB)
+          )
+          .map(([, data]) => data);
+
+        return sortedData;
       },
       transactions
     );
@@ -517,6 +539,16 @@ class AnalyticsService {
             spending,
             income,
             net: income - spending,
+          });
+        }
+
+        // Debug logging for spending trends
+        if (import.meta.env.DEV) {
+          console.log("Spending trends calculation:", {
+            periods,
+            trendsCount: trends.length,
+            trends: trends,
+            hasData: trends.some(t => t.spending > 0 || t.income > 0),
           });
         }
 
