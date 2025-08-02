@@ -494,48 +494,93 @@ class AnalyticsService {
         const trends = [];
         const now = new Date();
 
-        // Determine number of periods based on time range
-        let periods = 12;
-        let periodType = "month";
+        // Determine periods and period type based on time range
+        let periods, periodType, startDate, endDate;
 
         switch (timeRange) {
           case "week":
             periods = 7;
             periodType = "day";
+            // Last 7 days
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            endDate = now;
             break;
           case "month":
-            periods = 6; // Show last 6 months for monthly view
-            periodType = "month";
+            periods = 4; // 4 weeks in current month
+            periodType = "week";
+            // Current month (from 1st to today)
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = now;
             break;
           case "quarter":
-            periods = 4; // Show last 4 quarters
-            periodType = "month";
+            {
+              periods = 3; // 3 months in current quarter
+              periodType = "month";
+              // Current quarter
+              const currentQuarter = Math.floor(now.getMonth() / 3);
+              startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
+              endDate = now;
+            }
             break;
           case "year":
-            periods = 12; // Show last 12 months for yearly view
+            periods = 12; // 12 months in current year
             periodType = "month";
+            // Current year
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = now;
             break;
           default:
             periods = 12;
             periodType = "month";
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = now;
         }
 
-        for (let i = periods - 1; i >= 0; i--) {
-          let startDate, endDate;
+        // Generate periods based on type
+        for (let i = 0; i < periods; i++) {
+          let periodStart, periodEnd, periodLabel;
 
           if (periodType === "day") {
-            startDate = new Date(
-              now.getFullYear(),
-              now.getMonth(),
-              now.getDate() - i
+            // Daily periods for week view
+            periodStart = new Date(
+              startDate.getTime() + i * 24 * 60 * 60 * 1000
             );
-            endDate = new Date(startDate);
-            endDate.setDate(startDate.getDate() + 1);
-          } else {
-            startDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            endDate = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+            periodEnd = new Date(
+              periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
+            );
+            periodLabel = periodStart.toLocaleDateString("en-US", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            });
+          } else if (periodType === "week") {
+            // Weekly periods for month view
+            periodStart = new Date(
+              startDate.getTime() + i * 7 * 24 * 60 * 60 * 1000
+            );
+            periodEnd = new Date(
+              periodStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1
+            );
+            periodLabel = `Week ${i + 1}`;
+          } else if (periodType === "month") {
+            // Monthly periods for quarter/year view
+            periodStart = new Date(
+              startDate.getFullYear(),
+              startDate.getMonth() + i,
+              1
+            );
+            periodEnd = new Date(
+              periodStart.getFullYear(),
+              periodStart.getMonth() + 1,
+              0
+            );
+            periodLabel = periodStart.toLocaleDateString("en-US", {
+              month: "short",
+              year: "numeric",
+            });
           }
 
+          // Filter transactions for this period
           const periodTransactions = transactions.filter(t => {
             let transactionDate;
             if (typeof t.date === "string") {
@@ -554,9 +599,12 @@ class AnalyticsService {
               return false;
             }
 
-            return transactionDate >= startDate && transactionDate <= endDate;
+            return (
+              transactionDate >= periodStart && transactionDate <= periodEnd
+            );
           });
 
+          // Calculate spending and income for this period
           const spending = periodTransactions
             .filter(t => t.amount < 0)
             .reduce((sum, t) => sum + Math.abs(t.amount), 0);
@@ -566,13 +614,13 @@ class AnalyticsService {
             .reduce((sum, t) => sum + t.amount, 0);
 
           trends.push({
-            period: startDate.toLocaleString("default", {
-              month: "short",
-              year: "numeric",
-            }),
+            period: periodLabel,
             spending,
             income,
             net: income - spending,
+            periodStart: periodStart.toISOString(),
+            periodEnd: periodEnd.toISOString(),
+            transactionCount: periodTransactions.length,
           });
         }
 
@@ -581,6 +629,9 @@ class AnalyticsService {
           console.log("Spending trends calculation:", {
             timeRange,
             periods,
+            periodType,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
             trendsCount: trends.length,
             trends: trends,
             hasData: trends.some(t => t.spending > 0 || t.income > 0),
