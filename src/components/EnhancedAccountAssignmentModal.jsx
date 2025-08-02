@@ -36,7 +36,7 @@ const EnhancedAccountAssignmentModal = ({
   accountSuggestions = [],
   onComplete,
 }) => {
-  const { addAccount, updateTransaction } = useStore();
+  const { addAccount, updateTransaction, loadTransactions } = useStore();
   const [selectedAccounts, setSelectedAccounts] = useState({});
   const [showCreateAccount, setShowCreateAccount] = useState(false);
   const [newAccountData, setNewAccountData] = useState({
@@ -694,14 +694,41 @@ const EnhancedAccountAssignmentModal = ({
     });
   };
 
-  const handleComplete = () => {
-    const updatedTransactions = localTransactions.map(transaction => ({
-      ...transaction,
-      accountId: selectedAccounts[transaction.id] || transaction.accountId,
-    }));
+  const handleComplete = async () => {
+    try {
+      setIsProcessing(true);
+      
+      // Update each transaction with its assigned account
+      const updatePromises = localTransactions.map(async (transaction) => {
+        const assignedAccountId = selectedAccounts[transaction.id];
+        if (assignedAccountId && assignedAccountId !== transaction.accountId) {
+          // Only update if the account assignment has changed
+          await updateTransaction(transaction.id, {
+            accountId: assignedAccountId
+          });
+        }
+      });
 
-    onComplete(updatedTransactions);
-    onClose();
+      // Wait for all updates to complete
+      await Promise.all(updatePromises);
+
+      // Reload transactions to reflect changes
+      await loadTransactions();
+
+      // Call the onComplete callback with updated transactions
+      const updatedTransactions = localTransactions.map(transaction => ({
+        ...transaction,
+        accountId: selectedAccounts[transaction.id] || transaction.accountId,
+      }));
+
+      onComplete(updatedTransactions);
+      onClose();
+    } catch (error) {
+      console.error("Error saving transaction assignments:", error);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const getAccountIcon = account => {
