@@ -333,7 +333,9 @@ const AnalyticsPage = () => {
           </div>
           <div
             className={`transition-all duration-300 ease-in-out ${
-              isExpanded ? "h-96" : "h-64 sm:h-72 lg:h-80"
+              isExpanded 
+                ? "h-64 sm:h-72 lg:h-80" // Regular size when expanded (collapsed from mobile default)
+                : "h-32 sm:h-64 lg:h-80"  // Collapsed on mobile, regular on desktop
             }`}
           >
             {children}

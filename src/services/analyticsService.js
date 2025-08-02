@@ -126,8 +126,15 @@ class AnalyticsService {
         filteredCount: filteredTransactions.length,
         startDate: startDate.toISOString(),
         endDate: now.toISOString(),
-        sampleTransaction:
-          filteredTransactions.length > 0 ? filteredTransactions[0] : null,
+        sampleTransaction: filteredTransactions.length > 0 ? filteredTransactions[0] : null,
+        sampleTransactionDates: transactions.slice(0, 3).map(t => ({
+          id: t.id,
+          date: t.date,
+          dateType: typeof t.date,
+          isDateObject: t.date instanceof Date,
+          parsedDate: new Date(t.date),
+          parsedDateValid: !isNaN(new Date(t.date).getTime())
+        }))
       });
     }
 
