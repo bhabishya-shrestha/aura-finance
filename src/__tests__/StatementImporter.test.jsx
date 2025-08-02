@@ -80,11 +80,9 @@ describe("StatementImporter", () => {
       />
     );
 
-    expect(screen.getByText("Import Financial Documents")).toBeInTheDocument();
+    expect(screen.getByText("Import Statement")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Upload statements, receipts, or invoices to automatically import transactions"
-      )
+      screen.getByText("Upload your bank or credit card statement")
     ).toBeInTheDocument();
   });
 
@@ -97,9 +95,7 @@ describe("StatementImporter", () => {
       />
     );
 
-    expect(
-      screen.queryByText("Import Financial Documents")
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Import Statement")).not.toBeInTheDocument();
   });
 
   it("shows file upload area", () => {
@@ -115,11 +111,9 @@ describe("StatementImporter", () => {
       screen.getByText("Drop your file here or click to browse")
     ).toBeInTheDocument();
     expect(screen.getByText("Choose File")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Support for PDF, CSV, and image files (JPG, PNG, GIF, WebP, HEIC)"
-      )
-    ).toBeInTheDocument();
+    expect(screen.getByText("CSV Files")).toBeInTheDocument();
+    expect(screen.getByText("PDF Files")).toBeInTheDocument();
+    expect(screen.getByText("Images")).toBeInTheDocument();
   });
 
   it("handles file selection", async () => {
