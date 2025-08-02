@@ -66,12 +66,18 @@ const AnalyticsPage = () => {
     savingsTrend,
   } = useMemo(() => {
     const GRADIENT_COLORS = [
-      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-      "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-      "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-      "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-      "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
+      "#667eea", // Blue-purple
+      "#f093fb", // Pink
+      "#4facfe", // Blue
+      "#43e97b", // Green
+      "#fa709a", // Pink-orange
+      "#a8edea", // Light blue-green
+      "#ff9a9e", // Light pink
+      "#fecfef", // Light purple
+      "#fecfef", // Light purple
+      "#ffecd2", // Light orange
+      "#fcb69f", // Peach
+      "#ff9a9e", // Light pink
     ];
 
     const data = {
