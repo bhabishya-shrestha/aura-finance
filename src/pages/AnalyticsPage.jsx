@@ -76,6 +76,19 @@ const AnalyticsPage = () => {
       quickAnalytics: getQuickAnalytics(timeRange),
     };
 
+    // Debug logging
+    if (import.meta.env.DEV) {
+      console.log("Analytics data for charts:", {
+        transactionsCount: transactions.length,
+        timeRange,
+        spendingByCategory: data.spendingByCategory,
+        monthlySpending: data.monthlySpending,
+        incomeVsSpending: data.incomeVsSpending,
+        spendingTrends: data.spendingTrends,
+        sampleTransactions: transactions.slice(0, 3)
+      });
+    }
+
     // Enhanced spending data with gradients
     const enhancedSpendingData = data.spendingByCategory.map((item, index) => ({
       ...item,
@@ -119,6 +132,7 @@ const AnalyticsPage = () => {
     getTopSpendingCategories,
     getAverageDailySpending,
     getQuickAnalytics,
+    transactions,
   ]);
 
   // Animation effects
@@ -131,7 +145,23 @@ const AnalyticsPage = () => {
   // Refresh analytics data when component mounts
   useEffect(() => {
     refreshAnalytics();
-  }, [refreshAnalytics]);
+    
+    // Debug logging for transactions
+    if (import.meta.env.DEV) {
+      console.log("AnalyticsPage - Current transactions:", {
+        count: transactions.length,
+        transactions: transactions.slice(0, 5),
+        sampleDates: transactions.slice(0, 3).map(t => ({
+          id: t.id,
+          date: t.date,
+          dateType: typeof t.date,
+          isDateObject: t.date instanceof Date,
+          description: t.description,
+          amount: t.amount
+        }))
+      });
+    }
+  }, [refreshAnalytics, transactions]);
 
   // Enhanced utility functions
   const formatCurrency = useCallback(amount => {

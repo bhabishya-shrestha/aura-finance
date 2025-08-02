@@ -49,6 +49,16 @@ class AnalyticsService {
     }
 
     const result = calculationFn();
+
+    // Debug logging
+    if (import.meta.env.DEV) {
+      console.log(`Analytics calculation for ${cacheKey}:`, {
+        transactionCount: transactions.length,
+        result: result,
+        hasData: Array.isArray(result) ? result.length > 0 : result !== 0,
+      });
+    }
+
     this.cache.set(cacheKey, {
       data: result,
       timestamp: Date.now(),
@@ -83,10 +93,45 @@ class AnalyticsService {
         return transactions;
     }
 
-    return transactions.filter(transaction => {
-      const transactionDate = new Date(transaction.date);
+    const filteredTransactions = transactions.filter(transaction => {
+      // Ensure we have a proper Date object
+      let transactionDate;
+      if (typeof transaction.date === "string") {
+        transactionDate = new Date(transaction.date);
+      } else if (transaction.date instanceof Date) {
+        transactionDate = transaction.date;
+      } else {
+        // If it's a timestamp or other format, try to convert
+        transactionDate = new Date(transaction.date);
+      }
+
+      // Check if the date is valid
+      if (isNaN(transactionDate.getTime())) {
+        console.warn(
+          "Invalid transaction date:",
+          transaction.date,
+          "for transaction:",
+          transaction
+        );
+        return false;
+      }
+
       return transactionDate >= startDate && transactionDate <= now;
     });
+
+    // Debug logging
+    if (import.meta.env.DEV) {
+      console.log(`Filtered transactions for ${timeRange}:`, {
+        totalTransactions: transactions.length,
+        filteredCount: filteredTransactions.length,
+        startDate: startDate.toISOString(),
+        endDate: now.toISOString(),
+        sampleTransaction:
+          filteredTransactions.length > 0 ? filteredTransactions[0] : null,
+      });
+    }
+
+    return filteredTransactions;
   }
 
   // Calculate net worth
@@ -126,9 +171,25 @@ class AnalyticsService {
         filteredTransactions.forEach(transaction => {
           if (transaction.amount < 0) {
             // Only spending
-            const date = new Date(transaction.date);
-            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-            const monthName = date.toLocaleString("default", {
+            let transactionDate;
+            if (typeof transaction.date === "string") {
+              transactionDate = new Date(transaction.date);
+            } else if (transaction.date instanceof Date) {
+              transactionDate = transaction.date;
+            } else {
+              transactionDate = new Date(transaction.date);
+            }
+
+            if (isNaN(transactionDate.getTime())) {
+              console.warn(
+                "Invalid date in monthly spending calculation:",
+                transaction.date
+              );
+              return;
+            }
+
+            const monthKey = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, "0")}`;
+            const monthName = transactionDate.toLocaleString("default", {
               month: "short",
             });
 
@@ -145,9 +206,25 @@ class AnalyticsService {
             monthlyData[monthKey].net -= Math.abs(transaction.amount);
           } else {
             // Income
-            const date = new Date(transaction.date);
-            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-            const monthName = date.toLocaleString("default", {
+            let transactionDate;
+            if (typeof transaction.date === "string") {
+              transactionDate = new Date(transaction.date);
+            } else if (transaction.date instanceof Date) {
+              transactionDate = transaction.date;
+            } else {
+              transactionDate = new Date(transaction.date);
+            }
+
+            if (isNaN(transactionDate.getTime())) {
+              console.warn(
+                "Invalid date in monthly spending calculation:",
+                transaction.date
+              );
+              return;
+            }
+
+            const monthKey = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, "0")}`;
+            const monthName = transactionDate.toLocaleString("default", {
               month: "short",
             });
 
@@ -313,7 +390,23 @@ class AnalyticsService {
         // Calculate spending trend (compare with previous period)
         const previousPeriodTransactions = this.filterTransactionsByTimeRange(
           transactions.filter(t => {
-            const transactionDate = new Date(t.date);
+            let transactionDate;
+            if (typeof t.date === "string") {
+              transactionDate = new Date(t.date);
+            } else if (t.date instanceof Date) {
+              transactionDate = t.date;
+            } else {
+              transactionDate = new Date(t.date);
+            }
+
+            if (isNaN(transactionDate.getTime())) {
+              console.warn(
+                "Invalid date in quick analytics calculation:",
+                t.date
+              );
+              return false;
+            }
+
             const now = new Date();
             const startDate = new Date();
 
@@ -379,7 +472,23 @@ class AnalyticsService {
           );
 
           const periodTransactions = transactions.filter(t => {
-            const transactionDate = new Date(t.date);
+            let transactionDate;
+            if (typeof t.date === "string") {
+              transactionDate = new Date(t.date);
+            } else if (t.date instanceof Date) {
+              transactionDate = t.date;
+            } else {
+              transactionDate = new Date(t.date);
+            }
+
+            if (isNaN(transactionDate.getTime())) {
+              console.warn(
+                "Invalid date in spending trends calculation:",
+                t.date
+              );
+              return false;
+            }
+
             return transactionDate >= startDate && transactionDate <= endDate;
           });
 
@@ -453,11 +562,19 @@ class AnalyticsService {
               filteredTransactions.length > 0
                 ? Math.ceil(
                     (now -
-                      new Date(
-                        filteredTransactions[
-                          filteredTransactions.length - 1
-                        ].date
-                      )) /
+                      (() => {
+                        let lastTransactionDate;
+                        const lastTransaction =
+                          filteredTransactions[filteredTransactions.length - 1];
+                        if (typeof lastTransaction.date === "string") {
+                          lastTransactionDate = new Date(lastTransaction.date);
+                        } else if (lastTransaction.date instanceof Date) {
+                          lastTransactionDate = lastTransaction.date;
+                        } else {
+                          lastTransactionDate = new Date(lastTransaction.date);
+                        }
+                        return lastTransactionDate;
+                      })()) /
                       (1000 * 60 * 60 * 24)
                   )
                 : 1;
