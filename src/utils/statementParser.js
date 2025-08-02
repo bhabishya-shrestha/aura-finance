@@ -14,8 +14,15 @@ export const CATEGORIES = [
   "Other",
 ];
 
-// Parse CSV files with enhanced error handling
-export const parseCSV = file => {
+// Parse CSV files with enhanced error handling and smart date parsing
+export const parseCSV = (file, options = {}) => {
+  const {
+    userSpecifiedYear = null,
+    statementStartDate = null,
+    statementEndDate = null,
+    allowFutureDates = false,
+  } = options;
+
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
@@ -72,16 +79,18 @@ export const parseCSV = file => {
                 );
               }
 
-              // Parse date with better error handling
+              // Parse date with smart detection and user control
               let parsedDate;
               try {
-                parsedDate = new Date(date);
-                if (isNaN(parsedDate.getTime())) {
-                  throw new Error("Invalid date");
-                }
+                parsedDate = parseDateWithContext(date, {
+                  userSpecifiedYear,
+                  statementStartDate,
+                  statementEndDate,
+                  allowFutureDates,
+                });
               } catch (dateError) {
                 throw new Error(
-                  `Invalid date format in row ${index + 1}: ${date}`
+                  `Invalid date format in row ${index + 1}: ${date} - ${dateError.message}`
                 );
               }
 
@@ -287,15 +296,216 @@ const categorizeTransaction = description => {
   return "Other";
 };
 
+// Professional date parsing with smart detection and user control
+const parseDateWithContext = (dateStr, options = {}) => {
+  const {
+    defaultYear = new Date().getFullYear(),
+    userSpecifiedYear = null,
+    statementStartDate = null,
+    statementEndDate = null,
+    allowFutureDates = false,
+  } = options;
+
+  try {
+    // If user specified a year, use it
+    if (userSpecifiedYear) {
+      return parseDateWithYear(dateStr, userSpecifiedYear);
+    }
+
+    // Handle various date formats
+    let parsedDate = null;
+
+    // Format: MM/DD or MM/DD/YY or MM/DD/YYYY
+    if (dateStr.includes("/")) {
+      const parts = dateStr.split("/");
+
+      if (parts.length === 2) {
+        // MM/DD format - ambiguous year
+        const month = parseInt(parts[0]) - 1; // 0-based month
+        const day = parseInt(parts[1]);
+
+        // Smart year detection based on context
+        const detectedYear = detectYearFromContext(month, day, {
+          defaultYear,
+          statementStartDate,
+          statementEndDate,
+          allowFutureDates,
+        });
+
+        parsedDate = new Date(detectedYear, month, day);
+      } else if (parts.length === 3) {
+        // MM/DD/YY or MM/DD/YYYY format
+        const month = parseInt(parts[0]) - 1;
+        const day = parseInt(parts[1]);
+        const yearPart = parts[2];
+
+        let year;
+        if (yearPart.length === 2) {
+          // YY format - convert to YYYY
+          const shortYear = parseInt(yearPart);
+          year = shortYear >= 50 ? 1900 + shortYear : 2000 + shortYear;
+        } else {
+          // YYYY format
+          year = parseInt(yearPart);
+        }
+
+        parsedDate = new Date(year, month, day);
+      }
+    }
+
+    // Format: MM-DD or MM-DD-YY or MM-DD-YYYY
+    else if (dateStr.includes("-")) {
+      const parts = dateStr.split("-");
+
+      if (parts.length === 2) {
+        // MM-DD format - ambiguous year
+        const month = parseInt(parts[0]) - 1;
+        const day = parseInt(parts[1]);
+
+        const detectedYear = detectYearFromContext(month, day, {
+          defaultYear,
+          statementStartDate,
+          statementEndDate,
+          allowFutureDates,
+        });
+
+        parsedDate = new Date(detectedYear, month, day);
+      } else if (parts.length === 3) {
+        // MM-DD-YY or MM-DD-YYYY format
+        const month = parseInt(parts[0]) - 1;
+        const day = parseInt(parts[1]);
+        const yearPart = parts[2];
+
+        let year;
+        if (yearPart.length === 2) {
+          const shortYear = parseInt(yearPart);
+          year = shortYear >= 50 ? 1900 + shortYear : 2000 + shortYear;
+        } else {
+          year = parseInt(yearPart);
+        }
+
+        parsedDate = new Date(year, month, day);
+      }
+    }
+
+    // Format: "Jan 15, 2024" or "January 15, 2024"
+    else {
+      parsedDate = new Date(dateStr);
+    }
+
+    // Validate the parsed date
+    if (isNaN(parsedDate.getTime())) {
+      throw new Error(`Invalid date format: ${dateStr}`);
+    }
+
+    // Additional validation based on context
+    if (statementStartDate && statementEndDate) {
+      if (parsedDate < statementStartDate || parsedDate > statementEndDate) {
+        console.warn(
+          `Date ${parsedDate.toISOString()} is outside statement period ${statementStartDate.toISOString()} - ${statementEndDate.toISOString()}`
+        );
+      }
+    }
+
+    if (!allowFutureDates && parsedDate > new Date()) {
+      console.warn(`Future date detected: ${parsedDate.toISOString()}`);
+    }
+
+    return parsedDate;
+  } catch (error) {
+    throw new Error(`Failed to parse date '${dateStr}': ${error.message}`);
+  }
+};
+
+// Smart year detection based on context
+const detectYearFromContext = (month, day, context) => {
+  const {
+    defaultYear,
+    statementStartDate,
+    statementEndDate,
+    allowFutureDates,
+  } = context;
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+
+  // Try the default year first
+  let testDate = new Date(defaultYear, month, day);
+
+  // If statement dates are provided, use them as primary context
+  if (statementStartDate && statementEndDate) {
+    const statementStartYear = statementStartDate.getFullYear();
+    const statementEndYear = statementEndDate.getFullYear();
+
+    // Try statement start year
+    testDate = new Date(statementStartYear, month, day);
+    if (testDate >= statementStartDate && testDate <= statementEndDate) {
+      return statementStartYear;
+    }
+
+    // Try statement end year
+    testDate = new Date(statementEndYear, month, day);
+    if (testDate >= statementStartDate && testDate <= statementEndDate) {
+      return statementEndYear;
+    }
+
+    // Try previous year if within reasonable range
+    const prevYear = statementStartYear - 1;
+    testDate = new Date(prevYear, month, day);
+    if (testDate >= new Date(prevYear, 0, 1) && testDate <= statementEndDate) {
+      return prevYear;
+    }
+  }
+
+  // Fallback logic based on current date
+  const currentMonth = currentDate.getMonth();
+  const currentDay = currentDate.getDate();
+
+  // If the date is in the future relative to current date, use previous year
+  if (month > currentMonth || (month === currentMonth && day > currentDay)) {
+    if (!allowFutureDates) {
+      return defaultYear - 1;
+    }
+  }
+
+  // If the date is more than 6 months in the past, it's likely from current year
+  // (for recent transactions)
+  const sixMonthsAgo = new Date(currentYear, currentMonth - 6, currentDay);
+  testDate = new Date(defaultYear, month, day);
+
+  if (testDate < sixMonthsAgo) {
+    return defaultYear;
+  }
+
+  return defaultYear;
+};
+
+// Parse date with explicit year
+const parseDateWithYear = (dateStr, year) => {
+  // Remove year if present and replace with specified year
+  const dateWithoutYear = dateStr
+    .replace(/\/(\d{2}|\d{4})$/, "")
+    .replace(/-(\d{2}|\d{4})$/, "");
+
+  if (dateWithoutYear.includes("/")) {
+    const [month, day] = dateWithoutYear.split("/");
+    return new Date(year, parseInt(month) - 1, parseInt(day));
+  } else if (dateWithoutYear.includes("-")) {
+    const [month, day] = dateWithoutYear.split("-");
+    return new Date(year, parseInt(month) - 1, parseInt(day));
+  }
+
+  throw new Error(`Cannot parse date format: ${dateStr}`);
+};
+
 // Main function to parse statements (CSV only - PDF and images handled by Gemini)
-export const parseStatement = async file => {
+export const parseStatement = async (file, options = {}) => {
   try {
     if (!file) {
       throw new Error("No file provided");
     }
 
     if (file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv")) {
-      return await parseCSV(file);
+      return await parseCSV(file, options);
     } else {
       throw new Error(
         "This parser only handles CSV files. For PDF and image files, please use the AI-powered import feature."
@@ -313,7 +523,7 @@ export const parseStatement = async file => {
       );
     } else if (error.message.includes("Invalid date format")) {
       throw new Error(
-        "Date format error: Please ensure dates are in a recognizable format (e.g., MM/DD/YYYY or YYYY-MM-DD)."
+        "Date format error: Please ensure dates are in a recognizable format (e.g., MM/DD/YYYY or MM/DD). For ambiguous dates like '06/21', you can specify the year in the import options."
       );
     } else if (error.message.includes("No valid transactions")) {
       throw new Error(

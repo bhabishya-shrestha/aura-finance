@@ -45,7 +45,7 @@ const useStore = create((set, get) => ({
       }
 
       // Clear analytics cache when transactions are loaded
-      analyticsService.forceRefresh();
+      // analyticsService.forceRefresh(); // Removed - not needed with batch calculations
       set({ transactions });
     } catch (error) {
       // Error handling - in production, this would use a proper error notification system
@@ -76,7 +76,7 @@ const useStore = create((set, get) => ({
       }
 
       // Clear analytics cache when accounts are loaded
-      analyticsService.forceRefresh();
+      // analyticsService.forceRefresh(); // Removed - not needed with batch calculations
       set({ accounts });
     } catch (error) {
       // Error handling - in production, this would use a proper error notification system
@@ -469,6 +469,23 @@ const useStore = create((set, get) => ({
       };
     }
     return analyticsService.calculateQuickAnalytics(transactions, timeRange);
+  },
+
+  // Get all analytics data in a single batch calculation
+  getAllAnalytics: (timeRange = "month") => {
+    const { transactions } = get();
+    if (!transactions || transactions.length === 0) {
+      return {
+        spendingByCategory: [],
+        monthlySpending: [],
+        incomeVsSpending: { income: 0, spending: 0, net: 0 },
+        spendingTrends: [],
+        topCategories: [],
+        avgDailySpending: 0,
+        quickAnalytics: { income: 0, spending: 0, net: 0 },
+      };
+    }
+    return analyticsService.calculateAllAnalytics(transactions, timeRange);
   },
 
   getSpendingByCategory: (timeRange = "month") => {

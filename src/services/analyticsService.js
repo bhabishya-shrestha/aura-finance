@@ -1,105 +1,146 @@
-// Analytics calculation service with caching and efficient data management
+// Analytics calculation service with professional caching and data management
 class AnalyticsService {
   constructor() {
     this.cache = new Map();
-    this.cacheTimeout = 1 * 60 * 1000; // 1 minute (reduced from 5 minutes)
-    this.lastCalculation = null;
-    this.lastTransactionCount = 0;
-    this.lastRefreshTime = 0; // Added for forceRefresh optimization
+    this.cacheTimeout = 2 * 60 * 1000; // 2 minutes
+    this.lastTransactionHash = null;
+    this.lastCalculationTime = 0;
+  }
+
+  // Generate a hash of transaction data for cache invalidation
+  generateTransactionHash(transactions) {
+    if (!transactions || transactions.length === 0) return "empty";
+
+    // Create a hash based on transaction count, IDs, and modification times
+    const hashData = transactions.map(t => ({
+      id: t.id,
+      amount: t.amount,
+      date: t.date,
+      category: t.category,
+    }));
+
+    // Simple hash function for performance
+    return JSON.stringify(hashData).length + "_" + transactions.length;
   }
 
   // Clear cache when data changes
   clearCache() {
     this.cache.clear();
-    this.lastCalculation = null;
-    this.lastTransactionCount = 0;
+    this.lastTransactionHash = null;
+    this.lastCalculationTime = 0;
   }
 
   // Force refresh cache
   forceRefresh() {
-    this.cache.clear();
-    if (import.meta.env.DEV) {
-      console.log("Analytics cache cleared");
-    }
+    console.log("Force refreshing analytics cache");
+    this.clearCache();
   }
 
   // Check if data needs refresh based on transaction changes
   needsRefresh(transactions = []) {
-    return transactions.length !== this.lastTransactionCount;
+    const currentHash = this.generateTransactionHash(transactions);
+    return currentHash !== this.lastTransactionHash;
   }
 
-  // Get cache key for different time ranges and calculations
-  getCacheKey(calculation, timeRange = "all", accountId = null) {
-    return `${calculation}_${timeRange}_${accountId || "all"}`;
+  // Get cache key with transaction hash for proper invalidation
+  getCacheKey(
+    calculation,
+    timeRange = "all",
+    accountId = null,
+    transactionHash = null
+  ) {
+    const baseKey = `${calculation}_${timeRange}_${accountId || "all"}`;
+    return transactionHash ? `${baseKey}_${transactionHash}` : baseKey;
   }
 
   // Check if cache is still valid
-  isCacheValid(cacheKey) {
+  isCacheValid(cacheKey, transactions = []) {
     const cached = this.cache.get(cacheKey);
     if (!cached) {
       return false;
     }
 
-    // Simple cache expiration check
+    // Check if transaction data has changed
+    const currentHash = this.generateTransactionHash(transactions);
+    if (cached.transactionHash !== currentHash) {
+      return false;
+    }
+
+    // Check cache expiration
     return Date.now() - cached.timestamp < this.cacheTimeout;
   }
 
-  // Get cached result or calculate new one
+  // Get cached result or calculate new one with proper invalidation
   getCachedOrCalculate(cacheKey, calculationFn, transactions = []) {
-    if (this.isCacheValid(cacheKey)) {
-      return this.cache.get(cacheKey).data;
+    const transactionHash = this.generateTransactionHash(transactions);
+
+    // Use the original cacheKey directly instead of trying to parse it
+    const fullCacheKey = `${cacheKey}_${transactionHash}`;
+
+    if (this.isCacheValid(fullCacheKey, transactions)) {
+      return this.cache.get(fullCacheKey).data;
     }
 
     const result = calculationFn();
 
     // Debug logging
     if (import.meta.env.DEV) {
-      console.log(`Analytics calculation for ${cacheKey}:`, {
+      console.log(`Analytics calculation for ${fullCacheKey}:`, {
         transactionCount: transactions.length,
+        transactionHash,
         result: result,
         hasData: Array.isArray(result) ? result.length > 0 : result !== 0,
+        calculationTime: Date.now() - this.lastCalculationTime,
       });
     }
 
-    this.cache.set(cacheKey, {
+    this.cache.set(fullCacheKey, {
       data: result,
       timestamp: Date.now(),
+      transactionHash,
     });
 
-    // Update last transaction count
-    this.lastTransactionCount = transactions.length;
+    this.lastTransactionHash = transactionHash;
+    this.lastCalculationTime = Date.now();
 
     return result;
   }
 
-  // Filter transactions by time range
+  // Filter transactions by time range with professional validation
   filterTransactionsByTimeRange(transactions, timeRange) {
+    // Input validation
+    if (!Array.isArray(transactions)) {
+      console.warn("Invalid transactions input:", transactions);
+      return [];
+    }
+
+    if (!timeRange || typeof timeRange !== "string") {
+      console.warn("Invalid timeRange input:", timeRange);
+      return transactions;
+    }
+
     const now = new Date();
-    const startDate = new Date();
+    let startDate = new Date();
 
     switch (timeRange) {
       case "week":
-        startDate.setDate(now.getDate() - 7);
+        // Last 7 days from now
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
       case "month":
-        // Use current month (from 1st of current month to now)
-        startDate.setDate(1); // First day of current month
-        startDate.setHours(0, 0, 0, 0);
+        // Current month (from 1st of current month to now)
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         break;
       case "quarter":
-        // Use current quarter
+        // Current quarter
         {
           const currentQuarter = Math.floor(now.getMonth() / 3);
-          startDate.setMonth(currentQuarter * 3);
-          startDate.setDate(1);
-          startDate.setHours(0, 0, 0, 0);
+          startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
         }
         break;
       case "year":
-        // Use current year
-        startDate.setMonth(0);
-        startDate.setDate(1);
-        startDate.setHours(0, 0, 0, 0);
+        // Current year
+        startDate = new Date(now.getFullYear(), 0, 1);
         break;
       case "all":
       default:
@@ -107,6 +148,12 @@ class AnalyticsService {
     }
 
     const filteredTransactions = transactions.filter(transaction => {
+      // Validate transaction structure
+      if (!transaction || typeof transaction !== "object") {
+        console.warn("Invalid transaction object:", transaction);
+        return false;
+      }
+
       // Ensure we have a proper Date object
       let transactionDate;
       if (typeof transaction.date === "string") {
@@ -132,7 +179,7 @@ class AnalyticsService {
       return transactionDate >= startDate && transactionDate <= now;
     });
 
-    // Debug logging
+    // Professional debug logging
     if (import.meta.env.DEV) {
       console.log(`Filtered transactions for ${timeRange}:`, {
         totalTransactions: transactions.length,
@@ -149,6 +196,12 @@ class AnalyticsService {
           parsedDate: new Date(t.date),
           parsedDateValid: !isNaN(new Date(t.date).getTime()),
         })),
+        validationSummary: {
+          validTransactions: filteredTransactions.length,
+          invalidTransactions:
+            transactions.length - filteredTransactions.length,
+          dateRange: `${startDate.toLocaleDateString()} - ${now.toLocaleDateString()}`,
+        },
       });
     }
 
@@ -175,30 +228,97 @@ class AnalyticsService {
           (sum, t) => sum + t.amount,
           0
         );
+
         const accountTotal = accounts.reduce(
           (sum, a) => sum + (a.balance || 0),
           0
         );
+
         return transactionTotal + accountTotal;
       },
       transactions
     );
   }
 
-  // Calculate monthly spending
-  calculateMonthlySpending(transactions, timeRange = "year") {
+  // Calculate spending by category (works with pre-filtered transactions)
+  calculateSpendingByCategory(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("spendingByCategory", timeRange);
+
+    return this.getCachedOrCalculate(
+      cacheKey,
+      () => {
+        // Use transactions as-is (they should already be filtered)
+        const categoryData = {};
+
+        transactions.forEach(transaction => {
+          if (transaction.amount < 0) {
+            // Only spending transactions
+            const category = transaction.category || "Uncategorized";
+            if (!categoryData[category]) {
+              categoryData[category] = 0;
+            }
+            categoryData[category] += Math.abs(transaction.amount);
+          }
+        });
+
+        // Convert to array and sort by amount
+        const result = Object.entries(categoryData)
+          .map(([category, amount]) => ({
+            category,
+            amount,
+            fill: "#667eea", // Default color, will be enhanced later
+          }))
+          .sort((a, b) => b.amount - a.amount);
+
+        return result;
+      },
+      transactions
+    );
+  }
+
+  // Calculate income vs spending (works with pre-filtered transactions)
+  calculateIncomeVsSpending(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("incomeVsSpending", timeRange);
+
+    return this.getCachedOrCalculate(
+      cacheKey,
+      () => {
+        // Use transactions as-is (they should already be filtered)
+        const income = transactions
+          .filter(t => t.amount > 0)
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        const spending = transactions
+          .filter(t => t.amount < 0)
+          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+        const net = income - spending;
+
+        return {
+          income,
+          spending,
+          net,
+          data: [
+            { name: "Income", amount: income, fill: "#10b981" },
+            { name: "Spending", amount: spending, fill: "#ef4444" },
+          ],
+        };
+      },
+      transactions
+    );
+  }
+
+  // Calculate monthly spending (works with pre-filtered transactions)
+  calculateMonthlySpending(transactions, timeRange = "month") {
     const cacheKey = this.getCacheKey("monthlySpending", timeRange);
 
     return this.getCachedOrCalculate(
       cacheKey,
       () => {
-        const filteredTransactions = this.filterTransactionsByTimeRange(
-          transactions,
-          timeRange
-        );
+        // Use transactions as-is (they should already be filtered)
         const monthlyData = {};
 
-        filteredTransactions.forEach(transaction => {
+        transactions.forEach(transaction => {
           if (transaction.amount < 0) {
             // Only spending
             let transactionDate;
@@ -285,79 +405,6 @@ class AnalyticsService {
     );
   }
 
-  // Calculate spending by category
-  calculateSpendingByCategory(transactions, timeRange = "month") {
-    const cacheKey = this.getCacheKey("spendingByCategory", timeRange);
-
-    return this.getCachedOrCalculate(
-      cacheKey,
-      () => {
-        const filteredTransactions = this.filterTransactionsByTimeRange(
-          transactions,
-          timeRange
-        );
-        const categorySpending = {};
-
-        filteredTransactions.forEach(transaction => {
-          if (transaction.amount < 0) {
-            // Only spending
-            const category = transaction.category || "Uncategorized";
-            categorySpending[category] =
-              (categorySpending[category] || 0) + Math.abs(transaction.amount);
-          }
-        });
-
-        const totalSpending = Object.values(categorySpending).reduce(
-          (sum, amount) => sum + amount,
-          0
-        );
-
-        return Object.entries(categorySpending)
-          .map(([category, amount]) => ({
-            category,
-            amount,
-            percentage: totalSpending > 0 ? (amount / totalSpending) * 100 : 0,
-          }))
-          .sort((a, b) => b.amount - a.amount);
-      },
-      transactions
-    );
-  }
-
-  // Calculate income vs spending
-  calculateIncomeVsSpending(transactions, timeRange = "month") {
-    const cacheKey = this.getCacheKey("incomeVsSpending", timeRange);
-
-    return this.getCachedOrCalculate(
-      cacheKey,
-      () => {
-        const filteredTransactions = this.filterTransactionsByTimeRange(
-          transactions,
-          timeRange
-        );
-
-        const income = filteredTransactions
-          .filter(t => t.amount > 0)
-          .reduce((sum, t) => sum + t.amount, 0);
-
-        const spending = filteredTransactions
-          .filter(t => t.amount < 0)
-          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-        return {
-          income,
-          spending,
-          net: income - spending,
-          data: [
-            { type: "Income", amount: income, color: "#10B981" },
-            { type: "Spending", amount: spending, color: "#EF4444" },
-          ],
-        };
-      },
-      transactions
-    );
-  }
-
   // Calculate account-specific analytics
   calculateAccountAnalytics(transactions, accountId, timeRange = "month") {
     const cacheKey = this.getCacheKey("accountAnalytics", timeRange, accountId);
@@ -398,198 +445,137 @@ class AnalyticsService {
     );
   }
 
-  // Calculate quick analytics for dashboard
+  // Calculate quick analytics (works with pre-filtered transactions)
   calculateQuickAnalytics(transactions, timeRange = "month") {
     const cacheKey = this.getCacheKey("quickAnalytics", timeRange);
 
     return this.getCachedOrCalculate(
       cacheKey,
       () => {
-        const filteredTransactions = this.filterTransactionsByTimeRange(
-          transactions,
-          timeRange
-        );
-
-        const income = filteredTransactions
+        // Use transactions as-is (they should already be filtered)
+        const income = transactions
           .filter(t => t.amount > 0)
           .reduce((sum, t) => sum + t.amount, 0);
 
-        const spending = filteredTransactions
+        const spending = transactions
           .filter(t => t.amount < 0)
           .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
         const netSavings = income - spending;
-
-        // Calculate spending trend (compare with previous period)
-        const previousPeriodTransactions = this.filterTransactionsByTimeRange(
-          transactions.filter(t => {
-            let transactionDate;
-            if (typeof t.date === "string") {
-              transactionDate = new Date(t.date);
-            } else if (t.date instanceof Date) {
-              transactionDate = t.date;
-            } else {
-              transactionDate = new Date(t.date);
-            }
-
-            if (isNaN(transactionDate.getTime())) {
-              console.warn(
-                "Invalid date in quick analytics calculation:",
-                t.date
-              );
-              return false;
-            }
-
-            const now = new Date();
-            const startDate = new Date();
-
-            switch (timeRange) {
-              case "month":
-                startDate.setMonth(now.getMonth() - 2);
-                break;
-              case "quarter":
-                startDate.setMonth(now.getMonth() - 6);
-                break;
-              case "year":
-                startDate.setFullYear(now.getFullYear() - 2);
-                break;
-              default:
-                return false;
-            }
-
-            return (
-              transactionDate >= startDate &&
-              transactionDate < new Date(now.getMonth() - 1)
-            );
-          }),
-          timeRange
-        );
-
-        const previousSpending = previousPeriodTransactions
-          .filter(t => t.amount < 0)
-          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-        const spendingTrend =
-          previousSpending > 0
-            ? ((spending - previousSpending) / previousSpending) * 100
-            : 0;
+        const transactionCount = transactions.length;
 
         return {
           income,
           spending,
           netSavings,
-          spendingTrend,
-          transactionCount: filteredTransactions.length,
+          transactionCount,
         };
       },
       transactions
     );
   }
 
-  // Calculate spending trends over time
+  // Calculate spending trends (works with pre-filtered transactions)
   calculateSpendingTrends(transactions, timeRange = "month") {
     const cacheKey = this.getCacheKey("spendingTrends", timeRange);
 
     return this.getCachedOrCalculate(
       cacheKey,
       () => {
+        // Use transactions as-is (they should already be filtered)
         const trends = [];
         const now = new Date();
 
-        // Determine periods and period type based on time range
+        // Determine period type and count based on time range
         let periods, periodType, startDate, endDate;
 
         switch (timeRange) {
           case "week":
             periods = 7;
             periodType = "day";
-            // Last 7 days
             startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             endDate = now;
             break;
           case "month":
-            periods = 4; // 4 weeks in current month
+            periods = 4; // 4 weeks
             periodType = "week";
-            // Current month (from 1st to today)
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
             endDate = now;
             break;
-          case "quarter":
-            {
-              periods = 3; // 3 months in current quarter
-              periodType = "month";
-              // Current quarter
-              const currentQuarter = Math.floor(now.getMonth() / 3);
-              startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
-              endDate = now;
-            }
-            break;
-          case "year":
-            periods = 12; // 12 months in current year
+          case "quarter": {
+            periods = 3;
             periodType = "month";
-            // Current year
-            startDate = new Date(now.getFullYear(), 0, 1);
+            const currentQuarter = Math.floor(now.getMonth() / 3);
+            startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
             endDate = now;
             break;
-          default:
+          }
+          case "year":
             periods = 12;
             periodType = "month";
             startDate = new Date(now.getFullYear(), 0, 1);
             endDate = now;
+            break;
+          default:
+            periods = 6;
+            periodType = "month";
+            startDate = new Date(now.getTime() - 6 * 30 * 24 * 60 * 60 * 1000);
+            endDate = now;
         }
 
-        // Generate periods based on type
+        // Generate periods
         for (let i = 0; i < periods; i++) {
           let periodStart, periodEnd, periodLabel;
 
-          if (periodType === "day") {
-            // Daily periods for week view
-            periodStart = new Date(
-              startDate.getTime() + i * 24 * 60 * 60 * 1000
-            );
-            periodEnd = new Date(
-              periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
-            );
-            periodLabel = periodStart.toLocaleDateString("en-US", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-            });
-          } else if (periodType === "week") {
-            // Weekly periods for month view
-            periodStart = new Date(
-              startDate.getTime() + i * 7 * 24 * 60 * 60 * 1000
-            );
-            periodEnd = new Date(
-              periodStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1
-            );
-            periodLabel = `Week ${i + 1}`;
-          } else if (periodType === "month") {
-            // Monthly periods for quarter/year view
-            periodStart = new Date(
-              startDate.getFullYear(),
-              startDate.getMonth() + i,
-              1
-            );
-            periodEnd = new Date(
-              periodStart.getFullYear(),
-              periodStart.getMonth() + 1,
-              0
-            );
-            periodLabel = periodStart.toLocaleDateString("en-US", {
-              month: "short",
-              year: "numeric",
-            });
+          switch (periodType) {
+            case "day":
+              periodStart = new Date(
+                startDate.getTime() + i * 24 * 60 * 60 * 1000
+              );
+              periodEnd = new Date(
+                periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
+              );
+              periodLabel = periodStart.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              });
+              break;
+            case "week":
+              periodStart = new Date(
+                startDate.getTime() + i * 7 * 24 * 60 * 60 * 1000
+              );
+              periodEnd = new Date(
+                periodStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1
+              );
+              periodLabel = `Week ${i + 1}`;
+              break;
+            case "month":
+              periodStart = new Date(
+                startDate.getFullYear(),
+                startDate.getMonth() + i,
+                1
+              );
+              periodEnd = new Date(
+                periodStart.getFullYear(),
+                periodStart.getMonth() + 1,
+                0
+              );
+              periodLabel = periodStart.toLocaleDateString("en-US", {
+                month: "short",
+                year: "numeric",
+              });
+              break;
           }
 
           // Filter transactions for this period
-          const periodTransactions = transactions.filter(t => {
+          const periodTransactions = transactions.filter((t, idx) => {
             let transactionDate;
             if (typeof t.date === "string") {
               transactionDate = new Date(t.date);
             } else if (t.date instanceof Date) {
               transactionDate = t.date;
             } else {
+              // Attempt to parse other formats, e.g., numbers as timestamps
               transactionDate = new Date(t.date);
             }
 
@@ -597,36 +583,52 @@ class AnalyticsService {
               console.warn(
                 "Invalid date in spending trends calculation:",
                 t.date
-              );
+              ); // Log the invalid date
               return false;
             }
 
-            return (
-              transactionDate >= periodStart && transactionDate <= periodEnd
-            );
+            const isInPeriod =
+              transactionDate >= periodStart && transactionDate <= periodEnd;
+
+            // Debug logging for first few transactions
+            if (import.meta.env.DEV && idx < 3) {
+              // Log for first 3 transactions in each period
+              console.log("Period filtering debug:", {
+                periodLabel,
+                periodStart: periodStart.toISOString(),
+                periodEnd: periodEnd.toISOString(),
+                transactionDate: transactionDate.toISOString(),
+                isInPeriod,
+                transaction: {
+                  id: t.id,
+                  amount: t.amount,
+                  date: t.date,
+                  category: t.category,
+                },
+              });
+            }
+
+            return isInPeriod;
           });
 
           // Calculate spending and income for this period
-          const spending = periodTransactions
+          const periodSpending = periodTransactions
             .filter(t => t.amount < 0)
             .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-          const income = periodTransactions
+          const periodIncome = periodTransactions
             .filter(t => t.amount > 0)
             .reduce((sum, t) => sum + t.amount, 0);
 
           trends.push({
             period: periodLabel,
-            spending,
-            income,
-            net: income - spending,
-            periodStart: periodStart.toISOString(),
-            periodEnd: periodEnd.toISOString(),
-            transactionCount: periodTransactions.length,
+            spending: periodSpending,
+            income: periodIncome,
+            net: periodIncome - periodSpending,
           });
         }
 
-        // Debug logging for spending trends
+        // Professional debug logging
         if (import.meta.env.DEV) {
           console.log("Spending trends calculation:", {
             timeRange,
@@ -639,6 +641,25 @@ class AnalyticsService {
             hasData: trends.some(t => t.spending > 0 || t.income > 0),
             totalTransactions: transactions.length,
             sampleTransaction: transactions.length > 0 ? transactions[0] : null,
+            sampleTrend: trends.length > 0 ? trends[0] : null,
+            allPeriodsHaveData: trends.every(
+              t => t.spending > 0 || t.income > 0
+            ),
+            periodsWithData: trends.filter(t => t.spending > 0 || t.income > 0)
+              .length,
+            // Add detailed transaction analysis
+            transactionSample: transactions.slice(0, 5).map(t => ({
+              id: t.id,
+              amount: t.amount,
+              date: t.date,
+              category: t.category,
+              parsedDate: new Date(t.date),
+              isValidDate: !isNaN(new Date(t.date).getTime()),
+              isInRange: (() => {
+                const date = new Date(t.date);
+                return date >= startDate && date <= endDate;
+              })(),
+            })),
           });
         }
 
@@ -648,70 +669,131 @@ class AnalyticsService {
     );
   }
 
-  // Get top spending categories
+  // Get top spending categories (works with pre-filtered transactions)
   getTopSpendingCategories(transactions, timeRange = "month", limit = 5) {
-    const categories = this.calculateSpendingByCategory(
+    // Filter transactions for the time range first
+    const filteredTransactions = this.filterTransactionsByTimeRange(
       transactions,
       timeRange
     );
+
+    // Then calculate spending by category using the filtered transactions
+    const categories = this.calculateSpendingByCategory(
+      filteredTransactions,
+      timeRange
+    );
+
     return categories.slice(0, limit);
   }
 
-  // Calculate average daily spending
+  // Calculate average daily spending (works with pre-filtered transactions)
   calculateAverageDailySpending(transactions, timeRange = "month") {
     const cacheKey = this.getCacheKey("avgDailySpending", timeRange);
 
     return this.getCachedOrCalculate(
       cacheKey,
       () => {
+        // Use transactions as-is (they should already be filtered)
+        const totalSpending = transactions
+          .filter(t => t.amount < 0)
+          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+        // Calculate days in the time range
+        const now = new Date();
+        let startDate;
+
+        switch (timeRange) {
+          case "week":
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case "month":
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case "quarter": {
+            const currentQuarter = Math.floor(now.getMonth() / 3);
+            startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
+            break;
+          }
+          case "year":
+            startDate = new Date(now.getFullYear(), 0, 1);
+            break;
+          default:
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        }
+
+        const daysDiff = Math.ceil((now - startDate) / (1000 * 60 * 60 * 24));
+        const avgDailySpending = daysDiff > 0 ? totalSpending / daysDiff : 0;
+
+        return avgDailySpending;
+      },
+      transactions
+    );
+  }
+
+  // Calculate all analytics in a single batch for performance
+  calculateAllAnalytics(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("allAnalytics", timeRange);
+
+    return this.getCachedOrCalculate(
+      cacheKey,
+      () => {
+        // Filter transactions once for the entire batch calculation
         const filteredTransactions = this.filterTransactionsByTimeRange(
           transactions,
           timeRange
         );
-        const spending = filteredTransactions
-          .filter(t => t.amount < 0)
-          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-        const now = new Date();
-        let daysInPeriod;
-
-        switch (timeRange) {
-          case "week":
-            daysInPeriod = 7;
-            break;
-          case "month":
-            daysInPeriod = 30;
-            break;
-          case "quarter":
-            daysInPeriod = 90;
-            break;
-          case "year":
-            daysInPeriod = 365;
-            break;
-          default:
-            daysInPeriod =
-              filteredTransactions.length > 0
-                ? Math.ceil(
-                    (now -
-                      (() => {
-                        let lastTransactionDate;
-                        const lastTransaction =
-                          filteredTransactions[filteredTransactions.length - 1];
-                        if (typeof lastTransaction.date === "string") {
-                          lastTransactionDate = new Date(lastTransaction.date);
-                        } else if (lastTransaction.date instanceof Date) {
-                          lastTransactionDate = lastTransaction.date;
-                        } else {
-                          lastTransactionDate = new Date(lastTransaction.date);
-                        }
-                        return lastTransactionDate;
-                      })()) /
-                      (1000 * 60 * 60 * 24)
-                  )
-                : 1;
+        // Professional debug logging
+        if (import.meta.env.DEV) {
+          console.log(`Batch analytics calculation for ${timeRange}:`, {
+            transactionCount: transactions.length,
+            filteredCount: filteredTransactions.length,
+            hasData: filteredTransactions.length > 0,
+            sampleTransaction:
+              filteredTransactions.length > 0 ? filteredTransactions[0] : null,
+            dateRange: timeRange === "all" ? "All time" : `${timeRange} period`,
+          });
         }
 
-        return spending / daysInPeriod;
+        // Calculate all analytics using the same filtered transaction set
+        const spendingByCategory = this.calculateSpendingByCategory(
+          filteredTransactions,
+          timeRange
+        );
+
+        const monthlySpending = this.calculateMonthlySpending(
+          filteredTransactions,
+          timeRange
+        );
+
+        const incomeVsSpending = this.calculateIncomeVsSpending(
+          filteredTransactions,
+          timeRange
+        );
+
+        const spendingTrends = this.calculateSpendingTrends(
+          filteredTransactions,
+          timeRange
+        );
+
+        const quickAnalytics = this.calculateQuickAnalytics(
+          filteredTransactions,
+          timeRange
+        );
+
+        const avgDailySpending = this.calculateAverageDailySpending(
+          filteredTransactions,
+          timeRange
+        );
+
+        return {
+          spendingByCategory,
+          monthlySpending,
+          incomeVsSpending,
+          spendingTrends,
+          quickAnalytics,
+          avgDailySpending,
+        };
       },
       transactions
     );
