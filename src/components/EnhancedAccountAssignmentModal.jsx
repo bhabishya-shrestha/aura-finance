@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   X,
   Plus,
@@ -95,213 +95,240 @@ const EnhancedAccountAssignmentModal = ({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Enhanced AI-powered account suggestion algorithm
-  const generateAccountSuggestions = useCallback(transactions => {
-    const suggestions = [];
-    const transactionTexts = transactions.map(t =>
-      `${t.description || ""} ${t.category || ""}`.toLowerCase()
-    );
+  // Track if suggestions have been generated to prevent infinite loops
+  const suggestionsGeneratedRef = useRef(false);
 
-    // Analyze transaction patterns to suggest account types
-    const patterns = {
-      checking: ["bank", "checking", "deposit", "withdrawal", "debit"],
-      savings: ["savings", "interest", "deposit"],
-      credit: ["credit", "card", "visa", "mastercard", "amex", "discover"],
-      investment: [
-        "investment",
-        "stock",
-        "fund",
-        "portfolio",
-        "trading",
-        "brokerage",
-      ],
-      loan: ["loan", "mortgage", "payment", "interest", "finance"],
-    };
+  // Track if local state has been initialized to prevent infinite loops
+  const initializedRef = useRef(false);
+  const lastTransactionsRef = useRef([]);
+  const lastAccountsRef = useRef([]);
 
-    // Detect account type from transaction patterns
-    let detectedType = "checking";
-    for (const [type, keywords] of Object.entries(patterns)) {
-      if (
-        keywords.some(keyword =>
-          transactionTexts.some(text => text.includes(keyword))
-        )
-      ) {
-        detectedType = type;
-        break;
-      }
-    }
-
-    // Extract institution names from transaction descriptions
-    const institutionPatterns = [
-      /(chase|bank of america|wells fargo|citibank|us bank|pnc|td bank|capital one|american express|discover)/i,
-      /(amazon|walmart|target|costco|home depot|lowes|kroger|safeway|whole foods)/i,
-      /(netflix|spotify|hulu|disney|amazon prime|youtube|google|microsoft|apple)/i,
-    ];
-
-    const detectedInstitutions = new Set();
-    transactions.forEach(t => {
-      const description = t.description || "";
-      institutionPatterns.forEach(pattern => {
-        const match = description.match(pattern);
-        if (match) {
-          detectedInstitutions.add(match[1].toLowerCase());
-        }
-      });
-    });
-
-    // Generate financial account suggestions based on detected patterns
-    if (detectedInstitutions.size > 0) {
-      const institutions = Array.from(detectedInstitutions);
-
-      // Suggest based on financial institutions
-      const financialInstitutions = institutions.filter(inst =>
-        [
-          "chase",
-          "bank of america",
-          "wells fargo",
-          "citibank",
-          "us bank",
-          "pnc",
-          "td bank",
-          "capital one",
-        ].includes(inst)
-      );
-
-      if (financialInstitutions.length > 0) {
-        const institution = financialInstitutions[0];
-        const institutionName = institution
-          .split(" ")
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" ");
-
-        suggestions.push({
-          name: `${institutionName} ${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)}`,
-          type: detectedType,
-          confidence: 0.9,
-          reason: `Detected ${institutionName} transactions`,
-        });
-      }
-    }
-
-    // Suggest based on transaction patterns and amounts
-    const avgAmount =
-      transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0) /
-      transactions.length;
-
-    if (avgAmount > 500) {
-      suggestions.push({
-        name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
-        type: detectedType,
-        confidence: 0.7,
-        reason: `Based on ${detectedType} transaction patterns`,
-      });
-    }
-
-    // Suggest based on transaction frequency and types
-    const creditCardPatterns = [
-      "visa",
-      "mastercard",
-      "amex",
-      "discover",
-      "credit",
-    ];
-    const hasCreditCardTransactions = creditCardPatterns.some(pattern =>
-      transactionTexts.some(text => text.includes(pattern))
-    );
-
-    if (hasCreditCardTransactions) {
-      suggestions.push({
-        name: "Credit Card Account",
-        type: "credit",
-        confidence: 0.8,
-        reason: "Detected credit card transactions",
-      });
-    }
-
-    // Suggest based on transaction categories
-    const categories = new Set(
-      transactions.map(t => t.category).filter(Boolean)
-    );
-
-    if (categories.size > 0) {
-      const categoryList = Array.from(categories).slice(0, 2);
-      suggestions.push({
-        name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
-        type: detectedType,
-        confidence: 0.6,
-        reason: `Based on categories: ${categoryList.join(", ")}`,
-      });
-    }
-
-    // Add default suggestion if no specific patterns detected
-    if (suggestions.length === 0) {
-      suggestions.push({
-        name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
-        type: detectedType,
-        confidence: 0.5,
-        reason: "Default account suggestion",
-      });
-    }
-
-    setSuggestedAccounts(suggestions);
-  }, []);
-
-  // Initialize selected accounts when modal opens
+  // Single useEffect to handle all initialization when modal opens
   useEffect(() => {
     if (isOpen) {
-      const initialSelection = {};
-      transactions.forEach(transaction => {
-        initialSelection[transaction.id] = transaction.accountId || null;
-      });
-      setSelectedAccounts(initialSelection);
-      setSelectedTransactions(new Set());
-      setLocalTransactions([...transactions]); // Initialize localTransactions with a copy
-      setLocalAccounts([...accounts]); // Initialize localAccounts with a copy
+      // Check if transactions or accounts have actually changed
+      const transactionsChanged =
+        JSON.stringify(transactions) !==
+        JSON.stringify(lastTransactionsRef.current);
+      const accountsChanged =
+        JSON.stringify(accounts) !== JSON.stringify(lastAccountsRef.current);
 
-      // Pre-fill new account data if account info was detected
-      if (detectedAccountInfo) {
-        setNewAccountData({
-          name: detectedAccountInfo.name || "",
-          type: detectedAccountInfo.type || "checking",
-          balance: detectedAccountInfo.balance || 0,
+      // Only initialize if not already initialized or if props have changed
+      if (!initializedRef.current || transactionsChanged || accountsChanged) {
+        // Initialize selected accounts
+        const initialSelection = {};
+        transactions.forEach(transaction => {
+          initialSelection[transaction.id] = transaction.accountId || null;
+        });
+        setSelectedAccounts(initialSelection);
+        setSelectedTransactions(new Set());
+
+        // Initialize local state only if content has changed
+        if (transactionsChanged) {
+          setLocalTransactions([...transactions]);
+          lastTransactionsRef.current = transactions;
+        }
+        if (accountsChanged) {
+          setLocalAccounts([...accounts]);
+          lastAccountsRef.current = accounts;
+        }
+
+        // Pre-fill new account data if account info was detected
+        if (detectedAccountInfo && detectedAccountInfo.name) {
+          setNewAccountData({
+            name: detectedAccountInfo.name || "",
+            type: detectedAccountInfo.type || "checking",
+            balance: detectedAccountInfo.balance || 0,
+          });
+        }
+
+        initializedRef.current = true;
+      }
+    } else {
+      // Reset flags when modal closes
+      suggestionsGeneratedRef.current = false;
+      initializedRef.current = false;
+    }
+  }, [isOpen, transactions, accounts, detectedAccountInfo]);
+
+  // Generate account suggestions when modal opens and transactions change
+  useEffect(() => {
+    if (isOpen && transactions.length > 0 && !suggestionsGeneratedRef.current) {
+      suggestionsGeneratedRef.current = true;
+      const suggestions = [];
+      const transactionTexts = transactions.map(t =>
+        `${t.description || ""} ${t.category || ""}`.toLowerCase()
+      );
+
+      // Analyze transaction patterns to suggest account types
+      const patterns = {
+        checking: ["bank", "checking", "deposit", "withdrawal", "debit"],
+        savings: ["savings", "interest", "deposit"],
+        credit: ["credit", "card", "visa", "mastercard", "amex", "discover"],
+        investment: [
+          "investment",
+          "stock",
+          "fund",
+          "portfolio",
+          "trading",
+          "brokerage",
+        ],
+        loan: ["loan", "mortgage", "payment", "interest", "finance"],
+      };
+
+      // Detect account type from transaction patterns
+      let detectedType = "checking";
+      for (const [type, keywords] of Object.entries(patterns)) {
+        if (
+          keywords.some(keyword =>
+            transactionTexts.some(text => text.includes(keyword))
+          )
+        ) {
+          detectedType = type;
+          break;
+        }
+      }
+
+      // Extract institution names from transaction descriptions
+      const institutionPatterns = [
+        /(chase|bank of america|wells fargo|citibank|us bank|pnc|td bank|capital one|american express|discover)/i,
+        /(amazon|walmart|target|costco|home depot|lowes|kroger|safeway|whole foods)/i,
+        /(netflix|spotify|hulu|disney|amazon prime|youtube|google|microsoft|apple)/i,
+      ];
+
+      const detectedInstitutions = new Set();
+      transactions.forEach(t => {
+        const description = t.description || "";
+        institutionPatterns.forEach(pattern => {
+          const match = description.match(pattern);
+          if (match) {
+            detectedInstitutions.add(match[1].toLowerCase());
+          }
+        });
+      });
+
+      // Generate financial account suggestions based on detected patterns
+      if (detectedInstitutions.size > 0) {
+        const institutions = Array.from(detectedInstitutions);
+
+        // Suggest based on financial institutions
+        const financialInstitutions = institutions.filter(inst =>
+          [
+            "chase",
+            "bank of america",
+            "wells fargo",
+            "citibank",
+            "us bank",
+            "pnc",
+            "td bank",
+            "capital one",
+          ].includes(inst)
+        );
+
+        if (financialInstitutions.length > 0) {
+          const institution = financialInstitutions[0];
+          const institutionName = institution
+            .split(" ")
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+
+          suggestions.push({
+            name: `${institutionName} ${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)}`,
+            type: detectedType,
+            confidence: 0.9,
+            reason: `Detected ${institutionName} transactions`,
+          });
+        }
+      }
+
+      // Suggest based on transaction patterns and amounts
+      const avgAmount =
+        transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0) /
+        transactions.length;
+
+      if (avgAmount > 500) {
+        suggestions.push({
+          name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
+          type: detectedType,
+          confidence: 0.7,
+          reason: `Based on ${detectedType} transaction patterns`,
         });
       }
 
-      // Generate AI-powered account suggestions
-      generateAccountSuggestions(transactions);
-    }
-  }, [
-    isOpen,
-    transactions,
-    accounts,
-    detectedAccountInfo,
-    generateAccountSuggestions,
-  ]);
-
-  // Enhanced account suggestion for transactions
-  const suggestAccountForTransaction = useCallback(
-    transaction => {
-      const relevantAccounts = localAccounts.filter(
-        account =>
-          account.name
-            .toLowerCase()
-            .includes(transaction.description.toLowerCase()) ||
-          account.type === transaction.category
+      // Suggest based on transaction frequency and types
+      const creditCardPatterns = [
+        "visa",
+        "mastercard",
+        "amex",
+        "discover",
+        "credit",
+      ];
+      const hasCreditCardTransactions = creditCardPatterns.some(pattern =>
+        transactionTexts.some(text => text.includes(pattern))
       );
 
-      if (relevantAccounts.length > 0) {
-        return relevantAccounts[0];
+      if (hasCreditCardTransactions) {
+        suggestions.push({
+          name: "Credit Card Account",
+          type: "credit",
+          confidence: 0.8,
+          reason: "Detected credit card transactions",
+        });
       }
 
-      // Fallback: suggest based on transaction type
-      return localAccounts.filter(account => {
-        if (transaction.amount > 0 && account.type === "checking") return true;
-        if (transaction.amount < 0 && account.type === "credit") return true;
-        return false;
-      })[0];
-    },
-    [localAccounts]
-  );
+      // Suggest based on transaction categories
+      const categories = new Set(
+        transactions.map(t => t.category).filter(Boolean)
+      );
+
+      if (categories.size > 0) {
+        const categoryList = Array.from(categories).slice(0, 2);
+        suggestions.push({
+          name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
+          type: detectedType,
+          confidence: 0.6,
+          reason: `Based on categories: ${categoryList.join(", ")}`,
+        });
+      }
+
+      // Add default suggestion if no specific patterns detected
+      if (suggestions.length === 0) {
+        suggestions.push({
+          name: `${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} Account`,
+          type: detectedType,
+          confidence: 0.5,
+          reason: "Default account suggestion",
+        });
+      }
+
+      setSuggestedAccounts(suggestions);
+    }
+  }, [isOpen, transactions]);
+
+  // Enhanced account suggestion for transactions (simple function to avoid circular dependencies)
+  const suggestAccountForTransaction = (
+    transaction,
+    accountsToUse = localAccounts
+  ) => {
+    const relevantAccounts = accountsToUse.filter(
+      account =>
+        account.name
+          .toLowerCase()
+          .includes(transaction.description.toLowerCase()) ||
+        account.type === transaction.category
+    );
+
+    if (relevantAccounts.length > 0) {
+      return relevantAccounts[0];
+    }
+
+    // Fallback: suggest based on transaction type
+    return accountsToUse.filter(account => {
+      if (transaction.amount > 0 && account.type === "checking") return true;
+      if (transaction.amount < 0 && account.type === "credit") return true;
+      return false;
+    })[0];
+  };
 
   // Filter accounts based on search and type
   const filteredAccounts = useMemo(() => {
@@ -323,7 +350,10 @@ const EnhancedAccountAssignmentModal = ({
 
     localTransactions.forEach(transaction => {
       // Try to suggest account based on transaction description
-      const suggestion = suggestAccountForTransaction(transaction);
+      const suggestion = suggestAccountForTransaction(
+        transaction,
+        localAccounts
+      );
       const key = suggestion ? suggestion.id : "uncategorized";
 
       if (!groups[key]) {
@@ -344,7 +374,7 @@ const EnhancedAccountAssignmentModal = ({
     );
 
     return Object.fromEntries(sortedGroups);
-  }, [localTransactions, suggestAccountForTransaction]);
+  }, [localTransactions, localAccounts]);
 
   // Get category icon for transaction
   const getCategoryIcon = transaction => {
@@ -389,6 +419,12 @@ const EnhancedAccountAssignmentModal = ({
   const handleCreateAccount = async () => {
     try {
       setIsProcessing(true);
+      
+      // Safety check to ensure newAccountData is not undefined
+      if (!newAccountData || !newAccountData.name) {
+        throw new Error("Account data is missing or invalid");
+      }
+      
       const newAccount = await addAccount(newAccountData);
 
       // Update local accounts list
@@ -1185,7 +1221,7 @@ const EnhancedAccountAssignmentModal = ({
                   </label>
                   <input
                     type="text"
-                    value={newAccountData.name}
+                    value={newAccountData?.name || ""}
                     onChange={e =>
                       setNewAccountData(prev => ({
                         ...prev,
@@ -1202,7 +1238,7 @@ const EnhancedAccountAssignmentModal = ({
                     Account Type
                   </label>
                   <select
-                    value={newAccountData.type}
+                    value={newAccountData?.type || "checking"}
                     onChange={e =>
                       setNewAccountData(prev => ({
                         ...prev,
@@ -1224,7 +1260,7 @@ const EnhancedAccountAssignmentModal = ({
                   </label>
                   <input
                     type="number"
-                    value={newAccountData.balance}
+                    value={newAccountData?.balance || 0}
                     onChange={e =>
                       setNewAccountData(prev => ({
                         ...prev,
@@ -1247,7 +1283,7 @@ const EnhancedAccountAssignmentModal = ({
                 </button>
                 <button
                   onClick={handleCreateAccount}
-                  disabled={!newAccountData.name || isProcessing}
+                  disabled={!newAccountData?.name || isProcessing}
                   className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isProcessing ? "Creating..." : "Create Account"}

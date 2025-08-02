@@ -257,12 +257,14 @@ const DashboardPage = ({ onPageChange }) => {
       />
 
       {/* Account Assignment Modal */}
-      <EnhancedAccountAssignmentModal
-        isOpen={isAccountAssignmentModalOpen}
-        onClose={() => setIsAccountAssignmentModalOpen(false)}
-        transactions={transactionsToAssign}
-        onComplete={handleAccountAssignmentComplete}
-      />
+      {isAccountAssignmentModalOpen && (
+        <EnhancedAccountAssignmentModal
+          isOpen={isAccountAssignmentModalOpen}
+          onClose={() => setIsAccountAssignmentModalOpen(false)}
+          transactions={transactionsToAssign}
+          onComplete={handleAccountAssignmentComplete}
+        />
+      )}
     </div>
   );
 };
