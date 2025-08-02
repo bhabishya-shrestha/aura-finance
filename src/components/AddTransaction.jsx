@@ -23,8 +23,6 @@ const AddTransaction = () => {
   });
   const [errors, setErrors] = useState({});
 
-
-
   // Initialize form with first available account
   React.useEffect(() => {
     if (accounts && accounts.length > 0 && !formData.accountId) {
