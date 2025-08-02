@@ -239,19 +239,12 @@ const AnalyticsPage = () => {
     onClick,
   }) => {
     const colorClasses = {
-      blue: "bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-600/10 border-blue-200 dark:border-blue-500/20",
+      blue: "bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20",
       green:
-        "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-500/10 dark:to-green-600/10 border-green-200 dark:border-green-500/20",
-      red: "bg-gradient-to-br from-red-50 to-red-100 dark:from-red-500/10 dark:to-red-600/10 border-red-200 dark:border-red-500/20",
+        "bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20",
+      red: "bg-gradient-to-br from-red-500/10 to-red-600/10 border-red-500/20",
       purple:
-        "bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-500/10 dark:to-purple-600/10 border-purple-200 dark:border-purple-500/20",
-    };
-
-    const iconColors = {
-      blue: "text-blue-600 dark:text-blue-400",
-      green: "text-green-600 dark:text-green-400",
-      red: "text-red-600 dark:text-red-400",
-      purple: "text-purple-600 dark:text-purple-400",
+        "bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20",
     };
 
     return (
@@ -263,32 +256,26 @@ const AnalyticsPage = () => {
       >
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div
-              className={`transform transition-transform duration-300 ${iconColors[color]}`}
-            >
-              <Icon className="w-8 h-8 sm:w-10 sm:h-10" />
+            <div className="transform transition-transform duration-300">
+              <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-white/80" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-soft-white">
+              <h3 className="text-sm sm:text-base font-semibold text-soft-white">
                 {title}
               </h3>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                {subtitle}
-              </p>
+              <p className="text-xs sm:text-sm text-gray-400">{subtitle}</p>
             </div>
           </div>
         </div>
 
         <div className="flex items-end justify-between">
-          <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-soft-white">
+          <div className="text-2xl sm:text-3xl font-bold text-soft-white">
             {typeof value === "number" ? formatCurrency(value) : value}
           </div>
           {trend !== undefined && (
             <div
               className={`flex items-center text-sm font-medium ${
-                trend >= 0
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-red-600 dark:text-red-400"
+                trend >= 0 ? "text-green-400" : "text-red-400"
               }`}
             >
               <div className="transform transition-transform duration-300">
@@ -323,34 +310,26 @@ const AnalyticsPage = () => {
         style={{ cursor: isMobile ? "pointer" : "default" }}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-soft-white">
-            {title}
-          </h3>
+          <h3 className="text-lg font-semibold text-soft-white">{title}</h3>
           {isMobile && (
             <button
               onClick={e => {
                 e.stopPropagation(); // Prevent card click when clicking button
                 onToggleExpand();
               }}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
               title={isExpanded ? "Collapse" : "Expand"}
             >
               {isExpanded ? (
-                <ChevronUp className="w-4 h-4 text-gray-600 dark:text-soft-white" />
+                <ChevronUp className="w-4 h-4 text-soft-white" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-gray-600 dark:text-soft-white" />
+                <ChevronDown className="w-4 h-4 text-soft-white" />
               )}
             </button>
           )}
         </div>
-        {!isMobile || isExpanded ? (
-          <div className="min-h-[200px] sm:min-h-[250px] lg:min-h-[300px]">
-            {children}
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-16 text-gray-500 dark:text-gray-400 text-sm">
-            Tap to expand
-          </div>
+        {(!isMobile || isExpanded) && (
+          <div className="h-64 sm:h-72 lg:h-80">{children}</div>
         )}
       </div>
     );
@@ -718,32 +697,34 @@ const AnalyticsPage = () => {
               </ChartContainer>
 
               {/* Top Spending Categories - Enhanced */}
-              <ChartContainer 
-                title="Top Spending Categories" 
+              <ChartContainer
+                title="Top Spending Categories"
                 isExpanded={expandedCharts.topSpendingCategories}
-                onToggleExpand={() => toggleChartExpansion('topSpendingCategories')}
+                onToggleExpand={() =>
+                  toggleChartExpansion("topSpendingCategories")
+                }
                 className="mb-6 sm:mb-8"
               >
                 <div className="space-y-3">
                   {spendingByCategory.slice(0, 6).map(item => (
                     <div
                       key={item.category}
-                      className="flex items-center justify-between p-3 bg-white/50 dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
+                      className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div
                           className="w-4 h-4 rounded-full"
                           style={{ backgroundColor: item.fill }}
                         />
-                        <span className="text-gray-900 dark:text-soft-white font-medium text-sm sm:text-base">
+                        <span className="text-soft-white font-medium text-sm sm:text-base">
                           {item.category}
                         </span>
                       </div>
                       <div className="text-right">
-                        <div className="text-gray-900 dark:text-soft-white font-semibold text-sm sm:text-base">
+                        <div className="text-soft-white font-semibold text-sm sm:text-base">
                           {formatCurrency(item.amount)}
                         </div>
-                        <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
+                        <div className="text-gray-400 text-xs sm:text-sm">
                           {item.percentage.toFixed(1)}%
                         </div>
                       </div>
@@ -753,10 +734,12 @@ const AnalyticsPage = () => {
               </ChartContainer>
 
               {/* Transaction Distribution - Enhanced */}
-              <ChartContainer 
-                title="Transaction Distribution" 
+              <ChartContainer
+                title="Transaction Distribution"
                 isExpanded={expandedCharts.transactionDistribution}
-                onToggleExpand={() => toggleChartExpansion('transactionDistribution')}
+                onToggleExpand={() =>
+                  toggleChartExpansion("transactionDistribution")
+                }
                 className="mb-6 sm:mb-8"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
