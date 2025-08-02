@@ -39,6 +39,7 @@ const AnalyticsPage = () => {
     getAverageDailySpending,
     getQuickAnalytics,
     transactions,
+    refreshAnalytics,
   } = useStore();
 
   const [timeRange, setTimeRange] = useState("month");
@@ -126,6 +127,11 @@ const AnalyticsPage = () => {
     const timer = setTimeout(() => setAnimateCards(false), 1000);
     return () => clearTimeout(timer);
   }, [timeRange, selectedView]);
+
+  // Refresh analytics data when component mounts
+  useEffect(() => {
+    refreshAnalytics();
+  }, [refreshAnalytics]);
 
   // Enhanced utility functions
   const formatCurrency = useCallback(amount => {
@@ -377,48 +383,6 @@ const AnalyticsPage = () => {
 
       {/* Main content with enhanced spacing */}
       <div className="px-4 sm:px-6 lg:px-8 pb-8">
-        {/* Enhanced Summary Cards with staggered animations */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
-          <MetricCard
-            title="Net Worth"
-            value={getNetWorth()}
-            subtitle="Total assets minus liabilities"
-            icon={DollarSign}
-            color="purple"
-            className="sm:animate-fade-in-up"
-            style={{ animationDelay: "0ms" }}
-          />
-          <MetricCard
-            title="Total Income"
-            value={incomeVsSpending.income}
-            subtitle={`${quickAnalytics.transactionCount} transactions`}
-            icon={TrendingUp}
-            trend={quickAnalytics.spendingTrend}
-            color="green"
-            className="sm:animate-fade-in-up"
-            style={{ animationDelay: "100ms" }}
-          />
-          <MetricCard
-            title="Total Spending"
-            value={incomeVsSpending.spending}
-            subtitle="All expenses this period"
-            icon={TrendingDown}
-            trend={-quickAnalytics.spendingTrend}
-            color="red"
-            className="sm:animate-fade-in-up"
-            style={{ animationDelay: "200ms" }}
-          />
-          <MetricCard
-            title="Net Savings"
-            value={quickAnalytics.netSavings}
-            subtitle="Income minus spending"
-            icon={PiggyBank}
-            color="blue"
-            className="sm:animate-fade-in-up"
-            style={{ animationDelay: "300ms" }}
-          />
-        </div>
-
         {selectedView === "overview" ? (
           <>
             {/* Enhanced Charts Grid */}
@@ -573,6 +537,48 @@ const AnalyticsPage = () => {
                 </AreaChart>
               </ResponsiveContainer>
             </ChartContainer>
+
+            {/* Enhanced Summary Cards moved to bottom */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
+              <MetricCard
+                title="Net Worth"
+                value={getNetWorth()}
+                subtitle="Total assets minus liabilities"
+                icon={DollarSign}
+                color="purple"
+                className="sm:animate-fade-in-up"
+                style={{ animationDelay: "0ms" }}
+              />
+              <MetricCard
+                title="Total Income"
+                value={incomeVsSpending.income}
+                subtitle={`${quickAnalytics.transactionCount} transactions`}
+                icon={TrendingUp}
+                trend={quickAnalytics.spendingTrend}
+                color="green"
+                className="sm:animate-fade-in-up"
+                style={{ animationDelay: "100ms" }}
+              />
+              <MetricCard
+                title="Total Spending"
+                value={incomeVsSpending.spending}
+                subtitle="All expenses this period"
+                icon={TrendingDown}
+                trend={-quickAnalytics.spendingTrend}
+                color="red"
+                className="sm:animate-fade-in-up"
+                style={{ animationDelay: "200ms" }}
+              />
+              <MetricCard
+                title="Net Savings"
+                value={quickAnalytics.netSavings}
+                subtitle="Income minus spending"
+                icon={PiggyBank}
+                color="blue"
+                className="sm:animate-fade-in-up"
+                style={{ animationDelay: "300ms" }}
+              />
+            </div>
           </>
         ) : (
           <>
@@ -684,6 +690,48 @@ const AnalyticsPage = () => {
                 </div>
               </div>
             </ChartContainer>
+
+            {/* Enhanced Summary Cards moved to bottom for detailed view too */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
+              <MetricCard
+                title="Net Worth"
+                value={getNetWorth()}
+                subtitle="Total assets minus liabilities"
+                icon={DollarSign}
+                color="purple"
+                className="sm:animate-fade-in-up"
+                style={{ animationDelay: "0ms" }}
+              />
+              <MetricCard
+                title="Total Income"
+                value={incomeVsSpending.income}
+                subtitle={`${quickAnalytics.transactionCount} transactions`}
+                icon={TrendingUp}
+                trend={quickAnalytics.spendingTrend}
+                color="green"
+                className="sm:animate-fade-in-up"
+                style={{ animationDelay: "100ms" }}
+              />
+              <MetricCard
+                title="Total Spending"
+                value={incomeVsSpending.spending}
+                subtitle="All expenses this period"
+                icon={TrendingDown}
+                trend={-quickAnalytics.spendingTrend}
+                color="red"
+                className="sm:animate-fade-in-up"
+                style={{ animationDelay: "200ms" }}
+              />
+              <MetricCard
+                title="Net Savings"
+                value={quickAnalytics.netSavings}
+                subtitle="Income minus spending"
+                icon={PiggyBank}
+                color="blue"
+                className="sm:animate-fade-in-up"
+                style={{ animationDelay: "300ms" }}
+              />
+            </div>
           </>
         )}
       </div>

@@ -28,6 +28,7 @@ const ReportsPage = () => {
     getTopSpendingCategories,
     getAverageDailySpending,
     getIncomeVsSpending,
+    refreshAnalytics,
   } = useStore();
 
   const [selectedPeriod, setSelectedPeriod] = useState("month");
@@ -43,6 +44,9 @@ const ReportsPage = () => {
 
   // Update report data when period changes
   useEffect(() => {
+    // Force refresh analytics data to ensure latest data
+    refreshAnalytics();
+
     const categoryBreakdown = getSpendingByCategory(selectedPeriod);
     const monthlyTrends = getMonthlySpending(
       selectedPeriod === "month" ? "year" : selectedPeriod
@@ -68,6 +72,7 @@ const ReportsPage = () => {
     getTopSpendingCategories,
     getAverageDailySpending,
     getIncomeVsSpending,
+    refreshAnalytics,
   ]);
 
   const formatCurrency = amount => {

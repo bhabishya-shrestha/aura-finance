@@ -45,7 +45,7 @@ const useStore = create((set, get) => ({
       }
 
       // Clear analytics cache when transactions are loaded
-      analyticsService.clearCache();
+      analyticsService.forceRefresh();
       set({ transactions });
     } catch (error) {
       // Error handling - in production, this would use a proper error notification system
@@ -76,7 +76,7 @@ const useStore = create((set, get) => ({
       }
 
       // Clear analytics cache when accounts are loaded
-      analyticsService.clearCache();
+      analyticsService.forceRefresh();
       set({ accounts });
     } catch (error) {
       // Error handling - in production, this would use a proper error notification system
@@ -115,7 +115,7 @@ const useStore = create((set, get) => ({
       await db.transactions.add(transactionWithUser);
 
       // Clear analytics cache to ensure fresh data
-      analyticsService.clearCache();
+      analyticsService.forceRefresh();
 
       // Reload transactions to update the UI
       await get().loadTransactions();
@@ -185,7 +185,7 @@ const useStore = create((set, get) => ({
       await db.transactions.bulkAdd(transactionsWithUser);
 
       // Clear analytics cache to ensure fresh data
-      analyticsService.clearCache();
+      analyticsService.forceRefresh();
 
       // Reload transactions to update the UI
       await get().loadTransactions();
@@ -442,7 +442,7 @@ const useStore = create((set, get) => ({
       });
 
       // Clear analytics cache to ensure fresh data
-      analyticsService.clearCache();
+      analyticsService.forceRefresh();
 
       // Reload accounts to update the UI
       await get().loadAccounts();
@@ -545,6 +545,11 @@ const useStore = create((set, get) => ({
       transactions,
       timeRange
     );
+  },
+
+  // Force refresh analytics data
+  refreshAnalytics: () => {
+    analyticsService.forceRefresh();
   },
 
   // Reset all user data

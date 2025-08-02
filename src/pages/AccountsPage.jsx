@@ -286,13 +286,13 @@ const AccountsPage = () => {
                               e.stopPropagation();
                               handleEditBalance(account.id, balance);
                             }}
-                            className="p-1 hover:bg-blue-500/20 rounded text-blue-400"
+                            className="p-1 hover:bg-blue-500/20 rounded text-blue-400 flex-shrink-0"
                             title="Edit Balance"
                           >
                             <Edit3 className="w-3 h-3" />
                           </button>
                         )}
-                        <div className="text-right flex-shrink-0">
+                        <div className="text-right flex-shrink-0 min-w-[80px] sm:min-w-[100px]">
                           {editingBalance === account.id ? (
                             <div className="flex items-center gap-2">
                               <input
@@ -309,13 +309,13 @@ const AccountsPage = () => {
                               />
                               <button
                                 onClick={() => handleSaveBalance(account.id)}
-                                className="p-1 hover:bg-green-500/20 rounded text-green-400"
+                                className="p-1 hover:bg-green-500/20 rounded text-green-400 flex-shrink-0"
                               >
                                 <Save className="w-3 h-3" />
                               </button>
                               <button
                                 onClick={handleCancelEdit}
-                                className="p-1 hover:bg-gray-500/20 rounded text-gray-400"
+                                className="p-1 hover:bg-gray-500/20 rounded text-gray-400 flex-shrink-0"
                               >
                                 <X className="w-3 h-3" />
                               </button>
