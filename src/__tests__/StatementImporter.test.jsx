@@ -294,7 +294,7 @@ describe("StatementImporter", () => {
     // Wait for the 1-second delay to complete and preview to show
     await waitFor(
       () => {
-        expect(screen.getByText("Transaction Preview")).toBeInTheDocument();
+        expect(screen.getByText("Analysis Results")).toBeInTheDocument();
       },
       { timeout: 2000 }
     );

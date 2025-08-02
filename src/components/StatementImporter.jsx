@@ -262,6 +262,14 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         // Set the parsed transactions for review
         setParsedTransactions(transactions);
         setProcessingSummary(summary);
+
+        // Check if transactions were found
+        if (transactions.length === 0) {
+          setError("No transactions found in the file.");
+          setIsProcessing(false);
+          return;
+        }
+
         setShowAllTransactions(true);
         setIsProcessing(false);
 
@@ -603,7 +611,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                         Upload your statement
                       </h3>
                       <p className="text-gray-500 dark:text-gray-400 mb-4">
-                        Drag and drop your file here, or click to browse
+                        Drop your file here or click to browse
                       </p>
                       <input
                         type="file"
