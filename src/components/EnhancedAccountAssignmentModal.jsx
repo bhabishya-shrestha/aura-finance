@@ -312,10 +312,12 @@ const EnhancedAccountAssignmentModal = ({
   ) => {
     const relevantAccounts = accountsToUse.filter(
       account =>
-        account.name
-          .toLowerCase()
-          .includes(transaction.description.toLowerCase()) ||
-        account.type === transaction.category
+        (account &&
+          account.name &&
+          account.name
+            .toLowerCase()
+            .includes(transaction.description.toLowerCase())) ||
+        (account && account.type === transaction.category)
     );
 
     if (relevantAccounts.length > 0) {
@@ -324,6 +326,7 @@ const EnhancedAccountAssignmentModal = ({
 
     // Fallback: suggest based on transaction type
     return accountsToUse.filter(account => {
+      if (!account) return false;
       if (transaction.amount > 0 && account.type === "checking") return true;
       if (transaction.amount < 0 && account.type === "credit") return true;
       return false;
@@ -336,6 +339,7 @@ const EnhancedAccountAssignmentModal = ({
       return [];
     }
     return localAccounts.filter(account => {
+      if (!account || !account.name) return false;
       const matchesSearch = account.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
@@ -419,12 +423,12 @@ const EnhancedAccountAssignmentModal = ({
   const handleCreateAccount = async () => {
     try {
       setIsProcessing(true);
-      
+
       // Safety check to ensure newAccountData is not undefined
       if (!newAccountData || !newAccountData.name) {
         throw new Error("Account data is missing or invalid");
       }
-      
+
       const newAccount = await addAccount(newAccountData);
 
       // Update local accounts list
@@ -545,7 +549,7 @@ const EnhancedAccountAssignmentModal = ({
   };
 
   const handleEditSuggestion = async editedSuggestion => {
-    if (!editedSuggestion) return;
+    if (!editedSuggestion || !editedSuggestion.name) return;
 
     try {
       setIsProcessing(true);
@@ -553,7 +557,7 @@ const EnhancedAccountAssignmentModal = ({
       // Create account from edited suggestion
       const accountData = {
         name: editedSuggestion.name,
-        type: editedSuggestion.type,
+        type: editedSuggestion.type || "checking",
         balance: 0,
       };
 
@@ -568,12 +572,12 @@ const EnhancedAccountAssignmentModal = ({
 
       localTransactions.forEach(transaction => {
         const description = (transaction.description || "").toLowerCase();
-        const institution = editedSuggestion.name.toLowerCase();
+        const institution = (editedSuggestion.name || "").toLowerCase();
 
         // Assign if transaction description contains institution name or matches pattern
         if (
-          description.includes(institution.split(" ")[0]) ||
-          description.includes(editedSuggestion.type)
+          (institution && description.includes(institution.split(" ")[0])) ||
+          (editedSuggestion.type && description.includes(editedSuggestion.type))
         ) {
           updatedSelection[transaction.id] = newAccount.id;
           assignedCount++;
@@ -676,6 +680,9 @@ const EnhancedAccountAssignmentModal = ({
   };
 
   const getAccountIcon = account => {
+    if (!account || !account.type) {
+      return <Building2 className="w-4 h-4" />;
+    }
     const IconComponent = accountTypeIcons[account.type] || Building2;
     return <IconComponent className="w-4 h-4" />;
   };
@@ -771,10 +778,10 @@ const EnhancedAccountAssignmentModal = ({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 dark:text-white truncate">
-                        {account.name}
+                        {account?.name || "Unnamed Account"}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {formatAccountType(account.type)}
+                        {formatAccountType(account?.type || "checking")}
                       </p>
                     </div>
                   </div>
@@ -960,7 +967,7 @@ const EnhancedAccountAssignmentModal = ({
                       className="px-3 py-1.5 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1"
                     >
                       <Users className="w-3 h-3" />
-                      Assign to {account.name}
+                      Assign to {account?.name || "Unnamed Account"}
                     </button>
                   ))}
                   <button
@@ -1003,7 +1010,7 @@ const EnhancedAccountAssignmentModal = ({
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 dark:text-white truncate text-sm sm:text-base">
                             {group.account
-                              ? group.account.name
+                              ? group.account?.name || "Unnamed Account"
                               : "Uncategorized"}
                           </p>
                           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
@@ -1164,7 +1171,7 @@ const EnhancedAccountAssignmentModal = ({
                                   >
                                     {getAccountIcon(account)}
                                     <span className="truncate">
-                                      {account.name}
+                                      {account?.name || "Unnamed Account"}
                                     </span>
                                   </button>
                                 ))}
