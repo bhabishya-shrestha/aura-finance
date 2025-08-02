@@ -422,7 +422,13 @@ describe("StatementImporter", () => {
   });
 
   it("handles close button", () => {
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const closeButton = screen.getByRole("button", { name: "" }); // Close button has no accessible name
     fireEvent.click(closeButton);
@@ -453,7 +459,13 @@ describe("StatementImporter", () => {
         )
     );
 
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const file = new File(["test"], "test.csv", { type: "text/csv" });
     const input = screen.getByRole("button", { name: "Choose File" });
@@ -482,7 +494,13 @@ describe("StatementImporter", () => {
       },
     ]);
 
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const file = new File(["test"], "test.csv", { type: "text/csv" });
     const dropZone = screen
@@ -504,7 +522,13 @@ describe("StatementImporter", () => {
     const { parseStatement } = await import("../utils/statementParser");
     parseStatement.mockResolvedValue([]);
 
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const file = new File(["test"], "test.csv", { type: "text/csv" });
     const input = screen.getByRole("button", { name: "Choose File" });
@@ -524,7 +548,13 @@ describe("StatementImporter", () => {
   it("handles Gemini API errors gracefully", async () => {
     geminiService.analyzeImage.mockRejectedValue(new Error("API Error"));
 
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const file = new File(["test"], "receipt.jpg", { type: "image/jpeg" });
     const input = screen.getByRole("button", { name: "Choose File" });
@@ -588,7 +618,13 @@ describe("StatementImporter", () => {
       },
     });
 
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const file = new File(["test"], "test.csv", { type: "text/csv" });
     const input = screen.getByRole("button", { name: "Choose File" });
@@ -645,7 +681,13 @@ describe("StatementImporter", () => {
       },
     });
 
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const file = new File(["test"], "test.csv", { type: "text/csv" });
     const input = screen.getByRole("button", { name: "Choose File" });
@@ -721,7 +763,13 @@ describe("StatementImporter", () => {
       },
     });
 
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const file = new File(["test"], "test.csv", { type: "text/csv" });
     const input = screen.getByRole("button", { name: "Choose File" });
@@ -808,7 +856,13 @@ describe("StatementImporter", () => {
       },
     });
 
-    render(<StatementImporter isOpen={true} onClose={mockOnClose} />);
+    render(
+      <StatementImporter
+        isOpen={true}
+        onClose={mockOnClose}
+        onImportComplete={mockOnImportComplete}
+      />
+    );
 
     const file = new File(["test"], "test.csv", { type: "text/csv" });
     const input = screen.getByRole("button", { name: "Choose File" });
