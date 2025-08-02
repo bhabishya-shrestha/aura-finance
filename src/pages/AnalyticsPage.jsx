@@ -239,43 +239,56 @@ const AnalyticsPage = () => {
     onClick,
   }) => {
     const colorClasses = {
-      blue: "bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20",
-      green: "bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20",
-      red: "bg-gradient-to-br from-red-500/10 to-red-600/10 border-red-500/20",
-      purple: "bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20",
+      blue: "bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-600/10 border-blue-200 dark:border-blue-500/20",
+      green:
+        "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-500/10 dark:to-green-600/10 border-green-200 dark:border-green-500/20",
+      red: "bg-gradient-to-br from-red-50 to-red-100 dark:from-red-500/10 dark:to-red-600/10 border-red-200 dark:border-red-500/20",
+      purple:
+        "bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-500/10 dark:to-purple-600/10 border-purple-200 dark:border-purple-500/20",
+    };
+
+    const iconColors = {
+      blue: "text-blue-600 dark:text-blue-400",
+      green: "text-green-600 dark:text-green-400",
+      red: "text-red-600 dark:text-red-400",
+      purple: "text-purple-600 dark:text-purple-400",
     };
 
     return (
       <div
-        className={`relative p-4 sm:p-6 rounded-xl border transition-all duration-300 cursor-pointer ${
+        className={`relative p-4 sm:p-6 rounded-xl border transition-all duration-300 cursor-pointer hover:shadow-lg ${
           colorClasses[color]
-        } ${className} ${
-          animateCards ? "animate-fade-in-up" : ""
-        }`}
+        } ${className} ${animateCards ? "animate-fade-in-up" : ""}`}
         onClick={onClick}
       >
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="transform transition-transform duration-300">
-              <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-white/80" />
+            <div
+              className={`transform transition-transform duration-300 ${iconColors[color]}`}
+            >
+              <Icon className="w-8 h-8 sm:w-10 sm:h-10" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-semibold text-soft-white">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-soft-white">
                 {title}
               </h3>
-              <p className="text-xs sm:text-sm text-gray-400">{subtitle}</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                {subtitle}
+              </p>
             </div>
           </div>
         </div>
 
         <div className="flex items-end justify-between">
-          <div className="text-2xl sm:text-3xl font-bold text-soft-white">
+          <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-soft-white">
             {typeof value === "number" ? formatCurrency(value) : value}
           </div>
           {trend !== undefined && (
             <div
               className={`flex items-center text-sm font-medium ${
-                trend >= 0 ? "text-green-400" : "text-red-400"
+                trend >= 0
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
               }`}
             >
               <div className="transform transition-transform duration-300">
@@ -305,26 +318,39 @@ const AnalyticsPage = () => {
 
     return (
       <div
-        className={`bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-4 sm:p-6 ${className}`}
+        className={`bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 dark:border-white/10 border-gray-200 dark:border-gray-700 p-4 sm:p-6 ${className}`}
+        onClick={isMobile ? onToggleExpand : undefined}
+        style={{ cursor: isMobile ? "pointer" : "default" }}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-soft-white">{title}</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-soft-white">
+            {title}
+          </h3>
           {isMobile && (
             <button
-              onClick={onToggleExpand}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              onClick={e => {
+                e.stopPropagation(); // Prevent card click when clicking button
+                onToggleExpand();
+              }}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               title={isExpanded ? "Collapse" : "Expand"}
             >
               {isExpanded ? (
-                <ChevronUp className="w-4 h-4 text-soft-white" />
+                <ChevronUp className="w-4 h-4 text-gray-600 dark:text-soft-white" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-soft-white" />
+                <ChevronDown className="w-4 h-4 text-gray-600 dark:text-soft-white" />
               )}
             </button>
           )}
         </div>
-        {(!isMobile || isExpanded) && (
-          <div className="h-64 sm:h-72 lg:h-80">{children}</div>
+        {!isMobile || isExpanded ? (
+          <div className="min-h-[200px] sm:min-h-[250px] lg:min-h-[300px]">
+            {children}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-16 text-gray-500 dark:text-gray-400 text-sm">
+            Tap to expand
+          </div>
         )}
       </div>
     );
@@ -654,10 +680,12 @@ const AnalyticsPage = () => {
             {/* Detailed Analytics View */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 xl:gap-8 mb-4 sm:mb-6 lg:mb-8">
               {/* Spending Trends Over Time */}
-              <ChartContainer 
-                title="Spending Trends" 
+              <ChartContainer
+                title="Spending Trends"
                 isExpanded={expandedCharts.spendingTrendsDetailed}
-                onToggleExpand={() => toggleChartExpansion('spendingTrendsDetailed')}
+                onToggleExpand={() =>
+                  toggleChartExpansion("spendingTrendsDetailed")
+                }
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={spendingTrends}>
@@ -696,26 +724,26 @@ const AnalyticsPage = () => {
                 onToggleExpand={() => toggleChartExpansion('topSpendingCategories')}
                 className="mb-6 sm:mb-8"
               >
-                <div className="space-y-4 h-full overflow-y-auto">
+                <div className="space-y-3">
                   {spendingByCategory.slice(0, 6).map(item => (
                     <div
                       key={item.category}
-                      className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors"
+                      className="flex items-center justify-between p-3 bg-white/50 dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div
                           className="w-4 h-4 rounded-full"
                           style={{ backgroundColor: item.fill }}
                         />
-                        <span className="text-soft-white font-medium">
+                        <span className="text-gray-900 dark:text-soft-white font-medium text-sm sm:text-base">
                           {item.category}
                         </span>
                       </div>
                       <div className="text-right">
-                        <div className="text-soft-white font-semibold">
+                        <div className="text-gray-900 dark:text-soft-white font-semibold text-sm sm:text-base">
                           {formatCurrency(item.amount)}
                         </div>
-                        <div className="text-gray-400 text-sm">
+                        <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
                           {item.percentage.toFixed(1)}%
                         </div>
                       </div>
@@ -731,7 +759,7 @@ const AnalyticsPage = () => {
                 onToggleExpand={() => toggleChartExpansion('transactionDistribution')}
                 className="mb-6 sm:mb-8"
               >
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 h-full overflow-y-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-green-200 dark:border-green-800">
                     <div className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
                       {transactions.filter(t => t.amount > 0).length}
