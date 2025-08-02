@@ -86,7 +86,8 @@ const DashboardPage = ({ onPageChange }) => {
   const [transactionsToAssign, setTransactionsToAssign] = useState([]);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { getQuickAnalytics, loadTransactions } = useStore();
+  const { getQuickAnalytics, loadTransactions, accounts, addTransactions } =
+    useStore();
 
   // Get quick analytics data
   const quickAnalytics = getQuickAnalytics("month");
@@ -94,9 +95,18 @@ const DashboardPage = ({ onPageChange }) => {
   // Refresh analytics when transactions are imported
   const handleImportComplete = async transactions => {
     if (transactions && transactions.length > 0) {
-      setTransactionsToAssign(transactions);
-      setIsAccountAssignmentModalOpen(true);
-      setIsImportModalOpen(false);
+      try {
+        // Add transactions to database first
+        await addTransactions(transactions);
+
+        // Then open the assignment modal with the transactions
+        setTransactionsToAssign(transactions);
+        setIsAccountAssignmentModalOpen(true);
+        setIsImportModalOpen(false);
+      } catch (error) {
+        console.error("Error importing transactions:", error);
+        setError("Failed to import transactions. Please try again.");
+      }
     } else {
       await loadTransactions();
     }
@@ -262,6 +272,7 @@ const DashboardPage = ({ onPageChange }) => {
           isOpen={isAccountAssignmentModalOpen}
           onClose={() => setIsAccountAssignmentModalOpen(false)}
           transactions={transactionsToAssign}
+          accounts={accounts}
           onComplete={handleAccountAssignmentComplete}
         />
       )}

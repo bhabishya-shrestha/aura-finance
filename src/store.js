@@ -344,6 +344,16 @@ const useStore = create((set, get) => ({
         }
       }
 
+      // Check for duplicate account names
+      const existingAccounts = await db.accounts.where("userId").equals(userId || null).toArray();
+      const duplicateAccount = existingAccounts.find(account => 
+        account.name.toLowerCase().trim() === accountData.name.toLowerCase().trim()
+      );
+
+      if (duplicateAccount) {
+        throw new Error(`An account with the name "${accountData.name}" already exists. Please choose a different name.`);
+      }
+
       const accountWithUser = {
         ...accountData,
         initialBalance: accountData.balance || 0,
