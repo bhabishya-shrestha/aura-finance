@@ -526,8 +526,8 @@ const AnalyticsPage = () => {
                       stroke="#ffffff"
                     >
                       {spendingByCategory.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
+                        <Cell 
+                          key={`cell-${index}`} 
                           fill={entry.fill}
                           stroke="#ffffff"
                           strokeWidth={2}
