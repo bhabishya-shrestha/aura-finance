@@ -6,9 +6,7 @@ import {
   Calendar,
   FileText,
   Tag,
-  CreditCard,
   Wallet,
-  PiggyBank,
 } from "lucide-react";
 import useStore from "../store";
 import { CATEGORIES } from "../utils/statementParser";
@@ -24,8 +22,6 @@ const AddTransaction = () => {
     accountId: "1", // Default account
   });
   const [errors, setErrors] = useState({});
-
-
 
   // Initialize form with first available account
   React.useEffect(() => {

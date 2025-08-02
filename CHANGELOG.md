@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Enhanced Analytics Dashboard with professional charts and visualizations
 - AI-powered account assignment suggestions during transaction import
 - Improved loading bar animations with better visual feedback
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Quick actions panel for analytics export and insights
 
 ### Changed
+
 - Completely redesigned Analytics page with modern UI/UX
 - Enhanced account assignment modal with better transaction organization
 - Improved import flow to ensure all transactions are properly assigned to accounts
@@ -26,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved analytics data refresh mechanism to ensure real-time updates
 
 ### Fixed
+
 - Analytics not updating when transactions are imported from empty accounts
 - Loading bar animation issues on web layouts
 - Transactions being assigned to "uncategorized" account by default
@@ -33,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Import flow not properly handling account assignment for all transactions
 
 ### Technical
+
 - Added analytics cache clearing mechanism in store
 - Enhanced account suggestion algorithm with pattern matching
 - Improved transaction grouping with AI-powered suggestions
@@ -42,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] - 2025-01-28
 
 ### Added
+
 - Google Gemini AI integration for intelligent document analysis
 - Support for image file uploads (JPG, PNG, GIF, WebP) in addition to CSV and PDF
 - AI-powered OCR and smart document detection
@@ -51,12 +56,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Professional-grade document processing pipeline
 
 ### Changed
+
 - Enhanced StatementImporter with AI-powered capabilities
 - Improved file validation and error handling
 - Updated UI to reflect new AI-powered features
 - Enhanced processing feedback with detailed progress tracking
 
 ### Technical
+
 - Added Gemini AI service with rate limiting and validation
 - Implemented comprehensive error handling and fallback mechanisms
 - Enhanced file processing pipeline with multiple format support
@@ -65,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-01-26
 
 ### Added
+
 - Initial release of Aura Finance
 - User authentication system with JWT tokens
 - Transaction management with CRUD operations
@@ -76,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Professional Apple-inspired UI design
 
 ### Features
+
 - Dashboard with net worth tracking
 - Transaction history and categorization
 - Account balance management
@@ -85,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Responsive mobile-first design
 
 ### Technical
+
 - React 18 with Vite build system
 - Zustand for state management
 - Dexie.js for IndexedDB storage

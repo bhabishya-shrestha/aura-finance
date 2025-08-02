@@ -123,7 +123,7 @@ const AccountsPage = () => {
     } catch (error) {
       alert("Error updating balance. Please try again.");
       if (import.meta.env.DEV) {
-        console.error("Error updating balance:", error);
+        // Error updating balance
       }
     }
   };

@@ -8,7 +8,8 @@ db.version(2).stores({
   users: "++id, email, name, passwordHash, createdAt, updatedAt",
   sessions: "++id, userId, token, expiresAt, createdAt",
   transactions: "++id, date, description, amount, category, accountId, userId",
-  accounts: "++id, name, type, balance, initialBalance, lastBalanceUpdate, userId",
+  accounts:
+    "++id, name, type, balance, initialBalance, lastBalanceUpdate, userId",
 });
 
 // Initialize database without sample data
