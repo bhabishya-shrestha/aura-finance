@@ -516,12 +516,9 @@ const useStore = create((set, get) => ({
     );
   },
 
-  getSpendingTrends: (periods = 12) => {
+  getSpendingTrends: (timeRange = "month") => {
     const { transactions } = get();
-    if (!transactions || transactions.length === 0) {
-      return [];
-    }
-    return analyticsService.calculateSpendingTrends(transactions, periods);
+    return analyticsService.calculateSpendingTrends(transactions, timeRange);
   },
 
   getTopSpendingCategories: (timeRange = "month", limit = 5) => {

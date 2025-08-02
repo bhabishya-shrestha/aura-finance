@@ -485,8 +485,8 @@ class AnalyticsService {
   }
 
   // Calculate spending trends over time
-  calculateSpendingTrends(transactions, periods = 12) {
-    const cacheKey = this.getCacheKey("spendingTrends", `${periods}periods`);
+  calculateSpendingTrends(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("spendingTrends", timeRange);
 
     return this.getCachedOrCalculate(
       cacheKey,
@@ -494,13 +494,47 @@ class AnalyticsService {
         const trends = [];
         const now = new Date();
 
+        // Determine number of periods based on time range
+        let periods = 12;
+        let periodType = "month";
+
+        switch (timeRange) {
+          case "week":
+            periods = 7;
+            periodType = "day";
+            break;
+          case "month":
+            periods = 12;
+            periodType = "month";
+            break;
+          case "quarter":
+            periods = 4;
+            periodType = "month";
+            break;
+          case "year":
+            periods = 12;
+            periodType = "month";
+            break;
+          default:
+            periods = 12;
+            periodType = "month";
+        }
+
         for (let i = periods - 1; i >= 0; i--) {
-          const startDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const endDate = new Date(
-            now.getFullYear(),
-            now.getMonth() - i + 1,
-            0
-          );
+          let startDate, endDate;
+
+          if (periodType === "day") {
+            startDate = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate() - i
+            );
+            endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 1);
+          } else {
+            startDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+          }
 
           const periodTransactions = transactions.filter(t => {
             let transactionDate;
@@ -545,6 +579,7 @@ class AnalyticsService {
         // Debug logging for spending trends
         if (import.meta.env.DEV) {
           console.log("Spending trends calculation:", {
+            timeRange,
             periods,
             trendsCount: trends.length,
             trends: trends,

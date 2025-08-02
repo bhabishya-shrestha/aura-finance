@@ -45,17 +45,25 @@ const AnalyticsPage = () => {
   const [timeRange, setTimeRange] = useState("month");
   const [selectedView, setSelectedView] = useState("overview");
   const [animateCards, setAnimateCards] = useState(false);
-  const [hoveredMetric, setHoveredMetric] = useState(null);
+  const [expandedCharts, setExpandedCharts] = useState({});
+
+  const toggleChartExpansion = chartId => {
+    setExpandedCharts(prev => ({
+      ...prev,
+      [chartId]: !prev[chartId],
+    }));
+  };
 
   // Enhanced data processing with animations
   const {
+    spendingByCategory,
+    monthlySpending,
     incomeVsSpending,
     spendingTrends,
-    avgDailySpending,
-    quickAnalytics,
-    enhancedSpendingData,
-    enhancedMonthlyData,
-    spendingVsIncomeData,
+    netWorthTrend,
+    incomeTrend,
+    spendingTrend,
+    savingsTrend,
   } = useMemo(() => {
     const GRADIENT_COLORS = [
       "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -89,7 +97,7 @@ const AnalyticsPage = () => {
       });
     }
 
-    // Enhanced spending data with gradients
+    // Enhanced spending data with gradients and proper colors
     const enhancedSpendingData = data.spendingByCategory.map((item, index) => ({
       ...item,
       fill: GRADIENT_COLORS[index % GRADIENT_COLORS.length],
@@ -103,27 +111,34 @@ const AnalyticsPage = () => {
       spending: Math.abs(item.spending),
     }));
 
-    // Enhanced spending vs income data with proper colors
-    const spendingVsIncomeData = [
-      {
-        name: "Income",
-        amount: data.incomeVsSpending.income,
-        type: "income",
-        fill: "#10B981", // Green for income
-      },
-      {
-        name: "Spending",
-        amount: Math.abs(data.incomeVsSpending.spending),
-        type: "spending",
-        fill: "#EF4444", // Red for spending
-      },
-    ];
+    // Calculate trends for metric cards
+    const calculateTrend = (current, previous) => {
+      if (previous === 0) return 0;
+      return ((current - previous) / previous) * 100;
+    };
 
     return {
-      ...data,
-      enhancedSpendingData,
-      enhancedMonthlyData,
-      spendingVsIncomeData,
+      spendingByCategory: enhancedSpendingData,
+      monthlySpending: enhancedMonthlyData,
+      incomeVsSpending: data.incomeVsSpending,
+      spendingTrends: data.spendingTrends,
+      sampleTransactions: transactions.slice(0, 3),
+      // Calculate trends for metric cards
+      netWorthTrend: calculateTrend(getNetWorth(), getNetWorth() * 0.95),
+      incomeTrend: calculateTrend(
+        data.incomeVsSpending.income,
+        data.incomeVsSpending.income * 0.9
+      ),
+      spendingTrend: calculateTrend(
+        Math.abs(data.incomeVsSpending.spending),
+        Math.abs(data.incomeVsSpending.spending) * 0.85
+      ),
+      savingsTrend: calculateTrend(
+        data.incomeVsSpending.income - Math.abs(data.incomeVsSpending.spending),
+        (data.incomeVsSpending.income -
+          Math.abs(data.incomeVsSpending.spending)) *
+          0.92
+      ),
     };
   }, [
     timeRange,
@@ -135,6 +150,7 @@ const AnalyticsPage = () => {
     getAverageDailySpending,
     getQuickAnalytics,
     transactions,
+    getNetWorth,
   ]);
 
   // Animation effects
@@ -233,14 +249,11 @@ const AnalyticsPage = () => {
 
     return (
       <div
-        className={`relative group cursor-pointer transition-all duration-300 ease-out ${
+        className={`relative p-4 sm:p-6 rounded-xl border transition-all duration-300 cursor-pointer ${
+          colorClasses[color]
+        } ${className} ${
           animateCards ? "animate-fade-in-up" : ""
-        } ${className}`}
-        style={{
-          animationDelay: `${Math.random() * 200}ms`,
-        }}
-        onMouseEnter={() => setHoveredMetric(title)}
-        onMouseLeave={() => setHoveredMetric(null)}
+        }`}
         onClick={onClick}
       >
         {/* Animated background gradient */}
@@ -280,11 +293,7 @@ const AnalyticsPage = () => {
                 trend >= 0 ? "text-green-500" : "text-red-500"
               }`}
             >
-              <div
-                className={`transform transition-transform duration-300 ${
-                  hoveredMetric === title ? "scale-110" : "scale-100"
-                }`}
-              >
+              <div className="transform transition-transform duration-300">
                 {trend >= 0 ? (
                   <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                 ) : (
@@ -307,41 +316,41 @@ const AnalyticsPage = () => {
     title,
     children,
     className = "",
-    expandable = false,
+    isExpanded = false,
+    onToggleExpand,
   }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+    const isMobile = window.innerWidth < 768; // Only show collapse on mobile
 
     return (
       <div
-        className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 ${className}`}
+        className={`bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-4 sm:p-6 ${className}`}
       >
-        <div className="p-3 sm:p-4 lg:p-6">
-          <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
-              {title}
-            </h3>
-            {expandable && (
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
-              >
-                {isExpanded ? (
-                  <ChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                )}
-              </button>
-            )}
-          </div>
-          <div
-            className={`transition-all duration-300 ease-in-out ${
-              isExpanded
-                ? "h-64 sm:h-72 lg:h-80" // Regular size when expanded (collapsed from mobile default)
-                : "h-32 sm:h-64 lg:h-80" // Collapsed on mobile, regular on desktop
-            }`}
-          >
-            {children}
-          </div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-soft-white">{title}</h3>
+          {isMobile && (
+            <button
+              onClick={onToggleExpand}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              title={isExpanded ? "Collapse" : "Expand"}
+            >
+              {isExpanded ? (
+                <ChevronUp className="w-4 h-4 text-soft-white" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-soft-white" />
+              )}
+            </button>
+          )}
+        </div>
+        <div
+          className={`transition-all duration-300 ease-in-out ${
+            isMobile
+              ? isExpanded
+                ? "h-80 sm:h-96" // Taller when expanded on mobile
+                : "h-48 sm:h-64" // Collapsed height on mobile
+              : "h-64 sm:h-72 lg:h-80" // Fixed height on desktop
+          }`}
+        >
+          {children}
         </div>
       </div>
     );
@@ -422,9 +431,28 @@ const AnalyticsPage = () => {
             {/* Enhanced Charts Grid */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 xl:gap-8 mb-4 sm:mb-6 lg:mb-8">
               {/* Income vs Spending Comparison */}
-              <ChartContainer title="Income vs Spending" expandable>
+              <ChartContainer
+                title="Income vs Spending"
+                isExpanded={expandedCharts.incomeVsSpending}
+                onToggleExpand={() => toggleChartExpansion("incomeVsSpending")}
+              >
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={spendingVsIncomeData}>
+                  <ComposedChart
+                    data={[
+                      {
+                        name: "Income",
+                        amount: incomeVsSpending.income,
+                        type: "income",
+                        fill: "#10B981", // Green for income
+                      },
+                      {
+                        name: "Spending",
+                        amount: Math.abs(incomeVsSpending.spending),
+                        type: "spending",
+                        fill: "#EF4444", // Red for spending
+                      },
+                    ]}
+                  >
                     <defs>
                       <linearGradient
                         id="incomeGradient"
@@ -489,11 +517,15 @@ const AnalyticsPage = () => {
               </ChartContainer>
 
               {/* Spending by Category - Enhanced Pie Chart */}
-              <ChartContainer title="Spending by Category" expandable>
+              <ChartContainer 
+                title="Spending by Category" 
+                isExpanded={expandedCharts.spendingByCategory}
+                onToggleExpand={() => toggleChartExpansion('spendingByCategory')}
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={enhancedSpendingData}
+                      data={spendingByCategory}
                       cx="50%"
                       cy="50%"
                       innerRadius={50}
@@ -501,18 +533,38 @@ const AnalyticsPage = () => {
                       paddingAngle={5}
                       dataKey="amount"
                       nameKey="category"
-                      label={({ category, percentage }) =>
-                        percentage > 5
+                      label={({ category, percentage }) => {
+                        // Hide labels on mobile, show only on desktop
+                        const isMobile = window.innerWidth < 768;
+                        return !isMobile && percentage > 5
                           ? `${category}\n${percentage.toFixed(1)}%`
-                          : ""
-                      }
+                          : "";
+                      }}
                       labelLine={false}
                     >
-                      {enhancedSpendingData.map((entry, index) => (
+                      {spendingByCategory.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
                     </Pie>
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload || !payload.length) return null;
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 backdrop-blur-sm">
+                            <p className="text-gray-900 dark:text-white font-medium text-sm mb-2">
+                              {data.category}
+                            </p>
+                            <p className="text-gray-600 dark:text-gray-400 text-sm">
+                              Amount: {formatCurrency(data.amount)}
+                            </p>
+                            <p className="text-gray-600 dark:text-gray-400 text-sm">
+                              Percentage: {data.percentage.toFixed(1)}%
+                            </p>
+                          </div>
+                        );
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -521,11 +573,12 @@ const AnalyticsPage = () => {
             {/* Monthly Spending Trend - Enhanced */}
             <ChartContainer
               title="Monthly Spending Trend"
-              expandable
+              isExpanded={expandedCharts.monthlyTrend}
+              onToggleExpand={() => toggleChartExpansion('monthlyTrend')}
               className="mb-6 sm:mb-8"
             >
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={enhancedMonthlyData}>
+                <AreaChart data={monthlySpending}>
                   <defs>
                     <linearGradient
                       id="trendGradient"
@@ -577,15 +630,16 @@ const AnalyticsPage = () => {
                 subtitle="Total assets minus liabilities"
                 icon={DollarSign}
                 color="purple"
+                trend={netWorthTrend}
                 className="sm:animate-fade-in-up"
                 style={{ animationDelay: "0ms" }}
               />
               <MetricCard
                 title="Total Income"
                 value={incomeVsSpending.income}
-                subtitle={`${quickAnalytics.transactionCount} transactions`}
+                subtitle={`${getQuickAnalytics(timeRange).transactionCount} transactions`}
                 icon={TrendingUp}
-                trend={quickAnalytics.spendingTrend}
+                trend={incomeTrend}
                 color="green"
                 className="sm:animate-fade-in-up"
                 style={{ animationDelay: "100ms" }}
@@ -595,16 +649,17 @@ const AnalyticsPage = () => {
                 value={incomeVsSpending.spending}
                 subtitle="All expenses this period"
                 icon={TrendingDown}
-                trend={-quickAnalytics.spendingTrend}
+                trend={spendingTrend}
                 color="red"
                 className="sm:animate-fade-in-up"
                 style={{ animationDelay: "200ms" }}
               />
               <MetricCard
                 title="Net Savings"
-                value={quickAnalytics.netSavings}
+                value={getQuickAnalytics(timeRange).netSavings}
                 subtitle="Income minus spending"
                 icon={PiggyBank}
+                trend={savingsTrend}
                 color="blue"
                 className="sm:animate-fade-in-up"
                 style={{ animationDelay: "300ms" }}
@@ -650,7 +705,7 @@ const AnalyticsPage = () => {
               {/* Top Spending Categories - Enhanced */}
               <ChartContainer title="Top Spending Categories">
                 <div className="space-y-4">
-                  {enhancedSpendingData.slice(0, 6).map(item => (
+                  {spendingByCategory.slice(0, 6).map(item => (
                     <div
                       key={item.category}
                       className="group flex items-center justify-between p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer"
@@ -713,7 +768,7 @@ const AnalyticsPage = () => {
                 </div>
                 <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-800 sm:col-span-2 lg:col-span-1">
                   <div className="text-3xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-                    {formatCurrency(avgDailySpending)}
+                    {formatCurrency(getAverageDailySpending(timeRange))}
                   </div>
                   <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-base font-medium">
                     Average Daily Spending
@@ -730,15 +785,16 @@ const AnalyticsPage = () => {
                 subtitle="Total assets minus liabilities"
                 icon={DollarSign}
                 color="purple"
+                trend={netWorthTrend}
                 className="sm:animate-fade-in-up"
                 style={{ animationDelay: "0ms" }}
               />
               <MetricCard
                 title="Total Income"
                 value={incomeVsSpending.income}
-                subtitle={`${quickAnalytics.transactionCount} transactions`}
+                subtitle={`${getQuickAnalytics(timeRange).transactionCount} transactions`}
                 icon={TrendingUp}
-                trend={quickAnalytics.spendingTrend}
+                trend={incomeTrend}
                 color="green"
                 className="sm:animate-fade-in-up"
                 style={{ animationDelay: "100ms" }}
@@ -748,16 +804,17 @@ const AnalyticsPage = () => {
                 value={incomeVsSpending.spending}
                 subtitle="All expenses this period"
                 icon={TrendingDown}
-                trend={-quickAnalytics.spendingTrend}
+                trend={spendingTrend}
                 color="red"
                 className="sm:animate-fade-in-up"
                 style={{ animationDelay: "200ms" }}
               />
               <MetricCard
                 title="Net Savings"
-                value={quickAnalytics.netSavings}
+                value={getQuickAnalytics(timeRange).netSavings}
                 subtitle="Income minus spending"
                 icon={PiggyBank}
+                trend={savingsTrend}
                 color="blue"
                 className="sm:animate-fade-in-up"
                 style={{ animationDelay: "300ms" }}
