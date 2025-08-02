@@ -654,7 +654,11 @@ const AnalyticsPage = () => {
             {/* Detailed Analytics View */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 xl:gap-8 mb-4 sm:mb-6 lg:mb-8">
               {/* Spending Trends Over Time */}
-              <ChartContainer title="Spending Trends" expandable>
+              <ChartContainer 
+                title="Spending Trends" 
+                isExpanded={expandedCharts.spendingTrendsDetailed}
+                onToggleExpand={() => toggleChartExpansion('spendingTrendsDetailed')}
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={spendingTrends}>
                     <CartesianGrid
@@ -686,8 +690,10 @@ const AnalyticsPage = () => {
               </ChartContainer>
 
               {/* Top Spending Categories - Enhanced */}
-              <ChartContainer
-                title="Top Spending Categories"
+              <ChartContainer 
+                title="Top Spending Categories" 
+                isExpanded={expandedCharts.topSpendingCategories}
+                onToggleExpand={() => toggleChartExpansion('topSpendingCategories')}
                 className="mb-6 sm:mb-8"
               >
                 <div className="space-y-4 h-full overflow-y-auto">
@@ -719,8 +725,10 @@ const AnalyticsPage = () => {
               </ChartContainer>
 
               {/* Transaction Distribution - Enhanced */}
-              <ChartContainer
-                title="Transaction Distribution"
+              <ChartContainer 
+                title="Transaction Distribution" 
+                isExpanded={expandedCharts.transactionDistribution}
+                onToggleExpand={() => toggleChartExpansion('transactionDistribution')}
                 className="mb-6 sm:mb-8"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 h-full overflow-y-auto">
