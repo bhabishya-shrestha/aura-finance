@@ -605,12 +605,15 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                         className="hidden"
                         id="file-upload"
                       />
-                      <label
-                        htmlFor="file-upload"
+                      <button
+                        type="button"
+                        onClick={() =>
+                          document.getElementById("file-upload").click()
+                        }
                         className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
                       >
                         Choose File
-                      </label>
+                      </button>
                     </div>
                   </div>
                 </div>

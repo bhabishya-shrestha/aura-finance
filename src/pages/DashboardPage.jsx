@@ -85,7 +85,7 @@ const DashboardPage = ({ onPageChange }) => {
     useState(false);
   const [transactionsToAssign, setTransactionsToAssign] = useState([]);
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const { getQuickAnalytics, loadTransactions, accounts, addTransactions } =
     useStore();
 
