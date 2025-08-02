@@ -352,12 +352,20 @@ const useStore = create((set, get) => ({
         userId: userId || accountData.userId || null,
       };
 
-      await db.accounts.add(accountWithUser);
+      const newAccountId = await db.accounts.add(accountWithUser);
+      
+      // Get the created account with the generated ID
+      const newAccount = await db.accounts.get(newAccountId);
+      
       // Reload accounts to update the UI
       await get().loadAccounts();
+      
+      // Return the created account
+      return newAccount;
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Error adding account:", error);
+      throw error; // Re-throw the error so the calling function can handle it
     } finally {
       set({ isLoading: false });
     }

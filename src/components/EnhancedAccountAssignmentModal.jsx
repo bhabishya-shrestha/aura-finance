@@ -431,6 +431,13 @@ const EnhancedAccountAssignmentModal = ({
 
       const newAccount = await addAccount(newAccountData);
 
+      // Validate that the account was created successfully
+      if (!newAccount || !newAccount.id) {
+        throw new Error(
+          "Failed to create account - invalid response from addAccount"
+        );
+      }
+
       // Update local accounts list
       setLocalAccounts(prev => [...prev, newAccount]);
 
@@ -562,6 +569,13 @@ const EnhancedAccountAssignmentModal = ({
       };
 
       const newAccount = await addAccount(accountData);
+
+      // Validate that the account was created successfully
+      if (!newAccount || !newAccount.id) {
+        throw new Error(
+          "Failed to create account - invalid response from addAccount"
+        );
+      }
 
       // Update local accounts list
       setLocalAccounts(prev => [...prev, newAccount]);
