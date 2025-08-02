@@ -5,6 +5,7 @@ class AnalyticsService {
     this.cacheTimeout = 1 * 60 * 1000; // 1 minute (reduced from 5 minutes)
     this.lastCalculation = null;
     this.lastTransactionCount = 0;
+    this.lastRefreshTime = 0; // Added for forceRefresh optimization
   }
 
   // Clear cache when data changes
@@ -14,9 +15,23 @@ class AnalyticsService {
     this.lastTransactionCount = 0;
   }
 
-  // Force refresh all analytics data
+  // Force refresh cache (use sparingly)
   forceRefresh() {
-    this.clearCache();
+    // Only clear cache if it's been more than 30 seconds since last refresh
+    // This prevents excessive cache clearing during rapid component updates
+    const lastRefresh = this.lastRefreshTime || 0;
+    const timeSinceLastRefresh = Date.now() - lastRefresh;
+    
+    if (timeSinceLastRefresh > 30000) { // 30 seconds
+      this.cache.clear();
+      this.lastRefreshTime = Date.now();
+      
+      if (import.meta.env.DEV) {
+        console.log("Analytics cache cleared (force refresh)");
+      }
+    } else if (import.meta.env.DEV) {
+      console.log("Skipping force refresh - too soon since last refresh");
+    }
   }
 
   // Check if data needs refresh based on transaction changes
@@ -29,17 +44,26 @@ class AnalyticsService {
     return `${calculation}_${timeRange}_${accountId || "all"}`;
   }
 
-  // Check if cache is valid
+  // Check if cache is still valid
   isCacheValid(cacheKey, transactions = []) {
     const cached = this.cache.get(cacheKey);
-    if (!cached) return false;
-
-    // Invalidate cache if transaction count changed
-    if (transactions.length !== this.lastTransactionCount) {
+    if (!cached) {
       return false;
     }
 
-    return Date.now() - cached.timestamp < this.cacheTimeout;
+    // Check if cache has expired
+    if (Date.now() - cached.timestamp > this.cacheTimeout) {
+      return false;
+    }
+
+    // Check if transaction count has changed significantly (more than 1 transaction)
+    // This prevents unnecessary recalculations for minor changes
+    const transactionCountDiff = Math.abs(transactions.length - this.lastTransactionCount);
+    if (transactionCountDiff > 1) {
+      return false;
+    }
+
+    return true;
   }
 
   // Get cached result or calculate new one

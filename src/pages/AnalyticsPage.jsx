@@ -159,15 +159,14 @@ const AnalyticsPage = () => {
     getNetWorth,
   ]);
 
-  // Animation effects
+  // Animation effects and data refresh - consolidated to prevent double-loading
   useEffect(() => {
+    // Trigger animations
     setAnimateCards(true);
-    const timer = setTimeout(() => setAnimateCards(false), 1000);
-    return () => clearTimeout(timer);
-  }, [timeRange, selectedView]);
+    const animationTimer = setTimeout(() => setAnimateCards(false), 1000);
 
-  // Refresh analytics data when component mounts
-  useEffect(() => {
+    // Refresh analytics data only when timeRange or selectedView changes
+    // This prevents unnecessary refreshes on every mount
     refreshAnalytics();
 
     // Debug logging for transactions
@@ -185,7 +184,9 @@ const AnalyticsPage = () => {
         })),
       });
     }
-  }, [refreshAnalytics, transactions]);
+
+    return () => clearTimeout(animationTimer);
+  }, [timeRange, selectedView, refreshAnalytics, transactions]);
 
   // Enhanced utility functions
   const formatCurrency = useCallback(amount => {
