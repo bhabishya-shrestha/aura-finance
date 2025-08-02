@@ -347,18 +347,25 @@ const useStore = create((set, get) => ({
       // Check for duplicate account names
       let existingAccounts = [];
       if (userId) {
-        existingAccounts = await db.accounts.where("userId").equals(userId).toArray();
+        existingAccounts = await db.accounts
+          .where("userId")
+          .equals(userId)
+          .toArray();
       } else {
         // If no userId, get all accounts (for demo/fallback)
         existingAccounts = await db.accounts.toArray();
       }
-      
-      const duplicateAccount = existingAccounts.find(account => 
-        account.name.toLowerCase().trim() === accountData.name.toLowerCase().trim()
+
+      const duplicateAccount = existingAccounts.find(
+        account =>
+          account.name.toLowerCase().trim() ===
+          accountData.name.toLowerCase().trim()
       );
 
       if (duplicateAccount) {
-        throw new Error(`An account with the name "${accountData.name}" already exists. Please choose a different name.`);
+        throw new Error(
+          `An account with the name "${accountData.name}" already exists. Please choose a different name.`
+        );
       }
 
       const accountWithUser = {
@@ -370,13 +377,13 @@ const useStore = create((set, get) => ({
       };
 
       const newAccountId = await db.accounts.add(accountWithUser);
-      
+
       // Get the created account with the generated ID
       const newAccount = await db.accounts.get(newAccountId);
-      
+
       // Reload accounts to update the UI
       await get().loadAccounts();
-      
+
       // Return the created account
       return newAccount;
     } catch (error) {
