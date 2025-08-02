@@ -448,7 +448,7 @@ const useStore = create((set, get) => ({
       await get().loadAccounts();
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error("Error updating account balance:", error);
+        // Error updating account balance
       }
       throw error;
     } finally {

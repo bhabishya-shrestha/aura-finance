@@ -113,7 +113,7 @@ const EnhancedAccountAssignmentModal = ({
       // Generate AI-powered account suggestions
       generateAccountSuggestions();
     }
-  }, [isOpen, transactions, detectedAccountInfo, generateAccountSuggestions]);
+  }, [isOpen, transactions, detectedAccountInfo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Enhanced AI-powered account suggestion algorithm
   const generateAccountSuggestions = () => {

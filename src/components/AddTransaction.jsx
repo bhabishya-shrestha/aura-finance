@@ -6,9 +6,7 @@ import {
   Calendar,
   FileText,
   Tag,
-  CreditCard,
   Wallet,
-  PiggyBank,
 } from "lucide-react";
 import useStore from "../store";
 import { CATEGORIES } from "../utils/statementParser";
