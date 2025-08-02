@@ -239,12 +239,10 @@ const AnalyticsPage = () => {
     onClick,
   }) => {
     const colorClasses = {
-      blue: "from-blue-500 to-blue-600",
-      green: "from-green-500 to-green-600",
-      red: "from-red-500 to-red-600",
-      purple: "from-purple-500 to-purple-600",
-      orange: "from-orange-500 to-orange-600",
-      teal: "from-teal-500 to-teal-600",
+      blue: "bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20",
+      green: "bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20",
+      red: "bg-gradient-to-br from-red-500/10 to-red-600/10 border-red-500/20",
+      purple: "bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20",
     };
 
     return (
@@ -256,41 +254,28 @@ const AnalyticsPage = () => {
         }`}
         onClick={onClick}
       >
-        {/* Animated background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-xl" />
-
-        <div className="relative bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1">
-          {/* Icon with gradient background */}
-          <div
-            className={`inline-flex p-2 sm:p-3 rounded-lg bg-gradient-to-br ${colorClasses[color]} text-white mb-2 sm:mb-3 lg:mb-4 group-hover:scale-110 transition-transform duration-300`}
-          >
-            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="transform transition-transform duration-300">
+              <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-white/80" />
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-semibold text-soft-white">
+                {title}
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-400">{subtitle}</p>
+            </div>
           </div>
+        </div>
 
-          {/* Value with animated counter */}
-          <div className="mb-2">
-            <p className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300">
-              {typeof value === "number" ? formatCurrency(value) : value}
-            </p>
+        <div className="flex items-end justify-between">
+          <div className="text-2xl sm:text-3xl font-bold text-soft-white">
+            {typeof value === "number" ? formatCurrency(value) : value}
           </div>
-
-          {/* Title and subtitle */}
-          <div className="mb-2 sm:mb-3">
-            <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
-              {title}
-            </p>
-            {subtitle && (
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {subtitle}
-              </p>
-            )}
-          </div>
-
-          {/* Trend indicator with animation */}
           {trend !== undefined && (
             <div
-              className={`flex items-center text-xs sm:text-sm font-medium transition-all duration-300 ${
-                trend >= 0 ? "text-green-500" : "text-red-500"
+              className={`flex items-center text-sm font-medium ${
+                trend >= 0 ? "text-green-400" : "text-red-400"
               }`}
             >
               <div className="transform transition-transform duration-300">
@@ -303,9 +288,6 @@ const AnalyticsPage = () => {
               {formatPercentage(trend)}
             </div>
           )}
-
-          {/* Hover effect overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
         </div>
       </div>
     );
@@ -341,17 +323,9 @@ const AnalyticsPage = () => {
             </button>
           )}
         </div>
-        <div
-          className={`transition-all duration-300 ease-in-out ${
-            isMobile
-              ? isExpanded
-                ? "h-80 sm:h-96" // Taller when expanded on mobile
-                : "h-48 sm:h-64" // Collapsed height on mobile
-              : "h-64 sm:h-72 lg:h-80" // Fixed height on desktop
-          }`}
-        >
-          {children}
-        </div>
+        {(!isMobile || isExpanded) && (
+          <div className="h-64 sm:h-72 lg:h-80">{children}</div>
+        )}
       </div>
     );
   };
@@ -517,10 +491,12 @@ const AnalyticsPage = () => {
               </ChartContainer>
 
               {/* Spending by Category - Enhanced Pie Chart */}
-              <ChartContainer 
-                title="Spending by Category" 
+              <ChartContainer
+                title="Spending by Category"
                 isExpanded={expandedCharts.spendingByCategory}
-                onToggleExpand={() => toggleChartExpansion('spendingByCategory')}
+                onToggleExpand={() =>
+                  toggleChartExpansion("spendingByCategory")
+                }
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -541,9 +517,16 @@ const AnalyticsPage = () => {
                           : "";
                       }}
                       labelLine={false}
+                      strokeWidth={2}
+                      stroke="#ffffff"
                     >
                       {spendingByCategory.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.fill}
+                          stroke="#ffffff"
+                          strokeWidth={2}
+                        />
                       ))}
                     </Pie>
                     <Tooltip
@@ -574,7 +557,7 @@ const AnalyticsPage = () => {
             <ChartContainer
               title="Monthly Spending Trend"
               isExpanded={expandedCharts.monthlyTrend}
-              onToggleExpand={() => toggleChartExpansion('monthlyTrend')}
+              onToggleExpand={() => toggleChartExpansion("monthlyTrend")}
               className="mb-6 sm:mb-8"
             >
               <ResponsiveContainer width="100%" height="100%">
@@ -703,38 +686,30 @@ const AnalyticsPage = () => {
               </ChartContainer>
 
               {/* Top Spending Categories - Enhanced */}
-              <ChartContainer title="Top Spending Categories">
-                <div className="space-y-4">
+              <ChartContainer
+                title="Top Spending Categories"
+                className="mb-6 sm:mb-8"
+              >
+                <div className="space-y-4 h-full overflow-y-auto">
                   {spendingByCategory.slice(0, 6).map(item => (
                     <div
                       key={item.category}
-                      className="group flex items-center justify-between p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer"
+                      className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors"
                     >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex items-center gap-3">
                         <div
-                          className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
-                          style={{ background: item.fill }}
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: item.fill }}
                         />
-                        <div className="min-w-0 flex-1">
-                          <span className="text-gray-900 dark:text-white font-medium truncate text-sm sm:text-base block">
-                            {item.category}
-                          </span>
-                          <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 mt-1">
-                            <div
-                              className="h-2 rounded-full transition-all duration-300"
-                              style={{
-                                width: `${item.percentage}%`,
-                                background: item.fill,
-                              }}
-                            />
-                          </div>
-                        </div>
+                        <span className="text-soft-white font-medium">
+                          {item.category}
+                        </span>
                       </div>
-                      <div className="text-right flex-shrink-0 ml-4">
-                        <div className="text-gray-900 dark:text-white font-semibold text-sm sm:text-base">
+                      <div className="text-right">
+                        <div className="text-soft-white font-semibold">
                           {formatCurrency(item.amount)}
                         </div>
-                        <div className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
+                        <div className="text-gray-400 text-sm">
                           {item.percentage.toFixed(1)}%
                         </div>
                       </div>
@@ -742,40 +717,40 @@ const AnalyticsPage = () => {
                   ))}
                 </div>
               </ChartContainer>
-            </div>
 
-            {/* Transaction Distribution Analysis */}
-            <ChartContainer
-              title="Transaction Distribution"
-              className="mb-4 sm:mb-6 lg:mb-8"
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-                <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-green-200 dark:border-green-800">
-                  <div className="text-3xl sm:text-4xl font-bold text-green-600 dark:text-green-400 mb-2">
-                    {transactions.filter(t => t.amount > 0).length}
+              {/* Transaction Distribution - Enhanced */}
+              <ChartContainer
+                title="Transaction Distribution"
+                className="mb-6 sm:mb-8"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 h-full overflow-y-auto">
+                  <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-green-200 dark:border-green-800">
+                    <div className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                      {transactions.filter(t => t.amount > 0).length}
+                    </div>
+                    <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-base font-medium">
+                      Income Transactions
+                    </div>
                   </div>
-                  <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-base font-medium">
-                    Income Transactions
+                  <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-xl border border-red-200 dark:border-red-800">
+                    <div className="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400 mb-2">
+                      {transactions.filter(t => t.amount < 0).length}
+                    </div>
+                    <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-base font-medium">
+                      Spending Transactions
+                    </div>
+                  </div>
+                  <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-800 sm:col-span-2 lg:col-span-1">
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                      {formatCurrency(getAverageDailySpending(timeRange))}
+                    </div>
+                    <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-base font-medium">
+                      Avg Daily Spending
+                    </div>
                   </div>
                 </div>
-                <div className="text-center p-6 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-xl border border-red-200 dark:border-red-800">
-                  <div className="text-3xl sm:text-4xl font-bold text-red-600 dark:text-red-400 mb-2">
-                    {transactions.filter(t => t.amount < 0).length}
-                  </div>
-                  <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-base font-medium">
-                    Expense Transactions
-                  </div>
-                </div>
-                <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-800 sm:col-span-2 lg:col-span-1">
-                  <div className="text-3xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-                    {formatCurrency(getAverageDailySpending(timeRange))}
-                  </div>
-                  <div className="text-gray-600 dark:text-gray-400 text-sm sm:text-base font-medium">
-                    Average Daily Spending
-                  </div>
-                </div>
-              </div>
-            </ChartContainer>
+              </ChartContainer>
+            </div>
 
             {/* Enhanced Summary Cards moved to bottom for detailed view too */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">

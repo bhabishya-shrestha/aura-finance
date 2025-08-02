@@ -504,15 +504,15 @@ class AnalyticsService {
             periodType = "day";
             break;
           case "month":
-            periods = 12;
+            periods = 6; // Show last 6 months for monthly view
             periodType = "month";
             break;
           case "quarter":
-            periods = 4;
+            periods = 4; // Show last 4 quarters
             periodType = "month";
             break;
           case "year":
-            periods = 12;
+            periods = 12; // Show last 12 months for yearly view
             periodType = "month";
             break;
           default:
@@ -584,6 +584,8 @@ class AnalyticsService {
             trendsCount: trends.length,
             trends: trends,
             hasData: trends.some(t => t.spending > 0 || t.income > 0),
+            totalTransactions: transactions.length,
+            sampleTransaction: transactions.length > 0 ? transactions[0] : null,
           });
         }
 
