@@ -69,30 +69,73 @@ const AppLayout = () => {
 
   // Initialize update notification on first load
   useEffect(() => {
-    if (!lastUpdateNotification) {
-      setUpdateNotification({
-        version: "1.3.0",
-        features: [
-          "Enhanced document import system with AI-powered analysis",
-          "Comprehensive UI/UX improvements across all pages",
-          "Advanced analytics with improved data visualization",
-          "Robust duplicate transaction detection system",
-          "Enhanced statement parsing with multiple format support",
-          "Improved account assignment workflow",
-          "Better error handling and user feedback",
-        ],
-        bugFixes: [
-          "Fixed StatementImporter timing and state management issues",
-          "Resolved race conditions in file processing",
-          "Improved error handling with proper state cleanup",
-          "Fixed transaction import and account assignment issues",
-          "Enhanced test coverage and reliability",
-          "Resolved code quality and security check failures",
-          "Fixed UI layout and responsive design issues",
-        ],
-      });
-    }
+    // Only set update notification if it doesn't exist AND we want to show it
+    // For now, we'll disable automatic update notifications to prevent persistent banners
+    // if (!lastUpdateNotification) {
+    //   setUpdateNotification({
+    //     version: "1.3.0",
+    //     features: [
+    //       "Enhanced document import with AI analysis",
+    //       "Improved analytics and data visualization",
+    //       "Better duplicate transaction detection",
+    //       "Enhanced statement parsing support",
+    //       "Streamlined account assignment workflow",
+    //       "Improved error handling and user feedback"
+    //     ],
+    //     bugFixes: [
+    //       "Fixed various UI layout and responsive design issues",
+    //       "Resolved transaction import and processing bugs",
+    //       "Improved overall app stability and performance"
+    //     ],
+    //   });
+    // }
   }, [lastUpdateNotification, setUpdateNotification]);
+
+  // Device-specific update notifications - REMOVED: Should only show when user explicitly requests
+  // useEffect(() => {
+  //   if (!lastUpdateNotification) {
+  //     const isMobile = window.innerWidth <= 768;
+  //
+  //     if (isMobile) {
+  //       setUpdateNotification({
+  //         version: "1.3.0",
+  //         features: [
+  //           "Enhanced mobile navigation with improved sidebar design",
+  //           "Better mobile header with proper notification indicators",
+  //           "Improved mobile statement import process",
+  //           "Enhanced mobile layout for accounts and transactions",
+  //           "Professional mobile add account button design",
+  //           "Better mobile viewport handling and responsive design",
+  //         ],
+  //         bugFixes: [
+  //           "Fixed mobile browser compatibility issues",
+  //           "Resolved notification dropdown alignment on mobile",
+  //           "Fixed hamburger menu functionality",
+  //           "Improved icon centering in mobile header",
+  //           "Enhanced mobile scroll behavior and touch interactions",
+  //         ],
+  //       });
+  //     } else {
+  //       setUpdateNotification({
+  //         version: "1.3.0",
+  //         features: [
+  //           "Completely redesigned Analytics page",
+  //           "Enhanced AI-powered account detection and assignment",
+  //           "Professional transaction editing capabilities",
+  //           "Improved statement processing with better error handling",
+  //           "Enhanced account assignment modal with modern design",
+  //           "Better data visualization and chart improvements",
+  //         ],
+  //         bugFixes: [
+  //           "Fixed analytics data display and chart rendering issues",
+  //           "Resolved transaction import and account assignment bugs",
+  //           "Improved overall app stability and performance",
+  //           "Fixed UI layout and responsive design issues",
+  //         ],
+  //       });
+  //     }
+  //   }
+  // }, [lastUpdateNotification, setUpdateNotification]);
 
   useEffect(() => {
     // Only initialize once

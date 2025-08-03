@@ -40,6 +40,7 @@ const SettingsPage = ({ onPageChange }) => {
     loadTransactions,
     loadAccounts,
     resetUserData,
+    triggerUpdateNotification,
   } = useStore();
 
   const [activeTab, setActiveTab] = useState("general");
@@ -588,91 +589,33 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "notifications":
         return (
-          <div className="p-6 space-y-8">
+          <div className="p-6">
             {/* Header */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Notification Settings
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Control how and when you receive notifications
+                Manage your notification preferences and view app updates
               </p>
             </div>
 
-            {/* Notification Preferences */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                  <Bell className="w-5 h-5 text-orange-600" />
-                  Notification Preferences
+            {/* Settings */}
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  App Updates
                 </h3>
-              </div>
-              <div className="p-6 space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-white">
-                      Email Notifications
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Receive notifications via email
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.emailNotifications || false}
-                      onChange={e =>
-                        updateSetting("emailNotifications", e.target.checked)
-                      }
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-white">
-                      Budget Alerts
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Get notified when you exceed budget limits
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.budgetAlerts || true}
-                      onChange={e =>
-                        updateSetting("budgetAlerts", e.target.checked)
-                      }
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-white">
-                      Transaction Alerts
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Get notified for large transactions
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.transactionAlerts || false}
-                      onChange={e =>
-                        updateSetting("transactionAlerts", e.target.checked)
-                      }
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  View the latest features and improvements for your device
+                </p>
+                <button
+                  onClick={triggerUpdateNotification}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm"
+                >
+                  <Bell className="w-4 h-4" />
+                  View Latest Updates
+                </button>
               </div>
             </div>
           </div>

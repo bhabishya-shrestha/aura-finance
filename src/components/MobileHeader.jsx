@@ -1,5 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, User, Settings, Menu, X } from "lucide-react";
+import {
+  Bell,
+  User,
+  Settings,
+  Menu,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import useStore from "../store";
 
@@ -11,10 +18,11 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     lastUpdateNotification,
-    clearUpdateNotification,
+    markUpdateNotificationAsRead,
   } = useStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [expandedNotifications, setExpandedNotifications] = useState(new Set());
   const headerRef = useRef(null);
 
   // Close dropdowns when clicking outside
@@ -37,6 +45,18 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
     if (notification.action) {
       notification.action();
     }
+  };
+
+  const toggleNotificationExpansion = notificationId => {
+    setExpandedNotifications(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(notificationId)) {
+        newSet.delete(notificationId);
+      } else {
+        newSet.add(notificationId);
+      }
+      return newSet;
+    });
   };
 
   const formatTimeAgo = timestamp => {
@@ -94,7 +114,8 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
             aria-label="Notifications"
           >
             <Bell className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-            {unreadCount > 0 && (
+            {(unreadCount > 0 ||
+              (lastUpdateNotification && !lastUpdateNotification.read)) && (
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             )}
           </button>
@@ -107,10 +128,18 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                     Notifications
                   </h3>
-                  {unreadCount > 0 && (
+                  {(unreadCount > 0 ||
+                    (lastUpdateNotification &&
+                      !lastUpdateNotification.read)) && (
                     <button
                       onClick={() => {
                         markAllNotificationsAsRead();
+                        if (
+                          lastUpdateNotification &&
+                          !lastUpdateNotification.read
+                        ) {
+                          markUpdateNotificationAsRead();
+                        }
                         setShowNotifications(false);
                       }}
                       className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
@@ -122,7 +151,110 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
               </div>
 
               <div className="p-2">
-                {notifications.length === 0 ? (
+                {/* Update Notification */}
+                {lastUpdateNotification && (
+                  <div
+                    onClick={() => {
+                      if (!lastUpdateNotification.read) {
+                        markUpdateNotificationAsRead();
+                      }
+                      toggleNotificationExpansion("update");
+                    }}
+                    className={`mb-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                      lastUpdateNotification.read
+                        ? "bg-gray-50 dark:bg-gray-700"
+                        : "bg-blue-50 dark:bg-blue-900/20"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-lg">🎉</span>
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={`text-sm font-medium ${
+                            lastUpdateNotification.read
+                              ? "text-gray-700 dark:text-gray-300"
+                              : "text-gray-900 dark:text-white"
+                          }`}
+                        >
+                          What's New in Aura Finance v
+                          {lastUpdateNotification.version}
+                        </p>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 space-y-1">
+                          {lastUpdateNotification.features &&
+                            lastUpdateNotification.features.length > 0 && (
+                              <p>
+                                ✨ {lastUpdateNotification.features.length} new
+                                features added
+                              </p>
+                            )}
+                          {lastUpdateNotification.bugFixes &&
+                            lastUpdateNotification.bugFixes.length > 0 && (
+                              <p>
+                                🐛 {lastUpdateNotification.bugFixes.length} bug
+                                fixes and improvements
+                              </p>
+                            )}
+                        </div>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                          {formatTimeAgo(lastUpdateNotification.timestamp)}
+                        </p>
+
+                        {/* Expanded content */}
+                        {expandedNotifications.has("update") && (
+                          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                            {lastUpdateNotification.features &&
+                              lastUpdateNotification.features.length > 0 && (
+                                <div className="mb-3">
+                                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                    ✨ New Features:
+                                  </p>
+                                  <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                                    {lastUpdateNotification.features.map(
+                                      (feature, index) => (
+                                        <li key={index} className="pl-2">
+                                          • {feature}
+                                        </li>
+                                      )
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
+                            {lastUpdateNotification.bugFixes &&
+                              lastUpdateNotification.bugFixes.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                    🐛 Bug Fixes:
+                                  </p>
+                                  <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                                    {lastUpdateNotification.bugFixes.map(
+                                      (fix, index) => (
+                                        <li key={index} className="pl-2">
+                                          • {fix}
+                                        </li>
+                                      )
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
+                          </div>
+                        )}
+                      </div>
+                      {!lastUpdateNotification.read && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      )}
+                      <span className="text-gray-400">
+                        {expandedNotifications.has("update") ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Regular Notifications */}
+                {notifications.length === 0 && !lastUpdateNotification ? (
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No notifications</p>
@@ -211,51 +343,6 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
           )}
         </div>
       </div>
-
-      {/* Update Notification Banner */}
-      {lastUpdateNotification && (
-        <div className="fixed top-[calc(var(--mobile-header-height)+8px)] left-4 right-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-lg z-50 p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h4 className="font-semibold text-sm mb-1">
-                What's New in Aura Finance
-              </h4>
-              <div className="text-xs space-y-1">
-                {lastUpdateNotification.features &&
-                  lastUpdateNotification.features.length > 0 && (
-                    <div>
-                      <p className="font-medium mb-1">✨ New Features:</p>
-                      <ul className="list-disc list-inside space-y-0.5">
-                        {lastUpdateNotification.features.map(
-                          (feature, index) => (
-                            <li key={index}>{feature}</li>
-                          )
-                        )}
-                      </ul>
-                    </div>
-                  )}
-                {lastUpdateNotification.bugFixes &&
-                  lastUpdateNotification.bugFixes.length > 0 && (
-                    <div>
-                      <p className="font-medium mb-1">🐛 Bug Fixes:</p>
-                      <ul className="list-disc list-inside space-y-0.5">
-                        {lastUpdateNotification.bugFixes.map((fix, index) => (
-                          <li key={index}>{fix}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-              </div>
-            </div>
-            <button
-              onClick={clearUpdateNotification}
-              className="ml-2 p-1 hover:bg-white/20 rounded transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

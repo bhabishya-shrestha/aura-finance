@@ -73,7 +73,10 @@ const useStore = create(
             const payload = JSON.parse(atob(token.split(".")[1]));
             const userId = payload.userId;
 
-            accounts = await db.accounts.where("userId").equals(userId).toArray();
+            accounts = await db.accounts
+              .where("userId")
+              .equals(userId)
+              .toArray();
           } else {
             // Fallback to all accounts for demo
             accounts = await db.accounts.toArray();
@@ -174,17 +177,21 @@ const useStore = create(
                 "service charge",
               ];
 
-              return !skipPatterns.some(pattern => description.includes(pattern));
+              return !skipPatterns.some(pattern =>
+                description.includes(pattern)
+              );
             }
 
             return true;
           });
 
           // Add userId to transactions
-          const transactionsWithUser = filteredTransactions.map(transaction => ({
-            ...transaction,
-            userId: userId || transaction.userId || null,
-          }));
+          const transactionsWithUser = filteredTransactions.map(
+            transaction => ({
+              ...transaction,
+              userId: userId || transaction.userId || null,
+            })
+          );
 
           await db.transactions.bulkAdd(transactionsWithUser);
 
@@ -473,7 +480,8 @@ const useStore = create(
 
           // Update the account's base balance
           await db.accounts.update(accountId, {
-            balance: (account.balance || account.initialBalance || 0) + adjustment,
+            balance:
+              (account.balance || account.initialBalance || 0) + adjustment,
             lastBalanceUpdate: new Date().toISOString(),
           });
 
@@ -504,7 +512,10 @@ const useStore = create(
             transactionCount: 0,
           };
         }
-        return analyticsService.calculateQuickAnalytics(transactions, timeRange);
+        return analyticsService.calculateQuickAnalytics(
+          transactions,
+          timeRange
+        );
       },
 
       // Get all analytics data in a single batch calculation
@@ -540,7 +551,10 @@ const useStore = create(
         if (!transactions || transactions.length === 0) {
           return { income: 0, spending: 0, net: 0, data: [] };
         }
-        return analyticsService.calculateIncomeVsSpending(transactions, timeRange);
+        return analyticsService.calculateIncomeVsSpending(
+          transactions,
+          timeRange
+        );
       },
 
       getMonthlySpending: (timeRange = "year") => {
@@ -548,7 +562,10 @@ const useStore = create(
         if (!transactions || transactions.length === 0) {
           return [];
         }
-        return analyticsService.calculateMonthlySpending(transactions, timeRange);
+        return analyticsService.calculateMonthlySpending(
+          transactions,
+          timeRange
+        );
       },
 
       getAccountAnalytics: (accountId, timeRange = "month") => {
@@ -571,7 +588,10 @@ const useStore = create(
 
       getSpendingTrends: (timeRange = "month") => {
         const { transactions } = get();
-        return analyticsService.calculateSpendingTrends(transactions, timeRange);
+        return analyticsService.calculateSpendingTrends(
+          transactions,
+          timeRange
+        );
       },
 
       getTopSpendingCategories: (timeRange = "month", limit = 5) => {
@@ -650,26 +670,26 @@ const useStore = create(
       lastUpdateNotification: null,
 
       // Add notification
-      addNotification: (notification) => {
+      addNotification: notification => {
         const newNotification = {
           id: Date.now(),
           title: notification.title,
           message: notification.message,
-          type: notification.type || 'info', // 'info', 'success', 'warning', 'error'
+          type: notification.type || "info", // 'info', 'success', 'warning', 'error'
           timestamp: new Date().toISOString(),
           read: false,
           action: notification.action || null,
         };
 
-        set((state) => ({
+        set(state => ({
           notifications: [newNotification, ...state.notifications].slice(0, 50), // Keep last 50
           unreadCount: state.unreadCount + 1,
         }));
       },
 
       // Mark notification as read
-      markNotificationAsRead: (notificationId) => {
-        set((state) => ({
+      markNotificationAsRead: notificationId => {
+        set(state => ({
           notifications: state.notifications.map(notification =>
             notification.id === notificationId
               ? { ...notification, read: true }
@@ -681,7 +701,7 @@ const useStore = create(
 
       // Mark all notifications as read
       markAllNotificationsAsRead: () => {
-        set((state) => ({
+        set(state => ({
           notifications: state.notifications.map(notification => ({
             ...notification,
             read: true,
@@ -691,28 +711,43 @@ const useStore = create(
       },
 
       // Clear notification
-      clearNotification: (notificationId) => {
-        set((state) => {
-          const notification = state.notifications.find(n => n.id === notificationId);
+      clearNotification: notificationId => {
+        set(state => {
+          const notification = state.notifications.find(
+            n => n.id === notificationId
+          );
           return {
-            notifications: state.notifications.filter(n => n.id !== notificationId),
-            unreadCount: notification && !notification.read 
-              ? Math.max(0, state.unreadCount - 1) 
-              : state.unreadCount,
+            notifications: state.notifications.filter(
+              n => n.id !== notificationId
+            ),
+            unreadCount:
+              notification && !notification.read
+                ? Math.max(0, state.unreadCount - 1)
+                : state.unreadCount,
           };
         });
       },
 
       // Set update notification
-      setUpdateNotification: (updateInfo) => {
+      setUpdateNotification: updateInfo => {
         set({
           lastUpdateNotification: {
             version: updateInfo.version,
             timestamp: new Date().toISOString(),
             features: updateInfo.features,
             bugFixes: updateInfo.bugFixes,
+            read: false, // Add read state
           },
         });
+      },
+
+      // Mark update notification as read
+      markUpdateNotificationAsRead: () => {
+        set(state => ({
+          lastUpdateNotification: state.lastUpdateNotification
+            ? { ...state.lastUpdateNotification, read: true }
+            : null,
+        }));
       },
 
       // Clear update notification
@@ -721,10 +756,71 @@ const useStore = create(
           lastUpdateNotification: null,
         });
       },
+
+      // Clear all notifications (useful for removing test notifications)
+      clearAllNotifications: () => {
+        set({
+          notifications: [],
+          unreadCount: 0,
+          lastUpdateNotification: null,
+        });
+      },
+
+      // Manually trigger device-specific update notification
+      triggerUpdateNotification: () => {
+        const isMobile = window.innerWidth <= 768;
+        
+        if (isMobile) {
+          set({
+            lastUpdateNotification: {
+              version: "1.1.0",
+              timestamp: new Date().toISOString(),
+              features: [
+                "Enhanced mobile navigation with improved sidebar design",
+                "Better mobile header with proper notification indicators",
+                "Improved mobile statement import process",
+                "Enhanced mobile layout for accounts and transactions",
+                "Professional mobile add account button design",
+                "Better mobile viewport handling and responsive design"
+              ],
+              bugFixes: [
+                "Fixed mobile browser compatibility issues",
+                "Resolved notification dropdown alignment on mobile",
+                "Fixed hamburger menu functionality",
+                "Improved icon centering in mobile header",
+                "Enhanced mobile scroll behavior and touch interactions"
+              ],
+              read: false,
+            },
+          });
+        } else {
+          set({
+            lastUpdateNotification: {
+              version: "1.1.0",
+              timestamp: new Date().toISOString(),
+              features: [
+                "Completely redesigned Analytics page with Fortune 500 standards",
+                "Enhanced AI-powered account detection and assignment",
+                "Professional transaction editing capabilities",
+                "Improved statement processing with better error handling",
+                "Enhanced account assignment modal with modern design",
+                "Better data visualization and chart improvements"
+              ],
+              bugFixes: [
+                "Fixed analytics data display and chart rendering issues",
+                "Resolved transaction import and account assignment bugs",
+                "Improved overall app stability and performance",
+                "Fixed UI layout and responsive design issues"
+              ],
+              read: false,
+            },
+          });
+        }
+      },
     }),
     {
       name: "aura-finance-store",
-      partialize: (state) => ({
+      partialize: state => ({
         transactions: state.transactions,
         accounts: state.accounts,
         isLoading: state.isLoading,

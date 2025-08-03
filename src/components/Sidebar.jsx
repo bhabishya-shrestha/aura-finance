@@ -239,7 +239,7 @@ const Sidebar = ({
             <div
               className={`text-xs text-gray-500 dark:text-gray-400 ${isCollapsed ? "text-center" : ""}`}
             >
-              {isCollapsed ? "v1.0" : "Version 1.0.1"}
+              {isCollapsed ? "v1.3" : "Version 1.3.0"}
             </div>
           </div>
         </div>
