@@ -24,7 +24,7 @@ const DashboardPage = ({ onPageChange }) => {
     loadAccounts,
   } = useStore();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [showNetWorth, setShowNetWorth] = useState(true);
+  const [showNetWorth] = useState(true);
   const [error, setError] = useState("");
 
   // Use mobile viewport handling
@@ -92,7 +92,7 @@ const DashboardPage = ({ onPageChange }) => {
     icon: Icon,
     trend = "up",
   }) => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 lg:p-4 shadow-sm border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -122,7 +122,7 @@ const DashboardPage = ({ onPageChange }) => {
   );
 
   return (
-    <div className="p-4 lg:p-6 space-y-6">
+    <div className="p-4 lg:p-4 space-y-6">
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -140,18 +140,6 @@ const DashboardPage = ({ onPageChange }) => {
             Welcome back! Here&apos;s your financial overview.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowNetWorth(!showNetWorth)}
-            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            {showNetWorth ? (
-              <EyeOff className="w-5 h-5" />
-            ) : (
-              <Eye className="w-5 h-5" />
-            )}
-          </button>
-        </div>
       </div>
 
       {/* Mobile Header - Simple */}
@@ -165,19 +153,17 @@ const DashboardPage = ({ onPageChange }) => {
       </div>
 
       {/* Net Worth Card */}
-      {showNetWorth && (
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-100">Total Net Worth</p>
-              <p className="text-3xl font-bold">
-                ${totalBalance.toLocaleString()}
-              </p>
-            </div>
-            <DollarSign className="w-12 h-12 text-blue-200" />
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-4 lg:p-6 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-blue-100">Total Net Worth</p>
+            <p className="text-3xl font-bold">
+              ${totalBalance.toLocaleString()}
+            </p>
           </div>
+          <DollarSign className="w-12 h-12 text-blue-200" />
         </div>
-      )}
+      </div>
 
       {/* Quick Analytics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -210,7 +196,7 @@ const DashboardPage = ({ onPageChange }) => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Quick Actions
         </h2>
@@ -247,7 +233,7 @@ const DashboardPage = ({ onPageChange }) => {
       </div>
 
       {/* Recent Transactions */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Recent Transactions
