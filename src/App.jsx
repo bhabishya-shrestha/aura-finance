@@ -71,23 +71,24 @@ const AppLayout = () => {
   useEffect(() => {
     if (!lastUpdateNotification) {
       setUpdateNotification({
-        version: "1.2.0",
+        version: "1.3.0",
         features: [
-          "Mobile-first navigation with sidebar design",
-          "Enhanced mobile header with proper notifications",
-          "Floating action button for quick actions",
-          "Improved mobile statement import process",
-          "Better mobile layout for accounts and transactions",
-          "Professional mobile add account button",
-          "Enhanced mobile viewport handling",
+          "Enhanced document import system with AI-powered analysis",
+          "Comprehensive UI/UX improvements across all pages",
+          "Advanced analytics with improved data visualization",
+          "Robust duplicate transaction detection system",
+          "Enhanced statement parsing with multiple format support",
+          "Improved account assignment workflow",
+          "Better error handling and user feedback",
         ],
         bugFixes: [
-          "Fixed mobile browser compatibility issues",
-          "Resolved notification dropdown alignment",
-          "Fixed hamburger menu functionality",
-          "Improved icon centering in mobile header",
-          "Enhanced mobile scroll behavior",
-          "Fixed mobile layout padding and spacing",
+          "Fixed StatementImporter timing and state management issues",
+          "Resolved race conditions in file processing",
+          "Improved error handling with proper state cleanup",
+          "Fixed transaction import and account assignment issues",
+          "Enhanced test coverage and reliability",
+          "Resolved code quality and security check failures",
+          "Fixed UI layout and responsive design issues",
         ],
       });
     }
