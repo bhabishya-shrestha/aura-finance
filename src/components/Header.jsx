@@ -23,12 +23,11 @@ const Header = ({
   } = useStore();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   const headerRef = useRef(null);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = event => {
       if (headerRef.current && !headerRef.current.contains(event.target)) {
         setShowNotifications(false);
         setShowUserMenu(false);
@@ -39,14 +38,7 @@ const Header = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Show update banner on first load
-  useEffect(() => {
-    if (lastUpdateNotification && !showUpdateBanner) {
-      setShowUpdateBanner(true);
-    }
-  }, [lastUpdateNotification, showUpdateBanner]);
-
-  const handleNotificationClick = (notification) => {
+  const handleNotificationClick = notification => {
     if (!notification.read) {
       markNotificationAsRead(notification.id);
     }
@@ -55,7 +47,7 @@ const Header = ({
     }
   };
 
-  const formatTimeAgo = (timestamp) => {
+  const formatTimeAgo = timestamp => {
     const now = new Date();
     const time = new Date(timestamp);
     const diffInMinutes = Math.floor((now - time) / (1000 * 60));
@@ -66,7 +58,7 @@ const Header = ({
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
-  const getNotificationIcon = (type) => {
+  const getNotificationIcon = type => {
     switch (type) {
       case "success":
         return "✅";
@@ -93,51 +85,10 @@ const Header = ({
   };
 
   return (
-    <header ref={headerRef} className="bg-white dark:bg-gray-900 sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700 shadow-sm">
-      {/* Update Notification Banner */}
-      {showUpdateBanner && lastUpdateNotification && (
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h4 className="font-semibold text-sm mb-1">
-                What's New in Aura Finance
-              </h4>
-              <div className="text-xs space-y-1">
-                {lastUpdateNotification.features && lastUpdateNotification.features.length > 0 && (
-                  <div>
-                    <p className="font-medium mb-1">✨ New Features:</p>
-                    <ul className="list-disc list-inside space-y-0.5">
-                      {lastUpdateNotification.features.map((feature, index) => (
-                        <li key={index}>{feature}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {lastUpdateNotification.bugFixes && lastUpdateNotification.bugFixes.length > 0 && (
-                  <div>
-                    <p className="font-medium mb-1">🐛 Bug Fixes:</p>
-                    <ul className="list-disc list-inside space-y-0.5">
-                      {lastUpdateNotification.bugFixes.map((fix, index) => (
-                        <li key={index}>{fix}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                clearUpdateNotification();
-                setShowUpdateBanner(false);
-              }}
-              className="ml-4 p-1 hover:bg-white/20 rounded transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
+    <header
+      ref={headerRef}
+      className="bg-white dark:bg-gray-900 sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700 shadow-sm"
+    >
       <div className="flex items-center justify-between px-3 sm:px-6 py-2 sm:py-4">
         {/* Left Section - Logo and Title */}
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
@@ -223,6 +174,60 @@ const Header = ({
                 </div>
 
                 <div className="p-2 max-h-80 overflow-y-auto">
+                  {/* Update Notification */}
+                  {lastUpdateNotification && (
+                    <div className="mb-3 p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm mb-1">
+                            What's New in Aura Finance
+                          </h4>
+                          <div className="text-xs space-y-1">
+                            {lastUpdateNotification.features &&
+                              lastUpdateNotification.features.length > 0 && (
+                                <div>
+                                  <p className="font-medium mb-1">
+                                    ✨ New Features:
+                                  </p>
+                                  <ul className="list-disc list-inside space-y-0.5">
+                                    {lastUpdateNotification.features.map(
+                                      (feature, index) => (
+                                        <li key={index}>{feature}</li>
+                                      )
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
+                            {lastUpdateNotification.bugFixes &&
+                              lastUpdateNotification.bugFixes.length > 0 && (
+                                <div>
+                                  <p className="font-medium mb-1">
+                                    🐛 Bug Fixes:
+                                  </p>
+                                  <ul className="list-disc list-inside space-y-0.5">
+                                    {lastUpdateNotification.bugFixes.map(
+                                      (fix, index) => (
+                                        <li key={index}>{fix}</li>
+                                      )
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            clearUpdateNotification();
+                          }}
+                          className="ml-2 p-1 hover:bg-white/20 rounded transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Regular Notifications */}
                   {notifications.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                       <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -230,7 +235,7 @@ const Header = ({
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {notifications.slice(0, 10).map((notification) => (
+                      {notifications.slice(0, 10).map(notification => (
                         <div
                           key={notification.id}
                           onClick={() => handleNotificationClick(notification)}
