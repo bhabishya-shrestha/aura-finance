@@ -289,7 +289,7 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "profile":
         return (
-          <div className="space-y-8">
+          <div className="p-6 space-y-8">
             {/* Header */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -385,7 +385,7 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "security":
         return (
-          <div className="space-y-8">
+          <div className="p-6 space-y-8">
             {/* Header */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -544,7 +544,7 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "notifications":
         return (
-          <div className="space-y-8">
+          <div className="p-6 space-y-8">
             {/* Header */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -636,7 +636,7 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "data":
         return (
-          <div className="space-y-8">
+          <div className="p-6 space-y-8">
             {/* Header */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">

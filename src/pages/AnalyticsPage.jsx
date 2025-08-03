@@ -762,7 +762,7 @@ const AnalyticsPage = () => {
                       <select
                         value={timeRange}
                         onChange={e => setTimeRange(e.target.value)}
-                        className="appearance-none w-full sm:w-auto px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm pr-10 text-center sm:text-left"
+                        className="appearance-none w-full sm:w-auto px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm pr-10 text-center sm:text-left cursor-pointer"
                       >
                         <option value="week">This Week</option>
                         <option value="month">This Month</option>

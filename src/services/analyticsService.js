@@ -758,32 +758,32 @@ class AnalyticsService {
         // Calculate all analytics using the same filtered transaction set
         const spendingByCategory = this.calculateSpendingByCategory(
           filteredTransactions,
-          timeRange
+          "all" // Use "all" since transactions are already filtered
         );
 
         const monthlySpending = this.calculateMonthlySpending(
           filteredTransactions,
-          timeRange
+          "all" // Use "all" since transactions are already filtered
         );
 
         const incomeVsSpending = this.calculateIncomeVsSpending(
           filteredTransactions,
-          timeRange
+          "all" // Use "all" since transactions are already filtered
         );
 
         const spendingTrends = this.calculateSpendingTrends(
           filteredTransactions,
-          timeRange
+          "all" // Use "all" since transactions are already filtered
         );
 
         const quickAnalytics = this.calculateQuickAnalytics(
           filteredTransactions,
-          timeRange
+          "all" // Use "all" since transactions are already filtered
         );
 
         const avgDailySpending = this.calculateAverageDailySpending(
           filteredTransactions,
-          timeRange
+          "all" // Use "all" since transactions are already filtered
         );
 
         return {

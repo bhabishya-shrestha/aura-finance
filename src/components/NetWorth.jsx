@@ -16,15 +16,20 @@ const NetWorth = () => {
 
   useEffect(() => {
     const currentNetWorth = getNetWorth();
-    setPreviousNetWorth(netWorth);
-    setNetWorth(currentNetWorth);
+    
+    // Only update if the value actually changed to prevent unnecessary re-renders
+    if (currentNetWorth !== netWorth) {
+      setPreviousNetWorth(netWorth);
+      setNetWorth(currentNetWorth);
 
-    if (netWorth !== 0) {
-      setIsAnimating(true);
-      const timer = setTimeout(() => setIsAnimating(false), 1000);
-      return () => clearTimeout(timer);
+      // Only animate if we have a previous value and the new value is different
+      if (netWorth !== 0 && currentNetWorth !== netWorth) {
+        setIsAnimating(true);
+        const timer = setTimeout(() => setIsAnimating(false), 1000);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [getNetWorth, netWorth]);
+  }, [transactions, accounts, getNetWorth]);
 
   const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {

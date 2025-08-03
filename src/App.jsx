@@ -50,7 +50,11 @@ const ProtectedRoute = ({ children }) => {
 
 // Main App Layout Component
 const AppLayout = () => {
-  const [currentPage, setCurrentPage] = useState("dashboard");
+  const [currentPage, setCurrentPage] = useState(() => {
+    // Get the current page from localStorage or default to dashboard
+    const savedPage = localStorage.getItem("aura-finance-currentPage");
+    return savedPage || "dashboard";
+  });
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { loadTransactions, loadAccounts } = useStore();
   const isInitialized = useRef(false);
@@ -68,6 +72,11 @@ const AppLayout = () => {
 
     isInitialized.current = true;
   }, [loadTransactions, loadAccounts]); // Include dependencies
+
+  // Save current page to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("aura-finance-currentPage", currentPage);
+  }, [currentPage]);
 
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
