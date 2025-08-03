@@ -377,7 +377,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   };
 
   // Reset state when modal closes or completes
-  const resetState = () => {
+  const resetState = useCallback(() => {
     // Clear any ongoing animation
     if (progressAnimationId) {
       cancelAnimationFrame(progressAnimationId);
@@ -398,7 +398,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       allowFutureDates: false,
       autoDetectYear: true,
     });
-  };
+  }, [progressAnimationId]);
 
   // Reset state when modal closes
   useEffect(() => {

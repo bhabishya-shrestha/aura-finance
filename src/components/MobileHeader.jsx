@@ -5,13 +5,13 @@ import useStore from "../store";
 
 const MobileHeader = ({ onMenuClick, onPageChange }) => {
   const { user, signOut } = useAuth();
-  const { 
-    notifications, 
-    unreadCount, 
-    markNotificationAsRead, 
+  const {
+    notifications,
+    unreadCount,
+    markNotificationAsRead,
     markAllNotificationsAsRead,
     lastUpdateNotification,
-    clearUpdateNotification
+    clearUpdateNotification,
   } = useStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -30,7 +30,7 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleNotificationClick = (notification) => {
+  const handleNotificationClick = notification => {
     if (!notification.read) {
       markNotificationAsRead(notification.id);
     }
@@ -39,23 +39,27 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
     }
   };
 
-  const formatTimeAgo = (timestamp) => {
+  const formatTimeAgo = timestamp => {
     const now = new Date();
     const time = new Date(timestamp);
     const diffInMinutes = Math.floor((now - time) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Just now';
+
+    if (diffInMinutes < 1) return "Just now";
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
-  const getNotificationIcon = (type) => {
+  const getNotificationIcon = type => {
     switch (type) {
-      case 'success': return '✅';
-      case 'warning': return '⚠️';
-      case 'error': return '❌';
-      default: return 'ℹ️';
+      case "success":
+        return "✅";
+      case "warning":
+        return "⚠️";
+      case "error":
+        return "❌";
+      default:
+        return "ℹ️";
     }
   };
 
@@ -116,7 +120,7 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
                   )}
                 </div>
               </div>
-              
+
               <div className="p-2">
                 {notifications.length === 0 ? (
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -125,24 +129,28 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {notifications.slice(0, 10).map((notification) => (
+                    {notifications.slice(0, 10).map(notification => (
                       <div
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
                         className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                          notification.read 
-                            ? 'bg-gray-50 dark:bg-gray-700' 
-                            : 'bg-blue-50 dark:bg-blue-900/20'
+                          notification.read
+                            ? "bg-gray-50 dark:bg-gray-700"
+                            : "bg-blue-50 dark:bg-blue-900/20"
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <span className="text-lg">{getNotificationIcon(notification.type)}</span>
+                          <span className="text-lg">
+                            {getNotificationIcon(notification.type)}
+                          </span>
                           <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-medium ${
-                              notification.read 
-                                ? 'text-gray-700 dark:text-gray-300' 
-                                : 'text-gray-900 dark:text-white'
-                            }`}>
+                            <p
+                              className={`text-sm font-medium ${
+                                notification.read
+                                  ? "text-gray-700 dark:text-gray-300"
+                                  : "text-gray-900 dark:text-white"
+                              }`}
+                            >
                               {notification.title}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -213,26 +221,30 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
                 What's New in Aura Finance
               </h4>
               <div className="text-xs space-y-1">
-                {lastUpdateNotification.features && lastUpdateNotification.features.length > 0 && (
-                  <div>
-                    <p className="font-medium mb-1">✨ New Features:</p>
-                    <ul className="list-disc list-inside space-y-0.5">
-                      {lastUpdateNotification.features.map((feature, index) => (
-                        <li key={index}>{feature}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {lastUpdateNotification.bugFixes && lastUpdateNotification.bugFixes.length > 0 && (
-                  <div>
-                    <p className="font-medium mb-1">🐛 Bug Fixes:</p>
-                    <ul className="list-disc list-inside space-y-0.5">
-                      {lastUpdateNotification.bugFixes.map((fix, index) => (
-                        <li key={index}>{fix}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {lastUpdateNotification.features &&
+                  lastUpdateNotification.features.length > 0 && (
+                    <div>
+                      <p className="font-medium mb-1">✨ New Features:</p>
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {lastUpdateNotification.features.map(
+                          (feature, index) => (
+                            <li key={index}>{feature}</li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                {lastUpdateNotification.bugFixes &&
+                  lastUpdateNotification.bugFixes.length > 0 && (
+                    <div>
+                      <p className="font-medium mb-1">🐛 Bug Fixes:</p>
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {lastUpdateNotification.bugFixes.map((fix, index) => (
+                          <li key={index}>{fix}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
               </div>
             </div>
             <button

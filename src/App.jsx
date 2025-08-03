@@ -4,6 +4,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import Sidebar from "./components/Sidebar";
+import Header from "./components/Header";
 import MobileHeader from "./components/MobileHeader";
 import MobileSidebar from "./components/MobileSidebar";
 import MobileNav from "./components/MobileNav";
@@ -51,7 +52,7 @@ const App = () => {
   }, [lastUpdateNotification, setUpdateNotification]);
 
   // Update viewport height when page changes or mobile state changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (isMobile) {
       setTimeout(() => {
         updateViewportHeight();
@@ -79,56 +80,92 @@ const App = () => {
                 <MobileHeader onMenuClick={toggleMobileSidebar} onPageChange={handlePageChange} />
               </div>
 
-              {/* Desktop Sidebar */}
-              <div className="hidden lg:block">
+              {/* Desktop Layout */}
+              <div className="hidden lg:flex h-full">
                 <Sidebar currentPage={currentPage} onPageChange={handlePageChange} />
+                <div className="flex-1 flex flex-col">
+                  <Header currentPage={currentPage} />
+                  <main className="flex-1 overflow-auto pt-14">
+                    <Routes>
+                      <Route
+                        path="/"
+                        element={<DashboardPage onPageChange={handlePageChange} />}
+                      />
+                      <Route
+                        path="/dashboard"
+                        element={<DashboardPage onPageChange={handlePageChange} />}
+                      />
+                      <Route
+                        path="/accounts"
+                        element={<AccountsPage onPageChange={handlePageChange} />}
+                      />
+                      <Route
+                        path="/analytics"
+                        element={<AnalyticsPage onPageChange={handlePageChange} />}
+                      />
+                      <Route
+                        path="/transactions"
+                        element={<TransactionsPage onPageChange={handlePageChange} />}
+                      />
+                      <Route
+                        path="/settings"
+                        element={<SettingsPage onPageChange={handlePageChange} />}
+                      />
+                      <Route path="/auth" element={<AuthPage />} />
+                      <Route path="/auth/callback" element={<AuthCallbackPage />} />
+                    </Routes>
+                  </main>
+                </div>
               </div>
 
-              {/* Mobile Sidebar */}
-              <MobileSidebar
-                isOpen={isMobileSidebarOpen}
-                onClose={() => setIsMobileSidebarOpen(false)}
-                currentPage={currentPage}
-                onPageChange={handlePageChange}
-              />
+              {/* Mobile Layout */}
+              <div className="lg:hidden">
+                {/* Mobile Sidebar */}
+                <MobileSidebar
+                  isOpen={isMobileSidebarOpen}
+                  onClose={() => setIsMobileSidebarOpen(false)}
+                  currentPage={currentPage}
+                  onPageChange={handlePageChange}
+                />
 
-              {/* Main Content */}
-              <main
-                ref={mainContentRef}
-                className={`${isMobile ? 'mobile-content pt-0' : 'overflow-auto'} flex-1 transition-all duration-200`}
-              >
-                <Routes>
-                  <Route
-                    path="/"
-                    element={<DashboardPage onPageChange={handlePageChange} />}
-                  />
-                  <Route
-                    path="/dashboard"
-                    element={<DashboardPage onPageChange={handlePageChange} />}
-                  />
-                  <Route
-                    path="/accounts"
-                    element={<AccountsPage onPageChange={handlePageChange} />}
-                  />
-                  <Route
-                    path="/analytics"
-                    element={<AnalyticsPage onPageChange={handlePageChange} />}
-                  />
-                  <Route
-                    path="/transactions"
-                    element={<TransactionsPage onPageChange={handlePageChange} />}
-                  />
-                  <Route
-                    path="/settings"
-                    element={<SettingsPage onPageChange={handlePageChange} />}
-                  />
-                  <Route path="/auth" element={<AuthPage />} />
-                  <Route path="/auth/callback" element={<AuthCallbackPage />} />
-                </Routes>
-              </main>
+                {/* Mobile Main Content */}
+                <main
+                  ref={mainContentRef}
+                  className="mobile-content pt-0 flex-1 transition-all duration-200"
+                >
+                  <Routes>
+                    <Route
+                      path="/"
+                      element={<DashboardPage onPageChange={handlePageChange} />}
+                    />
+                    <Route
+                      path="/dashboard"
+                      element={<DashboardPage onPageChange={handlePageChange} />}
+                    />
+                    <Route
+                      path="/accounts"
+                      element={<AccountsPage onPageChange={handlePageChange} />}
+                    />
+                    <Route
+                      path="/analytics"
+                      element={<AnalyticsPage onPageChange={handlePageChange} />}
+                    />
+                    <Route
+                      path="/transactions"
+                      element={<TransactionsPage onPageChange={handlePageChange} />}
+                    />
+                    <Route
+                      path="/settings"
+                      element={<SettingsPage onPageChange={handlePageChange} />}
+                    />
+                    <Route path="/auth" element={<AuthPage />} />
+                    <Route path="/auth/callback" element={<AuthCallbackPage />} />
+                  </Routes>
+                </main>
 
-              {/* Mobile Quick Actions (Floating Action Button) */}
-              <MobileNav onPageChange={handlePageChange} currentPage={currentPage} />
+                {/* Mobile Quick Actions (Floating Action Button) */}
+                <MobileNav onPageChange={handlePageChange} currentPage={currentPage} />
+              </div>
             </div>
           </Router>
         </SettingsProvider>
