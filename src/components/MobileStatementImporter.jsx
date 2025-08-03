@@ -11,8 +11,10 @@ import {
 } from "lucide-react";
 import { parseStatement } from "../utils/statementParser";
 import geminiService from "../services/geminiService";
+import useStore from "../store";
 
 const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
+  const { addTransactions, addNotification } = useStore();
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
@@ -287,7 +289,7 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         throw new Error("Please select at least one transaction to import.");
       }
 
-      onImportComplete(selectedTransactions);
+      await handleImportComplete(selectedTransactions);
       resetState();
     } catch (error) {
       setError(
@@ -302,12 +304,41 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         throw new Error("No transactions to import.");
       }
 
-      onImportComplete(parsedTransactions);
+      await handleImportComplete(parsedTransactions);
       resetState();
     } catch (error) {
       setError(
         error.message || "An error occurred while importing transactions."
       );
+    }
+  };
+
+  const handleImportComplete = async (transactions) => {
+    try {
+      await addTransactions(transactions);
+      
+      // Add success notification
+      addNotification({
+        title: "Import Successful",
+        message: `Successfully imported ${transactions.length} transactions from your statement.`,
+        type: "success",
+        action: () => {
+          // Could navigate to transactions page
+          onClose();
+        }
+      });
+
+      onImportComplete(transactions);
+      onClose();
+    } catch (error) {
+      setError("Failed to import transactions. Please try again.");
+      
+      // Add error notification
+      addNotification({
+        title: "Import Failed",
+        message: "There was an error importing your transactions. Please try again.",
+        type: "error"
+      });
     }
   };
 
