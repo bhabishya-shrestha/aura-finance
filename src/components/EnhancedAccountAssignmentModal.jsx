@@ -680,12 +680,12 @@ const EnhancedAccountAssignmentModal = ({
 
   // Debounced versions of account creation functions to prevent rapid clicking
   const debouncedCreateAccount = useCallback(
-    debounce(handleCreateAccount, 300),
+    (...args) => debounce(handleCreateAccount, 300)(...args),
     [handleCreateAccount]
   );
 
   const debouncedEditSuggestion = useCallback(
-    debounce(handleEditSuggestion, 300),
+    (...args) => debounce(handleEditSuggestion, 300)(...args),
     [handleEditSuggestion]
   );
 

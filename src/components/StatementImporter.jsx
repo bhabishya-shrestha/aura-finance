@@ -208,7 +208,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   // Enhanced file processing with better progress tracking
   const processFile = useCallback(
     async file => {
-      console.log("processFile called with:", file.name, file.type);
       // Reset all states at the beginning
       setIsProcessing(true);
       setError("");
@@ -228,7 +227,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
 
         // Process based on file type
         if (file.type === "text/csv" || file.name.endsWith(".csv")) {
-          console.log("Processing CSV file");
           updateProgress(15, "Parsing CSV file...");
 
           // Use import options for date parsing
@@ -239,9 +237,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
             allowFutureDates: importOptions.allowFutureDates,
           };
 
-          console.log("Calling parseStatement with options:", parsingOptions);
           transactions = await parseStatement(file, parsingOptions);
-          console.log("parseStatement returned:", transactions);
           updateProgress(45, "Processing transactions...");
 
           // Apply import options to CSV transactions
@@ -300,7 +296,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
 
         // Check if transactions were found before setting states
         if (transactions.length === 0) {
-          console.log("No transactions found, setting error");
           setError("No transactions found in the file.");
           setIsProcessing(false);
           setProcessingProgress(0);
@@ -308,11 +303,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           setProcessingStep("");
           return;
         }
-
-        console.log("Setting final states:", {
-          transactionsLength: transactions.length,
-          summary: summary,
-        });
 
         // Set the parsed transactions for review
         setParsedTransactions(transactions);
@@ -327,7 +317,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
 
           // Keep at 100% for a moment before completing
           setTimeout(() => {
-            console.log("Final states set, completing processing");
             setIsProcessing(false);
           }, 800);
         }, 500);
@@ -351,15 +340,11 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
 
   const handleFileSelect = useCallback(
     event => {
-      console.log("handleFileSelect called", event.target.files);
       const file = event.target.files[0];
       if (file && !isProcessing) {
-        console.log("Processing file:", file.name, file.type);
         // Reset the file input to allow selecting the same file again
         event.target.value = "";
         processFile(file);
-      } else {
-        console.log("File not selected or already processing");
       }
     },
     [processFile, isProcessing]
@@ -403,8 +388,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
 
   // Reset state when modal closes or completes
   const resetState = () => {
-    console.log("resetState called - resetting all states");
-
     // Clear any ongoing animation
     if (progressAnimationId) {
       cancelAnimationFrame(progressAnimationId);
@@ -431,9 +414,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
 
   // Reset state when modal closes
   useEffect(() => {
-    console.log("useEffect triggered - isOpen:", isOpen);
     if (!isOpen) {
-      console.log("Modal is closing, calling resetState");
       // Clean up when modal closes
       resetState();
     }
@@ -512,11 +493,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-            {console.log("Rendering content with states:", {
-              isProcessing,
-              showAllTransactions,
-              parsedTransactionsLength: parsedTransactions.length,
-            })}
             {!isProcessing && !showAllTransactions && (
               <div className="space-y-6">
                 {/* Import Options - Moved to upload section */}

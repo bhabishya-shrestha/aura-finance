@@ -29,7 +29,7 @@ const NetWorth = () => {
         return () => clearTimeout(timer);
       }
     }
-  }, [transactions, accounts, getNetWorth]);
+  }, [transactions, accounts, getNetWorth, netWorth]);
 
   const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
