@@ -37,12 +37,12 @@ const EnhancedAccountAssignmentModal = ({
   isOpen,
   onClose,
   transactions,
-  accounts = [],
+  accounts: propAccounts = [],
   detectedAccountInfo = null,
   accountSuggestions = [],
   onComplete,
 }) => {
-  const { addAccount, updateTransaction, loadTransactions } = useStore();
+  const { addAccount, updateAccount } = useStore();
   const [selectedAccounts, setSelectedAccounts] = useState({});
   const [showCreateAccount, setShowCreateAccount] = useState(false);
   const [newAccountData, setNewAccountData] = useState({
@@ -66,6 +66,18 @@ const EnhancedAccountAssignmentModal = ({
   const [batchYear, setBatchYear] = useState(new Date().getFullYear());
   const [localTransactions, setLocalTransactions] = useState([]);
   const [localAccounts, setLocalAccounts] = useState([]);
+  const [stagedAccounts, setStagedAccounts] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionAttempts, setSubmissionAttempts] = useState(0);
+
+  // Debounce utility to prevent rapid clicking
+  const debounce = (func, delay) => {
+    let timeoutId;
+    return (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => func.apply(null, args), delay);
+    };
+  };
 
   // Account type icons mapping
   const accountTypeIcons = {
@@ -117,7 +129,8 @@ const EnhancedAccountAssignmentModal = ({
         JSON.stringify(transactions) !==
         JSON.stringify(lastTransactionsRef.current);
       const accountsChanged =
-        JSON.stringify(accounts) !== JSON.stringify(lastAccountsRef.current);
+        JSON.stringify(propAccounts) !==
+        JSON.stringify(lastAccountsRef.current);
 
       // Only initialize if not already initialized or if props have changed
       if (!initializedRef.current || transactionsChanged || accountsChanged) {
@@ -135,8 +148,8 @@ const EnhancedAccountAssignmentModal = ({
           lastTransactionsRef.current = transactions;
         }
         if (accountsChanged) {
-          setLocalAccounts([...accounts]);
-          lastAccountsRef.current = accounts;
+          setLocalAccounts([...propAccounts]);
+          lastAccountsRef.current = propAccounts;
         }
 
         // Pre-fill new account data if account info was detected
@@ -154,8 +167,12 @@ const EnhancedAccountAssignmentModal = ({
       // Reset flags when modal closes
       suggestionsGeneratedRef.current = false;
       initializedRef.current = false;
+      setIsProcessing(false);
+      setIsSubmitting(false);
+      setSubmissionAttempts(0);
+      setStagedAccounts([]);
     }
-  }, [isOpen, transactions, accounts, detectedAccountInfo]);
+  }, [isOpen, transactions, propAccounts, detectedAccountInfo]);
 
   // Generate account suggestions when modal opens and transactions change
   useEffect(() => {
@@ -441,39 +458,49 @@ const EnhancedAccountAssignmentModal = ({
   };
 
   const handleCreateAccount = async () => {
+    // Prevent duplicate submissions
+    if (isSubmitting || isProcessing) {
+      setSubmissionAttempts(prev => prev + 1);
+      // Reset attempts after 2 seconds
+      setTimeout(() => setSubmissionAttempts(0), 2000);
+      return;
+    }
+
     try {
       setIsProcessing(true);
+      setIsSubmitting(true);
 
       // Safety check to ensure newAccountData is not undefined
       if (!newAccountData || !newAccountData.name) {
         throw new Error("Account data is missing or invalid");
       }
 
-      // Clean the account data before sending to database
+      // Clean the account data before staging
       const cleanAccountData = {
         name: newAccountData.name.trim(),
         type: newAccountData.type || "checking",
         balance: parseFloat(newAccountData.balance) || 0,
       };
 
-      const newAccount = await addAccount(cleanAccountData);
+      // Create a staged account with a temporary ID
+      const stagedAccount = {
+        ...cleanAccountData,
+        id: `staged_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        isStaged: true,
+      };
 
-      // Validate that the account was created successfully
-      if (!newAccount || !newAccount.id) {
-        throw new Error(
-          "Failed to create account - invalid response from addAccount"
-        );
-      }
+      // Add to staged accounts
+      setStagedAccounts(prev => [...prev, stagedAccount]);
 
-      // Update local accounts list
-      setLocalAccounts(prev => [...prev, newAccount]);
+      // Update local accounts list with staged account
+      setLocalAccounts(prev => [...prev, stagedAccount]);
 
       // Assign all uncategorized transactions to the new account
       const updatedSelection = { ...selectedAccounts };
       localTransactions.forEach(transaction => {
         // Only assign transactions that haven't been assigned yet
         if (!selectedAccounts[transaction.id]) {
-          updatedSelection[transaction.id] = newAccount.id;
+          updatedSelection[transaction.id] = stagedAccount.id;
         }
       });
 
@@ -484,6 +511,7 @@ const EnhancedAccountAssignmentModal = ({
       // console.error("Error creating account:", error);
     } finally {
       setIsProcessing(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -583,10 +611,19 @@ const EnhancedAccountAssignmentModal = ({
   };
 
   const handleEditSuggestion = async editedSuggestion => {
+    // Prevent duplicate submissions
+    if (isSubmitting || isProcessing) {
+      setSubmissionAttempts(prev => prev + 1);
+      // Reset attempts after 2 seconds
+      setTimeout(() => setSubmissionAttempts(0), 2000);
+      return;
+    }
+
     if (!editedSuggestion || !editedSuggestion.name) return;
 
     try {
       setIsProcessing(true);
+      setIsSubmitting(true);
 
       // Validate and clean account data
       const accountName = editedSuggestion.name.trim();
@@ -594,24 +631,20 @@ const EnhancedAccountAssignmentModal = ({
         throw new Error("Account name cannot be empty");
       }
 
-      // Create account from edited suggestion - only include valid database fields
-      const accountData = {
+      // Create staged account from edited suggestion
+      const stagedAccount = {
         name: accountName,
         type: editedSuggestion.type || "checking",
         balance: 0,
+        id: `staged_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        isStaged: true,
       };
 
-      const newAccount = await addAccount(accountData);
+      // Add to staged accounts
+      setStagedAccounts(prev => [...prev, stagedAccount]);
 
-      // Validate that the account was created successfully
-      if (!newAccount || !newAccount.id) {
-        throw new Error(
-          "Failed to create account - invalid response from addAccount"
-        );
-      }
-
-      // Update local accounts list
-      setLocalAccounts(prev => [...prev, newAccount]);
+      // Update local accounts list with staged account
+      setLocalAccounts(prev => [...prev, stagedAccount]);
 
       // Auto-assign transactions that match this suggestion
       const updatedSelection = { ...selectedAccounts };
@@ -625,7 +658,7 @@ const EnhancedAccountAssignmentModal = ({
           (institution && description.includes(institution.split(" ")[0])) ||
           (editedSuggestion.type && description.includes(editedSuggestion.type))
         ) {
-          updatedSelection[transaction.id] = newAccount.id;
+          updatedSelection[transaction.id] = stagedAccount.id;
         }
       });
 
@@ -642,8 +675,20 @@ const EnhancedAccountAssignmentModal = ({
       // console.error("Error creating account:", error);
     } finally {
       setIsProcessing(false);
+      setIsSubmitting(false);
     }
   };
+
+  // Debounced versions of account creation functions to prevent rapid clicking
+  const debouncedCreateAccount = useCallback(
+    (...args) => debounce(handleCreateAccount, 300)(...args),
+    [handleCreateAccount]
+  );
+
+  const debouncedEditSuggestion = useCallback(
+    (...args) => debounce(handleEditSuggestion, 300)(...args),
+    [handleEditSuggestion]
+  );
 
   // Transaction editing functions
   const handleEditTransaction = transaction => {
@@ -662,7 +707,7 @@ const EnhancedAccountAssignmentModal = ({
       setIsProcessing(true);
 
       // Update the transaction in the store
-      await updateTransaction(editingTransaction.id, {
+      await updateAccount(editingTransaction.id, {
         description: editingTransaction.description,
         amount: editingTransaction.amount,
         type: editingTransaction.type,
@@ -719,29 +764,41 @@ const EnhancedAccountAssignmentModal = ({
     try {
       setIsProcessing(true);
 
-      // Update each transaction with its assigned account
-      const updatePromises = localTransactions.map(async transaction => {
-        const assignedAccountId = selectedAccounts[transaction.id];
-        if (assignedAccountId && assignedAccountId !== transaction.accountId) {
-          // Only update if the account assignment has changed
-          await updateTransaction(transaction.id, {
-            accountId: assignedAccountId,
+      // First, save all staged accounts to get real IDs
+      const accountIdMap = new Map(); // Maps staged IDs to real IDs
+
+      for (const stagedAccount of stagedAccounts) {
+        try {
+          const savedAccount = await addAccount({
+            name: stagedAccount.name,
+            type: stagedAccount.type,
+            balance: stagedAccount.balance,
           });
+
+          if (savedAccount && savedAccount.id) {
+            accountIdMap.set(stagedAccount.id, savedAccount.id);
+          }
+        } catch (error) {
+          // Error saving staged account - could be logged to error reporting service
         }
+      }
+
+      // Update transaction account assignments with real account IDs
+      const updatedTransactions = localTransactions.map(transaction => {
+        const assignedAccountId = selectedAccounts[transaction.id];
+        if (assignedAccountId) {
+          // If it's a staged account ID, map it to the real ID
+          const realAccountId =
+            accountIdMap.get(assignedAccountId) || assignedAccountId;
+          return {
+            ...transaction,
+            accountId: realAccountId,
+          };
+        }
+        return transaction;
       });
 
-      // Wait for all updates to complete
-      await Promise.all(updatePromises);
-
-      // Reload transactions to reflect changes
-      await loadTransactions();
-
       // Call the onComplete callback with updated transactions
-      const updatedTransactions = localTransactions.map(transaction => ({
-        ...transaction,
-        accountId: selectedAccounts[transaction.id] || transaction.accountId,
-      }));
-
       onComplete(updatedTransactions);
       onClose();
     } catch (error) {
@@ -844,16 +901,27 @@ const EnhancedAccountAssignmentModal = ({
                 {filteredAccounts.map(account => (
                   <div
                     key={account.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                    className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                      account.isStaged
+                        ? "border-orange-300 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30"
+                        : "border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    }`}
                     onClick={() => assignGroupToAccount(account.id)}
                   >
                     <div className="text-blue-500">
                       {getAccountIcon(account)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white truncate">
-                        {account?.name || "Unnamed Account"}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900 dark:text-white truncate">
+                          {account?.name || "Unnamed Account"}
+                        </p>
+                        {account.isStaged && (
+                          <span className="text-xs text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-800 px-2 py-0.5 rounded-full">
+                            New
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         {formatAccountType(account?.type || "checking")}
                       </p>
@@ -1368,11 +1436,17 @@ const EnhancedAccountAssignmentModal = ({
                   Cancel
                 </button>
                 <button
-                  onClick={handleCreateAccount}
-                  disabled={!newAccountData?.name || isProcessing}
+                  onClick={debouncedCreateAccount}
+                  disabled={
+                    !newAccountData?.name || isProcessing || isSubmitting
+                  }
                   className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {isProcessing ? "Creating..." : "Create Account"}
+                  {isProcessing || isSubmitting
+                    ? "Creating..."
+                    : submissionAttempts > 0
+                      ? "Please wait..."
+                      : "Create Account"}
                 </button>
               </div>
             </div>
@@ -1459,12 +1533,19 @@ const EnhancedAccountAssignmentModal = ({
                 </button>
                 <button
                   onClick={() =>
-                    editingSuggestion && handleEditSuggestion(editingSuggestion)
+                    editingSuggestion &&
+                    debouncedEditSuggestion(editingSuggestion)
                   }
-                  disabled={!editingSuggestion?.name || isProcessing}
+                  disabled={
+                    !editingSuggestion?.name || isProcessing || isSubmitting
+                  }
                   className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {isProcessing ? "Creating..." : "Create & Auto-Assign"}
+                  {isProcessing || isSubmitting
+                    ? "Creating..."
+                    : submissionAttempts > 0
+                      ? "Please wait..."
+                      : "Create & Auto-Assign"}
                 </button>
               </div>
             </div>

@@ -12,26 +12,23 @@ const NetWorth = () => {
   const { getNetWorth, transactions, accounts } = useStore();
   const [netWorth, setNetWorth] = useState(0);
   const [previousNetWorth, setPreviousNetWorth] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
 
   useEffect(() => {
     const currentNetWorth = getNetWorth();
-    setPreviousNetWorth(netWorth);
-    setNetWorth(currentNetWorth);
-
-    if (netWorth !== 0) {
-      setIsAnimating(true);
-      const timer = setTimeout(() => setIsAnimating(false), 1000);
-      return () => clearTimeout(timer);
+    if (currentNetWorth !== netWorth) {
+      setPreviousNetWorth(netWorth);
+      setNetWorth(currentNetWorth);
+      setShouldAnimate(true);
     }
-  }, [getNetWorth, netWorth]);
+  }, [transactions, accounts, getNetWorth, netWorth]);
 
   const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -102,7 +99,7 @@ const NetWorth = () => {
       {/* Net Worth Amount */}
       <div className="mb-3 sm:mb-4">
         <div
-          className={`text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-all duration-500 ${isAnimating ? "scale-105" : "scale-100"}`}
+          className={`text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-all duration-500 ${shouldAnimate ? "scale-105" : "scale-100"}`}
           aria-labelledby="net-worth-title"
           role="text"
         >

@@ -96,10 +96,8 @@ const DashboardPage = ({ onPageChange }) => {
   const handleImportComplete = async transactions => {
     if (transactions && transactions.length > 0) {
       try {
-        // Add transactions to database first
-        await addTransactions(transactions);
-
-        // Then open the assignment modal with the transactions
+        // Don't add transactions to database yet - stage them for assignment first
+        // Transactions will only be saved after account assignment is completed
         setTransactionsToAssign(transactions);
         setIsAccountAssignmentModalOpen(true);
         setIsImportModalOpen(false);
@@ -113,9 +111,19 @@ const DashboardPage = ({ onPageChange }) => {
   };
 
   const handleAccountAssignmentComplete = async () => {
-    setIsAccountAssignmentModalOpen(false);
-    setTransactionsToAssign([]);
-    await loadTransactions();
+    try {
+      // Now save the transactions with their assigned accounts
+      if (transactionsToAssign && transactionsToAssign.length > 0) {
+        await addTransactions(transactionsToAssign);
+      }
+
+      setIsAccountAssignmentModalOpen(false);
+      setTransactionsToAssign([]);
+      await loadTransactions();
+    } catch (error) {
+      // console.error("Error completing account assignment:", error);
+      setError("Failed to save transactions. Please try again.");
+    }
   };
 
   // Defensive: Always set modal closed on mount
@@ -270,7 +278,11 @@ const DashboardPage = ({ onPageChange }) => {
       {isAccountAssignmentModalOpen && (
         <EnhancedAccountAssignmentModal
           isOpen={isAccountAssignmentModalOpen}
-          onClose={() => setIsAccountAssignmentModalOpen(false)}
+          onClose={() => {
+            // User cancelled - clean up staged transactions
+            setIsAccountAssignmentModalOpen(false);
+            setTransactionsToAssign([]);
+          }}
           transactions={transactionsToAssign}
           accounts={accounts}
           onComplete={handleAccountAssignmentComplete}

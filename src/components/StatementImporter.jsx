@@ -54,7 +54,6 @@ const customScrollbarStyles = `
 const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
-  const [processingProgress, setProcessingProgress] = useState(0);
   const [processingStep, setProcessingStep] = useState("");
   const [processingSummary, setProcessingSummary] = useState(null);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
@@ -67,6 +66,57 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
     allowFutureDates: false,
     autoDetectYear: true,
   });
+  const [progressAnimationId, setProgressAnimationId] = useState(null);
+  const [displayProgress, setDisplayProgress] = useState(0);
+
+  // Smooth progress animation system
+  const animateProgress = useCallback(
+    (targetProgress, duration = 1200) => {
+      // Clear any existing animation
+      if (progressAnimationId) {
+        cancelAnimationFrame(progressAnimationId);
+      }
+
+      const startProgress = displayProgress;
+      const startTime = performance.now();
+
+      const animate = currentTime => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Use easing function for smooth animation
+        const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+        const currentDisplayProgress =
+          startProgress + (targetProgress - startProgress) * easeOutCubic;
+
+        setDisplayProgress(currentDisplayProgress);
+
+        if (progress < 1) {
+          const animationId = requestAnimationFrame(animate);
+          setProgressAnimationId(animationId);
+        } else {
+          setProgressAnimationId(null);
+        }
+      };
+
+      const animationId = requestAnimationFrame(animate);
+      setProgressAnimationId(animationId);
+    },
+    [displayProgress, progressAnimationId]
+  );
+
+  // Update progress with smooth animation
+  const updateProgress = useCallback(
+    (progress, step = "") => {
+      setProcessingStep(step);
+
+      // Add a small delay to make the progress feel more natural
+      setTimeout(() => {
+        animateProgress(progress);
+      }, 100);
+    },
+    [animateProgress]
+  );
 
   // Enhanced file validation
   const validateFile = file => {
@@ -159,7 +209,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       // Reset all states at the beginning
       setIsProcessing(true);
       setError("");
-      setProcessingProgress(0);
+      setProcessingStep("");
       setProcessingSummary(null);
       setShowAllTransactions(false);
       setParsedTransactions([]);
@@ -167,16 +217,14 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       try {
         // Validate file
         validateFile(file);
-        setProcessingProgress(10);
-        setProcessingStep("Validating file...");
+        updateProgress(5, "Validating file...");
 
         let transactions = [];
         let summary = null;
 
         // Process based on file type
         if (file.type === "text/csv" || file.name.endsWith(".csv")) {
-          setProcessingProgress(25);
-          setProcessingStep("Parsing CSV file...");
+          updateProgress(15, "Parsing CSV file...");
 
           // Use import options for date parsing
           const parsingOptions = {
@@ -187,11 +235,11 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           };
 
           transactions = await parseStatement(file, parsingOptions);
-          setProcessingProgress(60);
-          setProcessingStep("Processing transactions...");
+          updateProgress(45, "Processing transactions...");
 
           // Apply import options to CSV transactions
           transactions = applyImportOptionsToTransactions(transactions);
+          updateProgress(65, "Validating transaction data...");
 
           summary = {
             documentType: "CSV File",
@@ -216,19 +264,17 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           file.name.endsWith(".pdf") ||
           file.type.startsWith("image/")
         ) {
-          setProcessingProgress(20);
-          setProcessingStep("Uploading document...");
+          updateProgress(15, "Uploading document...");
 
-          setProcessingProgress(40);
-          setProcessingStep("Analyzing document with AI...");
+          updateProgress(30, "Analyzing document with AI...");
 
           // Use enhanced Gemini for PDF and image analysis
           const result = await geminiService.analyzeImage(file);
-          setProcessingProgress(70);
-          setProcessingStep("Processing AI results...");
+          updateProgress(55, "Processing AI results...");
 
           if (result.transactions && result.transactions.length > 0) {
             transactions = geminiService.convertToTransactions(result);
+            updateProgress(70, "Validating transaction data...");
 
             // Apply import options to AI-generated transactions
             transactions = applyImportOptionsToTransactions(transactions);
@@ -243,14 +289,12 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           throw new Error("Unsupported file type.");
         }
 
-        setProcessingProgress(85);
-        setProcessingStep("Finalizing...");
+        updateProgress(80, "Preparing results...");
 
         // Check if transactions were found before setting states
         if (transactions.length === 0) {
           setError("No transactions found in the file.");
           setIsProcessing(false);
-          setProcessingProgress(0);
           setProcessingStep("");
           return;
         }
@@ -260,17 +304,21 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         setProcessingSummary(summary);
         setShowAllTransactions(true);
 
-        setProcessingProgress(100);
-        setProcessingStep("Analysis complete!");
+        updateProgress(95, "Finalizing analysis...");
 
-        // Complete processing
-        setIsProcessing(false);
+        // Add a delay to show 100% completion before moving to next step
+        setTimeout(() => {
+          updateProgress(100, "Analysis complete!");
+
+          // Keep at 100% for a moment before completing
+          setTimeout(() => {
+            setIsProcessing(false);
+          }, 800);
+        }, 500);
       } catch (error) {
-        console.error("Error processing file:", error);
         setError(
           error.message || "An error occurred while processing the file."
         );
-        setProcessingProgress(0);
         setProcessingStep("");
         setParsedTransactions([]);
         setProcessingSummary(null);
@@ -306,7 +354,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       onImportComplete(selectedTransactions);
       resetState();
     } catch (error) {
-      console.error("Error importing selected transactions:", error);
       setError(
         error.message || "An error occurred while importing transactions."
       );
@@ -323,7 +370,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       onImportComplete(parsedTransactions);
       resetState();
     } catch (error) {
-      console.error("Error importing all transactions:", error);
       setError(
         error.message || "An error occurred while importing transactions."
       );
@@ -332,9 +378,14 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
 
   // Reset state when modal closes or completes
   const resetState = () => {
+    // Clear any ongoing animation
+    if (progressAnimationId) {
+      cancelAnimationFrame(progressAnimationId);
+      setProgressAnimationId(null);
+    }
+
     setIsProcessing(false);
     setError("");
-    setProcessingProgress(0);
     setProcessingStep("");
     setProcessingSummary(null);
     setShowAllTransactions(false);
@@ -349,20 +400,22 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
     });
   };
 
-  // Reset state when modal opens
+  // Reset state when modal closes
   useEffect(() => {
-    if (isOpen) {
-      resetState();
-    } else {
+    if (!isOpen) {
       // Clean up when modal closes
       resetState();
     }
+  }, [isOpen, resetState]);
 
-    // Cleanup function for component unmount
+  // Cleanup animations on unmount
+  useEffect(() => {
     return () => {
-      resetState();
+      if (progressAnimationId) {
+        cancelAnimationFrame(progressAnimationId);
+      }
     };
-  }, [isOpen]);
+  }, [progressAnimationId]);
 
   const toggleTransactionSelection = index => {
     const updatedTransactions = [...parsedTransactions];
@@ -687,23 +740,40 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
             {isProcessing && (
               <div className="space-y-6">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                    <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <div
+                    className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                      displayProgress >= 100
+                        ? "bg-green-100 dark:bg-green-900/20"
+                        : "bg-blue-100 dark:bg-blue-900/20 animate-pulse"
+                    }`}
+                  >
+                    {displayProgress >= 100 ? (
+                      <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+                    ) : (
+                      <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    )}
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                     Processing your statement
                   </h3>
                   <p className="text-gray-500 dark:text-gray-400 mb-4">
-                    {processingStep}
+                    {displayProgress >= 100
+                      ? "Preparing to show results..."
+                      : processingStep}
                   </p>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
                     <div
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
-                      style={{ width: `${processingProgress}%` }}
-                    ></div>
+                      className={`h-2 rounded-full transition-all duration-300 ease-out relative ${
+                        displayProgress >= 100 ? "bg-green-600" : "bg-blue-600"
+                      }`}
+                      style={{ width: `${displayProgress}%` }}
+                    >
+                      {/* Add a subtle shimmer effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                    </div>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    {processingProgress}% complete
+                    {Math.round(displayProgress)}% complete
                   </p>
                 </div>
               </div>

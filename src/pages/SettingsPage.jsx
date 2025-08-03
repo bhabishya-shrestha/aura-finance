@@ -45,6 +45,7 @@ const SettingsPage = ({ onPageChange }) => {
   const [activeTab, setActiveTab] = useState("general");
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
+  const [isNotificationVisible, setIsNotificationVisible] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showDataResetConfirm, setShowDataResetConfirm] = useState(false);
 
@@ -60,10 +61,21 @@ const SettingsPage = ({ onPageChange }) => {
     setIsSaving(true);
     setSaveMessage("Settings saved successfully!");
 
+    // Ensure notification starts hidden and then animates in
+    setIsNotificationVisible(false);
+    setTimeout(() => {
+      setIsNotificationVisible(true);
+    }, 10);
+
     // Simulate save delay
     setTimeout(() => {
       setIsSaving(false);
-      setTimeout(() => setSaveMessage(""), 3000);
+      // Start fade out after 2.5 seconds
+      setTimeout(() => {
+        setIsNotificationVisible(false);
+        // Clear message after fade out animation
+        setTimeout(() => setSaveMessage(""), 300);
+      }, 2500);
     }, 1000);
   };
 
@@ -73,10 +85,30 @@ const SettingsPage = ({ onPageChange }) => {
       try {
         await importSettings(file);
         setSaveMessage("Settings imported successfully!");
-        setTimeout(() => setSaveMessage(""), 3000);
+
+        // Ensure notification starts hidden and then animates in
+        setIsNotificationVisible(false);
+        setTimeout(() => {
+          setIsNotificationVisible(true);
+        }, 10);
+
+        setTimeout(() => {
+          setIsNotificationVisible(false);
+          setTimeout(() => setSaveMessage(""), 300);
+        }, 2500);
       } catch (error) {
         setSaveMessage("Error importing settings: " + error.message);
-        setTimeout(() => setSaveMessage(""), 5000);
+
+        // Ensure notification starts hidden and then animates in
+        setIsNotificationVisible(false);
+        setTimeout(() => {
+          setIsNotificationVisible(true);
+        }, 10);
+
+        setTimeout(() => {
+          setIsNotificationVisible(false);
+          setTimeout(() => setSaveMessage(""), 300);
+        }, 4500);
       }
     }
   };
@@ -84,7 +116,11 @@ const SettingsPage = ({ onPageChange }) => {
   const handleResetSettings = () => {
     resetSettings();
     setSaveMessage("Settings reset to default!");
-    setTimeout(() => setSaveMessage(""), 3000);
+    setIsNotificationVisible(true);
+    setTimeout(() => {
+      setIsNotificationVisible(false);
+      setTimeout(() => setSaveMessage(""), 300);
+    }, 2500);
     setShowResetConfirm(false);
   };
 
@@ -93,11 +129,19 @@ const SettingsPage = ({ onPageChange }) => {
       // Clear transactions and accounts from store
       await resetUserData();
       setSaveMessage("Data reset successfully!");
-      setTimeout(() => setSaveMessage(""), 3000);
+      setIsNotificationVisible(true);
+      setTimeout(() => {
+        setIsNotificationVisible(false);
+        setTimeout(() => setSaveMessage(""), 300);
+      }, 2500);
       setShowDataResetConfirm(false);
     } catch (error) {
       setSaveMessage("Error resetting data: " + error.message);
-      setTimeout(() => setSaveMessage(""), 5000);
+      setIsNotificationVisible(true);
+      setTimeout(() => {
+        setIsNotificationVisible(false);
+        setTimeout(() => setSaveMessage(""), 300);
+      }, 4500);
     }
   };
 
@@ -289,7 +333,7 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "profile":
         return (
-          <div className="space-y-8">
+          <div className="p-6 space-y-8">
             {/* Header */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -385,7 +429,7 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "security":
         return (
-          <div className="space-y-8">
+          <div className="p-6 space-y-8">
             {/* Header */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -544,7 +588,7 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "notifications":
         return (
-          <div className="space-y-8">
+          <div className="p-6 space-y-8">
             {/* Header */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -636,7 +680,7 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "data":
         return (
-          <div className="space-y-8">
+          <div className="p-6 space-y-8">
             {/* Header */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -815,10 +859,30 @@ const SettingsPage = ({ onPageChange }) => {
 
       {/* Save Message */}
       {saveMessage && (
-        <div className="fixed top-4 left-4 right-4 z-50 p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-          <div className="flex items-center gap-2">
-            <Check className="w-5 h-5 text-green-600" />
-            <p className="text-green-800 dark:text-green-200">{saveMessage}</p>
+        <div
+          className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg bg-white dark:bg-gray-800 border-2 border-green-500 shadow-lg backdrop-blur-sm transition-all duration-300 ease-out max-w-md w-full mx-4 ${
+            isNotificationVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-[-20px]"
+          }`}
+          style={{
+            animation: isNotificationVisible
+              ? "slide-down 0.3s ease-out"
+              : "none",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+              <Check className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-900 dark:text-white font-medium">
+                {saveMessage}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                Your changes have been applied
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -834,7 +898,7 @@ const SettingsPage = ({ onPageChange }) => {
       </div>
 
       {/* Desktop Layout */}
-      <div className="hidden lg:block p-6 lg:p-8 max-w-6xl mx-auto">
+      <div className="hidden lg:block p-6 lg:p-8 max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white">
@@ -845,7 +909,7 @@ const SettingsPage = ({ onPageChange }) => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar Navigation */}
           <div className="lg:col-span-1">
             <nav className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sticky top-8 animate-slide-in-left">
@@ -894,7 +958,7 @@ const SettingsPage = ({ onPageChange }) => {
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-2 animate-slide-in-right">
+          <div className="lg:col-span-3 animate-slide-in-right">
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
               {renderSectionContent()}
             </div>

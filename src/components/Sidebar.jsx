@@ -154,10 +154,10 @@ const Sidebar = ({
           >
             {!isCollapsed && (
               <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white leading-tight">
                   {getPersonalizedGreeting()}
                 </h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   {getDailyMessage()}
                 </p>
               </div>

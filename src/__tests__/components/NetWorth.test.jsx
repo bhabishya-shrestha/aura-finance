@@ -28,7 +28,7 @@ describe("NetWorth", () => {
     expect(
       screen.getByText("Total assets minus liabilities")
     ).toBeInTheDocument();
-    expect(screen.getByText("$50,000")).toBeInTheDocument();
+    expect(screen.getByText("$50,000.00")).toBeInTheDocument();
     expect(screen.getByText("Transactions")).toBeInTheDocument();
     expect(screen.getByText("Accounts")).toBeInTheDocument();
   });
@@ -37,7 +37,7 @@ describe("NetWorth", () => {
     mockGetNetWorth.mockReturnValue(25000);
     render(<NetWorth />);
 
-    expect(screen.getByText("$25,000")).toBeInTheDocument();
+    expect(screen.getByText("$25,000.00")).toBeInTheDocument();
     // Check for positive trend icon (TrendingUp should be present)
     expect(screen.getByTestId("trend-icon")).toBeInTheDocument();
   });
@@ -47,7 +47,7 @@ describe("NetWorth", () => {
     render(<NetWorth />);
 
     // Use getAllByText to get all instances and check the main net worth display
-    const netWorthElements = screen.getAllByText("-$5,000");
+    const netWorthElements = screen.getAllByText("-$5,000.00");
     expect(netWorthElements.length).toBeGreaterThan(0);
 
     // Check for negative trend icon (TrendingDown should be present)
@@ -58,7 +58,7 @@ describe("NetWorth", () => {
     mockGetNetWorth.mockReturnValue(0);
     render(<NetWorth />);
 
-    expect(screen.getByText("$0")).toBeInTheDocument();
+    expect(screen.getByText("$0.00")).toBeInTheDocument();
   });
 
   it("shows correct transaction and account counts", () => {
@@ -72,7 +72,7 @@ describe("NetWorth", () => {
     mockGetNetWorth.mockReturnValue(1234567);
     render(<NetWorth />);
 
-    expect(screen.getByText("$1,234,567")).toBeInTheDocument();
+    expect(screen.getByText("$1,234,567.00")).toBeInTheDocument();
   });
 
   it("formats negative large numbers correctly", () => {
@@ -80,7 +80,7 @@ describe("NetWorth", () => {
     render(<NetWorth />);
 
     // Use getAllByText to get all instances and check the main net worth display
-    const netWorthElements = screen.getAllByText("-$987,654");
+    const netWorthElements = screen.getAllByText("-$987,654.00");
     expect(netWorthElements.length).toBeGreaterThan(0);
   });
 

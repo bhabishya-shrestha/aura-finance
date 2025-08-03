@@ -46,6 +46,7 @@ const useStore = create((set, get) => ({
 
       // Clear analytics cache when transactions are loaded
       // analyticsService.forceRefresh(); // Removed - not needed with batch calculations
+
       set({ transactions });
     } catch (error) {
       // Error handling - in production, this would use a proper error notification system

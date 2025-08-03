@@ -165,10 +165,10 @@ const MobileSidebar = ({ isOpen, onClose, currentPage, onPageChange }) => {
         {/* Greeting Section */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
           <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white leading-tight">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white leading-tight">
               {getPersonalizedGreeting()}
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+            <p className="text-base text-gray-600 dark:text-gray-300 mt-1">
               {getDailyMessage()}
             </p>
           </div>
