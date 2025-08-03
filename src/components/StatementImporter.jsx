@@ -54,10 +54,7 @@ const customScrollbarStyles = `
 const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
-  const [processingProgress, setProcessingProgress] = useState(0);
-  const [displayProgress, setDisplayProgress] = useState(0);
   const [processingStep, setProcessingStep] = useState("");
-  const [progressAnimationId, setProgressAnimationId] = useState(null);
   const [processingSummary, setProcessingSummary] = useState(null);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
   const [parsedTransactions, setParsedTransactions] = useState([]);
@@ -69,6 +66,8 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
     allowFutureDates: false,
     autoDetectYear: true,
   });
+  const [progressAnimationId, setProgressAnimationId] = useState(null);
+  const [displayProgress, setDisplayProgress] = useState(0);
 
   // Smooth progress animation system
   const animateProgress = useCallback(
@@ -109,7 +108,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   // Update progress with smooth animation
   const updateProgress = useCallback(
     (progress, step = "") => {
-      setProcessingProgress(progress);
       setProcessingStep(step);
 
       // Add a small delay to make the progress feel more natural
@@ -211,8 +209,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       // Reset all states at the beginning
       setIsProcessing(true);
       setError("");
-      setProcessingProgress(0);
-      setDisplayProgress(0);
+      setProcessingStep("");
       setProcessingSummary(null);
       setShowAllTransactions(false);
       setParsedTransactions([]);
@@ -298,8 +295,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         if (transactions.length === 0) {
           setError("No transactions found in the file.");
           setIsProcessing(false);
-          setProcessingProgress(0);
-          setDisplayProgress(0);
           setProcessingStep("");
           return;
         }
@@ -321,12 +316,9 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           }, 800);
         }, 500);
       } catch (error) {
-        console.error("Error processing file:", error);
         setError(
           error.message || "An error occurred while processing the file."
         );
-        setProcessingProgress(0);
-        setDisplayProgress(0);
         setProcessingStep("");
         setParsedTransactions([]);
         setProcessingSummary(null);
@@ -362,7 +354,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       onImportComplete(selectedTransactions);
       resetState();
     } catch (error) {
-      console.error("Error importing selected transactions:", error);
       setError(
         error.message || "An error occurred while importing transactions."
       );
@@ -379,7 +370,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       onImportComplete(parsedTransactions);
       resetState();
     } catch (error) {
-      console.error("Error importing all transactions:", error);
       setError(
         error.message || "An error occurred while importing transactions."
       );
@@ -396,8 +386,6 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
 
     setIsProcessing(false);
     setError("");
-    setProcessingProgress(0);
-    setDisplayProgress(0);
     setProcessingStep("");
     setProcessingSummary(null);
     setShowAllTransactions(false);
@@ -418,7 +406,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       // Clean up when modal closes
       resetState();
     }
-  }, [isOpen]);
+  }, [isOpen, resetState]);
 
   // Cleanup animations on unmount
   useEffect(() => {

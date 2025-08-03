@@ -88,16 +88,7 @@ const AnalyticsDataProvider = ({ children }) => {
       setIsAnalyticsLoading(true);
     }
 
-    // Debug logging for time range changes
-    if (import.meta.env.DEV) {
-      console.log("Analytics recalculation triggered:", {
-        timeRange,
-        transactionCount: transactions.length,
-        lastTransactionCount,
-        needsRecalculation,
-        isAnalyticsLoading,
-      });
-    }
+    
 
     // Professional data validation
     if (!Array.isArray(transactions)) {

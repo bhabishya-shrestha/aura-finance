@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { CreditCard, Wallet, PiggyBank, BarChart3 } from "lucide-react";
 import useStore from "../store";
 

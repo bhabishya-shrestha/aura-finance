@@ -37,12 +37,12 @@ const EnhancedAccountAssignmentModal = ({
   isOpen,
   onClose,
   transactions,
-  accounts = [],
+  accounts: propAccounts = [],
   detectedAccountInfo = null,
   accountSuggestions = [],
   onComplete,
 }) => {
-  const { addAccount, updateTransaction, loadTransactions } = useStore();
+  const { addAccount, updateAccount } = useStore();
   const [selectedAccounts, setSelectedAccounts] = useState({});
   const [showCreateAccount, setShowCreateAccount] = useState(false);
   const [newAccountData, setNewAccountData] = useState({
@@ -129,7 +129,8 @@ const EnhancedAccountAssignmentModal = ({
         JSON.stringify(transactions) !==
         JSON.stringify(lastTransactionsRef.current);
       const accountsChanged =
-        JSON.stringify(accounts) !== JSON.stringify(lastAccountsRef.current);
+        JSON.stringify(propAccounts) !==
+        JSON.stringify(lastAccountsRef.current);
 
       // Only initialize if not already initialized or if props have changed
       if (!initializedRef.current || transactionsChanged || accountsChanged) {
@@ -147,8 +148,8 @@ const EnhancedAccountAssignmentModal = ({
           lastTransactionsRef.current = transactions;
         }
         if (accountsChanged) {
-          setLocalAccounts([...accounts]);
-          lastAccountsRef.current = accounts;
+          setLocalAccounts([...propAccounts]);
+          lastAccountsRef.current = propAccounts;
         }
 
         // Pre-fill new account data if account info was detected
@@ -171,7 +172,7 @@ const EnhancedAccountAssignmentModal = ({
       setSubmissionAttempts(0);
       setStagedAccounts([]);
     }
-  }, [isOpen, transactions, accounts, detectedAccountInfo]);
+  }, [isOpen, transactions, propAccounts, detectedAccountInfo]);
 
   // Generate account suggestions when modal opens and transactions change
   useEffect(() => {
@@ -499,7 +500,7 @@ const EnhancedAccountAssignmentModal = ({
       localTransactions.forEach(transaction => {
         // Only assign transactions that haven't been assigned yet
         if (!selectedAccounts[transaction.id]) {
-          updatedSelection[transaction.id] = newAccount.id;
+          updatedSelection[transaction.id] = stagedAccount.id;
         }
       });
 
@@ -657,7 +658,7 @@ const EnhancedAccountAssignmentModal = ({
           (institution && description.includes(institution.split(" ")[0])) ||
           (editedSuggestion.type && description.includes(editedSuggestion.type))
         ) {
-          updatedSelection[transaction.id] = newAccount.id;
+          updatedSelection[transaction.id] = stagedAccount.id;
         }
       });
 
@@ -706,7 +707,7 @@ const EnhancedAccountAssignmentModal = ({
       setIsProcessing(true);
 
       // Update the transaction in the store
-      await updateTransaction(editingTransaction.id, {
+      await updateAccount(editingTransaction.id, {
         description: editingTransaction.description,
         amount: editingTransaction.amount,
         type: editingTransaction.type,
@@ -778,7 +779,7 @@ const EnhancedAccountAssignmentModal = ({
             accountIdMap.set(stagedAccount.id, savedAccount.id);
           }
         } catch (error) {
-          console.error("Error saving staged account:", error);
+          // Error saving staged account - could be logged to error reporting service
         }
       }
 

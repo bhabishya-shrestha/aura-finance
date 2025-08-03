@@ -32,7 +32,7 @@ class AnalyticsService {
 
   // Force refresh cache
   forceRefresh() {
-    console.log("Force refreshing analytics cache");
+  
     this.clearCache();
   }
 
@@ -83,17 +83,7 @@ class AnalyticsService {
 
     const result = calculationFn();
 
-    // Debug logging
-    if (import.meta.env.DEV) {
-      console.log(`Analytics calculation for ${fullCacheKey}:`, {
-        cacheKey,
-        transactionCount: transactions.length,
-        transactionHash,
-        result: result,
-        hasData: Array.isArray(result) ? result.length > 0 : result !== 0,
-        calculationTime: Date.now() - this.lastCalculationTime,
-      });
-    }
+
 
     this.cache.set(fullCacheKey, {
       data: result,
@@ -182,31 +172,7 @@ class AnalyticsService {
       return transactionDate >= startDate && transactionDate <= now;
     });
 
-    // Professional debug logging
-    if (import.meta.env.DEV) {
-      console.log(`Filtered transactions for ${timeRange}:`, {
-        totalTransactions: transactions.length,
-        filteredCount: filteredTransactions.length,
-        startDate: startDate.toISOString(),
-        endDate: now.toISOString(),
-        sampleTransaction:
-          filteredTransactions.length > 0 ? filteredTransactions[0] : null,
-        sampleTransactionDates: transactions.slice(0, 3).map(t => ({
-          id: t.id,
-          date: t.date,
-          dateType: typeof t.date,
-          isDateObject: t.date instanceof Date,
-          parsedDate: new Date(t.date),
-          parsedDateValid: !isNaN(new Date(t.date).getTime()),
-        })),
-        validationSummary: {
-          validTransactions: filteredTransactions.length,
-          invalidTransactions:
-            transactions.length - filteredTransactions.length,
-          dateRange: `${startDate.toLocaleDateString()} - ${now.toLocaleDateString()}`,
-        },
-      });
-    }
+
 
     // Return filtered transactions - no fallback to all transactions
     // This ensures each time range shows only appropriate data

@@ -12,22 +12,14 @@ const NetWorth = () => {
   const { getNetWorth, transactions, accounts } = useStore();
   const [netWorth, setNetWorth] = useState(0);
   const [previousNetWorth, setPreviousNetWorth] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
 
   useEffect(() => {
     const currentNetWorth = getNetWorth();
-
-    // Only update if the value actually changed to prevent unnecessary re-renders
     if (currentNetWorth !== netWorth) {
       setPreviousNetWorth(netWorth);
       setNetWorth(currentNetWorth);
-
-      // Only animate if we have a previous value and the new value is different
-      if (netWorth !== 0 && currentNetWorth !== netWorth) {
-        setIsAnimating(true);
-        const timer = setTimeout(() => setIsAnimating(false), 1000);
-        return () => clearTimeout(timer);
-      }
+      setShouldAnimate(true);
     }
   }, [transactions, accounts, getNetWorth, netWorth]);
 
@@ -107,7 +99,7 @@ const NetWorth = () => {
       {/* Net Worth Amount */}
       <div className="mb-3 sm:mb-4">
         <div
-          className={`text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-all duration-500 ${isAnimating ? "scale-105" : "scale-100"}`}
+          className={`text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-all duration-500 ${shouldAnimate ? "scale-105" : "scale-100"}`}
           aria-labelledby="net-worth-title"
           role="text"
         >

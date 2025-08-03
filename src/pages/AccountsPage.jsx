@@ -1,24 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Plus,
-  CreditCard,
-  Wallet,
-  PiggyBank,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Calendar,
-  X,
-  Edit3,
-  Save,
+  Edit,
   Trash2,
+  MoreVertical,
+  Building2,
+  PiggyBank,
+  CreditCard,
   Eye,
   EyeOff,
-  ChevronRight,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  BarChart3,
 } from "lucide-react";
 import useStore from "../store";
 
@@ -58,11 +48,11 @@ const AccountsPage = () => {
       case "credit":
         return <CreditCard className="w-6 h-6" />;
       case "checking":
-        return <Wallet className="w-6 h-6" />;
+        return <Building2 className="w-6 h-6" />;
       case "savings":
         return <PiggyBank className="w-6 h-6" />;
       default:
-        return <Wallet className="w-6 h-6" />;
+        return <Building2 className="w-6 h-6" />;
     }
   };
 
@@ -248,7 +238,7 @@ const AccountsPage = () => {
                 className="p-2 hover:bg-blue-500/20 rounded-lg transition-colors text-blue-600 dark:text-blue-400"
                 title="Edit Balance"
               >
-                <Edit3 className="w-4 h-4" />
+                <Edit className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setSelectedAccount(isSelected ? null : account)}
@@ -302,13 +292,13 @@ const AccountsPage = () => {
                     onClick={() => handleSaveBalance(account.id)}
                     className="p-1.5 hover:bg-green-500/20 rounded transition-colors text-green-600 dark:text-green-400"
                   >
-                    <Save className="w-4 h-4" />
+                    <Edit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={handleCancelEdit}
                     className="p-1.5 hover:bg-gray-500/20 rounded transition-colors text-gray-600 dark:text-gray-400"
                   >
-                    <X className="w-4 h-4" />
+                    <EyeOff className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
@@ -321,7 +311,7 @@ const AccountsPage = () => {
             </div>
             <div className="text-right">
               <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                <BarChart3 className="w-4 h-4" />
+                <MoreVertical className="w-4 h-4" />
                 <span>{stats.transactionCount} transactions</span>
               </div>
             </div>
@@ -387,9 +377,9 @@ const AccountsPage = () => {
                           }`}
                         >
                           {transaction.amount > 0 ? (
-                            <TrendingUp className="w-4 h-4" />
+                            <Eye className="w-4 h-4" />
                           ) : (
-                            <TrendingDown className="w-4 h-4" />
+                            <EyeOff className="w-4 h-4" />
                           )}
                         </div>
                         <div>
@@ -416,7 +406,7 @@ const AccountsPage = () => {
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <EyeOff className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p>No recent transactions</p>
                 </div>
               )}
@@ -428,7 +418,7 @@ const AccountsPage = () => {
         <div className="px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <Calendar className="w-4 h-4" />
+              <Eye className="w-4 h-4" />
               <span>
                 Last updated:{" "}
                 {new Date(
@@ -481,7 +471,7 @@ const AccountsPage = () => {
       ) : (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Wallet className="w-8 h-8 text-gray-400" />
+            <Building2 className="w-8 h-8 text-gray-400" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             No accounts yet
@@ -511,7 +501,7 @@ const AccountsPage = () => {
                 onClick={() => setShowAddModal(false)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <EyeOff className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
@@ -590,7 +580,7 @@ const AccountsPage = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full">
             <div className="flex items-center gap-3 mb-4">
-              <AlertTriangle className="w-6 h-6 text-red-500" />
+              <EyeOff className="w-6 h-6 text-red-500" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Delete Account
               </h3>
