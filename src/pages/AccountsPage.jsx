@@ -7,8 +7,9 @@ import {
   Building2,
   PiggyBank,
   CreditCard,
-  Eye,
-  EyeOff,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
 } from "lucide-react";
 import useStore from "../store";
 
@@ -104,51 +105,27 @@ const AccountsPage = () => {
       income,
       expenses,
       netFlow,
-      transactionCount: recentTransactions.length,
+      transactionCount: transactions.length,
     };
   };
 
-  const handleAddAccount = async e => {
-    e.preventDefault();
-
-    if (!formData.name.trim() || !formData.balance) {
-      return;
-    }
+  const handleAddAccount = async () => {
+    if (!formData.name || !formData.balance) return;
 
     setIsLoading(true);
     try {
       await addAccount({
-        name: formData.name.trim(),
+        name: formData.name,
         type: formData.type,
         balance: parseFloat(formData.balance),
       });
-
-      // Reset form and close modal
-      setFormData({
-        name: "",
-        type: "checking",
-        balance: "",
-      });
+      setFormData({ name: "", type: "checking", balance: "" });
       setShowAddModal(false);
     } catch (error) {
-      console.error("Error adding account:", error);
+      console.error("Failed to add account:", error);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleInputChange = e => {
-    const { name, value } = e.target;
-    if (name === "balance") {
-      // Limit to 2 decimal places
-      if (value.includes(".") && value.split(".")[1]?.length > 2) {
-        return;
-      }
-    }
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
   };
 
   const handleEditBalance = (accountId, currentBalance) => {
@@ -157,21 +134,14 @@ const AccountsPage = () => {
   };
 
   const handleSaveBalance = async accountId => {
+    if (!newBalance || isNaN(parseFloat(newBalance))) return;
+
     try {
-      const balance = parseFloat(newBalance);
-      if (isNaN(balance)) {
-        alert("Please enter a valid balance amount");
-        return;
-      }
-
-      // Round to 2 decimal places
-      const roundedBalance = Math.round(balance * 100) / 100;
-
-      await updateAccountBalance(accountId, roundedBalance);
+      await updateAccountBalance(accountId, parseFloat(newBalance));
       setEditingBalance(null);
       setNewBalance("");
     } catch (error) {
-      alert("Error updating balance. Please try again.");
+      console.error("Failed to update balance:", error);
     }
   };
 
@@ -188,19 +158,251 @@ const AccountsPage = () => {
   const confirmDeleteAccount = async () => {
     if (!accountToDelete) return;
 
-    setIsLoading(true);
     try {
       await deleteAccount(accountToDelete.id);
       setShowDeleteConfirm(false);
       setAccountToDelete(null);
     } catch (error) {
-      console.error("Error deleting account:", error);
-    } finally {
-      setIsLoading(false);
+      console.error("Failed to delete account:", error);
     }
   };
 
-  const AccountCard = ({ account }) => {
+  // Mobile Account Card - Simplified for mobile
+  const MobileAccountCard = ({ account }) => {
+    const balance = getAccountBalance(account.id);
+    const stats = calculateAccountStats(account.id);
+    const isSelected = selectedAccount?.id === account.id;
+
+    return (
+      <div
+        onClick={() => setSelectedAccount(isSelected ? null : account)}
+        className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 cursor-pointer ${
+          isSelected ? "ring-2 ring-blue-500 shadow-lg" : "hover:shadow-md active:scale-95"
+        }`}
+      >
+        {/* Header */}
+        <div className={`p-4 ${getAccountTypeBgColor(account.type)}`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div
+                className={`p-2 rounded-lg bg-white dark:bg-gray-700 shadow-sm ${getAccountTypeColor(account.type)}`}
+              >
+                {getAccountIcon(account.type)}
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                  {account.name}
+                </h3>
+                <p
+                  className={`text-xs font-medium capitalize ${getAccountTypeColor(account.type)}`}
+                >
+                  {account.type} Account
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditBalance(account.id, balance);
+              }}
+              className="p-2 hover:bg-blue-500/20 rounded-lg transition-colors text-blue-600 dark:text-blue-400"
+              title="Edit Balance"
+            >
+              <Edit className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Balance Section */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                Current Balance
+              </p>
+              {editingBalance === account.id ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={newBalance}
+                    onChange={e => {
+                      const value = e.target.value;
+                      if (
+                        value.includes(".") &&
+                        value.split(".")[1]?.length > 2
+                      ) {
+                        return;
+                      }
+                      setNewBalance(value);
+                    }}
+                    className="w-24 px-2 py-1 text-sm font-semibold border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onKeyPress={e => {
+                      if (e.key === "Enter") {
+                        handleSaveBalance(account.id);
+                      }
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSaveBalance(account.id);
+                    }}
+                    className="p-1 hover:bg-green-500/20 rounded transition-colors text-green-600 dark:text-green-400"
+                  >
+                    <Edit className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancelEdit();
+                    }}
+                    className="p-1 hover:bg-gray-500/20 rounded transition-colors text-gray-600 dark:text-gray-400"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <p className="text-xl font-bold text-gray-900 dark:text-white">
+                  {formatCurrency(balance)}
+                </p>
+              )}
+            </div>
+            <div className="text-right">
+              <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                <MoreVertical className="w-3 h-3" />
+                <span>{stats.transactionCount} transactions</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                Income
+              </p>
+              <p className="text-xs font-semibold text-green-600 dark:text-green-400">
+                {formatCurrency(stats.income)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                Expenses
+              </p>
+              <p className="text-xs font-semibold text-red-600 dark:text-red-400">
+                {formatCurrency(stats.expenses)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                Net Flow
+              </p>
+              <p
+                className={`text-xs font-semibold ${
+                  stats.netFlow >= 0
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {formatCurrency(stats.netFlow)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Expanded Details */}
+        {isSelected && (
+          <div className="border-t border-gray-200 dark:border-gray-700">
+            <div className="p-4">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                Recent Transactions
+              </h4>
+              {getAccountTransactions(account.id).length > 0 ? (
+                <div className="space-y-2">
+                  {getAccountTransactions(account.id).map(transaction => (
+                    <div
+                      key={transaction.id}
+                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`p-1 rounded ${
+                            transaction.amount > 0
+                              ? "bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400"
+                              : "bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+                          }`}
+                        >
+                          {transaction.amount > 0 ? (
+                            <TrendingUp className="w-3 h-3" />
+                          ) : (
+                            <TrendingDown className="w-3 h-3" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-900 dark:text-white truncate max-w-32">
+                            {transaction.description}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(transaction.date).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <p
+                        className={`text-xs font-semibold ${
+                          transaction.amount > 0
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      >
+                        {transaction.amount > 0 ? "+" : ""}
+                        {formatCurrency(transaction.amount)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                  <DollarSign className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                  <p className="text-xs">No recent transactions</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+              <DollarSign className="w-3 h-3" />
+              <span>
+                Updated:{" "}
+                {new Date(
+                  account.lastBalanceUpdate || Date.now()
+                ).toLocaleDateString()}
+              </span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteAccount(account);
+              }}
+              className="p-1 hover:bg-red-500/20 rounded transition-colors text-red-600 dark:text-red-400"
+              title="Delete Account"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Desktop Account Card - Enhanced for better information hierarchy
+  const DesktopAccountCard = ({ account }) => {
     const balance = getAccountBalance(account.id);
     const stats = calculateAccountStats(account.id);
     const transactions = getAccountTransactions(account.id);
@@ -208,7 +410,8 @@ const AccountsPage = () => {
 
     return (
       <div
-        className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 hover:shadow-lg ${
+        onClick={() => setSelectedAccount(isSelected ? null : account)}
+        className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 cursor-pointer ${
           isSelected ? "ring-2 ring-blue-500 shadow-lg" : "hover:shadow-md"
         }`}
       >
@@ -234,26 +437,14 @@ const AccountsPage = () => {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => handleEditBalance(account.id, balance)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditBalance(account.id, balance);
+                }}
                 className="p-2 hover:bg-blue-500/20 rounded-lg transition-colors text-blue-600 dark:text-blue-400"
                 title="Edit Balance"
               >
                 <Edit className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setSelectedAccount(isSelected ? null : account)}
-                className={`p-2 rounded-lg transition-colors ${
-                  isSelected
-                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
-                }`}
-                title={isSelected ? "Hide details" : "Show details"}
-              >
-                {isSelected ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
               </button>
             </div>
           </div>
@@ -287,18 +478,25 @@ const AccountsPage = () => {
                         handleSaveBalance(account.id);
                       }
                     }}
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <button
-                    onClick={() => handleSaveBalance(account.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSaveBalance(account.id);
+                    }}
                     className="p-1.5 hover:bg-green-500/20 rounded transition-colors text-green-600 dark:text-green-400"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={handleCancelEdit}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancelEdit();
+                    }}
                     className="p-1.5 hover:bg-gray-500/20 rounded transition-colors text-gray-600 dark:text-gray-400"
                   >
-                    <EyeOff className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
@@ -377,9 +575,9 @@ const AccountsPage = () => {
                           }`}
                         >
                           {transaction.amount > 0 ? (
-                            <Eye className="w-4 h-4" />
+                            <TrendingUp className="w-4 h-4" />
                           ) : (
-                            <EyeOff className="w-4 h-4" />
+                            <TrendingDown className="w-4 h-4" />
                           )}
                         </div>
                         <div>
@@ -406,7 +604,7 @@ const AccountsPage = () => {
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <EyeOff className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <DollarSign className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p>No recent transactions</p>
                 </div>
               )}
@@ -418,7 +616,7 @@ const AccountsPage = () => {
         <div className="px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <Eye className="w-4 h-4" />
+              <DollarSign className="w-4 h-4" />
               <span>
                 Last updated:{" "}
                 {new Date(
@@ -427,7 +625,10 @@ const AccountsPage = () => {
               </span>
             </div>
             <button
-              onClick={() => handleDeleteAccount(account)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteAccount(account);
+              }}
               className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-600 dark:text-red-400"
               title="Delete Account"
             >
@@ -452,20 +653,44 @@ const AccountsPage = () => {
           </p>
         </div>
 
+        {/* Desktop Add Account Button */}
         <button
           onClick={() => setShowAddModal(true)}
-          className="btn-glass-primary px-4 sm:px-6 py-3 flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200 group text-sm sm:text-base"
+          className="hidden lg:flex btn-glass-primary px-6 py-3 items-center justify-center gap-2 hover:scale-105 transition-all duration-200 group text-base"
         >
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform" />
+          <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
           <span className="font-medium">Add Account</span>
+        </button>
+      </div>
+
+      {/* Mobile Add Account Button */}
+      <div className="lg:hidden mb-6">
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-4 flex items-center justify-center gap-3 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 active:scale-95 shadow-lg"
+        >
+          <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+            <Plus className="w-5 h-5 text-white" />
+          </div>
+          <div className="text-left">
+            <p className="font-semibold text-lg">Add New Account</p>
+            <p className="text-sm text-blue-100">Connect your bank or credit card</p>
+          </div>
         </button>
       </div>
 
       {/* Accounts Grid */}
       {accounts.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
           {accounts.map(account => (
-            <AccountCard key={account.id} account={account} />
+            <div key={account.id} className="lg:hidden">
+              <MobileAccountCard account={account} />
+            </div>
+          ))}
+          {accounts.map(account => (
+            <div key={account.id} className="hidden lg:block">
+              <DesktopAccountCard account={account} />
+            </div>
           ))}
         </div>
       ) : (
@@ -501,23 +726,23 @@ const AccountsPage = () => {
                 onClick={() => setShowAddModal(false)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <EyeOff className="w-5 h-5 text-gray-500" />
+                <Plus className="w-5 h-5 text-gray-500 transform rotate-45" />
               </button>
             </div>
 
-            <form onSubmit={handleAddAccount} className="space-y-4">
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Account Name
                 </label>
                 <input
                   type="text"
-                  name="name"
                   value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  onChange={e =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   placeholder="e.g., Chase Checking"
-                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
@@ -526,10 +751,11 @@ const AccountsPage = () => {
                   Account Type
                 </label>
                 <select
-                  name="type"
                   value={formData.type}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  onChange={e =>
+                    setFormData({ ...formData, type: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="checking">Checking</option>
                   <option value="savings">Savings</option>
@@ -539,69 +765,62 @@ const AccountsPage = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Initial Balance
+                  Current Balance
                 </label>
                 <input
                   type="number"
-                  name="balance"
                   step="0.01"
-                  min="0"
                   value={formData.balance}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  onChange={e =>
+                    setFormData({ ...formData, balance: e.target.value })
+                  }
                   placeholder="0.00"
-                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
+            </div>
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-4 py-3 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? "Adding..." : "Add Account"}
-                </button>
-              </div>
-            </form>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddAccount}
+                disabled={!formData.name || !formData.balance || isLoading}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isLoading ? "Adding..." : "Add Account"}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && accountToDelete && (
+      {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full">
-            <div className="flex items-center gap-3 mb-4">
-              <EyeOff className="w-6 h-6 text-red-500" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Delete Account
-              </h3>
-            </div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Delete Account
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to delete "{accountToDelete.name}"? This
-              will also delete all associated transactions and cannot be undone.
+              Are you sure you want to delete "{accountToDelete?.name}"? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDeleteAccount}
-                disabled={isLoading}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
-                {isLoading ? "Deleting..." : "Delete Account"}
+                Delete
               </button>
             </div>
           </div>

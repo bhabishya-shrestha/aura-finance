@@ -2,15 +2,14 @@ import React, { useState, useEffect } from "react";
 import {
   Search,
   Download,
-  DollarSign,
   TrendingUp,
   TrendingDown,
   FileText,
   ArrowUpDown,
-  Building2,
-  CreditCard,
-  PiggyBank,
-  Settings,
+  Filter,
+  SortAsc,
+  SortDesc,
+  X,
 } from "lucide-react";
 import useStore from "../store";
 import AddTransaction from "../components/AddTransaction";
@@ -23,11 +22,10 @@ const TransactionsPage = () => {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [sortBy, setSortBy] = useState("date");
   const [sortOrder, setSortOrder] = useState("desc");
-  const [showAccountModal, setShowAccountModal] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [selectedTransactions, setSelectedTransactions] = useState(new Set());
   const [showBulkAssignment, setShowBulkAssignment] = useState(false);
   const [showBulkYearAssignment, setShowBulkYearAssignment] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
     loadTransactions();
@@ -98,65 +96,11 @@ const TransactionsPage = () => {
     }).format(amount);
   };
 
-  const formatDate = dateString => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = date => {
+    return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
-    });
-  };
-
-  // Account assignment functions
-  const handleAssignAccount = transaction => {
-    setSelectedTransaction(transaction);
-    setShowAccountModal(true);
-  };
-
-  const handleAccountAssignment = async accountId => {
-    if (selectedTransaction && accountId) {
-      try {
-        await updateTransaction(selectedTransaction.id, {
-          ...selectedTransaction,
-          accountId: accountId,
-        });
-        setShowAccountModal(false);
-        setSelectedTransaction(null);
-        // Reload transactions to update the UI
-        await loadTransactions();
-      } catch (error) {
-        // Error updating transaction
-      }
-    }
-  };
-
-  const getAccountIcon = accountType => {
-    switch (accountType) {
-      case "checking":
-        return <Building2 className="w-4 h-4" />;
-      case "savings":
-        return <PiggyBank className="w-4 h-4" />;
-      case "credit":
-        return <CreditCard className="w-4 h-4" />;
-      default:
-        return <Building2 className="w-4 h-4" />;
-    }
-  };
-
-  const getAccountName = accountId => {
-    const account = accounts.find(acc => acc.id === accountId);
-    return account ? account.name : "Uncategorized";
-  };
-
-  // Bulk assignment functions
-  const handleSelectTransaction = transactionId => {
-    setSelectedTransactions(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(transactionId)) {
-        newSet.delete(transactionId);
-      } else {
-        newSet.add(transactionId);
-      }
-      return newSet;
     });
   };
 
@@ -164,11 +108,23 @@ const TransactionsPage = () => {
     if (selectedTransactions.size === filteredTransactions.length) {
       setSelectedTransactions(new Set());
     } else {
-      setSelectedTransactions(new Set(filteredTransactions.map(t => t.id)));
+      setSelectedTransactions(
+        new Set(filteredTransactions.map(t => t.id))
+      );
     }
   };
 
-  const handleBulkAccountAssignment = async accountId => {
+  const handleSelectTransaction = transactionId => {
+    const newSelected = new Set(selectedTransactions);
+    if (newSelected.has(transactionId)) {
+      newSelected.delete(transactionId);
+    } else {
+      newSelected.add(transactionId);
+    }
+    setSelectedTransactions(newSelected);
+  };
+
+  const handleBulkAccountAssignment = async selectedAccountId => {
     try {
       const updatePromises = Array.from(selectedTransactions).map(
         transactionId => {
@@ -176,7 +132,7 @@ const TransactionsPage = () => {
           if (transaction) {
             return updateTransaction(transactionId, {
               ...transaction,
-              accountId: accountId,
+              accountId: selectedAccountId,
             });
           }
           return Promise.resolve();
@@ -277,13 +233,134 @@ const TransactionsPage = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  // Mobile-specific components
+  const MobileFilterModal = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 lg:hidden">
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Filters & Sort
+          </h3>
+          <button
+            onClick={() => setShowMobileFilters(false)}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Filter Section */}
+        <div className="space-y-4 mb-6">
+          <h4 className="font-medium text-gray-900 dark:text-white">Filter by Type</h4>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { id: "all", label: "All", color: "gray" },
+              { id: "income", label: "Income", color: "green" },
+              { id: "expense", label: "Expense", color: "red" },
+            ].map(filter => (
+              <button
+                key={filter.id}
+                onClick={() => setSelectedFilter(filter.id)}
+                className={`p-3 rounded-lg text-sm font-medium transition-colors ${
+                  selectedFilter === filter.id
+                    ? `bg-${filter.color}-600 text-white`
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Sort Section */}
+        <div className="space-y-4">
+          <h4 className="font-medium text-gray-900 dark:text-white">Sort by</h4>
+          <div className="space-y-2">
+            {[
+              { value: "date-desc", label: "Date (Newest First)" },
+              { value: "date-asc", label: "Date (Oldest First)" },
+              { value: "amount-desc", label: "Amount (High to Low)" },
+              { value: "amount-asc", label: "Amount (Low to High)" },
+              { value: "description-asc", label: "Description (A-Z)" },
+              { value: "description-desc", label: "Description (Z-A)" },
+            ].map(option => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  const [field, order] = option.value.split("-");
+                  setSortBy(field);
+                  setSortOrder(order);
+                  setShowMobileFilters(false);
+                }}
+                className={`w-full p-3 rounded-lg text-left transition-colors ${
+                  `${sortBy}-${sortOrder}` === option.value
+                    ? "bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const MobileTransactionCard = ({ transaction }) => (
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={selectedTransactions.has(transaction.id)}
+            onChange={() => handleSelectTransaction(transaction.id)}
+            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+          />
+          <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+            {getTransactionIcon(transaction.type)}
+          </div>
+        </div>
+        <div className="text-right">
+          <p
+            className={`font-semibold text-lg ${
+              transaction.amount > 0
+                ? "text-green-600 dark:text-green-400"
+                : "text-red-600 dark:text-red-400"
+            }`}
+          >
+            {formatCurrency(transaction.amount)}
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {formatDate(transaction.date)}
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <h3 className="font-medium text-gray-900 dark:text-white">
+          {transaction.description || "No description"}
+        </h3>
+        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+          <span className="capitalize">
+            {transaction.category?.name || "Uncategorized"}
+          </span>
+          <span>
+            {transaction.account?.name || "Uncategorized Account"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6 sm:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="p-4 lg:p-6 max-w-7xl mx-auto">
+      {/* Header - Desktop only */}
+      <div className="hidden lg:block mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
               Transactions
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -294,7 +371,7 @@ const TransactionsPage = () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleExport}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 shadow-sm"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 shadow-sm"
             >
               <Download className="w-4 h-4" />
               <span>Export</span>
@@ -304,8 +381,49 @@ const TransactionsPage = () => {
         </div>
       </div>
 
-      {/* Filters and Search */}
-      <div className="mb-6 space-y-4">
+      {/* Mobile Header - Simple */}
+      <div className="lg:hidden mb-4">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+          Transactions
+        </h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Manage and track all your financial transactions
+        </p>
+      </div>
+
+      {/* Mobile Search and Filters */}
+      <div className="lg:hidden space-y-4 mb-6">
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search transactions..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        {/* Mobile Filter Button */}
+        <button
+          onClick={() => setShowMobileFilters(true)}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          <Filter className="w-4 h-4" />
+          <span>Filters & Sort</span>
+          <div className="flex items-center gap-1">
+            {sortOrder === "asc" ? (
+              <SortAsc className="w-4 h-4" />
+            ) : (
+              <SortDesc className="w-4 h-4" />
+            )}
+          </div>
+        </button>
+      </div>
+
+      {/* Desktop Filters and Search */}
+      <div className="hidden lg:block mb-6 space-y-4">
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -363,7 +481,7 @@ const TransactionsPage = () => {
                 setSortBy(field);
                 setSortOrder(order);
               }}
-              className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent [&>option]:bg-white [&>option]:text-gray-900 dark:[&>option]:bg-gray-800 dark:[&>option]:text-white"
+              className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="date-desc">Date (Newest)</option>
               <option value="date-asc">Date (Oldest)</option>
@@ -379,421 +497,213 @@ const TransactionsPage = () => {
       {/* Bulk Actions Bar */}
       {selectedTransactions.size > 0 && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
                 {selectedTransactions.size} transaction
                 {selectedTransactions.size !== 1 ? "s" : ""} selected
               </span>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={() => setShowBulkAssignment(true)}
-                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
               >
                 Assign to Account
               </button>
               <button
                 onClick={() => setShowBulkYearAssignment(true)}
-                className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
               >
                 Assign to Year
               </button>
             </div>
-            <button
-              onClick={() => setSelectedTransactions(new Set())}
-              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-            >
-              Clear Selection
-            </button>
           </div>
         </div>
       )}
 
-      {/* Transactions Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedTransactions.size ===
-                        filteredTransactions.length &&
-                      filteredTransactions.length > 0
-                    }
-                    onChange={handleSelectAll}
-                    className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                  />
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  <button
-                    onClick={() => handleSort("description")}
-                    className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                  >
-                    Description
-                    <ArrowUpDown className="w-3 h-3" />
-                  </button>
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Account
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  <button
-                    onClick={() => handleSort("amount")}
-                    className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                  >
-                    Amount
-                    <ArrowUpDown className="w-3 h-3" />
-                  </button>
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredTransactions.length === 0 ? (
+      {/* Mobile Transaction List */}
+      <div className="lg:hidden space-y-3">
+        {filteredTransactions.map(transaction => (
+          <MobileTransactionCard key={transaction.id} transaction={transaction} />
+        ))}
+        {filteredTransactions.length === 0 && (
+          <div className="text-center py-8">
+            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">
+              No transactions found
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Transaction Table */}
+      <div className="hidden lg:block">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <FileText className="w-12 h-12 text-gray-400" />
-                      <div>
-                        <p className="text-gray-900 dark:text-white font-medium">
-                          No transactions found
-                        </p>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">
-                          {searchTerm || selectedFilter !== "all"
-                            ? "Try adjusting your search or filters"
-                            : "Add your first transaction to get started"}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedTransactions.size === filteredTransactions.length &&
+                        filteredTransactions.length > 0
+                      }
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <button
+                      onClick={() => handleSort("date")}
+                      className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200"
+                    >
+                      Date
+                      <ArrowUpDown className="w-3 h-3" />
+                    </button>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <button
+                      onClick={() => handleSort("description")}
+                      className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200"
+                    >
+                      Description
+                      <ArrowUpDown className="w-3 h-3" />
+                    </button>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Account
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <button
+                      onClick={() => handleSort("amount")}
+                      className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200"
+                    >
+                      Amount
+                      <ArrowUpDown className="w-3 h-3" />
+                    </button>
+                  </th>
                 </tr>
-              ) : (
-                filteredTransactions.map(transaction => (
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {filteredTransactions.map(transaction => (
                   <tr
                     key={transaction.id}
-                    className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                      selectedTransactions.has(transaction.id)
-                        ? "bg-blue-50 dark:bg-blue-900/20"
-                        : ""
-                    }`}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input
                         type="checkbox"
                         checked={selectedTransactions.has(transaction.id)}
                         onChange={() => handleSelectTransaction(transaction.id)}
-                        className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                       />
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      {formatDate(transaction.date)}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        {getTransactionIcon(transaction.type)}
-                        <div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {transaction.description || "Unknown"}
-                          </div>
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mr-3">
+                          {getTransactionIcon(transaction.type)}
+                        </div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {transaction.description || "No description"}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatDate(transaction.date)}
+                      {transaction.category?.name || "Uncategorized"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                        {transaction.category || "Unknown"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <div className="text-blue-500">
-                          {getAccountIcon(
-                            accounts.find(
-                              acc => acc.id === transaction.accountId
-                            )?.type || "checking"
-                          )}
-                        </div>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {getAccountName(transaction.accountId)}
-                        </span>
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {transaction.account?.name || "Uncategorized Account"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <span
                         className={
-                          transaction.amount >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
+                          transaction.amount > 0
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
                         }
                       >
-                        {formatCurrency(Math.abs(transaction.amount))}
+                        {formatCurrency(transaction.amount)}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          transaction.type === "income"
-                            ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400"
-                            : "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400"
-                        }`}
-                      >
-                        {transaction.type === "income" ? "Income" : "Expense"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleAssignAccount(transaction)}
-                        className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        title="Assign to account"
-                      >
-                        <Settings className="w-4 h-4" />
-                      </button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* Summary */}
-      {filteredTransactions.length > 0 && (
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-green-600" />
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Total Income
-              </span>
-            </div>
-            <p className="text-2xl font-bold text-green-600 mt-1">
-              {formatCurrency(
-                filteredTransactions
-                  .filter(t => t.type === "income")
-                  .reduce((sum, t) => sum + (t.amount || 0), 0)
-              )}
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-2">
-              <TrendingDown className="w-5 h-5 text-red-600" />
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Total Expenses
-              </span>
-            </div>
-            <p className="text-2xl font-bold text-red-600 mt-1">
-              {formatCurrency(
-                Math.abs(
-                  filteredTransactions
-                    .filter(t => t.type === "expense")
-                    .reduce((sum, t) => sum + (t.amount || 0), 0)
-                )
-              )}
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-blue-600" />
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Net
-              </span>
-            </div>
-            <p
-              className={`text-2xl font-bold mt-1 ${
-                filteredTransactions.reduce(
-                  (sum, t) => sum + (t.amount || 0),
-                  0
-                ) >= 0
-                  ? "text-green-600"
-                  : "text-red-600"
-              }`}
-            >
-              {formatCurrency(
-                filteredTransactions.reduce(
-                  (sum, t) => sum + (t.amount || 0),
-                  0
-                )
-              )}
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Mobile Filter Modal */}
+      {showMobileFilters && <MobileFilterModal />}
 
       {/* Account Assignment Modal */}
-      {showAccountModal && selectedTransaction && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Assign Transaction to Account
-            </h3>
-
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Transaction:{" "}
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {selectedTransaction.description}
-                </span>
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Amount:{" "}
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {formatCurrency(Math.abs(selectedTransaction.amount))}
-                </span>
-              </p>
-            </div>
-
-            <div className="space-y-2 mb-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Select Account
-              </label>
-              {accounts.length > 0 ? (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {accounts.map(account => (
-                    <button
-                      key={account.id}
-                      onClick={() => handleAccountAssignment(account.id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                        selectedTransaction.accountId === account.id
-                          ? "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300"
-                          : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      }`}
-                    >
-                      <div className="text-blue-500">
-                        {getAccountIcon(account.type)}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="font-medium">{account.name}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                          {account.type}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                  No accounts available. Please create an account first.
-                </p>
-              )}
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowAccountModal(false)}
-                className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bulk Account Assignment Modal */}
       {showBulkAssignment && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Assign {selectedTransactions.size} Transaction
-              {selectedTransactions.size !== 1 ? "s" : ""} to Account
+              Assign to Account
             </h3>
-
             <div className="space-y-2 mb-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Select Account
-              </label>
-              {accounts.length > 0 ? (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {accounts.map(account => (
-                    <button
-                      key={account.id}
-                      onClick={() => handleBulkAccountAssignment(account.id)}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <div className="text-blue-500">
-                        {getAccountIcon(account.type)}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="font-medium">{account.name}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                          {account.type}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                  No accounts available. Please create an account first.
-                </p>
-              )}
+              {accounts.map(account => (
+                <button
+                  key={account.id}
+                  onClick={() => handleBulkAccountAssignment(account.id)}
+                  className="w-full p-3 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {account.name}
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {account.type}
+                  </div>
+                </button>
+              ))}
             </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowBulkAssignment(false)}
-                className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+            <button
+              onClick={() => setShowBulkAssignment(false)}
+              className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
 
-      {/* Bulk Year Assignment Modal */}
+      {/* Year Assignment Modal */}
       {showBulkYearAssignment && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Assign {selectedTransactions.size} Transaction
-              {selectedTransactions.size !== 1 ? "s" : ""} to Year
+              Assign to Year
             </h3>
-
             <div className="space-y-2 mb-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Select Year
-              </label>
-              <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
-                {Array.from({ length: 10 }, (_, i) => {
-                  const year = new Date().getFullYear() - 5 + i;
-                  return (
-                    <button
-                      key={year}
-                      onClick={() => handleBulkYearAssignment(year)}
-                      className="p-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-center"
-                    >
-                      <div className="font-medium">{year}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {year === new Date().getFullYear() ? "Current" : ""}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              {[2024, 2023, 2022, 2021, 2020].map(year => (
+                <button
+                  key={year}
+                  onClick={() => handleBulkYearAssignment(year)}
+                  className="w-full p-3 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {year}
+                  </div>
+                </button>
+              ))}
             </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowBulkYearAssignment(false)}
-                className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+            <button
+              onClick={() => setShowBulkYearAssignment(false)}
+              className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}

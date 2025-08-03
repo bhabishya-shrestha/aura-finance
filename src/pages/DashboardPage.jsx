@@ -1,291 +1,312 @@
 import React, { useState, useEffect } from "react";
-import NetWorth from "../components/NetWorth";
-import Accounts from "../components/Accounts";
-import RecentTransactions from "../components/RecentTransactions";
-import AddTransaction from "../components/AddTransaction";
-import StatementImporter from "../components/StatementImporter";
-import EnhancedAccountAssignmentModal from "../components/EnhancedAccountAssignmentModal";
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  CreditCard,
+  Plus,
+  Upload,
+  Eye,
+  EyeOff,
+  FileText,
+} from "lucide-react";
 import useStore from "../store";
-
-// Quick Analytics Card Component
-const QuickAnalyticsCard = ({
-  title,
-  value,
-  subtitle,
-  trend = null,
-  className = "",
-}) => {
-  const formatCurrency = amount => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
-
-  const getTrendIcon = trend => {
-    if (!trend) return null;
-    if (trend > 0) {
-      return (
-        <div className="flex items-center gap-1 text-green-500">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-            />
-          </svg>
-          <span className="text-xs">+{Math.abs(trend).toFixed(1)}%</span>
-        </div>
-      );
-    } else {
-      return (
-        <div className="flex items-center gap-1 text-red-500">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6"
-            />
-          </svg>
-          <span className="text-xs">-{Math.abs(trend).toFixed(1)}%</span>
-        </div>
-      );
-    }
-  };
-
-  return (
-    <div
-      className={`text-center p-6 apple-glass-light rounded-apple-lg ${className}`}
-    >
-      <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-success mb-2">
-        {formatCurrency(value)}
-      </div>
-      <div className="text-muted text-sm lg:text-base mb-1">{title}</div>
-      {subtitle && <div className="text-xs text-muted-gray">{subtitle}</div>}
-      {trend !== null && getTrendIcon(trend)}
-    </div>
-  );
-};
+import StatementImporter from "../components/StatementImporter";
+import MobileStatementImporter from "../components/MobileStatementImporter";
+import { useMobileViewport } from "../hooks/useMobileViewport";
 
 const DashboardPage = ({ onPageChange }) => {
+  const {
+    transactions,
+    accounts,
+    addTransactions,
+    loadTransactions,
+    loadAccounts,
+  } = useStore();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isAccountAssignmentModalOpen, setIsAccountAssignmentModalOpen] =
-    useState(false);
-  const [transactionsToAssign, setTransactionsToAssign] = useState([]);
-  const [error, setError] = useState(null);
-  const [isLoading] = useState(false);
-  const { getQuickAnalytics, loadTransactions, accounts, addTransactions } =
-    useStore();
+  const [showNetWorth, setShowNetWorth] = useState(true);
+  const [error, setError] = useState("");
 
-  // Get quick analytics data
-  const quickAnalytics = getQuickAnalytics("month");
-
-  // Refresh analytics when transactions are imported
-  const handleImportComplete = async transactions => {
-    if (transactions && transactions.length > 0) {
-      try {
-        // Don't add transactions to database yet - stage them for assignment first
-        // Transactions will only be saved after account assignment is completed
-        setTransactionsToAssign(transactions);
-        setIsAccountAssignmentModalOpen(true);
-        setIsImportModalOpen(false);
-      } catch (error) {
-        // console.error("Error importing transactions:", error);
-        setError("Failed to import transactions. Please try again.");
-      }
-    } else {
-      await loadTransactions();
-    }
-  };
-
-  const handleAccountAssignmentComplete = async () => {
-    try {
-      // Now save the transactions with their assigned accounts
-      if (transactionsToAssign && transactionsToAssign.length > 0) {
-        await addTransactions(transactionsToAssign);
-      }
-
-      setIsAccountAssignmentModalOpen(false);
-      setTransactionsToAssign([]);
-      await loadTransactions();
-    } catch (error) {
-      // console.error("Error completing account assignment:", error);
-      setError("Failed to save transactions. Please try again.");
-    }
-  };
-
-  // Defensive: Always set modal closed on mount
-  useEffect(() => {
-    setIsImportModalOpen(false);
-  }, []);
+  // Use mobile viewport handling
+  const { isMobile } = useMobileViewport();
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Load any necessary data for dashboard
-        setError(null);
-      } catch (error) {
-        setError("Failed to load dashboard data");
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // Debug: Log modal state on every render
-  useEffect(() => {}, [isImportModalOpen]);
+    loadTransactions();
+    loadAccounts();
+  }, [loadTransactions, loadAccounts]);
 
   const handleImportClick = () => {
+    setIsImportModalOpen(true);
+  };
+
+  const handleImportComplete = async importedTransactions => {
     try {
-      setIsImportModalOpen(true);
-    } catch (err) {
-      setError(err.message);
+      // Add transactions to store
+      await addTransactions(importedTransactions);
+
+      // Close modal
+      setIsImportModalOpen(false);
+
+      // Show success message or redirect
+    } catch (error) {
+      setError("Failed to import transactions: " + error.message);
     }
   };
 
-  // Show loading state while auth is initializing
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleAccountAssignmentComplete = async assignedTransactions => {
+    try {
+      // Add the assigned transactions
+      await addTransactions(assignedTransactions);
 
-  // Show error if there is one
-  if (error) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">Error: {error}</p>
-          <button
-            onClick={() => setError(null)}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Try Again
-          </button>
+      // Reload transactions to get updated data
+      await loadTransactions();
+
+      // Close modal
+      setIsImportModalOpen(false);
+    } catch (error) {
+      setError("Failed to complete account assignment: " + error.message);
+    }
+  };
+
+  // Calculate dashboard metrics
+  const totalBalance = accounts.reduce(
+    (sum, account) => sum + account.balance,
+    0
+  );
+  const recentTransactions = transactions.slice(0, 5);
+  const monthlyIncome = transactions
+    .filter(
+      t => t.amount > 0 && new Date(t.date).getMonth() === new Date().getMonth()
+    )
+    .reduce((sum, t) => sum + t.amount, 0);
+  const monthlyExpenses = transactions
+    .filter(
+      t => t.amount < 0 && new Date(t.date).getMonth() === new Date().getMonth()
+    )
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+  const QuickAnalyticsCard = ({
+    title,
+    value,
+    change,
+    icon: Icon,
+    trend = "up",
+  }) => (
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            {title}
+          </p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            {value}
+          </p>
+          {change && (
+            <div
+              className={`flex items-center text-sm ${trend === "up" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+            >
+              {trend === "up" ? (
+                <TrendingUp className="w-4 h-4 mr-1" />
+              ) : (
+                <TrendingDown className="w-4 h-4 mr-1" />
+              )}
+              {change}
+            </div>
+          )}
+        </div>
+        <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+          <Icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div className="w-full h-full p-4 sm:p-6 lg:p-8 overflow-x-hidden">
-      {/* Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 lg:mb-8">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gradient mb-2">
+    <div className="p-4 lg:p-6 space-y-6">
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <p className="text-red-800 dark:text-red-200">{error}</p>
+        </div>
+      )}
+
+      {/* Header - Desktop only */}
+      <div className="hidden lg:flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
             Dashboard
           </h1>
-          <p className="text-muted text-sm sm:text-base lg:text-lg">
+          <p className="text-gray-600 dark:text-gray-400">
             Welcome back! Here&apos;s your financial overview.
           </p>
         </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-          <AddTransaction />
+        <div className="flex items-center gap-2">
           <button
-            onClick={handleImportClick}
-            className="btn-glass-primary px-4 sm:px-6 py-3 flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200 group text-sm sm:text-base"
+            onClick={() => setShowNetWorth(!showNetWorth)}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
-            <svg
-              className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-              />
-            </svg>
-            <span className="font-medium">Import Statement</span>
+            {showNetWorth ? (
+              <EyeOff className="w-5 h-5" />
+            ) : (
+              <Eye className="w-5 h-5" />
+            )}
           </button>
         </div>
       </div>
 
-      {/* Main Content Grid - Improved for portrait desktop */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 mb-6 lg:mb-8">
-        {/* Net Worth Card */}
-        <div className="xl:col-span-1">
-          <NetWorth />
-        </div>
-
-        {/* Accounts Card */}
-        <div className="xl:col-span-1">
-          <Accounts />
-        </div>
-
-        {/* Recent Transactions Card */}
-        <div className="xl:col-span-1">
-          <RecentTransactions onPageChange={onPageChange} />
-        </div>
+      {/* Mobile Header - Simple */}
+      <div className="lg:hidden">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+          Dashboard
+        </h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Welcome back! Here&apos;s your financial overview.
+        </p>
       </div>
 
-      {/* Analytics Preview */}
-      <div className="mb-6 lg:mb-8">
-        <div className="glass-card-hover p-6 lg:p-8">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-primary mb-6">
-            Quick Analytics
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-            <QuickAnalyticsCard
-              title="This Month's Spending"
-              value={quickAnalytics?.spending || 0}
-              subtitle={`${quickAnalytics?.transactionCount || 0} transactions`}
-              trend={quickAnalytics?.spendingTrend}
-            />
-            <QuickAnalyticsCard
-              title="This Month's Income"
-              value={quickAnalytics?.income || 0}
-              subtitle="Total income"
-            />
-            <QuickAnalyticsCard
-              title="Net Savings"
-              value={quickAnalytics?.netSavings || 0}
-              subtitle="Income minus spending"
-              className="sm:col-span-2 xl:col-span-1"
-            />
+      {/* Net Worth Card */}
+      {showNetWorth && (
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-blue-100">Total Net Worth</p>
+              <p className="text-3xl font-bold">
+                ${totalBalance.toLocaleString()}
+              </p>
+            </div>
+            <DollarSign className="w-12 h-12 text-blue-200" />
           </div>
         </div>
+      )}
+
+      {/* Quick Analytics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <QuickAnalyticsCard
+          title="Monthly Income"
+          value={`$${monthlyIncome.toLocaleString()}`}
+          change="+12.5%"
+          icon={TrendingUp}
+          trend="up"
+        />
+        <QuickAnalyticsCard
+          title="Monthly Expenses"
+          value={`$${monthlyExpenses.toLocaleString()}`}
+          change="-8.2%"
+          icon={TrendingDown}
+          trend="down"
+        />
+        <QuickAnalyticsCard
+          title="Total Accounts"
+          value={accounts.length}
+          change="+2"
+          icon={CreditCard}
+          trend="up"
+        />
+        <QuickAnalyticsCard
+          title="Recent Transactions"
+          value={recentTransactions.length}
+          icon={FileText}
+        />
       </div>
 
-      {/* Statement Importer Modal */}
-      <StatementImporter
-        isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
-        onImportComplete={handleImportComplete}
-      />
+      {/* Quick Actions */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Quick Actions
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <button
+            onClick={() => onPageChange("transactions")}
+            className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+          >
+            <Plus className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div className="text-left">
+              <p className="font-medium text-blue-900 dark:text-blue-100">
+                Add Transaction
+              </p>
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                Record a new transaction
+              </p>
+            </div>
+          </button>
+          <button
+            onClick={handleImportClick}
+            className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors"
+          >
+            <Upload className="w-6 h-6 text-green-600 dark:text-green-400" />
+            <div className="text-left">
+              <p className="font-medium text-green-900 dark:text-green-100">
+                Import Statement
+              </p>
+              <p className="text-sm text-green-700 dark:text-green-300">
+                Upload bank statements
+              </p>
+            </div>
+          </button>
+        </div>
+      </div>
 
-      {/* Account Assignment Modal */}
-      {isAccountAssignmentModalOpen && (
-        <EnhancedAccountAssignmentModal
-          isOpen={isAccountAssignmentModalOpen}
-          onClose={() => {
-            // User cancelled - clean up staged transactions
-            setIsAccountAssignmentModalOpen(false);
-            setTransactionsToAssign([]);
-          }}
-          transactions={transactionsToAssign}
-          accounts={accounts}
-          onComplete={handleAccountAssignmentComplete}
+      {/* Recent Transactions */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Recent Transactions
+          </h2>
+          <button
+            onClick={() => onPageChange("transactions")}
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
+          >
+            View All
+          </button>
+        </div>
+        {recentTransactions.length > 0 ? (
+          <div className="space-y-3">
+            {recentTransactions.map(transaction => (
+              <div
+                key={transaction.id}
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+              >
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {transaction.description}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {new Date(transaction.date).toLocaleDateString()}
+                  </p>
+                </div>
+                <p
+                  className={`font-semibold ${
+                    transaction.amount > 0
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-red-600 dark:text-red-400"
+                  }`}
+                >
+                  {transaction.amount > 0 ? "+" : ""}$
+                  {Math.abs(transaction.amount).toFixed(2)}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+            No transactions yet. Add your first transaction to get started.
+          </p>
+        )}
+      </div>
+
+      {/* Statement Importers */}
+      {!isMobile ? (
+        <StatementImporter
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          onImportComplete={handleImportComplete}
+          onAccountAssignmentComplete={handleAccountAssignmentComplete}
+        />
+      ) : (
+        <MobileStatementImporter
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          onImportComplete={handleImportComplete}
         />
       )}
     </div>
