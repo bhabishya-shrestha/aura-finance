@@ -48,7 +48,7 @@ const AccountsPage = () => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
-      minimumFractionDigits: 0,
+      minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
   };
@@ -99,17 +99,17 @@ const AccountsPage = () => {
   const calculateAccountStats = accountId => {
     const transactions = getTransactionsByAccount(accountId);
     const recentTransactions = transactions.slice(0, 30); // Last 30 days
-    
+
     const income = recentTransactions
       .filter(t => t.amount > 0)
       .reduce((sum, t) => sum + t.amount, 0);
-    
+
     const expenses = recentTransactions
       .filter(t => t.amount < 0)
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    
+
     const netFlow = income - expenses;
-    
+
     return {
       income,
       expenses,
@@ -151,7 +151,7 @@ const AccountsPage = () => {
     const { name, value } = e.target;
     if (name === "balance") {
       // Limit to 2 decimal places
-      if (value.includes('.') && value.split('.')[1]?.length > 2) {
+      if (value.includes(".") && value.split(".")[1]?.length > 2) {
         return;
       }
     }
@@ -190,14 +190,14 @@ const AccountsPage = () => {
     setNewBalance("");
   };
 
-  const handleDeleteAccount = (account) => {
+  const handleDeleteAccount = account => {
     setAccountToDelete(account);
     setShowDeleteConfirm(true);
   };
 
   const confirmDeleteAccount = async () => {
     if (!accountToDelete) return;
-    
+
     setIsLoading(true);
     try {
       await deleteAccount(accountToDelete.id);
@@ -217,36 +217,53 @@ const AccountsPage = () => {
     const isSelected = selectedAccount?.id === account.id;
 
     return (
-      <div className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 hover:shadow-lg ${
-        isSelected ? 'ring-2 ring-blue-500 shadow-lg' : 'hover:shadow-md'
-      }`}>
+      <div
+        className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 hover:shadow-lg ${
+          isSelected ? "ring-2 ring-blue-500 shadow-lg" : "hover:shadow-md"
+        }`}
+      >
         {/* Header */}
         <div className={`p-6 ${getAccountTypeBgColor(account.type)}`}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-lg bg-white dark:bg-gray-700 shadow-sm ${getAccountTypeColor(account.type)}`}>
+              <div
+                className={`p-3 rounded-lg bg-white dark:bg-gray-700 shadow-sm ${getAccountTypeColor(account.type)}`}
+              >
                 {getAccountIcon(account.type)}
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {account.name}
                 </h3>
-                <p className={`text-sm font-medium capitalize ${getAccountTypeColor(account.type)}`}>
+                <p
+                  className={`text-sm font-medium capitalize ${getAccountTypeColor(account.type)}`}
+                >
                   {account.type} Account
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button
+                onClick={() => handleEditBalance(account.id, balance)}
+                className="p-2 hover:bg-blue-500/20 rounded-lg transition-colors text-blue-600 dark:text-blue-400"
+                title="Edit Balance"
+              >
+                <Edit3 className="w-4 h-4" />
+              </button>
+              <button
                 onClick={() => setSelectedAccount(isSelected ? null : account)}
                 className={`p-2 rounded-lg transition-colors ${
-                  isSelected 
-                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  isSelected
+                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
                 }`}
                 title={isSelected ? "Hide details" : "Show details"}
               >
-                {isSelected ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {isSelected ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -254,7 +271,9 @@ const AccountsPage = () => {
           {/* Balance Section */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Current Balance</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                Current Balance
+              </p>
               {editingBalance === account.id ? (
                 <div className="flex items-center gap-2">
                   <input
@@ -264,7 +283,10 @@ const AccountsPage = () => {
                     value={newBalance}
                     onChange={e => {
                       const value = e.target.value;
-                      if (value.includes('.') && value.split('.')[1]?.length > 2) {
+                      if (
+                        value.includes(".") &&
+                        value.split(".")[1]?.length > 2
+                      ) {
                         return;
                       }
                       setNewBalance(value);
@@ -290,17 +312,10 @@ const AccountsPage = () => {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center">
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {formatCurrency(balance)}
                   </p>
-                  <button
-                    onClick={() => handleEditBalance(account.id, balance)}
-                    className="p-1.5 hover:bg-blue-500/20 rounded transition-colors text-blue-600 dark:text-blue-400"
-                    title="Edit Balance"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
                 </div>
               )}
             </div>
@@ -317,24 +332,32 @@ const AccountsPage = () => {
         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Income (30d)</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                Income (30d)
+              </p>
               <p className="text-sm font-semibold text-green-600 dark:text-green-400">
                 {formatCurrency(stats.income)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Expenses (30d)</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                Expenses (30d)
+              </p>
               <p className="text-sm font-semibold text-red-600 dark:text-red-400">
                 {formatCurrency(stats.expenses)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Net Flow</p>
-              <p className={`text-sm font-semibold ${
-                stats.netFlow >= 0 
-                  ? 'text-green-600 dark:text-green-400' 
-                  : 'text-red-600 dark:text-red-400'
-              }`}>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                Net Flow
+              </p>
+              <p
+                className={`text-sm font-semibold ${
+                  stats.netFlow >= 0
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
+                }`}
+              >
                 {formatCurrency(stats.netFlow)}
               </p>
             </div>
@@ -351,13 +374,18 @@ const AccountsPage = () => {
               {transactions.length > 0 ? (
                 <div className="space-y-3">
                   {transactions.map(transaction => (
-                    <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div
+                      key={transaction.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    >
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${
-                          transaction.amount > 0 
-                            ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                            : 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                        }`}>
+                        <div
+                          className={`p-2 rounded-lg ${
+                            transaction.amount > 0
+                              ? "bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400"
+                              : "bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+                          }`}
+                        >
                           {transaction.amount > 0 ? (
                             <TrendingUp className="w-4 h-4" />
                           ) : (
@@ -373,12 +401,15 @@ const AccountsPage = () => {
                           </p>
                         </div>
                       </div>
-                      <p className={`text-sm font-semibold ${
-                        transaction.amount > 0 
-                          ? 'text-green-600 dark:text-green-400' 
-                          : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {transaction.amount > 0 ? '+' : ''}{formatCurrency(transaction.amount)}
+                      <p
+                        className={`text-sm font-semibold ${
+                          transaction.amount > 0
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      >
+                        {transaction.amount > 0 ? "+" : ""}
+                        {formatCurrency(transaction.amount)}
                       </p>
                     </div>
                   ))}
@@ -398,7 +429,12 @@ const AccountsPage = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <Calendar className="w-4 h-4" />
-              <span>Last updated: {new Date(account.lastBalanceUpdate || Date.now()).toLocaleDateString()}</span>
+              <span>
+                Last updated:{" "}
+                {new Date(
+                  account.lastBalanceUpdate || Date.now()
+                ).toLocaleDateString()}
+              </span>
             </div>
             <button
               onClick={() => handleDeleteAccount(account)}
@@ -560,7 +596,8 @@ const AccountsPage = () => {
               </h3>
             </div>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to delete "{accountToDelete.name}"? This will also delete all associated transactions and cannot be undone.
+              Are you sure you want to delete "{accountToDelete.name}"? This
+              will also delete all associated transactions and cannot be undone.
             </p>
             <div className="flex gap-3">
               <button

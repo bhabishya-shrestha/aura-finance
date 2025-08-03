@@ -69,6 +69,8 @@ const AnalyticsDataProvider = ({ children }) => {
       localStorage.setItem("aura-finance-timeRange", newTimeRange);
       // Force refresh cache when time range changes
       analyticsService.forceRefresh();
+      // Also clear the last transaction count to force recalculation
+      setLastTransactionCount(0);
     } catch (error) {
       // console.warn("Could not save time range:", error);
     }
@@ -84,6 +86,17 @@ const AnalyticsDataProvider = ({ children }) => {
     if (needsRecalculation) {
       setLastTransactionCount(currentTransactionCount);
       setIsAnalyticsLoading(true);
+    }
+
+    // Debug logging for time range changes
+    if (import.meta.env.DEV) {
+      console.log("Analytics recalculation triggered:", {
+        timeRange,
+        transactionCount: transactions.length,
+        lastTransactionCount,
+        needsRecalculation,
+        isAnalyticsLoading,
+      });
     }
 
     // Professional data validation

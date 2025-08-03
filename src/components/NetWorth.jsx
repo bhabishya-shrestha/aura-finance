@@ -16,7 +16,7 @@ const NetWorth = () => {
 
   useEffect(() => {
     const currentNetWorth = getNetWorth();
-    
+
     // Only update if the value actually changed to prevent unnecessary re-renders
     if (currentNetWorth !== netWorth) {
       setPreviousNetWorth(netWorth);
@@ -35,8 +35,8 @@ const NetWorth = () => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 

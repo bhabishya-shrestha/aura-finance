@@ -27,6 +27,7 @@ const TransactionsPage = () => {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [selectedTransactions, setSelectedTransactions] = useState(new Set());
   const [showBulkAssignment, setShowBulkAssignment] = useState(false);
+  const [showBulkYearAssignment, setShowBulkYearAssignment] = useState(false);
 
   useEffect(() => {
     loadTransactions();
@@ -184,6 +185,38 @@ const TransactionsPage = () => {
 
       await Promise.all(updatePromises);
       setShowBulkAssignment(false);
+      setSelectedTransactions(new Set());
+      await loadTransactions();
+    } catch (error) {
+      // Error updating transactions
+    }
+  };
+
+  const handleBulkYearAssignment = async year => {
+    try {
+      const updatePromises = Array.from(selectedTransactions).map(
+        transactionId => {
+          const transaction = transactions.find(t => t.id === transactionId);
+          if (transaction) {
+            // Create a new date with the selected year, keeping the same month and day
+            const currentDate = new Date(transaction.date);
+            const newDate = new Date(
+              year,
+              currentDate.getMonth(),
+              currentDate.getDate()
+            );
+
+            return updateTransaction(transactionId, {
+              ...transaction,
+              date: newDate,
+            });
+          }
+          return Promise.resolve();
+        }
+      );
+
+      await Promise.all(updatePromises);
+      setShowBulkYearAssignment(false);
       setSelectedTransactions(new Set());
       await loadTransactions();
     } catch (error) {
@@ -357,6 +390,12 @@ const TransactionsPage = () => {
                 className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
               >
                 Assign to Account
+              </button>
+              <button
+                onClick={() => setShowBulkYearAssignment(true)}
+                className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+              >
+                Assign to Year
               </button>
             </div>
             <button
@@ -706,6 +745,50 @@ const TransactionsPage = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowBulkAssignment(false)}
+                className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Year Assignment Modal */}
+      {showBulkYearAssignment && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Assign {selectedTransactions.size} Transaction
+              {selectedTransactions.size !== 1 ? "s" : ""} to Year
+            </h3>
+
+            <div className="space-y-2 mb-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select Year
+              </label>
+              <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                {Array.from({ length: 10 }, (_, i) => {
+                  const year = new Date().getFullYear() - 5 + i;
+                  return (
+                    <button
+                      key={year}
+                      onClick={() => handleBulkYearAssignment(year)}
+                      className="p-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-center"
+                    >
+                      <div className="font-medium">{year}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {year === new Date().getFullYear() ? 'Current' : ''}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowBulkYearAssignment(false)}
                 className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 Cancel
