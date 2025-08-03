@@ -32,7 +32,6 @@ class AnalyticsService {
 
   // Force refresh cache
   forceRefresh() {
-  
     this.clearCache();
   }
 
@@ -82,8 +81,6 @@ class AnalyticsService {
     }
 
     const result = calculationFn();
-
-
 
     this.cache.set(fullCacheKey, {
       data: result,
@@ -171,8 +168,6 @@ class AnalyticsService {
 
       return transactionDate >= startDate && transactionDate <= now;
     });
-
-
 
     // Return filtered transactions - no fallback to all transactions
     // This ensures each time range shows only appropriate data

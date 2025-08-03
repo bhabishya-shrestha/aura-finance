@@ -88,8 +88,6 @@ const AnalyticsDataProvider = ({ children }) => {
       setIsAnalyticsLoading(true);
     }
 
-    
-
     // Professional data validation
     if (!Array.isArray(transactions)) {
       // console.error("Invalid transactions data:", transactions);

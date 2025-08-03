@@ -5,21 +5,21 @@ import StatementImporter from "../components/StatementImporter";
 import useStore from "../store";
 
 // Mock requestAnimationFrame to prevent hanging in tests
-const mockRequestAnimationFrame = vi.fn((callback) => {
+const mockRequestAnimationFrame = vi.fn(callback => {
   setTimeout(callback, 0);
   return 1;
 });
 
 const mockCancelAnimationFrame = vi.fn();
 
-Object.defineProperty(window, 'requestAnimationFrame', {
+Object.defineProperty(window, "requestAnimationFrame", {
   value: mockRequestAnimationFrame,
-  writable: true
+  writable: true,
 });
 
-Object.defineProperty(window, 'cancelAnimationFrame', {
+Object.defineProperty(window, "cancelAnimationFrame", {
   value: mockCancelAnimationFrame,
-  writable: true
+  writable: true,
 });
 
 // Mocks
@@ -44,7 +44,7 @@ vi.mock("../components/StatementImporter", () => ({
     if (!isOpen) {
       return null;
     }
-    
+
     return (
       <div data-testid="statement-importer-modal">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -72,21 +72,21 @@ vi.mock("../components/StatementImporter", () => ({
                 ✕
               </button>
             </div>
-            
+
             {/* Content */}
             <div className="p-6">
               <div data-testid="upload-section">
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   data-testid="file-input"
                   accept=".pdf,.jpg,.jpeg,.png"
                 />
                 <button data-testid="upload-button">Upload Statement</button>
               </div>
-              <div data-testid="processing-section" style={{ display: 'none' }}>
+              <div data-testid="processing-section" style={{ display: "none" }}>
                 <div data-testid="progress-bar">Processing...</div>
               </div>
-              <div data-testid="results-section" style={{ display: 'none' }}>
+              <div data-testid="results-section" style={{ display: "none" }}>
                 <div data-testid="transactions-list">
                   <div data-testid="transaction-item">Transaction 1</div>
                   <div data-testid="transaction-item">Transaction 2</div>
@@ -124,7 +124,7 @@ describe("StatementImporter", () => {
         onImportComplete={mockOnImportComplete}
       />
     );
-    
+
     expect(screen.getByText("Import Statement")).toBeInTheDocument();
     expect(
       screen.getByText("Upload your bank or credit card statement")
@@ -139,7 +139,7 @@ describe("StatementImporter", () => {
         onImportComplete={mockOnImportComplete}
       />
     );
-    
+
     expect(screen.queryByText("Import Statement")).not.toBeInTheDocument();
   });
 
@@ -223,6 +223,8 @@ describe("StatementImporter", () => {
     );
 
     expect(screen.getByTestId("progress-bar")).toBeInTheDocument();
-    expect(screen.getByTestId("progress-bar")).toHaveTextContent("Processing...");
+    expect(screen.getByTestId("progress-bar")).toHaveTextContent(
+      "Processing..."
+    );
   });
 });

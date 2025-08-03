@@ -778,7 +778,7 @@ const TransactionsPage = () => {
                     >
                       <div className="font-medium">{year}</div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {year === new Date().getFullYear() ? 'Current' : ''}
+                        {year === new Date().getFullYear() ? "Current" : ""}
                       </div>
                     </button>
                   );

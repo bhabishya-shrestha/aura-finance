@@ -116,7 +116,7 @@ const DashboardPage = ({ onPageChange }) => {
       if (transactionsToAssign && transactionsToAssign.length > 0) {
         await addTransactions(transactionsToAssign);
       }
-      
+
       setIsAccountAssignmentModalOpen(false);
       setTransactionsToAssign([]);
       await loadTransactions();
