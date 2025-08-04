@@ -56,6 +56,7 @@ const StatementImporter = ({
   isOpen,
   onClose,
   onImportComplete,
+  onAccountAssignmentComplete,
   isMobile = false,
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -458,8 +459,12 @@ const StatementImporter = ({
   };
 
   const handleAccountAssignmentComplete = assignedTransactions => {
-    // Call the original onImportComplete with the assigned transactions
-    onImportComplete(assignedTransactions);
+    // Call the appropriate callback based on what's available
+    if (onAccountAssignmentComplete) {
+      onAccountAssignmentComplete(assignedTransactions);
+    } else {
+      onImportComplete(assignedTransactions);
+    }
     setShowAccountAssignment(false);
     setTransactionsForAssignment([]);
     resetState();
