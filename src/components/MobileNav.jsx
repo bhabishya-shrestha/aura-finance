@@ -4,7 +4,7 @@ import {
   Upload,
 } from "lucide-react";
 
-const MobileNav = ({ onPageChange, currentPage }) => {
+const MobileNav = () => {
   const [showQuickActions, setShowQuickActions] = useState(false);
 
   const quickActionItems = [

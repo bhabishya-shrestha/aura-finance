@@ -116,3 +116,12 @@ test.pdf
 test-*.pdf
 sample-*.pdf
 demo-*.pdf
+
+# GitGuardian cache
+.cache_ggshield
+
+# OCR training data
+*.traineddata
+
+# Documentation files
+PROJECT_DOCUMENTATION.md

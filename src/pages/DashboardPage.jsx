@@ -6,8 +6,6 @@ import {
   CreditCard,
   Plus,
   Upload,
-  Eye,
-  EyeOff,
   FileText,
 } from "lucide-react";
 import useStore from "../store";
@@ -24,7 +22,7 @@ const DashboardPage = ({ onPageChange }) => {
     loadAccounts,
   } = useStore();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [showNetWorth] = useState(true);
+
   const [error, setError] = useState("");
 
   // Use mobile viewport handling
