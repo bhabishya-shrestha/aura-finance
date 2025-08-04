@@ -24,7 +24,7 @@ class AIService {
         name: "Hugging Face Inference API",
         service: huggingFaceService,
         quotas: {
-          maxRequests: 500,
+          maxRequests: 5,
           maxDailyRequests: 500,
         },
         features: [

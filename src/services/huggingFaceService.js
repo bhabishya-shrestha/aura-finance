@@ -8,9 +8,9 @@ class HuggingFaceService {
 
     // Hugging Face has generous free tier limits
     this.rateLimit = {
-      maxRequests: 500, // 500 per minute (much higher than free tier)
+      maxRequests: 5, // 5 per minute
       timeWindow: 60000, // 1 minute in milliseconds
-      maxDailyRequests: 500, // 500 daily requests per user (vs 150 for free tier)
+      maxDailyRequests: 500, // 500 daily requests
     };
 
     this.requestCount = 0;
@@ -18,9 +18,10 @@ class HuggingFaceService {
     this.dailyRequestCount = 0;
     this.lastDailyReset = new Date().toDateString();
 
-    // Default model for document analysis
-    this.defaultModel = "microsoft/DialoGPT-medium"; // Good for text analysis
-    this.visionModel = "microsoft/git-base-coco"; // For image/document analysis
+    // Optimized models for cost-effectiveness and performance
+    this.defaultModel = "deepseek-ai/deepseek-coder-6.7b-instruct"; // Excellent for text analysis, cost-effective
+    this.visionModel = "microsoft/git-base-coco"; // Good for image/document analysis
+    this.ocrModel = "microsoft/trocr-base-handwritten"; // Better OCR for handwritten text
 
     if (!this.apiKey) {
       console.warn(
@@ -171,7 +172,8 @@ class HuggingFaceService {
 
       const prompt = `Analyze the following financial document text and extract transaction information. Return a JSON array of transactions with fields: date, description, amount, type (income/expense), category. Text: ${text}`;
 
-      const response = await fetch(`${this.baseUrl}/${this.defaultModel}`, {
+      const bestModel = this.getBestModel("transactionExtraction");
+      const response = await fetch(`${this.baseUrl}/${bestModel}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
@@ -230,7 +232,7 @@ class HuggingFaceService {
       return {
         success: true,
         transactions,
-        model: this.defaultModel,
+        model: bestModel,
         provider: "huggingface",
       };
     } catch (error) {
@@ -254,6 +256,19 @@ class HuggingFaceService {
   // Check if service is available
   isAvailable() {
     return !!this.apiKey;
+  }
+
+  // Get the best model for a specific task
+  getBestModel(task) {
+    const models = {
+      textAnalysis: "deepseek-ai/deepseek-coder-6.7b-instruct", // Best for text processing
+      visionAnalysis: "microsoft/git-base-coco", // Good for image understanding
+      ocr: "microsoft/trocr-base-handwritten", // Best for handwritten text
+      transactionExtraction: "deepseek-ai/deepseek-coder-6.7b-instruct", // Best for structured data extraction
+      accountSuggestions: "deepseek-ai/deepseek-coder-6.7b-instruct", // Best for reasoning tasks
+    };
+
+    return models[task] || this.defaultModel;
   }
 
   // Extract transactions from text (alias for extractTransactions)
@@ -286,7 +301,8 @@ class HuggingFaceService {
 
       const fullPrompt = `${prompt}\n\nTransaction texts:\n${transactionTexts.join("\n")}`;
 
-      const response = await fetch(`${this.baseUrl}/${this.defaultModel}`, {
+      const bestModel = this.getBestModel("accountSuggestions");
+      const response = await fetch(`${this.baseUrl}/${bestModel}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
@@ -318,7 +334,7 @@ class HuggingFaceService {
       return {
         success: true,
         suggestions: result.generated_text || "No suggestions available",
-        model: this.defaultModel,
+        model: bestModel,
         provider: "huggingface",
       };
     } catch (error) {

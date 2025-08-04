@@ -56,9 +56,9 @@ Aura Finance supports two AI providers for document analysis and transaction ext
 
 ### Hugging Face Inference API (Recommended - Free)
 - **Daily Limit**: 500 requests
-- **Per Minute**: 500 requests
+- **Per Minute**: 5 requests
 - **Cost**: Free
-- **Best For**: High-volume usage without cost
+- **Best For**: Higher volume usage without cost
 - **Setup**: Just need an API token from Hugging Face
 
 ### Setting Up Hugging Face (Recommended)
