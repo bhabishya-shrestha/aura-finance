@@ -12,6 +12,7 @@ import {
 import { parseStatement } from "../utils/statementParser";
 import geminiService from "../services/geminiService";
 import useStore from "../store";
+import MobileAccountAssignmentModal from "./MobileAccountAssignmentModal";
 
 const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   const { addTransactions, addNotification } = useStore();
@@ -31,6 +32,10 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   });
   const [progressAnimationId, setProgressAnimationId] = useState(null);
   const [displayProgress, setDisplayProgress] = useState(0);
+  const [showAccountAssignment, setShowAccountAssignment] = useState(false);
+  const [transactionsForAssignment, setTransactionsForAssignment] = useState(
+    []
+  );
 
   // Smooth progress animation system
   const animateProgress = useCallback(
@@ -289,8 +294,9 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         throw new Error("Please select at least one transaction to import.");
       }
 
-      await handleImportComplete(selectedTransactions);
-      resetState();
+      // Show account assignment modal instead of importing directly
+      setTransactionsForAssignment(selectedTransactions);
+      setShowAccountAssignment(true);
     } catch (error) {
       setError(
         error.message || "An error occurred while importing transactions."
@@ -304,8 +310,9 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         throw new Error("No transactions to import.");
       }
 
-      await handleImportComplete(parsedTransactions);
-      resetState();
+      // Show account assignment modal instead of importing directly
+      setTransactionsForAssignment(parsedTransactions);
+      setShowAccountAssignment(true);
     } catch (error) {
       setError(
         error.message || "An error occurred while importing transactions."
@@ -313,10 +320,10 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
     }
   };
 
-  const handleImportComplete = async (transactions) => {
+  const handleImportComplete = async transactions => {
     try {
       await addTransactions(transactions);
-      
+
       // Add success notification
       addNotification({
         title: "Import Successful",
@@ -325,21 +332,34 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         action: () => {
           // Could navigate to transactions page
           onClose();
-        }
+        },
       });
 
       onImportComplete(transactions);
       onClose();
     } catch (error) {
       setError("Failed to import transactions. Please try again.");
-      
+
       // Add error notification
       addNotification({
         title: "Import Failed",
-        message: "There was an error importing your transactions. Please try again.",
-        type: "error"
+        message:
+          "There was an error importing your transactions. Please try again.",
+        type: "error",
       });
     }
+  };
+
+  const handleAccountAssignmentComplete = assignedTransactions => {
+    // Call the original handleImportComplete with the assigned transactions
+    handleImportComplete(assignedTransactions);
+    setShowAccountAssignment(false);
+    setTransactionsForAssignment([]);
+  };
+
+  const handleAccountAssignmentClose = () => {
+    setShowAccountAssignment(false);
+    setTransactionsForAssignment([]);
   };
 
   const resetState = () => {
@@ -531,9 +551,7 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
             />
             <button
               type="button"
-              onClick={() =>
-                document.getElementById("file-upload").click()
-              }
+              onClick={() => document.getElementById("file-upload").click()}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
             >
               Choose File
@@ -668,17 +686,13 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
               <p className="text-green-600 dark:text-green-400 font-medium">
                 {processingSummary.transactionCount}
               </p>
-              <p className="text-green-700 dark:text-green-300">
-                Transactions
-              </p>
+              <p className="text-green-700 dark:text-green-300">Transactions</p>
             </div>
             <div>
               <p className="text-green-600 dark:text-green-400 font-medium">
                 {processingSummary.confidence}
               </p>
-              <p className="text-green-700 dark:text-green-300">
-                Confidence
-              </p>
+              <p className="text-green-700 dark:text-green-300">Confidence</p>
             </div>
           </div>
         </div>
@@ -736,9 +750,7 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                   </div>
                   <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                     <span>{formatDate(transaction.date)}</span>
-                    <span className="capitalize">
-                      {transaction.category}
-                    </span>
+                    <span className="capitalize">{transaction.category}</span>
                   </div>
                 </div>
               </div>
@@ -751,13 +763,10 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       <div className="flex flex-col gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={handleImportSelected}
-          disabled={
-            parsedTransactions.filter(t => t.selected).length === 0
-          }
+          disabled={parsedTransactions.filter(t => t.selected).length === 0}
           className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
         >
-          Import Selected (
-          {parsedTransactions.filter(t => t.selected).length})
+          Import Selected ({parsedTransactions.filter(t => t.selected).length})
         </button>
         <button
           onClick={handleImportAll}
@@ -793,8 +802,16 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         {currentStep === 2 && renderStep2()}
         {currentStep === 3 && renderStep3()}
       </div>
+
+      {/* Account Assignment Modal */}
+      <MobileAccountAssignmentModal
+        isOpen={showAccountAssignment}
+        onClose={handleAccountAssignmentClose}
+        transactions={transactionsForAssignment}
+        onComplete={handleAccountAssignmentComplete}
+      />
     </div>
   );
 };
 
-export default MobileStatementImporter; 
+export default MobileStatementImporter;

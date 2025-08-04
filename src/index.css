@@ -98,6 +98,8 @@
   padding-bottom: var(--mobile-safe-bottom);
 }
 
+
+
 /* Mobile header positioning */
 .mobile-header {
   height: var(--mobile-header-height);

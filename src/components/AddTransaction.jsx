@@ -11,7 +11,7 @@ import {
 import useStore from "../store";
 import { CATEGORIES } from "../utils/statementParser";
 
-const AddTransaction = () => {
+const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
   const { addTransaction, accounts } = useStore();
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -83,7 +83,11 @@ const AddTransaction = () => {
           accounts && accounts.length > 0 ? accounts[0].id.toString() : "",
       });
       setErrors({});
-      setShowModal(false);
+      if (onClose) {
+        onClose();
+      } else {
+        setShowModal(false);
+      }
     } catch (error) {
       setErrors({ submit: "Failed to add transaction. Please try again." });
     }
@@ -115,24 +119,32 @@ const AddTransaction = () => {
         accounts && accounts.length > 0 ? accounts[0].id.toString() : "",
     });
     setErrors({});
-    setShowModal(false);
+    if (onClose) {
+      onClose();
+    } else {
+      setShowModal(false);
+    }
   };
+
+  // Determine if modal should be shown
+  const shouldShowModal = isOpen !== undefined ? isOpen : showModal;
 
   return (
     <>
-      {/* Trigger Button */}
-      <button
-        onClick={() => setShowModal(true)}
-        className="px-3 sm:px-4 py-2 sm:py-3 bg-blue-600 text-white rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 hover:scale-105 transition-all duration-200 group text-sm sm:text-base shadow-sm"
-      >
-        <Plus className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-all duration-200" />
-        <span className="font-medium">Add Transaction</span>
-      </button>
-
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-gray-200 dark:border-gray-700">
+      {shouldShowModal && (
+        <div
+          className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center ${
+            isMobile ? "" : "p-4"
+          }`}
+        >
+          <div
+            className={`bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 ${
+              isMobile
+                ? "w-full h-full rounded-none mx-0 p-4"
+                : "rounded-lg max-w-md w-full mx-4 p-6"
+            }`}
+          >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
                 Add New Transaction

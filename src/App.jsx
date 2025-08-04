@@ -230,6 +230,7 @@ const AppLayout = () => {
               <DashboardPage
                 onPageChange={setCurrentPage}
                 triggerImport={triggerImport}
+                onImportClick={handleImportClick}
               />
             )}
             {currentPage === "accounts" && <AccountsPage />}
@@ -251,6 +252,16 @@ const AppLayout = () => {
           />
         )}
       </div>
+
+      {/* Global Modals - Rendered outside main content for proper full-screen coverage */}
+      {currentPage === "dashboard" && (
+        <DashboardPage
+          onPageChange={setCurrentPage}
+          triggerImport={triggerImport}
+          onImportClick={handleImportClick}
+          isModalOnly={true}
+        />
+      )}
     </div>
   );
 };
