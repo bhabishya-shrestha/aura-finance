@@ -630,19 +630,6 @@ const EnhancedAccountAssignmentModal = ({
       if (!accountName) {
         throw new Error("Account name cannot be empty");
       }
-      }
-
-      if (!editedSuggestion || !editedSuggestion.name) return;
-
-      try {
-        setIsProcessing(true);
-        setIsSubmitting(true);
-
-        // Validate and clean account data
-        const accountName = editedSuggestion.name.trim();
-        if (!accountName) {
-          throw new Error("Account name cannot be empty");
-        }
 
         // Create staged account from edited suggestion
         const stagedAccount = {
