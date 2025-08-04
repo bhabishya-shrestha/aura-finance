@@ -39,6 +39,10 @@ const defaultSettings = {
   autoBackup: true,
   backupFrequency: "weekly", // daily, weekly, monthly
   dataRetention: 365, // days
+
+  // AI Settings
+  aiProvider: "gemini", // gemini, vertex
+  aiAutoFallback: true, // Automatically fallback to other provider if one fails
 };
 
 export const SettingsProvider = ({ children }) => {

@@ -44,6 +44,57 @@ A modern, AI-powered personal finance management application built with React, f
 - **Testing**: Vitest, React Testing Library
 - **Deployment**: Vercel
 
+## 🤖 AI Services Configuration
+
+Aura Finance supports two AI providers for document analysis and transaction extraction:
+
+### Google Gemini API (Free Tier)
+- **Daily Limit**: 150 requests
+- **Per Minute**: 15 requests
+- **Cost**: Free
+- **Best For**: Development, testing, and light usage
+
+### Google Cloud Vertex AI (Recommended)
+- **Daily Limit**: 10,000+ requests
+- **Per Minute**: 300 requests
+- **Cost**: Pay-as-you-go (~$0.001 per request)
+- **Best For**: Production applications and high-volume usage
+
+### Setting Up Vertex AI
+
+1. **Create a Google Cloud Project**
+   ```bash
+   # Install Google Cloud CLI
+   gcloud auth login
+   gcloud projects create your-project-id
+   gcloud config set project your-project-id
+   ```
+
+2. **Enable Vertex AI API**
+   ```bash
+   gcloud services enable aiplatform.googleapis.com
+   ```
+
+3. **Create API Key**
+   ```bash
+   gcloud auth application-default login
+   # Or create a service account for production
+   ```
+
+4. **Configure Environment Variables**
+   ```env
+   VITE_GCP_PROJECT_ID=your-project-id
+   VITE_GCP_API_KEY=your-api-key
+   VITE_GCP_LOCATION=us-central1
+   ```
+
+### Switching Between Providers
+
+1. Go to **Settings** → **AI Services**
+2. Select your preferred provider
+3. Enable **Auto Fallback** for automatic failover
+4. Monitor usage in the settings panel
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -73,10 +124,18 @@ A modern, AI-powered personal finance management application built with React, f
    cp env.example .env.local
    ```
 
-   Add your Gemini API key:
+   Configure your AI service provider:
 
+   **Option A: Google Gemini API (Free Tier)**
    ```env
    VITE_GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+
+   **Option B: Google Cloud Vertex AI (Recommended for Production)**
+   ```env
+   VITE_GCP_PROJECT_ID=your_gcp_project_id_here
+   VITE_GCP_API_KEY=your_gcp_api_key_here
+   VITE_GCP_LOCATION=us-central1
    ```
 
 4. **Start the development server**

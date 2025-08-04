@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
+import { useSettings } from "../contexts/SettingsContext";
 import {
   Upload,
   FileText,
@@ -11,7 +12,7 @@ import {
   Info,
 } from "lucide-react";
 import { parseStatement } from "../utils/statementParser";
-import geminiService from "../services/geminiService";
+import aiService from "../services/aiService";
 import EnhancedAccountAssignmentModal from "./EnhancedAccountAssignmentModal";
 
 // Custom scrollbar styles
@@ -59,6 +60,15 @@ const StatementImporter = ({
   onAccountAssignmentComplete,
   isMobile = false,
 }) => {
+  // Get AI provider from settings
+  const { settings } = useSettings();
+  
+  // Set the AI provider based on settings
+  useEffect(() => {
+    if (settings.aiProvider) {
+      aiService.setProvider(settings.aiProvider);
+    }
+  }, [settings.aiProvider]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
   const [processingStep, setProcessingStep] = useState("");
@@ -279,18 +289,18 @@ const StatementImporter = ({
 
           updateProgress(30, "Analyzing document with AI...");
 
-          // Use enhanced Gemini for PDF and image analysis
-          const result = await geminiService.analyzeImage(file);
+          // Use unified AI service for PDF and image analysis
+          const result = await aiService.analyzeImage(file);
           updateProgress(55, "Processing AI results...");
 
           if (result.transactions && result.transactions.length > 0) {
-            transactions = geminiService.convertToTransactions(result);
+            transactions = aiService.convertToTransactions(result);
             updateProgress(70, "Validating transaction data...");
 
             // Apply import options to AI-generated transactions
             transactions = applyImportOptionsToTransactions(transactions);
 
-            summary = geminiService.getProcessingSummary(result);
+            summary = aiService.getProcessingSummary(result);
           } else {
             throw new Error(
               "No transactions found in the document. Please try a clearer document or different file."
