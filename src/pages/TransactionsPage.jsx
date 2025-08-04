@@ -108,9 +108,7 @@ const TransactionsPage = () => {
     if (selectedTransactions.size === filteredTransactions.length) {
       setSelectedTransactions(new Set());
     } else {
-      setSelectedTransactions(
-        new Set(filteredTransactions.map(t => t.id))
-      );
+      setSelectedTransactions(new Set(filteredTransactions.map(t => t.id)));
     }
   };
 
@@ -251,7 +249,9 @@ const TransactionsPage = () => {
 
         {/* Filter Section */}
         <div className="space-y-4 mb-6">
-          <h4 className="font-medium text-gray-900 dark:text-white">Filter by Type</h4>
+          <h4 className="font-medium text-gray-900 dark:text-white">
+            Filter by Type
+          </h4>
           <div className="grid grid-cols-3 gap-2">
             {[
               { id: "all", label: "All", color: "gray" },
@@ -346,9 +346,7 @@ const TransactionsPage = () => {
           <span className="capitalize">
             {transaction.category?.name || "Uncategorized"}
           </span>
-          <span>
-            {transaction.account?.name || "Uncategorized Account"}
-          </span>
+          <span>{transaction.account?.name || "Uncategorized Account"}</span>
         </div>
       </div>
     </div>
@@ -525,7 +523,10 @@ const TransactionsPage = () => {
       {/* Mobile Transaction List */}
       <div className="lg:hidden space-y-3">
         {filteredTransactions.map(transaction => (
-          <MobileTransactionCard key={transaction.id} transaction={transaction} />
+          <MobileTransactionCard
+            key={transaction.id}
+            transaction={transaction}
+          />
         ))}
         {filteredTransactions.length === 0 && (
           <div className="text-center py-8">
@@ -548,7 +549,8 @@ const TransactionsPage = () => {
                     <input
                       type="checkbox"
                       checked={
-                        selectedTransactions.size === filteredTransactions.length &&
+                        selectedTransactions.size ===
+                          filteredTransactions.length &&
                         filteredTransactions.length > 0
                       }
                       onChange={handleSelectAll}

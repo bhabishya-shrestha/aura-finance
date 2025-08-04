@@ -361,7 +361,6 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
     setShowAccountAssignment(false);
     setTransactionsForAssignment([]);
   };
-
   const resetState = useCallback(() => {
     if (progressAnimationId) {
       cancelAnimationFrame(progressAnimationId);

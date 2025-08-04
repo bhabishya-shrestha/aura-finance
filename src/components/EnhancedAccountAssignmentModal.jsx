@@ -630,54 +630,70 @@ const EnhancedAccountAssignmentModal = ({
       if (!accountName) {
         throw new Error("Account name cannot be empty");
       }
+      }
 
-      // Create staged account from edited suggestion
-      const stagedAccount = {
-        name: accountName,
-        type: editedSuggestion.type || "checking",
-        balance: 0,
-        id: `staged_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        isStaged: true,
-      };
+      if (!editedSuggestion || !editedSuggestion.name) return;
 
-      // Add to staged accounts
-      setStagedAccounts(prev => [...prev, stagedAccount]);
+      try {
+        setIsProcessing(true);
+        setIsSubmitting(true);
 
-      // Update local accounts list with staged account
-      setLocalAccounts(prev => [...prev, stagedAccount]);
-
-      // Auto-assign transactions that match this suggestion
-      const updatedSelection = { ...selectedAccounts };
-
-      localTransactions.forEach(transaction => {
-        const description = (transaction.description || "").toLowerCase();
-        const institution = (editedSuggestion.name || "").toLowerCase();
-
-        // Assign if transaction description contains institution name or matches pattern
-        if (
-          (institution && description.includes(institution.split(" ")[0])) ||
-          (editedSuggestion.type && description.includes(editedSuggestion.type))
-        ) {
-          updatedSelection[transaction.id] = stagedAccount.id;
+        // Validate and clean account data
+        const accountName = editedSuggestion.name.trim();
+        if (!accountName) {
+          throw new Error("Account name cannot be empty");
         }
-      });
 
-      setSelectedAccounts(updatedSelection);
-      setShowEditModal(false);
-      setEditingSuggestion(null);
+        // Create staged account from edited suggestion
+        const stagedAccount = {
+          name: accountName,
+          type: editedSuggestion.type || "checking",
+          balance: 0,
+          id: `staged_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          isStaged: true,
+        };
 
-      // Show success feedback
-      // console.log(
-      //   `Created account "${editedSuggestion.name}" and assigned ${assignedCount} transactions`
-      // );
-    } catch (error) {
-      // Error creating account - could be logged to error reporting service
-      // console.error("Error creating account:", error);
-    } finally {
-      setIsProcessing(false);
-      setIsSubmitting(false);
-    }
-  }, [isSubmitting, isProcessing, selectedAccounts, localTransactions]);
+        // Add to staged accounts
+        setStagedAccounts(prev => [...prev, stagedAccount]);
+
+        // Update local accounts list with staged account
+        setLocalAccounts(prev => [...prev, stagedAccount]);
+
+        // Auto-assign transactions that match this suggestion
+        const updatedSelection = { ...selectedAccounts };
+
+        localTransactions.forEach(transaction => {
+          const description = (transaction.description || "").toLowerCase();
+          const institution = (editedSuggestion.name || "").toLowerCase();
+
+          // Assign if transaction description contains institution name or matches pattern
+          if (
+            (institution && description.includes(institution.split(" ")[0])) ||
+            (editedSuggestion.type &&
+              description.includes(editedSuggestion.type))
+          ) {
+            updatedSelection[transaction.id] = stagedAccount.id;
+          }
+        });
+
+        setSelectedAccounts(updatedSelection);
+        setShowEditModal(false);
+        setEditingSuggestion(null);
+
+        // Show success feedback
+        // console.log(
+        //   `Created account "${editedSuggestion.name}" and assigned ${assignedCount} transactions`
+        // );
+      } catch (error) {
+        // Error creating account - could be logged to error reporting service
+        // console.error("Error creating account:", error);
+      } finally {
+        setIsProcessing(false);
+        setIsSubmitting(false);
+      }
+    },
+    [isSubmitting, isProcessing, selectedAccounts, localTransactions]
+  );
 
   // Debounced versions of account creation functions to prevent rapid clicking
   const debouncedCreateAccount = useCallback(

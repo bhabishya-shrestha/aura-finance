@@ -167,7 +167,6 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
               </div>
             </div>
           </div>
-
           {/* Navigation */}
           <div className="flex-1 p-4 overflow-y-auto">
             <div className="space-y-1">
