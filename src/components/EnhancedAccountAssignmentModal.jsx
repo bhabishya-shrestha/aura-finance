@@ -513,7 +513,13 @@ const EnhancedAccountAssignmentModal = ({
       setIsProcessing(false);
       setIsSubmitting(false);
     }
-  }, [isSubmitting, isProcessing, newAccountData, selectedAccounts, localTransactions]);
+  }, [
+    isSubmitting,
+    isProcessing,
+    newAccountData,
+    selectedAccounts,
+    localTransactions,
+  ]);
 
   const assignGroupToAccount = accountId => {
     const updatedSelection = { ...selectedAccounts };
@@ -610,26 +616,27 @@ const EnhancedAccountAssignmentModal = ({
     setShowEditModal(true);
   };
 
-  const handleEditSuggestion = useCallback(async editedSuggestion => {
-    // Prevent duplicate submissions
-    if (isSubmitting || isProcessing) {
-      setSubmissionAttempts(prev => prev + 1);
-      // Reset attempts after 2 seconds
-      setTimeout(() => setSubmissionAttempts(0), 2000);
-      return;
-    }
-
-    if (!editedSuggestion || !editedSuggestion.name) return;
-
-    try {
-      setIsProcessing(true);
-      setIsSubmitting(true);
-
-      // Validate and clean account data
-      const accountName = editedSuggestion.name.trim();
-      if (!accountName) {
-        throw new Error("Account name cannot be empty");
+  const handleEditSuggestion = useCallback(
+    async editedSuggestion => {
+      // Prevent duplicate submissions
+      if (isSubmitting || isProcessing) {
+        setSubmissionAttempts(prev => prev + 1);
+        // Reset attempts after 2 seconds
+        setTimeout(() => setSubmissionAttempts(0), 2000);
+        return;
       }
+
+      if (!editedSuggestion || !editedSuggestion.name) return;
+
+      try {
+        setIsProcessing(true);
+        setIsSubmitting(true);
+
+        // Validate and clean account data
+        const accountName = editedSuggestion.name.trim();
+        if (!accountName) {
+          throw new Error("Account name cannot be empty");
+        }
 
         // Create staged account from edited suggestion
         const stagedAccount = {

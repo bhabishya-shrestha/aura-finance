@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  X,
-  DollarSign,
-  Calendar,
-  FileText,
-  Tag,
-  Wallet,
-} from "lucide-react";
+import { X, DollarSign, Calendar, FileText, Tag, Wallet } from "lucide-react";
 import useStore from "../store";
 import { CATEGORIES } from "../utils/statementParser";
 
