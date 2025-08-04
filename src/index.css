@@ -43,18 +43,23 @@
   );
 }
 
-/* Mobile layout container */
+/* Mobile layout structure */
 .mobile-layout {
-  height: calc(var(--vh, 1vh) * 100);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow-x: clip;
+  gap: 0;
+  margin: 0;
+  padding: 0;
 }
 
 .mobile-content {
-  height: calc(var(--vh, 1vh) * 100 - var(--mobile-header-height));
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
+  padding-top: 0;
+  margin-top: 0;
 }
 
 /* Mobile scrollbar fixes */
@@ -96,8 +101,10 @@
 /* Mobile header positioning */
 .mobile-header {
   height: var(--mobile-header-height);
-  padding-top: var(--mobile-safe-top);
   min-height: 64px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 /* Mobile navigation positioning */

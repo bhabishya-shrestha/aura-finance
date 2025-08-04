@@ -638,6 +638,81 @@ IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside t
         : null,
     };
   }
+
+  // Analyze transactions and suggest account names
+  async analyzeTransactions(transactionTexts, prompt) {
+    if (!this.apiKey) {
+      throw new Error("Gemini API key not configured");
+    }
+
+    this.checkRateLimit();
+
+    try {
+      const requestBody = {
+        contents: [
+          {
+            parts: [
+              {
+                text: `${prompt}\n\nTransaction data:\n${transactionTexts}`,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.3,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+        },
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE",
+          },
+          {
+            category: "HARM_CATEGORY_HATE_SPEECH",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE",
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE",
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE",
+          },
+        ],
+      };
+
+      const response = await fetch(`${GEMINI_API_URL}?key=${this.apiKey}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (
+        !data.candidates ||
+        !data.candidates[0] ||
+        !data.candidates[0].content
+      ) {
+        throw new Error("Invalid response from Gemini API");
+      }
+
+      const responseText = data.candidates[0].content.parts[0].text;
+      return responseText.trim();
+    } catch (error) {
+      // Error analyzing transactions - could be logged to error reporting service
+      throw new Error(`Failed to analyze transactions: ${error.message}`);
+    }
+  }
 }
 
 export default new GeminiService();

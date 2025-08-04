@@ -122,7 +122,7 @@ const AccountsPage = () => {
       setFormData({ name: "", type: "checking", balance: "" });
       setShowAddModal(false);
     } catch (error) {
-      // Error handled silently - user will see appropriate UI feedback
+      // Failed to add account - could be logged to error reporting service
     } finally {
       setIsLoading(false);
     }
@@ -141,7 +141,7 @@ const AccountsPage = () => {
       setEditingBalance(null);
       setNewBalance("");
     } catch (error) {
-      // Error handled silently - user will see appropriate UI feedback
+      // Failed to update balance - could be logged to error reporting service
     }
   };
 
@@ -163,7 +163,7 @@ const AccountsPage = () => {
       setShowDeleteConfirm(false);
       setAccountToDelete(null);
     } catch (error) {
-      // Error handled silently - user will see appropriate UI feedback
+      // Failed to delete account - could be logged to error reporting service
     }
   };
 

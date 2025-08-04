@@ -12,6 +12,7 @@ import {
 import { parseStatement } from "../utils/statementParser";
 import geminiService from "../services/geminiService";
 import useStore from "../store";
+import MobileAccountAssignmentModal from "./MobileAccountAssignmentModal";
 
 const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   const { addTransactions, addNotification } = useStore();
@@ -31,6 +32,10 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   });
   const [progressAnimationId, setProgressAnimationId] = useState(null);
   const [displayProgress, setDisplayProgress] = useState(0);
+  const [showAccountAssignment, setShowAccountAssignment] = useState(false);
+  const [transactionsForAssignment, setTransactionsForAssignment] = useState(
+    []
+  );
 
   // Smooth progress animation system
   const animateProgress = useCallback(
@@ -289,8 +294,9 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         throw new Error("Please select at least one transaction to import.");
       }
 
-      await handleImportComplete(selectedTransactions);
-      resetState();
+      // Show account assignment modal instead of importing directly
+      setTransactionsForAssignment(selectedTransactions);
+      setShowAccountAssignment(true);
     } catch (error) {
       setError(
         error.message || "An error occurred while importing transactions."
@@ -304,8 +310,9 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         throw new Error("No transactions to import.");
       }
 
-      await handleImportComplete(parsedTransactions);
-      resetState();
+      // Show account assignment modal instead of importing directly
+      setTransactionsForAssignment(parsedTransactions);
+      setShowAccountAssignment(true);
     } catch (error) {
       setError(
         error.message || "An error occurred while importing transactions."
@@ -343,6 +350,17 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
     }
   };
 
+  const handleAccountAssignmentComplete = assignedTransactions => {
+    // Call the original handleImportComplete with the assigned transactions
+    handleImportComplete(assignedTransactions);
+    setShowAccountAssignment(false);
+    setTransactionsForAssignment([]);
+  };
+
+  const handleAccountAssignmentClose = () => {
+    setShowAccountAssignment(false);
+    setTransactionsForAssignment([]);
+  };
   const resetState = useCallback(() => {
     if (progressAnimationId) {
       cancelAnimationFrame(progressAnimationId);
@@ -783,6 +801,14 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         {currentStep === 2 && renderStep2()}
         {currentStep === 3 && renderStep3()}
       </div>
+
+      {/* Account Assignment Modal */}
+      <MobileAccountAssignmentModal
+        isOpen={showAccountAssignment}
+        onClose={handleAccountAssignmentClose}
+        transactions={transactionsForAssignment}
+        onComplete={handleAccountAssignmentComplete}
+      />
     </div>
   );
 };

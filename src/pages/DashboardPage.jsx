@@ -4,16 +4,22 @@ import {
   TrendingDown,
   DollarSign,
   CreditCard,
-  Plus,
   Upload,
   FileText,
+  Plus,
 } from "lucide-react";
 import useStore from "../store";
 import StatementImporter from "../components/StatementImporter";
 import MobileStatementImporter from "../components/MobileStatementImporter";
+import AddTransaction from "../components/AddTransaction";
 import { useMobileViewport } from "../hooks/useMobileViewport";
 
-const DashboardPage = ({ onPageChange }) => {
+const DashboardPage = ({
+  onPageChange,
+  triggerImport,
+  onImportClick,
+  isModalOnly = false,
+}) => {
   const {
     transactions,
     accounts,
@@ -22,7 +28,8 @@ const DashboardPage = ({ onPageChange }) => {
     loadAccounts,
   } = useStore();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-
+  const [isAddTransactionModalOpen, setIsAddTransactionModalOpen] =
+    useState(false);
   const [error, setError] = useState("");
 
   // Use mobile viewport handling
@@ -33,8 +40,23 @@ const DashboardPage = ({ onPageChange }) => {
     loadAccounts();
   }, [loadTransactions, loadAccounts]);
 
+  // Handle import trigger from floating action button
+  useEffect(() => {
+    if (triggerImport) {
+      setIsImportModalOpen(true);
+    }
+  }, [triggerImport]);
+
   const handleImportClick = () => {
-    setIsImportModalOpen(true);
+    if (onImportClick) {
+      onImportClick();
+    } else {
+      setIsImportModalOpen(true);
+    }
+  };
+
+  const handleAddTransactionClick = () => {
+    setIsAddTransactionModalOpen(true);
   };
 
   const handleImportComplete = async importedTransactions => {
@@ -119,8 +141,38 @@ const DashboardPage = ({ onPageChange }) => {
     </div>
   );
 
+  // If only rendering modals, return just the modals
+  if (isModalOnly) {
+    return (
+      <>
+        {!isMobile ? (
+          <>
+            <StatementImporter
+              isOpen={isImportModalOpen}
+              onClose={() => setIsImportModalOpen(false)}
+              onImportComplete={handleImportComplete}
+              onAccountAssignmentComplete={handleAccountAssignmentComplete}
+              isMobile={false}
+            />
+            <AddTransaction
+              isOpen={isAddTransactionModalOpen}
+              onClose={() => setIsAddTransactionModalOpen(false)}
+              isMobile={false}
+            />
+          </>
+        ) : (
+          <MobileStatementImporter
+            isOpen={isImportModalOpen}
+            onClose={() => setIsImportModalOpen(false)}
+            onImportComplete={handleImportComplete}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
-    <div className="p-4 lg:p-4 space-y-6">
+    <div className="pt-0 px-4 pb-4 lg:p-4 space-y-6">
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -194,13 +246,13 @@ const DashboardPage = ({ onPageChange }) => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Quick Actions
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <button
-            onClick={() => onPageChange("transactions")}
+            onClick={handleAddTransactionClick}
             className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
           >
             <Plus className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -209,7 +261,7 @@ const DashboardPage = ({ onPageChange }) => {
                 Add Transaction
               </p>
               <p className="text-sm text-blue-700 dark:text-blue-300">
-                Record a new transaction
+                Manually add a transaction
               </p>
             </div>
           </button>
@@ -277,22 +329,6 @@ const DashboardPage = ({ onPageChange }) => {
           </p>
         )}
       </div>
-
-      {/* Statement Importers */}
-      {!isMobile ? (
-        <StatementImporter
-          isOpen={isImportModalOpen}
-          onClose={() => setIsImportModalOpen(false)}
-          onImportComplete={handleImportComplete}
-          onAccountAssignmentComplete={handleAccountAssignmentComplete}
-        />
-      ) : (
-        <MobileStatementImporter
-          isOpen={isImportModalOpen}
-          onClose={() => setIsImportModalOpen(false)}
-          onImportComplete={handleImportComplete}
-        />
-      )}
     </div>
   );
 };
