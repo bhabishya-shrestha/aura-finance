@@ -120,17 +120,44 @@ const MobileAccountAssignmentModal = ({
     }
   }, []);
 
-    // Update transactions ref when transactions change
+  // Update transactions ref when transactions change
   useEffect(() => {
     transactionsRef.current = transactions;
   }, [transactions]);
+
+  // Sync store accounts with local accounts when store accounts change
+  useEffect(() => {
+    if (isOpen) {
+      const baseAccounts =
+        propAccounts.length > 0 ? propAccounts : storeAccounts;
+      setLocalAccounts(prev => {
+        // Merge store accounts with staged accounts (newly created accounts)
+        const stagedAccountIds = new Set(stagedAccounts.map(acc => acc.id));
+        const existingStagedAccounts = prev.filter(acc =>
+          stagedAccountIds.has(acc.id)
+        );
+        const newStoreAccounts = baseAccounts.filter(
+          acc => !stagedAccountIds.has(acc.id)
+        );
+
+        return [...existingStagedAccounts, ...newStoreAccounts];
+      });
+    }
+  }, [storeAccounts, propAccounts, isOpen, stagedAccounts]);
 
   // Initialize local state when modal opens
   useEffect(() => {
     if (isOpen && transactions.length > 0) {
       setLocalTransactions(transactions.map(t => ({ ...t, selected: true })));
-      setLocalAccounts(propAccounts.length > 0 ? propAccounts : storeAccounts);
-      
+
+      // Initialize localAccounts with store accounts if empty
+      setLocalAccounts(prev => {
+        if (prev.length === 0) {
+          return propAccounts.length > 0 ? propAccounts : storeAccounts;
+        }
+        return prev;
+      });
+
       // Generate AI suggestions only once when modal opens
       if (!hasGeneratedSuggestions.current) {
         generateAccountSuggestions();
@@ -140,7 +167,7 @@ const MobileAccountAssignmentModal = ({
       // Reset the flag when modal closes
       hasGeneratedSuggestions.current = false;
     }
-  }, [isOpen, transactions, propAccounts, storeAccounts]);
+  }, [isOpen, transactions]);
 
   // Handle account creation
   const handleCreateAccount = async () => {
