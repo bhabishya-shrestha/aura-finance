@@ -68,22 +68,6 @@ const MobileAccountAssignmentModal = ({
     default: DollarSign,
   };
 
-  // Initialize local state when modal opens
-  useEffect(() => {
-    if (isOpen && transactions.length > 0) {
-      setLocalTransactions(transactions.map(t => ({ ...t, selected: true })));
-      setLocalAccounts(propAccounts.length > 0 ? propAccounts : storeAccounts);
-      // Generate AI suggestions when modal opens
-      generateAccountSuggestions();
-    }
-  }, [
-    isOpen,
-    transactions,
-    propAccounts,
-    storeAccounts,
-    generateAccountSuggestions,
-  ]);
-
   // Generate account suggestions using AI
   const generateAccountSuggestions = useCallback(async () => {
     if (transactions.length === 0) return;
@@ -126,6 +110,22 @@ const MobileAccountAssignmentModal = ({
       setShowAISuggestions(true);
     }
   }, [transactions]);
+
+  // Initialize local state when modal opens
+  useEffect(() => {
+    if (isOpen && transactions.length > 0) {
+      setLocalTransactions(transactions.map(t => ({ ...t, selected: true })));
+      setLocalAccounts(propAccounts.length > 0 ? propAccounts : storeAccounts);
+      // Generate AI suggestions when modal opens
+      generateAccountSuggestions();
+    }
+  }, [
+    isOpen,
+    transactions,
+    propAccounts,
+    storeAccounts,
+    generateAccountSuggestions,
+  ]);
 
   // Handle account creation
   const handleCreateAccount = async () => {
