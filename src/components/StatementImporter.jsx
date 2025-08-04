@@ -327,7 +327,7 @@ const StatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         setIsProcessing(false);
       }
     },
-    [importOptions, applyImportOptionsToTransactions]
+    [importOptions, applyImportOptionsToTransactions, updateProgress]
   );
 
   const handleFileSelect = useCallback(

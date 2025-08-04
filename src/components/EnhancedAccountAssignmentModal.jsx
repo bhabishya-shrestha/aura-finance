@@ -457,7 +457,7 @@ const EnhancedAccountAssignmentModal = ({
     return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
   };
 
-  const handleCreateAccount = async () => {
+  const handleCreateAccount = useCallback(async () => {
     // Prevent duplicate submissions
     if (isSubmitting || isProcessing) {
       setSubmissionAttempts(prev => prev + 1);
@@ -513,7 +513,7 @@ const EnhancedAccountAssignmentModal = ({
       setIsProcessing(false);
       setIsSubmitting(false);
     }
-  };
+  }, [isSubmitting, isProcessing, newAccountData, selectedAccounts, localTransactions]);
 
   const assignGroupToAccount = accountId => {
     const updatedSelection = { ...selectedAccounts };
@@ -610,7 +610,7 @@ const EnhancedAccountAssignmentModal = ({
     setShowEditModal(true);
   };
 
-  const handleEditSuggestion = async editedSuggestion => {
+  const handleEditSuggestion = useCallback(async editedSuggestion => {
     // Prevent duplicate submissions
     if (isSubmitting || isProcessing) {
       setSubmissionAttempts(prev => prev + 1);
@@ -677,7 +677,7 @@ const EnhancedAccountAssignmentModal = ({
       setIsProcessing(false);
       setIsSubmitting(false);
     }
-  };
+  }, [isSubmitting, isProcessing, selectedAccounts, localTransactions]);
 
   // Debounced versions of account creation functions to prevent rapid clicking
   const debouncedCreateAccount = useCallback(

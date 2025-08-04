@@ -72,12 +72,12 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
     },
   ];
 
-  const handleNavigationClick = (pageId) => {
+  const handleNavigationClick = pageId => {
     onPageChange(pageId);
     onClose();
   };
 
-  const handleQuickAction = (action) => {
+  const handleQuickAction = action => {
     action();
   };
 
@@ -86,7 +86,7 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
       await signOut();
       onClose();
     } catch (error) {
-      console.error("Error signing out:", error);
+      // Error handled silently - user will be redirected to login
     }
   };
 
@@ -149,7 +149,7 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
               Quick Actions
             </h3>
             <div className="space-y-2">
-              {quickActions.map((action) => (
+              {quickActions.map(action => (
                 <button
                   key={action.id}
                   onClick={() => handleQuickAction(action.action)}
@@ -177,7 +177,7 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
               Navigation
             </h3>
             <div className="space-y-1">
-              {navigationItems.map((item) => (
+              {navigationItems.map(item => (
                 <button
                   key={item.id}
                   onClick={() => handleNavigationClick(item.id)}

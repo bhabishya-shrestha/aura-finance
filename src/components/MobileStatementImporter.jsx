@@ -266,7 +266,7 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         setIsProcessing(false);
       }
     },
-    [importOptions, applyImportOptionsToTransactions]
+    [importOptions, applyImportOptionsToTransactions, updateProgress]
   );
 
   const handleFileSelect = useCallback(
@@ -313,10 +313,10 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
     }
   };
 
-  const handleImportComplete = async (transactions) => {
+  const handleImportComplete = async transactions => {
     try {
       await addTransactions(transactions);
-      
+
       // Add success notification
       addNotification({
         title: "Import Successful",
@@ -325,24 +325,25 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         action: () => {
           // Could navigate to transactions page
           onClose();
-        }
+        },
       });
 
       onImportComplete(transactions);
       onClose();
     } catch (error) {
       setError("Failed to import transactions. Please try again.");
-      
+
       // Add error notification
       addNotification({
         title: "Import Failed",
-        message: "There was an error importing your transactions. Please try again.",
-        type: "error"
+        message:
+          "There was an error importing your transactions. Please try again.",
+        type: "error",
       });
     }
   };
 
-  const resetState = () => {
+  const resetState = useCallback(() => {
     if (progressAnimationId) {
       cancelAnimationFrame(progressAnimationId);
       setProgressAnimationId(null);
@@ -363,13 +364,13 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       allowFutureDates: false,
       autoDetectYear: true,
     });
-  };
+  }, [progressAnimationId]);
 
   useEffect(() => {
     if (!isOpen) {
       resetState();
     }
-  }, [isOpen]);
+  }, [isOpen, resetState]);
 
   useEffect(() => {
     return () => {
@@ -531,9 +532,7 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
             />
             <button
               type="button"
-              onClick={() =>
-                document.getElementById("file-upload").click()
-              }
+              onClick={() => document.getElementById("file-upload").click()}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
             >
               Choose File
@@ -668,17 +667,13 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
               <p className="text-green-600 dark:text-green-400 font-medium">
                 {processingSummary.transactionCount}
               </p>
-              <p className="text-green-700 dark:text-green-300">
-                Transactions
-              </p>
+              <p className="text-green-700 dark:text-green-300">Transactions</p>
             </div>
             <div>
               <p className="text-green-600 dark:text-green-400 font-medium">
                 {processingSummary.confidence}
               </p>
-              <p className="text-green-700 dark:text-green-300">
-                Confidence
-              </p>
+              <p className="text-green-700 dark:text-green-300">Confidence</p>
             </div>
           </div>
         </div>
@@ -736,9 +731,7 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
                   </div>
                   <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                     <span>{formatDate(transaction.date)}</span>
-                    <span className="capitalize">
-                      {transaction.category}
-                    </span>
+                    <span className="capitalize">{transaction.category}</span>
                   </div>
                 </div>
               </div>
@@ -751,13 +744,10 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       <div className="flex flex-col gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={handleImportSelected}
-          disabled={
-            parsedTransactions.filter(t => t.selected).length === 0
-          }
+          disabled={parsedTransactions.filter(t => t.selected).length === 0}
           className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
         >
-          Import Selected (
-          {parsedTransactions.filter(t => t.selected).length})
+          Import Selected ({parsedTransactions.filter(t => t.selected).length})
         </button>
         <button
           onClick={handleImportAll}
@@ -797,4 +787,4 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   );
 };
 
-export default MobileStatementImporter; 
+export default MobileStatementImporter;
