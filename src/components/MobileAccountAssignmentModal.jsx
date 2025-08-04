@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import {
   X,
   Plus,
@@ -43,6 +49,8 @@ const MobileAccountAssignmentModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState("overview"); // overview, create-account, edit-transaction
   const [showAISuggestions, setShowAISuggestions] = useState(false);
+  const hasGeneratedSuggestions = useRef(false);
+  const transactionsRef = useRef(transactions);
 
   // Account type icons mapping
   const accountTypeIcons = {
@@ -70,11 +78,12 @@ const MobileAccountAssignmentModal = ({
 
   // Generate account suggestions using AI
   const generateAccountSuggestions = useCallback(async () => {
-    if (transactions.length === 0) return;
+    const currentTransactions = transactionsRef.current;
+    if (currentTransactions.length === 0) return;
 
     try {
       // Analyze transactions to suggest accounts
-      const transactionTexts = transactions
+      const transactionTexts = currentTransactions
         .map(t => `${t.description} - ${t.amount} - ${t.category}`)
         .join("\n");
 
@@ -109,6 +118,11 @@ const MobileAccountAssignmentModal = ({
       setSuggestedAccounts(suggestions);
       setShowAISuggestions(true);
     }
+  }, []);
+
+    // Update transactions ref when transactions change
+  useEffect(() => {
+    transactionsRef.current = transactions;
   }, [transactions]);
 
   // Initialize local state when modal opens
@@ -116,16 +130,17 @@ const MobileAccountAssignmentModal = ({
     if (isOpen && transactions.length > 0) {
       setLocalTransactions(transactions.map(t => ({ ...t, selected: true })));
       setLocalAccounts(propAccounts.length > 0 ? propAccounts : storeAccounts);
-      // Generate AI suggestions when modal opens
-      generateAccountSuggestions();
+      
+      // Generate AI suggestions only once when modal opens
+      if (!hasGeneratedSuggestions.current) {
+        generateAccountSuggestions();
+        hasGeneratedSuggestions.current = true;
+      }
+    } else if (!isOpen) {
+      // Reset the flag when modal closes
+      hasGeneratedSuggestions.current = false;
     }
-  }, [
-    isOpen,
-    transactions,
-    propAccounts,
-    storeAccounts,
-    generateAccountSuggestions,
-  ]);
+  }, [isOpen, transactions, propAccounts, storeAccounts]);
 
   // Handle account creation
   const handleCreateAccount = async () => {
