@@ -769,7 +769,7 @@ const useStore = create(
       // Manually trigger device-specific update notification
       triggerUpdateNotification: () => {
         const isMobile = window.innerWidth <= 768;
-        
+
         if (isMobile) {
           set({
             lastUpdateNotification: {
@@ -781,14 +781,14 @@ const useStore = create(
                 "Improved mobile statement import process",
                 "Enhanced mobile layout for accounts and transactions",
                 "Professional mobile add account button design",
-                "Better mobile viewport handling and responsive design"
+                "Better mobile viewport handling and responsive design",
               ],
               bugFixes: [
                 "Fixed mobile browser compatibility issues",
                 "Resolved notification dropdown alignment on mobile",
                 "Fixed hamburger menu functionality",
                 "Improved icon centering in mobile header",
-                "Enhanced mobile scroll behavior and touch interactions"
+                "Enhanced mobile scroll behavior and touch interactions",
               ],
               read: false,
             },
@@ -804,13 +804,13 @@ const useStore = create(
                 "Professional transaction editing capabilities",
                 "Improved statement processing with better error handling",
                 "Enhanced account assignment modal with modern design",
-                "Better data visualization and chart improvements"
+                "Better data visualization and chart improvements",
               ],
               bugFixes: [
                 "Fixed analytics data display and chart rendering issues",
                 "Resolved transaction import and account assignment bugs",
                 "Improved overall app stability and performance",
-                "Fixed UI layout and responsive design issues"
+                "Fixed UI layout and responsive design issues",
               ],
               read: false,
             },

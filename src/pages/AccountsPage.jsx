@@ -177,7 +177,9 @@ const AccountsPage = () => {
       <div
         onClick={() => setSelectedAccount(isSelected ? null : account)}
         className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 cursor-pointer ${
-          isSelected ? "ring-2 ring-blue-500 shadow-lg" : "hover:shadow-md active:scale-95"
+          isSelected
+            ? "ring-2 ring-blue-500 shadow-lg"
+            : "hover:shadow-md active:scale-95"
         }`}
       >
         {/* Header */}
@@ -201,7 +203,7 @@ const AccountsPage = () => {
               </div>
             </div>
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 handleEditBalance(account.id, balance);
               }}
@@ -241,10 +243,10 @@ const AccountsPage = () => {
                         handleSaveBalance(account.id);
                       }
                     }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={e => e.stopPropagation()}
                   />
                   <button
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleSaveBalance(account.id);
                     }}
@@ -253,7 +255,7 @@ const AccountsPage = () => {
                     <Edit className="w-3 h-3" />
                   </button>
                   <button
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleCancelEdit();
                     }}
@@ -386,7 +388,7 @@ const AccountsPage = () => {
               </span>
             </div>
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 handleDeleteAccount(account);
               }}
@@ -437,7 +439,7 @@ const AccountsPage = () => {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   handleEditBalance(account.id, balance);
                 }}
@@ -478,10 +480,10 @@ const AccountsPage = () => {
                         handleSaveBalance(account.id);
                       }
                     }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={e => e.stopPropagation()}
                   />
                   <button
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleSaveBalance(account.id);
                     }}
@@ -490,7 +492,7 @@ const AccountsPage = () => {
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleCancelEdit();
                     }}
@@ -625,7 +627,7 @@ const AccountsPage = () => {
               </span>
             </div>
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 handleDeleteAccount(account);
               }}
@@ -674,7 +676,9 @@ const AccountsPage = () => {
           </div>
           <div className="text-left">
             <p className="font-semibold text-lg">Add New Account</p>
-            <p className="text-sm text-blue-100">Connect your bank or credit card</p>
+            <p className="text-sm text-blue-100">
+              Connect your bank or credit card
+            </p>
           </div>
         </button>
       </div>
@@ -807,7 +811,8 @@ const AccountsPage = () => {
               Delete Account
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to delete &quot;{accountToDelete?.name}&quot;? This action cannot be undone.
+              Are you sure you want to delete &quot;{accountToDelete?.name}
+              &quot;? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button

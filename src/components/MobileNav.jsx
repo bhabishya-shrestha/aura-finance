@@ -1,8 +1,5 @@
 import React, { useState } from "react";
-import {
-  Plus,
-  Upload,
-} from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 
 const MobileNav = () => {
   const [showQuickActions, setShowQuickActions] = useState(false);
@@ -26,7 +23,7 @@ const MobileNav = () => {
     },
   ];
 
-  const handleQuickAction = (action) => {
+  const handleQuickAction = action => {
     action();
   };
 
