@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, Menu, Sun, Moon, X, Check } from "lucide-react";
+import { Bell, Menu, Sun, Moon, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import useStore from "../store";
@@ -208,7 +208,7 @@ const Header = ({
                                 : "text-gray-900 dark:text-white"
                             }`}
                           >
-                            What's New in Aura Finance v
+                            What&apos;s New in Aura Finance v
                             {lastUpdateNotification.version}
                           </p>
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 space-y-1">

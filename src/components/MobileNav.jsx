@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Plus, Upload } from "lucide-react";
 import AddTransaction from "./AddTransaction";
 
-const MobileNav = ({ onPageChange, currentPage, onImportClick }) => {
+const MobileNav = ({ onImportClick }) => {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
 

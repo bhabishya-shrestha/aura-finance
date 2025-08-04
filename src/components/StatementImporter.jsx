@@ -337,7 +337,7 @@ const StatementImporter = ({
         setIsProcessing(false);
       }
     },
-    [importOptions, applyImportOptionsToTransactions]
+    [importOptions, applyImportOptionsToTransactions, updateProgress]
   );
 
   const handleFileSelect = useCallback(

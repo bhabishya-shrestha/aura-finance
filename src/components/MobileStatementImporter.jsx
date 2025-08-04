@@ -271,7 +271,7 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         setIsProcessing(false);
       }
     },
-    [importOptions, applyImportOptionsToTransactions]
+    [importOptions, applyImportOptionsToTransactions, updateProgress]
   );
 
   const handleFileSelect = useCallback(
@@ -362,7 +362,7 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
     setTransactionsForAssignment([]);
   };
 
-  const resetState = () => {
+  const resetState = useCallback(() => {
     if (progressAnimationId) {
       cancelAnimationFrame(progressAnimationId);
       setProgressAnimationId(null);
@@ -383,13 +383,13 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
       allowFutureDates: false,
       autoDetectYear: true,
     });
-  };
+  }, [progressAnimationId]);
 
   useEffect(() => {
     if (!isOpen) {
       resetState();
     }
-  }, [isOpen]);
+  }, [isOpen, resetState]);
 
   useEffect(() => {
     return () => {

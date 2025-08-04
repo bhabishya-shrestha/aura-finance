@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import {
   User,
   Home,
@@ -33,20 +33,23 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
     touchEndX.current = e.touches[0].clientX;
   };
 
-  const handleTouchEnd = e => {
-    // Only handle touch events on the sidebar container, not navigation items
-    if (e.target.closest("button")) {
-      return;
-    }
+  const handleTouchEnd = useCallback(
+    e => {
+      // Only handle touch events on the sidebar container, not navigation items
+      if (e.target.closest("button")) {
+        return;
+      }
 
-    const swipeDistance = touchStartX.current - touchEndX.current;
-    const minSwipeDistance = 100; // Minimum distance to trigger close
+      const swipeDistance = touchStartX.current - touchEndX.current;
+      const minSwipeDistance = 100; // Minimum distance to trigger close
 
-    // Only close if it's a clear swipe gesture
-    if (swipeDistance > minSwipeDistance) {
-      onClose();
-    }
-  };
+      // Only close if it's a clear swipe gesture
+      if (swipeDistance > minSwipeDistance) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   // Add touch event listeners when sidebar is open
   useEffect(() => {
@@ -70,7 +73,7 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
         });
       };
     }
-  }, [isOpen]);
+  }, [isOpen, handleTouchEnd]);
 
   const navigationItems = [
     {
@@ -128,7 +131,7 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
       await signOut();
       onClose();
     } catch (error) {
-      console.error("Error signing out:", error);
+      // Error signing out - could be logged to error reporting service
     }
   };
 

@@ -709,8 +709,8 @@ IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside t
       const responseText = data.candidates[0].content.parts[0].text;
       return responseText.trim();
     } catch (error) {
-      console.error("Error analyzing transactions:", error);
-      throw error;
+      // Error analyzing transactions - could be logged to error reporting service
+      throw new Error(`Failed to analyze transactions: ${error.message}`);
     }
   }
 }

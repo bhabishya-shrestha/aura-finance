@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Plus,
   X,
   DollarSign,
   Calendar,

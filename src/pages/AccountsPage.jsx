@@ -122,7 +122,7 @@ const AccountsPage = () => {
       setFormData({ name: "", type: "checking", balance: "" });
       setShowAddModal(false);
     } catch (error) {
-      console.error("Failed to add account:", error);
+      // Failed to add account - could be logged to error reporting service
     } finally {
       setIsLoading(false);
     }
@@ -141,7 +141,7 @@ const AccountsPage = () => {
       setEditingBalance(null);
       setNewBalance("");
     } catch (error) {
-      console.error("Failed to update balance:", error);
+      // Failed to update balance - could be logged to error reporting service
     }
   };
 
@@ -163,7 +163,7 @@ const AccountsPage = () => {
       setShowDeleteConfirm(false);
       setAccountToDelete(null);
     } catch (error) {
-      console.error("Failed to delete account:", error);
+      // Failed to delete account - could be logged to error reporting service
     }
   };
 
@@ -807,7 +807,7 @@ const AccountsPage = () => {
               Delete Account
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to delete "{accountToDelete?.name}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{accountToDelete?.name}&quot;? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button

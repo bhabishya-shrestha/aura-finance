@@ -167,7 +167,7 @@ const MobileAccountAssignmentModal = ({
       // Reset the flag when modal closes
       hasGeneratedSuggestions.current = false;
     }
-  }, [isOpen, transactions]);
+  }, [isOpen, transactions, generateAccountSuggestions, propAccounts, storeAccounts]);
 
   // Handle account creation
   const handleCreateAccount = async () => {
