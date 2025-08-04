@@ -12,6 +12,99 @@
   --warning: #f59e0b;
   --danger: #ef4444;
   --muted: #6b7280;
+
+  /* Mobile viewport height handling */
+  --vh: 1vh;
+  --mobile-header-height: 64px;
+  --mobile-safe-top: env(safe-area-inset-top, 0px);
+  --mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Mobile viewport height calculation */
+@supports (height: 100dvh) {
+  :root {
+    --vh: 1dvh;
+  }
+}
+
+/* Mobile-specific height classes */
+.mobile-h-screen {
+  height: calc(var(--vh, 1vh) * 100);
+}
+
+.mobile-h-full {
+  height: calc(var(--vh, 1vh) * 100 - var(--mobile-header-height));
+}
+
+.mobile-h-content {
+  height: calc(
+    var(--vh, 1vh) * 100 - var(--mobile-header-height) -
+      var(--mobile-safe-top) - var(--mobile-safe-bottom)
+  );
+}
+
+/* Mobile layout container */
+.mobile-layout {
+  height: calc(var(--vh, 1vh) * 100);
+  overflow: hidden;
+}
+
+.mobile-content {
+  height: calc(var(--vh, 1vh) * 100 - var(--mobile-header-height));
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Mobile scrollbar fixes */
+.mobile-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mobile-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mobile-content::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 2px;
+}
+
+.mobile-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+/* Dark mode scrollbar */
+.dark .mobile-content::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.3);
+}
+
+.dark .mobile-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.5);
+}
+
+/* Mobile safe area handling */
+.mobile-safe-top {
+  padding-top: var(--mobile-safe-top);
+}
+
+.mobile-safe-bottom {
+  padding-bottom: var(--mobile-safe-bottom);
+}
+
+/* Mobile header positioning */
+.mobile-header {
+  height: var(--mobile-header-height);
+  padding-top: var(--mobile-safe-top);
+  min-height: 64px;
+}
+
+/* Mobile navigation positioning */
+/* Mobile floating action button */
+.mobile-fab {
+  bottom: 24px;
+  right: 16px;
 }
 
 /* Smooth Animations */
@@ -275,6 +368,283 @@ body.sidebar-open {
   * {
     -webkit-tap-highlight-color: transparent;
   }
+
+  /* Enhanced touch feedback */
+  button:active,
+  a:active,
+  [role="button"]:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
+
+  /* Smooth transitions for mobile */
+  .mobile-transition {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Better mobile shadows */
+  .mobile-shadow {
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Mobile-specific spacing */
+  .mobile-padding {
+    padding: 1rem;
+  }
+
+  .mobile-margin {
+    margin: 1rem;
+  }
+
+  /* Better mobile typography */
+  .mobile-text {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .mobile-text-lg {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /* Mobile-specific animations */
+  @keyframes mobile-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .mobile-fade-in {
+    animation: mobile-fade-in 0.3s ease-out;
+  }
+
+  /* Better mobile modals */
+  .mobile-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    z-index: 50;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Mobile-specific grid layouts */
+  .mobile-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .mobile-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  /* Better mobile cards */
+  .mobile-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow:
+      0 1px 3px 0 rgba(0, 0, 0, 0.1),
+      0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  /* Mobile-specific buttons */
+  .mobile-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    min-height: 44px;
+    transition: all 0.2s ease;
+  }
+
+  .mobile-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* Better mobile form elements */
+  .mobile-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 16px;
+    background: white;
+  }
+
+  .mobile-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Mobile-specific navigation */
+  .mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 40;
+  }
+
+  /* Better mobile lists */
+  .mobile-list {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .mobile-list-item {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s ease;
+  }
+
+  .mobile-list-item:last-child {
+    border-bottom: none;
+  }
+
+  .mobile-list-item:active {
+    background-color: #f9fafb;
+  }
+
+  /* Mobile-specific loading states */
+  .mobile-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .mobile-loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  /* Better mobile empty states */
+  .mobile-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    text-align: center;
+  }
+
+  .mobile-empty-icon {
+    width: 48px;
+    height: 48px;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+  }
+
+  /* Mobile-specific tooltips */
+  .mobile-tooltip {
+    position: relative;
+  }
+
+  .mobile-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .mobile-tooltip:active::after {
+    opacity: 1;
+  }
+
+  /* Better mobile gestures */
+  .mobile-swipeable {
+    touch-action: pan-y;
+  }
+
+  .mobile-swipeable-horizontal {
+    touch-action: pan-x;
+  }
+
+  /* Mobile-specific focus states */
+  .mobile-focus:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  /* Better mobile accessibility */
+  .mobile-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Mobile-specific dark mode improvements */
+  .dark .mobile-card {
+    background: #1f2937;
+    box-shadow:
+      0 1px 3px 0 rgba(0, 0, 0, 0.3),
+      0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .mobile-input {
+    background: #374151;
+    border-color: #4b5563;
+    color: white;
+  }
+
+  .dark .mobile-list {
+    background: #1f2937;
+  }
+
+  .dark .mobile-list-item {
+    border-bottom-color: #374151;
+  }
+
+  .dark .mobile-list-item:active {
+    background-color: #374151;
+  }
+
+  .dark .mobile-nav {
+    background: #1f2937;
+    border-top-color: #374151;
+  }
 }
 
 @layer base {
@@ -323,47 +693,411 @@ body.sidebar-open {
 
   /* Mobile-specific improvements */
   @media (max-width: 768px) {
-    /* Improve touch targets */
-    button,
-    a,
-    [role="button"] {
-      min-height: 44px;
-      min-width: 44px;
+    /* Better mobile typography */
+    h1 {
+      font-size: 1.5rem;
+      line-height: 2rem;
     }
 
-    /* Better scrolling on mobile */
-    .overflow-auto,
-    .overflow-scroll {
-      -webkit-overflow-scrolling: touch;
-      scroll-behavior: smooth;
+    h2 {
+      font-size: 1.25rem;
+      line-height: 1.75rem;
     }
 
-    /* Hide scrollbar on mobile for cleaner look */
-    .scrollbar-hide {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
+    h3 {
+      font-size: 1.125rem;
+      line-height: 1.75rem;
     }
 
-    .scrollbar-hide::-webkit-scrollbar {
-      display: none;
+    /* Better mobile spacing */
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
     }
 
-    /* Prevent zoom on input focus */
+    /* Better mobile forms */
     input,
     select,
     textarea {
-      font-size: 16px;
+      font-size: 16px !important;
     }
 
-    /* Better tap highlights */
-    * {
-      -webkit-tap-highlight-color: transparent;
+    /* Better mobile buttons */
+    .btn {
+      min-height: 44px;
+      padding: 0.75rem 1rem;
     }
 
-    /* Improve text rendering on mobile */
-    body {
-      -webkit-text-size-adjust: 100%;
-      -ms-text-size-adjust: 100%;
+    /* Better mobile cards */
+    .card {
+      border-radius: 12px;
+      box-shadow:
+        0 1px 3px 0 rgba(0, 0, 0, 0.1),
+        0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    /* Better mobile modals */
+    .modal {
+      border-radius: 12px;
+      margin: 1rem;
+    }
+
+    /* Better mobile navigation */
+    .nav-item {
+      min-height: 44px;
+      padding: 0.75rem 1rem;
+    }
+
+    /* Better mobile tables */
+    .table {
+      font-size: 14px;
+    }
+
+    .table th,
+    .table td {
+      padding: 0.5rem;
+    }
+
+    /* Better mobile alerts */
+    .alert {
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    /* Better mobile badges */
+    .badge {
+      font-size: 12px;
+      padding: 0.25rem 0.5rem;
+    }
+
+    /* Better mobile tooltips */
+    .tooltip {
+      font-size: 12px;
+      padding: 0.5rem;
+    }
+
+    /* Better mobile dropdowns */
+    .dropdown {
+      border-radius: 8px;
+      box-shadow:
+        0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Better mobile tabs */
+    .tab {
+      min-height: 44px;
+      padding: 0.75rem 1rem;
+    }
+
+    /* Better mobile breadcrumbs */
+    .breadcrumb {
+      font-size: 14px;
+    }
+
+    /* Better mobile pagination */
+    .pagination {
+      gap: 0.25rem;
+    }
+
+    .pagination-item {
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    /* Better mobile progress bars */
+    .progress {
+      height: 8px;
+      border-radius: 4px;
+    }
+
+    /* Better mobile spinners */
+    .spinner {
+      width: 24px;
+      height: 24px;
+    }
+
+    /* Better mobile avatars */
+    .avatar {
+      width: 40px;
+      height: 40px;
+    }
+
+    /* Better mobile icons */
+    .icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Better mobile dividers */
+    .divider {
+      margin: 1rem 0;
+    }
+
+    /* Better mobile lists */
+    .list {
+      border-radius: 8px;
+    }
+
+    .list-item {
+      padding: 1rem;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .list-item:last-child {
+      border-bottom: none;
+    }
+
+    /* Better mobile accordions */
+    .accordion {
+      border-radius: 8px;
+    }
+
+    .accordion-item {
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .accordion-header {
+      padding: 1rem;
+      min-height: 44px;
+    }
+
+    .accordion-content {
+      padding: 1rem;
+    }
+
+    /* Better mobile carousels */
+    .carousel {
+      border-radius: 8px;
+    }
+
+    .carousel-item {
+      padding: 1rem;
+    }
+
+    /* Better mobile sliders */
+    .slider {
+      padding: 1rem 0;
+    }
+
+    .slider-track {
+      height: 4px;
+      border-radius: 2px;
+    }
+
+    .slider-thumb {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Better mobile switches */
+    .switch {
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch-thumb {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Better mobile checkboxes */
+    .checkbox {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Better mobile radio buttons */
+    .radio {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Better mobile select */
+    .select {
+      min-height: 44px;
+      padding: 0.75rem;
+    }
+
+    /* Better mobile textarea */
+    .textarea {
+      min-height: 100px;
+      padding: 0.75rem;
+    }
+
+    /* Better mobile file inputs */
+    .file-input {
+      min-height: 44px;
+      padding: 0.75rem;
+    }
+
+    /* Better mobile search */
+    .search {
+      min-height: 44px;
+      padding: 0.75rem;
+    }
+
+    /* Better mobile filters */
+    .filter {
+      padding: 0.75rem;
+      border-radius: 8px;
+    }
+
+    /* Better mobile sort */
+    .sort {
+      padding: 0.75rem;
+      border-radius: 8px;
+    }
+
+    /* Better mobile actions */
+    .action {
+      min-height: 44px;
+      padding: 0.75rem;
+    }
+
+    /* Better mobile status */
+    .status {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    /* Better mobile notifications */
+    .notification {
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 0.5rem;
+    }
+
+    /* Better mobile toasts */
+    .toast {
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 0.5rem;
+    }
+
+    /* Better mobile popovers */
+    .popover {
+      border-radius: 8px;
+      box-shadow:
+        0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Better mobile menus */
+    .menu {
+      border-radius: 8px;
+      box-shadow:
+        0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .menu-item {
+      padding: 0.75rem 1rem;
+      min-height: 44px;
+    }
+
+    /* Better mobile sidebars */
+    .sidebar {
+      border-radius: 0 12px 12px 0;
+    }
+
+    /* Better mobile headers */
+    .header {
+      padding: 1rem;
+      min-height: 60px;
+    }
+
+    /* Better mobile footers */
+    .footer {
+      padding: 1rem;
+    }
+
+    /* Better mobile main content */
+    .main {
+      padding: 1rem;
+    }
+
+    /* Better mobile sections */
+    .section {
+      margin: 1rem 0;
+    }
+
+    /* Better mobile containers */
+    .container {
+      padding: 1rem;
+    }
+
+    /* Better mobile grids */
+    .grid {
+      gap: 1rem;
+    }
+
+    /* Better mobile flexbox */
+    .flex {
+      gap: 0.5rem;
+    }
+
+    /* Better mobile spacing */
+    .space-y > * + * {
+      margin-top: 1rem;
+    }
+
+    .space-x > * + * {
+      margin-left: 1rem;
+    }
+
+    /* Better mobile borders */
+    .border {
+      border-width: 1px;
+    }
+
+    /* Better mobile shadows */
+    .shadow {
+      box-shadow:
+        0 1px 3px 0 rgba(0, 0, 0, 0.1),
+        0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    .shadow-lg {
+      box-shadow:
+        0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Better mobile transitions */
+    .transition {
+      transition-duration: 200ms;
+    }
+
+    /* Better mobile animations */
+    .animate {
+      animation-duration: 200ms;
+    }
+
+    /* Better mobile transforms */
+    .transform {
+      transform: scale(0.95);
+    }
+
+    /* Better mobile filters */
+    .filter {
+      backdrop-filter: blur(8px);
+    }
+
+    /* Better mobile gradients */
+    .gradient {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    /* Better mobile patterns */
+    .pattern {
+      background-image: radial-gradient(
+        circle at 1px 1px,
+        rgba(0, 0, 0, 0.1) 1px,
+        transparent 0
+      );
+      background-size: 20px 20px;
     }
   }
 

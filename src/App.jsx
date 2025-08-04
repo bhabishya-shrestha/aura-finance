@@ -20,10 +20,12 @@ import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import MobileHeader from "./components/MobileHeader";
 import MobileSidebar from "./components/MobileSidebar";
+import MobileNav from "./components/MobileNav";
 import ErrorBoundary from "./components/ErrorBoundary";
 import LoadingSpinner from "./components/LoadingSpinner";
 import { initializeDatabase } from "./database";
 import useStore from "./store";
+import { useMobileViewport } from "./hooks/useMobileViewport";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -56,8 +58,84 @@ const AppLayout = () => {
     return savedPage || "dashboard";
   });
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const { loadTransactions, loadAccounts } = useStore();
+  const {
+    loadTransactions,
+    loadAccounts,
+    setUpdateNotification,
+    lastUpdateNotification,
+  } = useStore();
   const isInitialized = useRef(false);
+  const { isMobile, updateViewportHeight } = useMobileViewport();
+
+  // Initialize update notification on first load
+  useEffect(() => {
+    // Only set update notification if it doesn't exist AND we want to show it
+    // For now, we'll disable automatic update notifications to prevent persistent banners
+    // if (!lastUpdateNotification) {
+    //   setUpdateNotification({
+    //     version: "1.3.0",
+    //     features: [
+    //       "Enhanced document import with AI analysis",
+    //       "Improved analytics and data visualization",
+    //       "Better duplicate transaction detection",
+    //       "Enhanced statement parsing support",
+    //       "Streamlined account assignment workflow",
+    //       "Improved error handling and user feedback"
+    //     ],
+    //     bugFixes: [
+    //       "Fixed various UI layout and responsive design issues",
+    //       "Resolved transaction import and processing bugs",
+    //       "Improved overall app stability and performance"
+    //     ],
+    //   });
+    // }
+  }, [lastUpdateNotification, setUpdateNotification]);
+
+  // Device-specific update notifications - REMOVED: Should only show when user explicitly requests
+  // useEffect(() => {
+  //   if (!lastUpdateNotification) {
+  //     const isMobile = window.innerWidth <= 768;
+  //
+  //     if (isMobile) {
+  //       setUpdateNotification({
+  //         version: "1.3.0",
+  //         features: [
+  //           "Enhanced mobile navigation with improved sidebar design",
+  //           "Better mobile header with proper notification indicators",
+  //           "Improved mobile statement import process",
+  //           "Enhanced mobile layout for accounts and transactions",
+  //           "Professional mobile add account button design",
+  //           "Better mobile viewport handling and responsive design",
+  //         ],
+  //         bugFixes: [
+  //           "Fixed mobile browser compatibility issues",
+  //           "Resolved notification dropdown alignment on mobile",
+  //           "Fixed hamburger menu functionality",
+  //           "Improved icon centering in mobile header",
+  //           "Enhanced mobile scroll behavior and touch interactions",
+  //         ],
+  //       });
+  //     } else {
+  //       setUpdateNotification({
+  //         version: "1.3.0",
+  //         features: [
+  //           "Completely redesigned Analytics page",
+  //           "Enhanced AI-powered account detection and assignment",
+  //           "Professional transaction editing capabilities",
+  //           "Improved statement processing with better error handling",
+  //           "Enhanced account assignment modal with modern design",
+  //           "Better data visualization and chart improvements",
+  //         ],
+  //         bugFixes: [
+  //           "Fixed analytics data display and chart rendering issues",
+  //           "Resolved transaction import and account assignment bugs",
+  //           "Improved overall app stability and performance",
+  //           "Fixed UI layout and responsive design issues",
+  //         ],
+  //       });
+  //     }
+  //   }
+  // }, [lastUpdateNotification, setUpdateNotification]);
 
   useEffect(() => {
     // Only initialize once
@@ -71,7 +149,16 @@ const AppLayout = () => {
     loadAccounts();
 
     isInitialized.current = true;
-  }, [loadTransactions, loadAccounts]); // Include dependencies
+  }, [loadTransactions, loadAccounts]);
+
+  // Update viewport height when page changes or mobile state changes
+  useEffect(() => {
+    if (isMobile) {
+      setTimeout(() => {
+        updateViewportHeight();
+      }, 100);
+    }
+  }, [currentPage, isMobile, updateViewportHeight]);
 
   // Save current page to localStorage whenever it changes
   useEffect(() => {
@@ -87,7 +174,9 @@ const AppLayout = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
+    <div
+      className={`${isMobile ? "mobile-layout" : "flex h-screen"} bg-gray-50 dark:bg-gray-900 overflow-hidden`}
+    >
       {/* Sidebar - Hidden on mobile */}
       <div className="hidden lg:block">
         <Sidebar
@@ -118,15 +207,17 @@ const AppLayout = () => {
         </div>
 
         {/* Mobile Header */}
-        <MobileHeader
-          onMenuToggle={toggleMobileSidebar}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-          onCloseMobileSidebar={closeMobileSidebar}
-        />
+        <div className="lg:hidden">
+          <MobileHeader
+            onMenuClick={toggleMobileSidebar}
+            onPageChange={setCurrentPage}
+          />
+        </div>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto lg:pb-0 pt-14 lg:pt-0">
+        <main
+          className={`flex-1 overflow-auto ${isMobile ? "mobile-content pt-0" : "lg:pb-0 pt-14 lg:pt-0"}`}
+        >
           <div className="w-full h-full">
             {currentPage === "dashboard" && (
               <DashboardPage onPageChange={setCurrentPage} />
@@ -140,6 +231,9 @@ const AppLayout = () => {
             )}
           </div>
         </main>
+
+        {/* Mobile Quick Actions (Floating Action Button) */}
+        <MobileNav onPageChange={setCurrentPage} currentPage={currentPage} />
       </div>
     </div>
   );
@@ -211,6 +305,22 @@ const AppContent = () => {
       />
       <Route
         path="/analytics"
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/transactions"
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports"
         element={
           <ProtectedRoute>
             <AppLayout />
