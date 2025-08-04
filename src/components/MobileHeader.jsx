@@ -97,13 +97,6 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
         <Menu className="w-6 h-6 text-gray-600 dark:text-gray-400" />
       </button>
 
-      {/* App Title */}
-      <div className="flex-1 text-center">
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Aura Finance
-        </h1>
-      </div>
-
       {/* Right Side Actions */}
       <div className="flex items-center gap-2">
         {/* Notifications */}

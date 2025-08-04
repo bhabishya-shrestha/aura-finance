@@ -15,7 +15,7 @@ import StatementImporter from "../components/StatementImporter";
 import MobileStatementImporter from "../components/MobileStatementImporter";
 import { useMobileViewport } from "../hooks/useMobileViewport";
 
-const DashboardPage = ({ onPageChange }) => {
+const DashboardPage = ({ onPageChange, triggerImport }) => {
   const {
     transactions,
     accounts,
@@ -34,6 +34,13 @@ const DashboardPage = ({ onPageChange }) => {
     loadTransactions();
     loadAccounts();
   }, [loadTransactions, loadAccounts]);
+
+  // Handle import trigger from floating action button
+  useEffect(() => {
+    if (triggerImport) {
+      setIsImportModalOpen(true);
+    }
+  }, [triggerImport]);
 
   const handleImportClick = () => {
     setIsImportModalOpen(true);
@@ -122,7 +129,7 @@ const DashboardPage = ({ onPageChange }) => {
   );
 
   return (
-    <div className="p-4 lg:p-4 space-y-6">
+    <div className="pt-0 px-4 pb-4 lg:p-4 space-y-6">
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -196,7 +203,7 @@ const DashboardPage = ({ onPageChange }) => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Quick Actions
         </h2>

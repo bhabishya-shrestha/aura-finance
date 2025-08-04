@@ -52,12 +52,9 @@ const ProtectedRoute = ({ children }) => {
 
 // Main App Layout Component
 const AppLayout = () => {
-  const [currentPage, setCurrentPage] = useState(() => {
-    // Get the current page from localStorage or default to dashboard
-    const savedPage = localStorage.getItem("aura-finance-currentPage");
-    return savedPage || "dashboard";
-  });
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState("dashboard");
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [triggerImport, setTriggerImport] = useState(false);
   const {
     loadTransactions,
     loadAccounts,
@@ -166,37 +163,47 @@ const AppLayout = () => {
   }, [currentPage]);
 
   const toggleMobileSidebar = () => {
-    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+    setShowMobileSidebar(!showMobileSidebar);
   };
 
   const closeMobileSidebar = () => {
-    setIsMobileSidebarOpen(false);
+    setShowMobileSidebar(false);
+  };
+
+  const handleImportClick = () => {
+    // Navigate to dashboard and trigger import modal
+    setCurrentPage("dashboard");
+    setTriggerImport(true);
+    // Reset trigger after a short delay
+    setTimeout(() => setTriggerImport(false), 100);
   };
 
   return (
     <div
-      className={`${isMobile ? "mobile-layout" : "flex h-screen"} bg-gray-50 dark:bg-gray-900 overflow-hidden`}
+      className={`${isMobile ? "mobile-layout" : "flex h-screen"} bg-gray-50 dark:bg-gray-900 ${isMobile ? "" : "overflow-hidden"}`}
     >
       {/* Sidebar - Hidden on mobile */}
       <div className="hidden lg:block">
         <Sidebar
           onPageChange={setCurrentPage}
           currentPage={currentPage}
-          isMobileOpen={isMobileSidebarOpen}
+          isMobileOpen={showMobileSidebar}
           onMobileToggle={toggleMobileSidebar}
         />
       </div>
 
       {/* Mobile Sidebar */}
       <MobileSidebar
-        isOpen={isMobileSidebarOpen}
+        isOpen={showMobileSidebar}
         onClose={closeMobileSidebar}
         currentPage={currentPage}
         onPageChange={setCurrentPage}
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div
+        className={`${isMobile ? "mobile-layout" : "flex-1 flex flex-col min-w-0"}`}
+      >
         {/* Header - Desktop only */}
         <div className="hidden lg:block">
           <Header
@@ -216,11 +223,14 @@ const AppLayout = () => {
 
         {/* Page Content */}
         <main
-          className={`flex-1 overflow-auto ${isMobile ? "mobile-content pt-0" : "lg:pb-0 pt-14 lg:pt-0"}`}
+          className={`${isMobile ? "mobile-content" : "flex-1 overflow-auto lg:pb-0 pt-14 lg:pt-0"}`}
         >
           <div className="w-full h-full">
             {currentPage === "dashboard" && (
-              <DashboardPage onPageChange={setCurrentPage} />
+              <DashboardPage
+                onPageChange={setCurrentPage}
+                triggerImport={triggerImport}
+              />
             )}
             {currentPage === "accounts" && <AccountsPage />}
             {currentPage === "analytics" && <AnalyticsPage />}
@@ -232,8 +242,14 @@ const AppLayout = () => {
           </div>
         </main>
 
-        {/* Mobile Quick Actions (Floating Action Button) */}
-        <MobileNav onPageChange={setCurrentPage} currentPage={currentPage} />
+        {/* Mobile Quick Actions (Floating Action Button) - Hidden on Settings */}
+        {currentPage !== "settings" && (
+          <MobileNav
+            onPageChange={setCurrentPage}
+            currentPage={currentPage}
+            onImportClick={handleImportClick}
+          />
+        )}
       </div>
     </div>
   );

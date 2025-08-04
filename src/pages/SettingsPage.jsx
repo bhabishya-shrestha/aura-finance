@@ -24,7 +24,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import useStore from "../store";
 
-const SettingsPage = ({ onPageChange }) => {
+const SettingsPage = () => {
   const {
     settings,
     updateSetting,
@@ -43,7 +43,7 @@ const SettingsPage = ({ onPageChange }) => {
     triggerUpdateNotification,
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState("general");
+  const [activeTab, setActiveTab] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [isNotificationVisible, setIsNotificationVisible] = useState(false);
@@ -222,8 +222,23 @@ const SettingsPage = ({ onPageChange }) => {
         return (
           <button
             key={section.id}
-            onClick={() => setActiveTab(section.id)}
-            className={`w-full flex items-center gap-3 px-4 py-4 rounded-lg text-left transition-all duration-200 ${
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (typeof e.stopImmediatePropagation === "function") {
+                e.stopImmediatePropagation();
+              }
+              setActiveTab(section.id);
+            }}
+            onTouchEnd={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (typeof e.stopImmediatePropagation === "function") {
+                e.stopImmediatePropagation();
+              }
+              setActiveTab(section.id);
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 relative z-10 ${
               activeTab === section.id
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
                 : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -253,96 +268,152 @@ const SettingsPage = ({ onPageChange }) => {
     switch (activeTab) {
       case "general":
         return (
-          <div className="p-6">
-            {/* Header */}
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                General Settings
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Configure your basic preferences and regional settings
-              </p>
-            </div>
-
-            {/* Settings */}
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Currency
-                </label>
-                <select
-                  value={settings.currency || "USD"}
-                  onChange={e => updateSetting("currency", e.target.value)}
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+          <div className="space-y-8 p-4">
+            {/* Professional Mobile Header */}
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4 -mx-4 -mt-4 mb-6 lg:hidden">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActiveTab(null);
+                  }}
+                  onTouchEnd={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActiveTab(null);
+                  }}
+                  className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative z-10"
                 >
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="GBP">GBP (£)</option>
-                  <option value="CAD">CAD (C$)</option>
-                  <option value="AUD">AUD (A$)</option>
-                  <option value="JPY">JPY (¥)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Date Format
-                </label>
-                <select
-                  value={settings.dateFormat || "MM/DD/YYYY"}
-                  onChange={e => updateSetting("dateFormat", e.target.value)}
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                >
-                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                  <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Language
-                </label>
-                <select
-                  value={settings.language || "en"}
-                  onChange={e => updateSetting("language", e.target.value)}
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                >
-                  <option value="en">English</option>
-                  <option value="es">Español</option>
-                  <option value="fr">Français</option>
-                  <option value="de">Deutsch</option>
-                  <option value="it">Italiano</option>
-                  <option value="pt">Português</option>
-                </select>
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    General Settings
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Configure your basic preferences and regional settings
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Save Button */}
-            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={handleSaveSettings}
-                disabled={isSaving}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-              >
-                <Save className="w-4 h-4" />
-                {isSaving ? "Saving..." : "Save Changes"}
-              </button>
+            {/* General Settings Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-blue-600" />
+                  Basic Preferences
+                </h3>
+              </div>
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Currency
+                  </label>
+                  <select
+                    value={settings.currency || "USD"}
+                    onChange={e => updateSetting("currency", e.target.value)}
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="CAD">CAD (C$)</option>
+                    <option value="AUD">AUD (A$)</option>
+                    <option value="JPY">JPY (¥)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Date Format
+                  </label>
+                  <select
+                    value={settings.dateFormat || "MM/DD/YYYY"}
+                    onChange={e => updateSetting("dateFormat", e.target.value)}
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  >
+                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Language
+                  </label>
+                  <select
+                    value={settings.language || "en"}
+                    onChange={e => updateSetting("language", e.target.value)}
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  >
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                    <option value="it">Italiano</option>
+                    <option value="pt">Português</option>
+                  </select>
+                </div>
+
+                {/* Save Button */}
+                <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={handleSaveSettings}
+                    disabled={isSaving}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  >
+                    <Save className="w-4 h-4" />
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         );
 
       case "profile":
         return (
-          <div className="p-6 space-y-8">
-            {/* Header */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Profile Settings
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Manage your personal information and account details
-              </p>
+          <div className="space-y-8 p-4">
+            {/* Professional Mobile Header */}
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4 -mx-4 -mt-4 mb-6 lg:hidden">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === "function") {
+                      e.stopImmediatePropagation();
+                    }
+                    setTimeout(() => {
+                      setActiveTab("general");
+                    }, 50);
+                  }}
+                  onTouchEnd={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === "function") {
+                      e.stopImmediatePropagation();
+                    }
+                    setTimeout(() => {
+                      setActiveTab("general");
+                    }, 50);
+                  }}
+                  className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative z-20"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Profile Settings
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Manage your personal information and account details
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Account Information */}
@@ -425,20 +496,61 @@ const SettingsPage = ({ onPageChange }) => {
                 </div>
               </div>
             </div>
+
+            {/* Save Button */}
+            <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={handleSaveSettings}
+                disabled={isSaving}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                <Save className="w-4 h-4" />
+                {isSaving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
           </div>
         );
 
       case "security":
         return (
-          <div className="p-6 space-y-8">
-            {/* Header */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Security Settings
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Manage your account security and privacy preferences
-              </p>
+          <div className="space-y-8 p-4">
+            {/* Professional Mobile Header */}
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4 -mx-4 -mt-4 mb-6 lg:hidden">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === "function") {
+                      e.stopImmediatePropagation();
+                    }
+                    setTimeout(() => {
+                      setActiveTab("general");
+                    }, 50);
+                  }}
+                  onTouchEnd={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === "function") {
+                      e.stopImmediatePropagation();
+                    }
+                    setTimeout(() => {
+                      setActiveTab("general");
+                    }, 50);
+                  }}
+                  className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative z-20"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Security Settings
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Manage your account security and privacy preferences
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Account Security */}
@@ -518,15 +630,44 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "appearance":
         return (
-          <div className="p-6">
-            {/* Header */}
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Appearance Settings
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Customize the look and feel of your application
-              </p>
+          <div className="p-4">
+            {/* Professional Mobile Header */}
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4 -mx-4 -mt-4 mb-6 lg:hidden">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === "function") {
+                      e.stopImmediatePropagation();
+                    }
+                    setTimeout(() => {
+                      setActiveTab("general");
+                    }, 50);
+                  }}
+                  onTouchEnd={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === "function") {
+                      e.stopImmediatePropagation();
+                    }
+                    setTimeout(() => {
+                      setActiveTab("general");
+                    }, 50);
+                  }}
+                  className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative z-20"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Appearance Settings
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Customize the look and feel of your application
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Theme Selection */}
@@ -589,15 +730,44 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "notifications":
         return (
-          <div className="p-6">
-            {/* Header */}
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Notification Settings
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Manage your notification preferences and view app updates
-              </p>
+          <div className="p-4">
+            {/* Professional Mobile Header */}
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4 -mx-4 -mt-4 mb-6 lg:hidden">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === "function") {
+                      e.stopImmediatePropagation();
+                    }
+                    setTimeout(() => {
+                      setActiveTab("general");
+                    }, 50);
+                  }}
+                  onTouchEnd={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === "function") {
+                      e.stopImmediatePropagation();
+                    }
+                    setTimeout(() => {
+                      setActiveTab("general");
+                    }, 50);
+                  }}
+                  className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative z-20"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Notification Settings
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Manage your notification preferences and view app updates
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Settings */}
@@ -623,15 +793,44 @@ const SettingsPage = ({ onPageChange }) => {
 
       case "data":
         return (
-          <div className="p-6 space-y-8">
-            {/* Header */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Data Management
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Export, import, and manage your data
-              </p>
+          <div className="space-y-8 p-4">
+            {/* Professional Mobile Header */}
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4 -mx-4 -mt-4 mb-6 lg:hidden">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === "function") {
+                      e.stopImmediatePropagation();
+                    }
+                    setTimeout(() => {
+                      setActiveTab("general");
+                    }, 50);
+                  }}
+                  onTouchEnd={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === "function") {
+                      e.stopImmediatePropagation();
+                    }
+                    setTimeout(() => {
+                      setActiveTab("general");
+                    }, 50);
+                  }}
+                  className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative z-20"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Data Management
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Export, import, and manage your data
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Data Summary */}
@@ -775,68 +974,14 @@ const SettingsPage = ({ onPageChange }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Mobile Header */}
-      <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                if (activeTab === "general") {
-                  // If we're on general settings, go back to previous page
-                  onPageChange && onPageChange("dashboard");
-                } else {
-                  // If we're in a sub-section, go back to general settings
-                  setActiveTab("general");
-                }
-              }}
-              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Settings
-            </h1>
-          </div>
-        </div>
-      </div>
-
-      {/* Save Message */}
-      {saveMessage && (
-        <div
-          className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg bg-white dark:bg-gray-800 border-2 border-green-500 shadow-lg backdrop-blur-sm transition-all duration-300 ease-out max-w-md w-full mx-4 ${
-            isNotificationVisible
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-[-20px]"
-          }`}
-          style={{
-            animation: isNotificationVisible
-              ? "slide-down 0.3s ease-out"
-              : "none",
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-              <Check className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="text-gray-900 dark:text-white font-medium">
-                {saveMessage}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-                Your changes have been applied
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Mobile Layout */}
       <div className="lg:hidden">
         {/* Mobile Settings List */}
-        {activeTab === "general" ? (
+        {!activeTab ? (
           <div className="p-4">{renderMobileSettingsList()}</div>
         ) : (
           /* Mobile Section Content */
-          <div className="p-4">{renderSectionContent()}</div>
+          <div>{renderSectionContent()}</div>
         )}
       </div>
 
@@ -908,6 +1053,36 @@ const SettingsPage = ({ onPageChange }) => {
           </div>
         </div>
       </div>
+
+      {/* Save Message */}
+      {saveMessage && (
+        <div
+          className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg bg-white dark:bg-gray-800 border-2 border-green-500 shadow-lg backdrop-blur-sm transition-all duration-300 ease-out max-w-md w-full mx-4 ${
+            isNotificationVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-[-20px]"
+          }`}
+          style={{
+            animation: isNotificationVisible
+              ? "slide-down 0.3s ease-out"
+              : "none",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+              <Check className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-900 dark:text-white font-medium">
+                {saveMessage}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                Your changes have been applied
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Reset Settings Confirmation Modal */}
       {showResetConfirm && (

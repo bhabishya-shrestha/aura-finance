@@ -4,7 +4,7 @@ import {
   Upload,
 } from "lucide-react";
 
-const MobileNav = ({ onPageChange, currentPage }) => {
+const MobileNav = ({ onPageChange, currentPage, onImportClick }) => {
   const [showQuickActions, setShowQuickActions] = useState(false);
 
   const quickActionItems = [
@@ -12,7 +12,7 @@ const MobileNav = ({ onPageChange, currentPage }) => {
       label: "Add Transaction",
       icon: Plus,
       action: () => {
-        // TODO: Implement add transaction functionality
+        onPageChange("transactions");
         setShowQuickActions(false);
       },
     },
@@ -20,7 +20,7 @@ const MobileNav = ({ onPageChange, currentPage }) => {
       label: "Import Statement",
       icon: Upload,
       action: () => {
-        // TODO: Implement import statement functionality
+        onImportClick();
         setShowQuickActions(false);
       },
     },

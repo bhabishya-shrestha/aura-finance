@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import {
-  X,
   User,
   Home,
   CreditCard,
@@ -8,13 +7,70 @@ import {
   FileText,
   Settings,
   LogOut,
-  Plus,
-  Upload,
 } from "lucide-react";
 import useStore from "../store";
 
 const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
   const { user, signOut } = useStore();
+  const sidebarRef = useRef(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  // Swipe to close functionality
+  const handleTouchStart = e => {
+    // Only handle touch events on the sidebar container, not navigation items
+    if (e.target.closest("button")) {
+      return;
+    }
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = e => {
+    // Only handle touch events on the sidebar container, not navigation items
+    if (e.target.closest("button")) {
+      return;
+    }
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = e => {
+    // Only handle touch events on the sidebar container, not navigation items
+    if (e.target.closest("button")) {
+      return;
+    }
+
+    const swipeDistance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 100; // Minimum distance to trigger close
+
+    // Only close if it's a clear swipe gesture
+    if (swipeDistance > minSwipeDistance) {
+      onClose();
+    }
+  };
+
+  // Add touch event listeners when sidebar is open
+  useEffect(() => {
+    if (isOpen && sidebarRef.current) {
+      const sidebar = sidebarRef.current;
+      sidebar.addEventListener("touchstart", handleTouchStart, {
+        passive: true,
+      });
+      sidebar.addEventListener("touchmove", handleTouchMove, { passive: true });
+      sidebar.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+      return () => {
+        sidebar.removeEventListener("touchstart", handleTouchStart, {
+          passive: true,
+        });
+        sidebar.removeEventListener("touchmove", handleTouchMove, {
+          passive: true,
+        });
+        sidebar.removeEventListener("touchend", handleTouchEnd, {
+          passive: true,
+        });
+      };
+    }
+  }, [isOpen]);
 
   const navigationItems = [
     {
@@ -49,36 +105,22 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
     },
   ];
 
-  const quickActions = [
-    {
-      id: "add-transaction",
-      label: "Add Transaction",
-      icon: Plus,
-      description: "Record a new transaction",
-      action: () => {
-        // TODO: Implement add transaction
-        onClose();
-      },
-    },
-    {
-      id: "import-statement",
-      label: "Import Statement",
-      icon: Upload,
-      description: "Upload bank statement",
-      action: () => {
-        // TODO: Implement import statement
-        onClose();
-      },
-    },
-  ];
+  const handleNavigationClick = (pageId, event) => {
+    // Prevent event bubbling and default behavior
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      // Only call stopImmediatePropagation if it exists
+      if (typeof event.stopImmediatePropagation === "function") {
+        event.stopImmediatePropagation();
+      }
+    }
 
-  const handleNavigationClick = (pageId) => {
-    onPageChange(pageId);
-    onClose();
-  };
-
-  const handleQuickAction = (action) => {
-    action();
+    // Add a small delay to ensure the click is processed
+    setTimeout(() => {
+      onPageChange(pageId);
+      onClose();
+    }, 10);
   };
 
   const handleSignOut = async () => {
@@ -101,31 +143,11 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
       />
 
       {/* Sidebar */}
-      <div className="fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white dark:bg-gray-900 shadow-xl z-50 lg:hidden transform transition-transform duration-300 ease-in-out">
+      <div
+        ref={sidebarRef}
+        className="fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white dark:bg-gray-900 shadow-xl z-50 lg:hidden transform transition-transform duration-300 ease-in-out"
+      >
         <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">A</span>
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Aura Finance
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Personal Finance
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            </button>
-          </div>
-
           {/* User Section */}
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3">
@@ -143,44 +165,14 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
-              Quick Actions
-            </h3>
-            <div className="space-y-2">
-              {quickActions.map((action) => (
-                <button
-                  key={action.id}
-                  onClick={() => handleQuickAction(action.action)}
-                  className="w-full flex items-center gap-3 p-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors active:scale-95"
-                >
-                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                    <action.icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {action.label}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {action.description}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Navigation */}
           <div className="flex-1 p-4 overflow-y-auto">
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
-              Navigation
-            </h3>
             <div className="space-y-1">
-              {navigationItems.map((item) => (
+              {navigationItems.map(item => (
                 <button
                   key={item.id}
-                  onClick={() => handleNavigationClick(item.id)}
+                  onClick={e => handleNavigationClick(item.id, e)}
+                  onTouchEnd={e => handleNavigationClick(item.id, e)}
                   className={`w-full flex items-center gap-3 p-3 text-left rounded-lg transition-colors active:scale-95 ${
                     currentPage === item.id
                       ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
