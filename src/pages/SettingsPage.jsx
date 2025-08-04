@@ -1024,19 +1024,22 @@ const SettingsPage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">
-                      Use Vertex AI (Higher Quotas)
+                      Use Hugging Face (30K Daily Requests)
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Switch between Gemini API (150/day) and Vertex AI (10,000/day)
+                      Switch between Gemini API (150/day) and Hugging Face
+                      (30,000/day)
                     </div>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={settings.aiProvider === 'vertex'}
+                      checked={settings.aiProvider === "huggingface"}
                       onChange={e => {
-                        const newProvider = e.target.checked ? 'vertex' : 'gemini';
-                        updateSetting('aiProvider', newProvider);
+                        const newProvider = e.target.checked
+                          ? "huggingface"
+                          : "gemini";
+                        updateSetting("aiProvider", newProvider);
                         aiService.setProvider(newProvider);
                       }}
                       className="sr-only peer"
@@ -1049,10 +1052,16 @@ const SettingsPage = () => {
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
                   <div className="text-sm">
                     <div className="font-medium text-gray-900 dark:text-white mb-1">
-                      Current Provider: {settings.aiProvider === 'vertex' ? 'Vertex AI' : 'Gemini API'}
+                      Current Provider:{" "}
+                      {settings.aiProvider === "huggingface"
+                        ? "Hugging Face"
+                        : "Gemini API"}
                     </div>
                     <div className="text-gray-600 dark:text-gray-400">
-                      Daily Limit: {settings.aiProvider === 'vertex' ? '10,000 requests' : '150 requests'}
+                      Daily Limit:{" "}
+                      {settings.aiProvider === "huggingface"
+                        ? "30,000 requests"
+                        : "150 requests"}
                     </div>
                   </div>
                 </div>
@@ -1063,8 +1072,12 @@ const SettingsPage = () => {
                     Environment Variables
                   </h4>
                   <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                    <p><strong>Gemini API:</strong> VITE_GEMINI_API_KEY</p>
-                    <p><strong>Vertex AI:</strong> VITE_GCP_PROJECT_ID, VITE_GCP_API_KEY</p>
+                    <p>
+                      <strong>Gemini API:</strong> VITE_GEMINI_API_KEY
+                    </p>
+                    <p>
+                      <strong>Hugging Face:</strong> VITE_HUGGINGFACE_API_KEY
+                    </p>
                   </div>
                 </div>
               </div>

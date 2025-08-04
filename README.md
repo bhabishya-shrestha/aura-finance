@@ -54,45 +54,36 @@ Aura Finance supports two AI providers for document analysis and transaction ext
 - **Cost**: Free
 - **Best For**: Development, testing, and light usage
 
-### Google Cloud Vertex AI (Recommended)
-- **Daily Limit**: 10,000+ requests
-- **Per Minute**: 300 requests
-- **Cost**: Pay-as-you-go (~$0.001 per request)
-- **Best For**: Production applications and high-volume usage
+### Hugging Face Inference API (Recommended - Free)
+- **Daily Limit**: 30,000 requests
+- **Per Minute**: 500 requests
+- **Cost**: Free
+- **Best For**: High-volume usage without cost
+- **Setup**: Just need an API token from Hugging Face
 
-### Setting Up Vertex AI
+### Setting Up Hugging Face (Recommended)
 
-1. **Create a Google Cloud Project**
-   ```bash
-   # Install Google Cloud CLI
-   gcloud auth login
-   gcloud projects create your-project-id
-   gcloud config set project your-project-id
-   ```
+1. **Create a Hugging Face Account**
+   - Go to [huggingface.co](https://huggingface.co) and sign up
+   - Verify your email address
 
-2. **Enable Vertex AI API**
-   ```bash
-   gcloud services enable aiplatform.googleapis.com
-   ```
+2. **Get Your API Token**
+   - Go to your [Access Tokens page](https://huggingface.co/settings/tokens)
+   - Click "New token"
+   - Give it a name (e.g., "Aura Finance")
+   - Select "Read" permissions
+   - Copy the generated token
 
-3. **Create API Key**
-   ```bash
-   gcloud auth application-default login
-   # Or create a service account for production
-   ```
-
-4. **Configure Environment Variables**
+3. **Configure Environment Variables**
    ```env
-   VITE_GCP_PROJECT_ID=your-project-id
-   VITE_GCP_API_KEY=your-api-key
-   VITE_GCP_LOCATION=us-central1
+   VITE_HUGGINGFACE_API_KEY=your_huggingface_token_here
    ```
 
 ### Switching Between Providers
 
 1. Go to **Settings** → **AI Services**
-2. Select your preferred provider
-3. Enable **Auto Fallback** for automatic failover
+2. Toggle between **Gemini API** (150/day) and **Hugging Face** (30,000/day)
+3. The system automatically falls back to other providers if one fails
 4. Monitor usage in the settings panel
 
 ## 🚀 Getting Started
@@ -131,11 +122,9 @@ Aura Finance supports two AI providers for document analysis and transaction ext
    VITE_GEMINI_API_KEY=your_gemini_api_key_here
    ```
 
-   **Option B: Google Cloud Vertex AI (Recommended for Production)**
+   **Option B: Hugging Face Inference API (Recommended for High Volume)**
    ```env
-   VITE_GCP_PROJECT_ID=your_gcp_project_id_here
-   VITE_GCP_API_KEY=your_gcp_api_key_here
-   VITE_GCP_LOCATION=us-central1
+   VITE_HUGGINGFACE_API_KEY=your_huggingface_api_key_here
    ```
 
 4. **Start the development server**

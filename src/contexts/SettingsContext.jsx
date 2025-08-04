@@ -41,7 +41,7 @@ const defaultSettings = {
   dataRetention: 365, // days
 
   // AI Settings
-  aiProvider: "gemini", // gemini, vertex
+  aiProvider: "gemini", // gemini, huggingface
 };
 
 export const SettingsProvider = ({ children }) => {

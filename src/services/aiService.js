@@ -1,6 +1,6 @@
-// Unified AI service that can switch between Gemini API and Vertex AI
+// Unified AI service that can switch between Gemini API and Hugging Face
 import geminiService from "./geminiService";
-import vertexAIService from "./vertexAIService";
+import huggingFaceService from "./huggingFaceService";
 
 class AIService {
   constructor() {
@@ -20,21 +20,21 @@ class AIService {
         ],
         pricing: "Free Tier",
       },
-      vertex: {
-        name: "Google Cloud Vertex AI",
-        service: vertexAIService,
+      huggingface: {
+        name: "Hugging Face Inference API",
+        service: huggingFaceService,
         quotas: {
-          maxRequests: 300,
-          maxDailyRequests: 10000,
+          maxRequests: 500,
+          maxDailyRequests: 30000,
         },
         features: [
           "Document Analysis",
           "Transaction Extraction",
           "Account Suggestions",
-          "Higher Quotas",
+          "30K Daily Requests",
         ],
-        pricing: "Pay-as-you-go",
-      },
+        pricing: "Free Tier",
+
     };
   }
 
@@ -69,10 +69,8 @@ class AIService {
   isProviderAvailable(provider) {
     if (provider === "gemini") {
       return !!import.meta.env.VITE_GEMINI_API_KEY;
-    } else if (provider === "vertex") {
-      return !!(
-        import.meta.env.VITE_GCP_PROJECT_ID && import.meta.env.VITE_GCP_API_KEY
-      );
+    } else if (provider === "huggingface") {
+      return !!import.meta.env.VITE_HUGGINGFACE_API_KEY;
     }
     return false;
   }
@@ -91,16 +89,16 @@ class AIService {
       // If current provider fails, try to fallback to the other provider
       if (
         this.currentProvider === "gemini" &&
-        this.isProviderAvailable("vertex")
+        this.isProviderAvailable("huggingface")
       ) {
-        console.warn("Gemini API failed, falling back to Vertex AI");
-        this.setProvider("vertex");
+        console.warn("Gemini API failed, falling back to Hugging Face");
+        this.setProvider("huggingface");
         return await this.getCurrentService().analyzeImage(file);
       } else if (
-        this.currentProvider === "vertex" &&
+        this.currentProvider === "huggingface" &&
         this.isProviderAvailable("gemini")
       ) {
-        console.warn("Vertex AI failed, falling back to Gemini API");
+        console.warn("Hugging Face failed, falling back to Gemini API");
         this.setProvider("gemini");
         return await this.getCurrentService().analyzeImage(file);
       }
