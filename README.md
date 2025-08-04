@@ -55,7 +55,7 @@ Aura Finance supports two AI providers for document analysis and transaction ext
 - **Best For**: Development, testing, and light usage
 
 ### Hugging Face Inference API (Recommended - Free)
-- **Daily Limit**: 30,000 requests
+- **Daily Limit**: 500 requests
 - **Per Minute**: 500 requests
 - **Cost**: Free
 - **Best For**: High-volume usage without cost
@@ -82,7 +82,7 @@ Aura Finance supports two AI providers for document analysis and transaction ext
 ### Switching Between Providers
 
 1. Go to **Settings** → **AI Services**
-2. Toggle between **Gemini API** (150/day) and **Hugging Face** (30,000/day)
+2. Toggle between **Gemini API** (150/day) and **Hugging Face** (500/day)
 3. The system automatically falls back to other providers if one fails
 4. Monitor usage in the settings panel
 
@@ -122,10 +122,10 @@ Aura Finance supports two AI providers for document analysis and transaction ext
    VITE_GEMINI_API_KEY=your_gemini_api_key_here
    ```
 
-   **Option B: Hugging Face Inference API (Recommended for High Volume)**
-   ```env
-   VITE_HUGGINGFACE_API_KEY=your_huggingface_api_key_here
-   ```
+       **Option B: Hugging Face Inference API (Recommended for Higher Volume)**
+    ```env
+    VITE_HUGGINGFACE_API_KEY=your_huggingface_api_key_here
+    ```
 
 4. **Start the development server**
 

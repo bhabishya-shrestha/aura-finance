@@ -1024,11 +1024,11 @@ const SettingsPage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">
-                      Use Hugging Face (30K Daily Requests)
+                      Use Hugging Face (500 Daily Requests)
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
                       Switch between Gemini API (150/day) and Hugging Face
-                      (30,000/day)
+                      (500/day)
                     </div>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -1060,24 +1060,9 @@ const SettingsPage = () => {
                     <div className="text-gray-600 dark:text-gray-400">
                       Daily Limit:{" "}
                       {settings.aiProvider === "huggingface"
-                        ? "30,000 requests"
+                        ? "500 requests"
                         : "150 requests"}
                     </div>
-                  </div>
-                </div>
-
-                {/* Environment Variables Info */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                  <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                    Environment Variables
-                  </h4>
-                  <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                    <p>
-                      <strong>Gemini API:</strong> VITE_GEMINI_API_KEY
-                    </p>
-                    <p>
-                      <strong>Hugging Face:</strong> VITE_HUGGINGFACE_API_KEY
-                    </p>
                   </div>
                 </div>
               </div>

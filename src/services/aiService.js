@@ -25,16 +25,16 @@ class AIService {
         service: huggingFaceService,
         quotas: {
           maxRequests: 500,
-          maxDailyRequests: 30000,
+          maxDailyRequests: 500,
         },
         features: [
           "Document Analysis",
           "Transaction Extraction",
           "Account Suggestions",
-          "30K Daily Requests",
+          "500 Daily Requests",
         ],
         pricing: "Free Tier",
-
+      },
     };
   }
 

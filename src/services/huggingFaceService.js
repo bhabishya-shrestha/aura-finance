@@ -10,7 +10,7 @@ class HuggingFaceService {
     this.rateLimit = {
       maxRequests: 500, // 500 per minute (much higher than free tier)
       timeWindow: 60000, // 1 minute in milliseconds
-      maxDailyRequests: 30000, // 30k daily requests (vs 150 for free tier)
+      maxDailyRequests: 500, // 500 daily requests per user (vs 150 for free tier)
     };
 
     this.requestCount = 0;
@@ -254,6 +254,77 @@ class HuggingFaceService {
   // Check if service is available
   isAvailable() {
     return !!this.apiKey;
+  }
+
+  // Extract transactions from text (alias for extractTransactions)
+  extractFromText(text) {
+    return this.extractTransactions(text);
+  }
+
+  // Convert AI response to transactions
+  convertToTransactions(response) {
+    if (response && response.transactions) {
+      return response.transactions;
+    }
+    return [];
+  }
+
+  // Get processing summary
+  getProcessingSummary(response) {
+    return {
+      totalTransactions: response?.transactions?.length || 0,
+      provider: "huggingface",
+      model: response?.model || "unknown",
+      success: response?.success || false,
+    };
+  }
+
+  // Analyze transactions for account suggestions
+  async analyzeTransactions(transactionTexts, prompt) {
+    try {
+      this.checkRateLimit();
+
+      const fullPrompt = `${prompt}\n\nTransaction texts:\n${transactionTexts.join("\n")}`;
+
+      const response = await fetch(`${this.baseUrl}/${this.defaultModel}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inputs: fullPrompt,
+          parameters: {
+            max_length: 500,
+            temperature: 0.3,
+            return_full_text: false,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          `Hugging Face API error: ${errorData.error || response.statusText}`
+        );
+      }
+
+      const result = await response.json();
+
+      // Update request counters
+      this.requestCount++;
+      this.dailyRequestCount++;
+
+      return {
+        success: true,
+        suggestions: result.generated_text || "No suggestions available",
+        model: this.defaultModel,
+        provider: "huggingface",
+      };
+    } catch (error) {
+      console.error("Hugging Face Transaction Analysis Error:", error);
+      throw new Error(`Failed to analyze transactions: ${error.message}`);
+    }
   }
 }
 
