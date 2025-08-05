@@ -176,12 +176,19 @@ const EnhancedAccountAssignmentModal = ({
 
   // Generate account suggestions when modal opens and transactions change
   useEffect(() => {
-    if (isOpen && transactions.length > 0 && !suggestionsGeneratedRef.current) {
+    if (
+      isOpen &&
+      Array.isArray(transactions) &&
+      transactions.length > 0 &&
+      !suggestionsGeneratedRef.current
+    ) {
       suggestionsGeneratedRef.current = true;
       const suggestions = [];
-      const transactionTexts = transactions.map(t =>
-        `${t.description || ""} ${t.category || ""}`.toLowerCase()
-      );
+      const transactionTexts = Array.isArray(transactions)
+        ? transactions.map(t =>
+            `${t.description || ""} ${t.category || ""}`.toLowerCase()
+          )
+        : [];
 
       // Analyze transaction patterns to suggest account types
       const patterns = {
@@ -301,7 +308,9 @@ const EnhancedAccountAssignmentModal = ({
 
       // Suggest based on transaction categories
       const categories = new Set(
-        transactions.map(t => t.category).filter(Boolean)
+        Array.isArray(transactions)
+          ? transactions.map(t => t.category).filter(Boolean)
+          : []
       );
 
       if (categories.size > 0) {
@@ -557,7 +566,13 @@ const EnhancedAccountAssignmentModal = ({
     if (selectedTransactions.size === localTransactions.length) {
       setSelectedTransactions(new Set());
     } else {
-      setSelectedTransactions(new Set(localTransactions.map(t => t.id)));
+      setSelectedTransactions(
+        new Set(
+          Array.isArray(localTransactions)
+            ? localTransactions.map(t => t.id)
+            : []
+        )
+      );
     }
   };
 
@@ -575,7 +590,7 @@ const EnhancedAccountAssignmentModal = ({
     if (selectedTransactions.size === 0) return;
 
     setLocalTransactions(prevTransactions =>
-      prevTransactions.map(transaction => {
+      Array.isArray(prevTransactions) ? prevTransactions.map(transaction => {
         if (selectedTransactions.has(transaction.id)) {
           // Update the year of the transaction date
           const currentDate = new Date(transaction.date);
@@ -591,7 +606,7 @@ const EnhancedAccountAssignmentModal = ({
           };
         }
         return transaction;
-      })
+      }) : []
     );
 
     setShowBatchYearModal(false);
@@ -794,7 +809,7 @@ const EnhancedAccountAssignmentModal = ({
       }
 
       // Update transaction account assignments with real account IDs
-      const updatedTransactions = localTransactions.map(transaction => {
+      const updatedTransactions = Array.isArray(localTransactions) ? localTransactions.map(transaction => {
         const assignedAccountId = selectedAccounts[transaction.id];
         if (assignedAccountId) {
           // If it's a staged account ID, map it to the real ID
@@ -806,7 +821,7 @@ const EnhancedAccountAssignmentModal = ({
           };
         }
         return transaction;
-      });
+      }) : [];
 
       // Call the onComplete callback with updated transactions
       onComplete(updatedTransactions);
@@ -1195,7 +1210,7 @@ const EnhancedAccountAssignmentModal = ({
 
                   {/* Transactions in Group */}
                   <div className="divide-y divide-gray-200 dark:divide-gray-600">
-                    {group.transactions.map(transaction => {
+                    {Array.isArray(group.transactions) ? group.transactions.map(transaction => {
                       const CategoryIcon = getCategoryIcon(transaction);
                       const isExpanded = expandedTransactions.has(
                         transaction.id
@@ -1337,7 +1352,7 @@ const EnhancedAccountAssignmentModal = ({
                           )}
                         </div>
                       );
-                    })}
+                    }) : null}
                   </div>
                 </div>
               ))}

@@ -108,7 +108,7 @@ const TransactionsPage = () => {
     if (selectedTransactions.size === filteredTransactions.length) {
       setSelectedTransactions(new Set());
     } else {
-      setSelectedTransactions(new Set(filteredTransactions.map(t => t.id)));
+      setSelectedTransactions(new Set(Array.isArray(filteredTransactions) ? filteredTransactions.map(t => t.id) : []));
     }
   };
 
@@ -207,7 +207,7 @@ const TransactionsPage = () => {
     ];
     const csvContent = [
       headers.join(","),
-      ...filteredTransactions.map(transaction =>
+      ...(Array.isArray(filteredTransactions) ? filteredTransactions.map(transaction =>
         [
           formatDate(transaction.date),
           `"${transaction.description || ""}"`,
@@ -216,7 +216,7 @@ const TransactionsPage = () => {
           transaction.amount,
           transaction.type || "expense",
         ].join(",")
-      ),
+      ) : []),
     ].join("\n");
 
     // Create and download file
@@ -522,13 +522,13 @@ const TransactionsPage = () => {
 
       {/* Mobile Transaction List */}
       <div className="lg:hidden space-y-3">
-        {filteredTransactions.map(transaction => (
+        {Array.isArray(filteredTransactions) ? filteredTransactions.map(transaction => (
           <MobileTransactionCard
             key={transaction.id}
             transaction={transaction}
           />
-        ))}
-        {filteredTransactions.length === 0 && (
+        )) : null}
+        {(!Array.isArray(filteredTransactions) || filteredTransactions.length === 0) && (
           <div className="text-center py-8">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400">
@@ -593,7 +593,7 @@ const TransactionsPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredTransactions.map(transaction => (
+                {Array.isArray(filteredTransactions) ? filteredTransactions.map(transaction => (
                   <tr
                     key={transaction.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -637,7 +637,7 @@ const TransactionsPage = () => {
                       </span>
                     </td>
                   </tr>
-                ))}
+                )) : null}
               </tbody>
             </table>
           </div>

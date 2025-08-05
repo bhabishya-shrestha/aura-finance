@@ -1,183 +1,366 @@
-// Unified AI service that can switch between Gemini API and Hugging Face
-import geminiService from "./geminiService";
-import huggingFaceService from "./huggingFaceService";
+// AI Service with server-side usage validation
+// Prevents exploitation by validating usage on the backend
+
+import geminiService from "./geminiService.js";
+import huggingFaceService from "./huggingFaceService.js";
+import apiUsageService from "./apiUsageService.js";
 
 class AIService {
   constructor() {
-    this.currentProvider = "gemini"; // Default to Gemini API
     this.providers = {
       gemini: {
-        name: "Google Gemini API",
+        name: "Gemini API",
         service: geminiService,
-        quotas: {
-          maxRequests: 15,
-          maxDailyRequests: 150,
-        },
-        features: [
-          "Document Analysis",
-          "Transaction Extraction",
-          "Account Suggestions",
-        ],
+        quotas: { maxDailyRequests: 150, maxRequests: 15 },
+        features: ["Document Analysis", "Transaction Extraction"],
         pricing: "Free Tier",
       },
       huggingface: {
         name: "Hugging Face Inference API",
         service: huggingFaceService,
-        quotas: {
-          maxRequests: 5,
-          maxDailyRequests: 500,
-        },
-        features: [
-          "Document Analysis",
-          "Transaction Extraction",
-          "Account Suggestions",
-          "500 Daily Requests",
-        ],
+        quotas: { maxDailyRequests: 500, maxRequests: 5 },
+        features: ["Document Analysis", "Transaction Extraction"],
         pricing: "Free Tier",
       },
     };
+
+    // Initialize with user's preferred provider from settings
+    this.initializeFromSettings();
   }
 
-  // Set the current AI provider
-  setProvider(provider) {
-    if (this.providers[provider]) {
-      this.currentProvider = provider;
-      console.log(`AI Service: Switched to ${this.providers[provider].name}`);
-    } else {
-      console.warn(
-        `AI Service: Unknown provider ${provider}, keeping current provider`
-      );
-    }
-  }
-
-  // Get current provider info
-  getCurrentProvider() {
-    return {
-      name: this.providers[this.currentProvider].name,
-      quotas: this.providers[this.currentProvider].quotas,
-      features: this.providers[this.currentProvider].features,
-      pricing: this.providers[this.currentProvider].pricing,
-    };
-  }
-
-  // Get all available providers
-  getAvailableProviders() {
-    return this.providers;
-  }
-
-  // Check if provider is available (has required credentials)
-  isProviderAvailable(provider) {
-    if (provider === "gemini") {
-      return !!import.meta.env.VITE_GEMINI_API_KEY;
-    } else if (provider === "huggingface") {
-      return !!import.meta.env.VITE_HUGGINGFACE_API_KEY;
-    }
-    return false;
-  }
-
-  // Get the current service instance
-  getCurrentService() {
-    return this.providers[this.currentProvider].service;
-  }
-
-  // Analyze image/document
-  async analyzeImage(file) {
-    const service = this.getCurrentService();
+  /**
+   * Initialize provider from user settings
+   */
+  initializeFromSettings() {
     try {
-      return await service.analyzeImage(file);
-    } catch (error) {
-      // If current provider fails, try to fallback to the other provider
-      if (
-        this.currentProvider === "gemini" &&
-        this.isProviderAvailable("huggingface")
-      ) {
-        console.warn("Gemini API failed, falling back to Hugging Face");
-        this.setProvider("huggingface");
-        return await this.getCurrentService().analyzeImage(file);
-      } else if (
-        this.currentProvider === "huggingface" &&
-        this.isProviderAvailable("gemini")
-      ) {
-        console.warn("Hugging Face failed, falling back to Gemini API");
-        this.setProvider("gemini");
-        return await this.getCurrentService().analyzeImage(file);
+      const settings = localStorage.getItem("aura_settings");
+      if (settings) {
+        const parsedSettings = JSON.parse(settings);
+        if (parsedSettings.aiProvider && this.providers[parsedSettings.aiProvider]) {
+          this.currentProvider = parsedSettings.aiProvider;
+        }
       }
+    } catch (error) {
+      console.warn("Failed to load AI provider settings:", error);
+    }
+
+    // Default to Gemini if no setting found
+    if (!this.currentProvider) {
+      this.currentProvider = "gemini";
+    }
+  }
+
+  /**
+   * Set the current AI provider with server-side validation
+   * @param {string} provider - 'gemini' or 'huggingface'
+   */
+  async setProvider(provider) {
+    if (!this.providers[provider]) {
+      throw new Error(`Invalid provider: ${provider}`);
+    }
+
+    // Validate that user can use this provider
+    const validation = await apiUsageService.validateApiUsage(provider);
+    
+    if (!validation.can_proceed) {
+      throw new Error(`Daily limit exceeded for ${this.providers[provider].name}. Please try again tomorrow or switch providers.`);
+    }
+
+    this.currentProvider = provider;
+    
+    // Save to localStorage
+    try {
+      const settings = JSON.parse(localStorage.getItem("aura_settings") || "{}");
+      settings.aiProvider = provider;
+      localStorage.setItem("aura_settings", JSON.stringify(settings));
+    } catch (error) {
+      console.warn("Failed to save AI provider setting:", error);
+    }
+  }
+
+  /**
+   * Get current provider information
+   * @returns {Object} Current provider info
+   */
+  getCurrentProvider() {
+    return this.providers[this.currentProvider];
+  }
+
+  /**
+   * Get provider comparison with server-side usage data
+   * @returns {Promise<Array>} Provider comparison with usage stats
+   */
+  async getProviderComparison() {
+    try {
+      const usageStats = await apiUsageService.getUserApiUsageStats();
+      
+      return Object.entries(this.providers).map(([key, provider]) => ({
+        key,
+        name: provider.name,
+        quotas: provider.quotas,
+        features: provider.features,
+        pricing: provider.pricing,
+        available: usageStats[key]?.remaining_requests > 0,
+        currentUsage: usageStats[key]?.current_usage || 0,
+        remainingRequests: usageStats[key]?.remaining_requests || 0,
+        approachingLimit: usageStats[key]?.approaching_limit || false,
+      }));
+    } catch (error) {
+      console.error("Failed to get provider comparison:", error);
+      // Fallback to basic comparison without usage data
+      return Object.entries(this.providers).map(([key, provider]) => ({
+        key,
+        name: provider.name,
+        quotas: provider.quotas,
+        features: provider.features,
+        pricing: provider.pricing,
+        available: true,
+        currentUsage: 0,
+        remainingRequests: provider.quotas.maxDailyRequests,
+        approachingLimit: false,
+      }));
+    }
+  }
+
+  /**
+   * Check if current provider is available with server-side validation
+   * @returns {Promise<boolean>} True if available
+   */
+  async isProviderAvailable(provider = this.currentProvider) {
+    try {
+      const validation = await apiUsageService.validateApiUsage(provider);
+      return validation.can_proceed;
+    } catch (error) {
+      console.error("Provider availability check failed:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if approaching limits with server-side validation
+   * @returns {Promise<boolean>} True if approaching limits
+   */
+  async isApproachingLimits(provider = this.currentProvider) {
+    try {
+      return await apiUsageService.isApproachingLimit(provider);
+    } catch (error) {
+      console.error("Approaching limits check failed:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Analyze image with server-side usage validation
+   * @param {File} file - Image file to analyze
+   * @returns {Promise<Object>} Analysis result
+   */
+  async analyzeImage(file) {
+    try {
+      // Validate usage before processing
+      const validation = await apiUsageService.validateApiUsage(this.currentProvider);
+      
+      if (!validation.can_proceed) {
+        throw new Error(`Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`);
+      }
+
+      // Increment usage counter
+      const incrementSuccess = await apiUsageService.incrementApiUsage(this.currentProvider);
+      
+      if (!incrementSuccess) {
+        throw new Error("Failed to record API usage. Please try again.");
+      }
+
+      // Perform the analysis
+      const result = await this.providers[this.currentProvider].service.analyzeImage(file);
+      
+      // Add server-side usage info to result
+      result.serverUsageValidation = {
+        provider: this.currentProvider,
+        currentUsage: validation.current_usage + 1, // +1 for this request
+        maxRequests: validation.max_requests,
+        remainingRequests: validation.remaining_requests - 1,
+        approachingLimit: validation.approachingLimit,
+      };
+
+      return result;
+    } catch (error) {
+      console.error("AI Service: Image analysis failed:", error);
       throw error;
     }
   }
 
-  // Extract transactions from text
-  extractFromText(text) {
-    const service = this.getCurrentService();
-    return service.extractFromText(text);
+  /**
+   * Extract transactions from text with server-side validation
+   * @param {string} text - Text to analyze
+   * @returns {Promise<Object>} Transaction extraction result
+   */
+  async extractFromText(text) {
+    try {
+      // Validate usage before processing
+      const validation = await apiUsageService.validateApiUsage(this.currentProvider);
+      
+      if (!validation.can_proceed) {
+        throw new Error(`Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`);
+      }
+
+      // Increment usage counter
+      const incrementSuccess = await apiUsageService.incrementApiUsage(this.currentProvider);
+      
+      if (!incrementSuccess) {
+        throw new Error("Failed to record API usage. Please try again.");
+      }
+
+      // Perform the extraction
+      const result = await this.providers[this.currentProvider].service.extractFromText(text);
+      
+      // Add server-side usage info to result
+      result.serverUsageValidation = {
+        provider: this.currentProvider,
+        currentUsage: validation.current_usage + 1,
+        maxRequests: validation.max_requests,
+        remainingRequests: validation.remaining_requests - 1,
+        approachingLimit: validation.approachingLimit,
+      };
+
+      return result;
+    } catch (error) {
+      console.error("AI Service: Text extraction failed:", error);
+      throw error;
+    }
   }
 
-  // Convert AI response to transactions
-  convertToTransactions(response) {
-    const service = this.getCurrentService();
-    return service.convertToTransactions(response);
+  /**
+   * Convert analysis to transactions with server-side validation
+   * @param {Object} analysis - Analysis result
+   * @returns {Promise<Array>} Transaction array
+   */
+  async convertToTransactions(analysis) {
+    try {
+      // Validate usage before processing
+      const validation = await apiUsageService.validateApiUsage(this.currentProvider);
+      
+      if (!validation.can_proceed) {
+        throw new Error(`Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`);
+      }
+
+      // Increment usage counter
+      const incrementSuccess = await apiUsageService.incrementApiUsage(this.currentProvider);
+      
+      if (!incrementSuccess) {
+        throw new Error("Failed to record API usage. Please try again.");
+      }
+
+      // Perform the conversion
+      const result = await this.providers[this.currentProvider].service.convertToTransactions(analysis);
+      
+      return result;
+    } catch (error) {
+      console.error("AI Service: Transaction conversion failed:", error);
+      throw error;
+    }
   }
 
-  // Get processing summary
-  getProcessingSummary(response) {
-    const service = this.getCurrentService();
-    return service.getProcessingSummary(response);
+  /**
+   * Get processing summary with server-side usage data
+   * @returns {Promise<Object>} Processing summary
+   */
+  async getProcessingSummary() {
+    try {
+      const usageStats = await apiUsageService.getUserApiUsageStats();
+      const currentProviderStats = usageStats[this.currentProvider];
+      
+      return {
+        provider: this.providers[this.currentProvider].name,
+        model: this.providers[this.currentProvider].service.getBestModel(),
+        dailyRequests: currentProviderStats?.current_usage || 0,
+        maxDailyRequests: currentProviderStats?.max_requests || 0,
+        remainingRequests: currentProviderStats?.remaining_requests || 0,
+        approachingLimits: currentProviderStats?.approaching_limit || false,
+        serverValidated: true,
+      };
+    } catch (error) {
+      console.error("Failed to get processing summary:", error);
+      // Fallback to client-side summary
+      return this.providers[this.currentProvider].service.getProcessingSummary();
+    }
   }
 
-  // Analyze transactions for account suggestions
-  async analyzeTransactions(transactionTexts, prompt) {
-    const service = this.getCurrentService();
-    return await service.analyzeTransactions(transactionTexts, prompt);
+  /**
+   * Analyze transactions with server-side validation
+   * @param {Array} transactions - Transactions to analyze
+   * @returns {Promise<Object>} Analysis result
+   */
+  async analyzeTransactions(transactions) {
+    try {
+      // Validate usage before processing
+      const validation = await apiUsageService.validateApiUsage(this.currentProvider);
+      
+      if (!validation.can_proceed) {
+        throw new Error(`Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`);
+      }
+
+      // Increment usage counter
+      const incrementSuccess = await apiUsageService.incrementApiUsage(this.currentProvider);
+      
+      if (!incrementSuccess) {
+        throw new Error("Failed to record API usage. Please try again.");
+      }
+
+      // Perform the analysis
+      const result = await this.providers[this.currentProvider].service.analyzeTransactions(transactions);
+      
+      // Add server-side usage info to result
+      result.serverUsageValidation = {
+        provider: this.currentProvider,
+        currentUsage: validation.current_usage + 1,
+        maxRequests: validation.max_requests,
+        remainingRequests: validation.remaining_requests - 1,
+        approachingLimit: validation.approachingLimit,
+      };
+
+      return result;
+    } catch (error) {
+      console.error("AI Service: Transaction analysis failed:", error);
+      throw error;
+    }
   }
 
-  // Validate file
-  validateFile(file) {
-    const service = this.getCurrentService();
-    return service.validateFile(file);
+  /**
+   * Validate file with server-side validation
+   * @param {File} file - File to validate
+   * @returns {boolean} True if valid
+   */
+  async validateFile(file) {
+    try {
+      // Validate usage before processing
+      const validation = await apiUsageService.validateApiUsage(this.currentProvider);
+      
+      if (!validation.can_proceed) {
+        throw new Error(`Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`);
+      }
+
+      // Perform file validation
+      return this.providers[this.currentProvider].service.validateFile(file);
+    } catch (error) {
+      console.error("AI Service: File validation failed:", error);
+      throw error;
+    }
   }
 
-  // Get rate limit info for current provider
-  getRateLimitInfo() {
-    const service = this.getCurrentService();
-    return {
-      provider: this.currentProvider,
-      providerName: this.providers[this.currentProvider].name,
-      quotas: this.providers[this.currentProvider].quotas,
-      currentUsage: {
-        dailyRequests: service.dailyRequestCount || 0,
-        minuteRequests: service.requestCount || 0,
-      },
-    };
-  }
-
-  // Check if we're approaching rate limits
-  isApproachingLimits() {
-    const service = this.getCurrentService();
-    const quotas = this.providers[this.currentProvider].quotas;
-
-    const dailyUsage = service.dailyRequestCount || 0;
-    const minuteUsage = service.requestCount || 0;
-
-    return {
-      daily: dailyUsage >= quotas.maxDailyRequests * 0.8, // 80% of daily limit
-      minute: minuteUsage >= quotas.maxRequests * 0.8, // 80% of minute limit
-      dailyUsage,
-      minuteUsage,
-      dailyLimit: quotas.maxDailyRequests,
-      minuteLimit: quotas.maxRequests,
-    };
-  }
-
-  // Get provider comparison for settings UI
-  getProviderComparison() {
-    return Object.entries(this.providers).map(([key, provider]) => ({
-      key,
-      name: provider.name,
-      quotas: provider.quotas,
-      features: provider.features,
-      pricing: provider.pricing,
-      available: this.isProviderAvailable(key),
-    }));
+  /**
+   * Get server-side usage statistics
+   * @returns {Promise<Object>} Usage statistics
+   */
+  async getServerUsageStats() {
+    try {
+      return await apiUsageService.getUserApiUsageStats();
+    } catch (error) {
+      console.error("Failed to get server usage stats:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
   }
 }
 

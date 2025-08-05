@@ -62,7 +62,7 @@ const StatementImporter = ({
 }) => {
   // Get AI provider from settings
   const { settings } = useSettings();
-  
+
   // Set the AI provider based on settings
   useEffect(() => {
     if (settings.aiProvider) {
@@ -269,7 +269,7 @@ const StatementImporter = ({
             quality: "excellent",
             transactionCount: transactions.length,
             dateRange:
-              transactions.length > 0
+              Array.isArray(transactions) && transactions.length > 0
                 ? {
                     start: new Date(
                       Math.min(...transactions.map(t => new Date(t.date)))
@@ -294,7 +294,7 @@ const StatementImporter = ({
           updateProgress(55, "Processing AI results...");
 
           if (result.transactions && result.transactions.length > 0) {
-            transactions = aiService.convertToTransactions(result);
+            transactions = await aiService.convertToTransactions(result);
             updateProgress(70, "Validating transaction data...");
 
             // Apply import options to AI-generated transactions
@@ -321,7 +321,7 @@ const StatementImporter = ({
         }
 
         // Set the parsed transactions for review
-        setParsedTransactions(transactions);
+        setParsedTransactions(Array.isArray(transactions) ? transactions : []);
         setProcessingSummary(summary);
         setShowAllTransactions(true);
 
@@ -365,7 +365,9 @@ const StatementImporter = ({
 
   const handleImportSelected = async () => {
     try {
-      const selectedTransactions = parsedTransactions.filter(t => t.selected);
+      const selectedTransactions = Array.isArray(parsedTransactions)
+        ? parsedTransactions.filter(t => t.selected)
+        : [];
 
       if (selectedTransactions.length === 0) {
         throw new Error("Please select at least one transaction to import.");
@@ -383,7 +385,10 @@ const StatementImporter = ({
 
   const handleImportAll = async () => {
     try {
-      if (parsedTransactions.length === 0) {
+      if (
+        !Array.isArray(parsedTransactions) ||
+        parsedTransactions.length === 0
+      ) {
         throw new Error("No transactions to import.");
       }
 
@@ -439,17 +444,27 @@ const StatementImporter = ({
   }, [progressAnimationId]);
 
   const toggleTransactionSelection = index => {
+    if (!Array.isArray(parsedTransactions)) {
+      return;
+    }
     const updatedTransactions = [...parsedTransactions];
-    updatedTransactions[index].selected = !updatedTransactions[index].selected;
-    setParsedTransactions(updatedTransactions);
+    if (updatedTransactions[index]) {
+      updatedTransactions[index].selected =
+        !updatedTransactions[index].selected;
+      setParsedTransactions(updatedTransactions);
+    }
   };
 
   const toggleAllTransactions = () => {
-    const allSelected = parsedTransactions.every(t => t.selected);
-    const updatedTransactions = parsedTransactions.map(t => ({
-      ...t,
-      selected: !allSelected,
-    }));
+    const allSelected =
+      Array.isArray(parsedTransactions) &&
+      parsedTransactions.every(t => t.selected);
+    const updatedTransactions = Array.isArray(parsedTransactions)
+      ? parsedTransactions.map(t => ({
+          ...t,
+          selected: !allSelected,
+        }))
+      : [];
     setParsedTransactions(updatedTransactions);
   };
 
@@ -857,6 +872,7 @@ const StatementImporter = ({
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
+                      qq
                       <p className="text-green-600 dark:text-green-400 font-medium">
                         {processingSummary.transactionCount}
                       </p>
@@ -920,49 +936,51 @@ const StatementImporter = ({
                 </div>
 
                 <div className="max-h-96 overflow-y-auto custom-scrollbar space-y-2">
-                  {parsedTransactions.map((transaction, index) => (
-                    <div
-                      key={index}
-                      className={`p-4 rounded-lg border transition-colors cursor-pointer ${
-                        transaction.selected
-                          ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
-                          : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      }`}
-                      onClick={() => toggleTransactionSelection(index)}
-                    >
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="checkbox"
-                          checked={transaction.selected}
-                          onChange={() => toggleTransactionSelection(index)}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                          onClick={e => e.stopPropagation()}
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {transaction.description}
-                            </p>
-                            <p
-                              className={`font-semibold ${
-                                transaction.amount > 0
-                                  ? "text-green-600 dark:text-green-400"
-                                  : "text-red-600 dark:text-red-400"
-                              }`}
-                            >
-                              {formatCurrency(transaction.amount)}
-                            </p>
-                          </div>
-                          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                            <span>{formatDate(transaction.date)}</span>
-                            <span className="capitalize">
-                              {transaction.category}
-                            </span>
+                  {Array.isArray(parsedTransactions)
+                    ? parsedTransactions.map((transaction, index) => (
+                        <div
+                          key={index}
+                          className={`p-4 rounded-lg border transition-colors cursor-pointer ${
+                            transaction.selected
+                              ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                              : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          }`}
+                          onClick={() => toggleTransactionSelection(index)}
+                        >
+                          <div className="flex items-center gap-4">
+                            <input
+                              type="checkbox"
+                              checked={transaction.selected}
+                              onChange={() => toggleTransactionSelection(index)}
+                              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                              onClick={e => e.stopPropagation()}
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {transaction.description}
+                                </p>
+                                <p
+                                  className={`font-semibold ${
+                                    transaction.amount > 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {formatCurrency(transaction.amount)}
+                                </p>
+                              </div>
+                              <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                                <span>{formatDate(transaction.date)}</span>
+                                <span className="capitalize">
+                                  {transaction.category}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      ))
+                    : null}
                 </div>
               </div>
 
@@ -978,18 +996,26 @@ const StatementImporter = ({
                   <button
                     onClick={handleImportSelected}
                     disabled={
+                      Array.isArray(parsedTransactions) &&
                       parsedTransactions.filter(t => t.selected).length === 0
                     }
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Import Selected (
-                    {parsedTransactions.filter(t => t.selected).length})
+                    {Array.isArray(parsedTransactions)
+                      ? parsedTransactions.filter(t => t.selected).length
+                      : 0}
+                    )
                   </button>
                   <button
                     onClick={handleImportAll}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
-                    Import {parsedTransactions.length} Transactions
+                    Import{" "}
+                    {Array.isArray(parsedTransactions)
+                      ? parsedTransactions.length
+                      : 0}{" "}
+                    Transactions
                   </button>
                 </div>
               </div>

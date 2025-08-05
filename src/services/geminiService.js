@@ -124,15 +124,9 @@ class GeminiService {
   // Enhanced document analysis with professional-grade prompts
   async analyzeImage(file) {
     if (!this.apiKey) {
-      return {
-        documentType: "Unknown",
-        source: "Manual Entry Required",
-        transactions: [],
-        confidence: "low",
-        notes:
-          "AI analysis is disabled. Please manually enter transaction details.",
-        error: "API_KEY_MISSING",
-      };
+      throw new Error(
+        "Google Gemini API key not configured. Please add your API key in settings or switch to Hugging Face API."
+      );
     }
 
     // Apply security checks
@@ -290,9 +284,34 @@ IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside t
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(
-          `Gemini API error: ${errorData.error?.message || response.statusText}`
-        );
+        console.error("Gemini API Error Details:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorData: errorData,
+          apiKeyLength: this.apiKey ? this.apiKey.length : 0,
+          apiKeyPrefix: this.apiKey
+            ? this.apiKey.substring(0, 10) + "..."
+            : "none",
+        });
+
+        // Throw user-friendly error based on the response
+        if (response.status === 400) {
+          throw new Error(
+            "Google Gemini API key is invalid. Please check your API key in settings or switch to Hugging Face API."
+          );
+        } else if (response.status === 429) {
+          throw new Error(
+            "Google Gemini API quota exceeded. Please switch to Hugging Face API in settings."
+          );
+        } else if (response.status === 401) {
+          throw new Error(
+            "Google Gemini API key is invalid. Please check your API key in settings or switch to Hugging Face API."
+          );
+        } else {
+          throw new Error(
+            "Google Gemini API error. Please switch to Hugging Face API in settings."
+          );
+        }
       }
 
       const data = await response.json();
