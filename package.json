@@ -47,11 +47,11 @@
     "@supabase/supabase-js": "^2.38.4",
     "dexie": "^3.2.4",
     "dotenv": "^17.2.1",
+    "firebase": "^12.0.0",
     "lucide-react": "^0.294.0",
     "papaparse": "^5.4.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-
     "react-router-dom": "^6.8.1",
     "react-spinners": "^0.17.0",
     "recharts": "^2.8.0",
