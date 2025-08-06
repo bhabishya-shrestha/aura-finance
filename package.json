@@ -36,6 +36,7 @@
     "oauth:configure": "node scripts/configure-oauth.cjs",
     "oauth:verify": "node scripts/verify-oauth.cjs",
     "db:migrate:denormalize": "node scripts/apply-denormalization-migration.js run",
+    "db:migrate:manual": "node scripts/apply-migration-manual.js extract",
     "db:maintain": "node scripts/maintain-denormalized-data.js run",
     "db:test:performance": "node scripts/test-performance-improvements.js run",
     "deploy:staging": "vercel --prod --target staging",
@@ -45,6 +46,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.38.4",
     "dexie": "^3.2.4",
+    "dotenv": "^17.2.1",
     "lucide-react": "^0.294.0",
     "papaparse": "^5.4.1",
     "react": "^18.2.0",
