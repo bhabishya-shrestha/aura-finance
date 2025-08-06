@@ -723,41 +723,38 @@ const AnalyticsPage = () => {
               />
 
               <div className="relative p-4 lg:p-6">
-
-
-                  {/* Controls */}
-                  <div className="flex flex-col gap-3 flex-shrink-0 w-full sm:w-auto">
-                    {/* View Toggle */}
-                    <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-full sm:w-auto">
-                      {["overview", "detailed"].map(view => (
-                        <button
-                          key={view}
-                          onClick={() => setSelectedView(view)}
-                          className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                            selectedView === view
-                              ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                          }`}
-                        >
-                          {view === "overview" ? "Overview" : "Detailed"}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Time Range Selector */}
-                    <div className="relative w-full sm:w-auto">
-                      <select
-                        value={timeRange}
-                        onChange={e => setTimeRange(e.target.value)}
-                        className="appearance-none w-full sm:w-auto px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm pr-10 text-center sm:text-left cursor-pointer"
+                {/* Controls */}
+                <div className="flex flex-col gap-3 flex-shrink-0 w-full sm:w-auto">
+                  {/* View Toggle */}
+                  <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-full sm:w-auto">
+                    {["overview", "detailed"].map(view => (
+                      <button
+                        key={view}
+                        onClick={() => setSelectedView(view)}
+                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          selectedView === view
+                            ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                            : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                        }`}
                       >
-                        <option value="week">This Week</option>
-                        <option value="month">This Month</option>
-                        <option value="quarter">This Quarter</option>
-                        <option value="year">This Year</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-                    </div>
+                        {view === "overview" ? "Overview" : "Detailed"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Time Range Selector */}
+                  <div className="relative w-full sm:w-auto">
+                    <select
+                      value={timeRange}
+                      onChange={e => setTimeRange(e.target.value)}
+                      className="appearance-none w-full sm:w-auto px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm pr-10 text-center sm:text-left cursor-pointer"
+                    >
+                      <option value="week">This Week</option>
+                      <option value="month">This Month</option>
+                      <option value="quarter">This Quarter</option>
+                      <option value="year">This Year</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
                   </div>
                 </div>
 

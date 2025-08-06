@@ -5,9 +5,32 @@ import { tokenManager } from "./services/localAuth";
 import { findDuplicateTransactions } from "./utils/duplicateDetector";
 import analyticsService from "./services/analyticsService";
 
+// Firebase sync service (loaded dynamically)
+let firebaseSync = null;
+
 const useStore = create(
   persist(
-    (set, get) => ({
+    (set, get) => {
+      // Helper function to sync data to Firebase
+      const syncToFirebase = async () => {
+        if (!firebaseSync) {
+          try {
+            const { default: firebaseSyncModule } = await import("./services/firebaseSync.js");
+            firebaseSync = firebaseSyncModule;
+          } catch (error) {
+            console.log("Firebase sync not available:", error.message);
+            return;
+          }
+        }
+        
+        try {
+          await firebaseSync.syncData();
+        } catch (error) {
+          console.log("Firebase sync failed:", error.message);
+        }
+      };
+
+      return {
       // State
       transactions: [],
       accounts: [],
@@ -263,6 +286,9 @@ const useStore = create(
           // Reload transactions to update the UI
           await get().loadTransactions();
           set({ parsedTransactions: [] });
+          
+          // Sync to Firebase
+          await syncToFirebase();
         } catch (error) {
           // Error handling - in production, this would use a proper error notification system
           if (import.meta.env.DEV) {
@@ -389,6 +415,9 @@ const useStore = create(
           await db.transactions.update(transactionId, updates);
           // Reload transactions to update the UI
           await get().loadTransactions();
+          
+          // Sync to Firebase
+          await syncToFirebase();
         } catch (error) {
           // Error handling - in production, this would use a proper error notification system
           if (import.meta.env.DEV) {
@@ -456,6 +485,9 @@ const useStore = create(
 
           // Reload accounts to update the UI
           await get().loadAccounts();
+          
+          // Sync to Firebase
+          await syncToFirebase();
 
           // Return the created account
           return newAccount;
@@ -479,6 +511,9 @@ const useStore = create(
           // Reload both transactions and accounts to update the UI
           await get().loadTransactions();
           await get().loadAccounts();
+          
+          // Sync to Firebase
+          await syncToFirebase();
         } catch (error) {
           // eslint-disable-next-line no-console
           console.error("Error deleting account:", error);
@@ -552,6 +587,9 @@ const useStore = create(
 
           // Reload accounts to update the UI
           await get().loadAccounts();
+          
+          // Sync to Firebase
+          await syncToFirebase();
         } catch (error) {
           if (import.meta.env.DEV) {
             // Error updating account balance
@@ -682,6 +720,18 @@ const useStore = create(
       // Force refresh analytics data
       refreshAnalytics: () => {
         analyticsService.forceRefresh();
+      },
+
+      // Manual sync to Firebase
+      syncToFirebase: async () => {
+        try {
+          set({ isLoading: true });
+          await syncToFirebase();
+        } catch (error) {
+          console.error("Manual sync failed:", error);
+        } finally {
+          set({ isLoading: false });
+        }
       },
 
       // Reset all user data

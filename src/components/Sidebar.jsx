@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import firebaseSync from "../services/firebaseSync";
+import useStore from "../store";
 import authBridge from "../services/authBridge";
 
 const Sidebar = ({
@@ -30,6 +31,7 @@ const Sidebar = ({
   });
   const [userSyncInfo, setUserSyncInfo] = useState(null);
   const { user, logout } = useAuth();
+  const { syncToFirebase } = useStore();
 
   // Update sync status every 2 seconds
   useEffect(() => {
@@ -165,7 +167,11 @@ const Sidebar = ({
   };
 
   const handleForceSync = async () => {
-    await firebaseSync.forceSync();
+    try {
+      await syncToFirebase();
+    } catch (error) {
+      console.error("Force sync failed:", error);
+    }
   };
 
   const formatLastSync = timestamp => {

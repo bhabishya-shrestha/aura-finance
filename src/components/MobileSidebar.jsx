@@ -16,7 +16,7 @@ import firebaseSync from "../services/firebaseSync";
 import authBridge from "../services/authBridge";
 
 const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
-  const { user, signOut } = useStore();
+  const { user, signOut, syncToFirebase } = useStore();
   const [syncStatus, setSyncStatus] = useState({
     isOnline: true,
     syncInProgress: false,
@@ -221,7 +221,11 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
   };
 
   const handleForceSync = async () => {
-    await firebaseSync.forceSync();
+    try {
+      await syncToFirebase();
+    } catch (error) {
+      console.error("Force sync failed:", error);
+    }
   };
 
   const formatLastSync = timestamp => {
