@@ -91,9 +91,7 @@ class DenormalizationPipeline {
         ),
         category:categories(
           name,
-          icon_id,
           color_id,
-          category_icons(ui_icons(name)),
           ui_colors(hex_code)
         ),
         transaction_types(
@@ -154,8 +152,6 @@ class DenormalizationPipeline {
 
     if (transaction.category) {
       updates.category_name = transaction.category.name;
-      updates.category_icon =
-        transaction.category.category_icons?.ui_icons?.name;
       updates.category_color = transaction.category.ui_colors?.hex_code;
     }
 
@@ -190,9 +186,7 @@ class DenormalizationPipeline {
         account_type_id,
         currency_id,
         account_types(name, icon_id, color_id),
-        currencies(name),
-        ui_icons(name),
-        ui_colors(hex_code)
+        currencies(name)
       `
       )
       .is("account_type_name", null);
@@ -293,9 +287,7 @@ class DenormalizationPipeline {
       .select(
         `
         id,
-        icon_id,
         color_id,
-        category_icons(ui_icons(name, icon_class)),
         ui_colors(hex_code)
       `
       )
