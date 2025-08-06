@@ -111,7 +111,7 @@ const MobileAccountAssignmentModal = ({
       setSuggestedAccounts(suggestions);
       setShowAISuggestions(true);
     } catch (error) {
-      console.error("Error generating AI suggestions:", error);
+      // console.error("Error generating AI suggestions:", error);
       // Fallback to basic suggestions
       const suggestions = [
         { name: "Primary Checking", type: "checking", confidence: 0.9 },
@@ -254,7 +254,7 @@ const MobileAccountAssignmentModal = ({
       // Call the completion handler
       onComplete(processedTransactions);
     } catch (error) {
-      console.error("Error completing account assignment:", error);
+      // console.error("Error completing account assignment:", error);
     } finally {
       setIsSubmitting(false);
     }

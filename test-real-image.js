@@ -316,8 +316,8 @@ async function testRealImage() {
     // console.log('\n=== Sample Extracted Transactions ===');
     validTransactions.slice(0, 5).forEach((transaction, index) => {
       // console.log(
-        `${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category}`
-      );
+//   `${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category}`
+// );
     });
     
     if (validTransactions.length > 5) {

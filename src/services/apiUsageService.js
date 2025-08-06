@@ -40,7 +40,7 @@ class ApiUsageService {
       });
 
       if (error) {
-        console.error('API usage validation error:', error);
+        // console.error('API usage validation error:', error);
         throw new Error('Failed to validate API usage');
       }
 
@@ -50,7 +50,7 @@ class ApiUsageService {
         approachingLimit: data.current_usage >= this.providers[provider].approachingLimitThreshold,
       };
     } catch (error) {
-      console.error('API usage validation failed:', error);
+      // console.error('API usage validation failed:', error);
       return {
         success: false,
         error: error.message,
@@ -85,13 +85,13 @@ class ApiUsageService {
       });
 
       if (error) {
-        console.error('API usage increment error:', error);
+        // console.error('API usage increment error:', error);
         throw new Error('Failed to increment API usage');
       }
 
       return data;
     } catch (error) {
-      console.error('API usage increment failed:', error);
+      // console.error('API usage increment failed:', error);
       return false;
     }
   }
@@ -113,7 +113,7 @@ class ApiUsageService {
       });
 
       if (error) {
-        console.error('Get usage stats error:', error);
+        // console.error('Get usage stats error:', error);
         throw new Error('Failed to get usage statistics');
       }
 
@@ -122,7 +122,7 @@ class ApiUsageService {
         ...data,
       };
     } catch (error) {
-      console.error('Get usage stats failed:', error);
+      // console.error('Get usage stats failed:', error);
       return {
         success: false,
         error: error.message,
@@ -165,13 +165,13 @@ class ApiUsageService {
       });
 
       if (error) {
-        console.error('Get daily usage error:', error);
+        // console.error('Get daily usage error:', error);
         return 0;
       }
 
       return data || 0;
     } catch (error) {
-      console.error('Get daily usage failed:', error);
+      // console.error('Get daily usage failed:', error);
       return 0;
     }
   }

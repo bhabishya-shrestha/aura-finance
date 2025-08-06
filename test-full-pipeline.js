@@ -125,8 +125,8 @@ global.import = async module => {
 // Test the transaction extraction logic directly with the improved patterns
 function testImprovedExtraction() {
   // console.log(
-    "=== Testing Improved Transaction Extraction with test1.png ===\n"
-  );
+  //   "=== Testing Improved Transaction Extraction with test1.png ===\n"
+  // );
 
   // Simulate the HuggingFaceService class methods
   const normalizeDate = dateStr => {
@@ -298,22 +298,22 @@ function testImprovedExtraction() {
 
     if (!analysis || analysis.trim() === "") {
       // console.log(
-        "[extractTransactionsFromAnalysis] Empty analysis, returning empty array"
-      );
+//   "[extractTransactionsFromAnalysis] Empty analysis, returning empty array"
+// );
       return transactions;
     }
 
     // console.log(
-      "[extractTransactionsFromAnalysis] Processing analysis:",
-      analysis
-    );
+//   "[extractTransactionsFromAnalysis] Processing analysis:",
+//   analysis
+// );
 
     // Count expected transactions
     const transactionMatches = analysis.match(/Transaction\s+\d+:/g);
     const paymentMatches = analysis.match(/Payment\s+\d+:/g);
     // console.log(
-      `[DEBUG] Found ${transactionMatches?.length || 0} transaction lines and ${paymentMatches?.length || 0} payment lines`
-    );
+//   `[DEBUG] Found ${transactionMatches?.length || 0} transaction lines and ${paymentMatches?.length || 0} payment lines`
+// );
 
     // More precise patterns specifically designed for bank statement format
     // Only use the most reliable patterns to avoid duplicates
@@ -331,8 +331,8 @@ function testImprovedExtraction() {
     patterns.forEach((pattern, index) => {
       const matches = [...analysis.matchAll(pattern)];
       // console.log(
-        `[extractTransactionsFromAnalysis] Pattern ${index + 1} found ${matches.length} matches`
-      );
+//   `[extractTransactionsFromAnalysis] Pattern ${index + 1} found ${matches.length} matches`
+// );
 
       // Debug: Show what matches were found
       matches.forEach((match, matchIndex) => {
@@ -369,22 +369,22 @@ function testImprovedExtraction() {
 
             transactions.push(transaction);
             // console.log(
-              `[extractTransactionsFromAnalysis] Added transaction:`,
-              transaction
-            );
+//   `[extractTransactionsFromAnalysis] Added transaction:`,
+//   transaction
+// );
           } else {
             // console.log(
-              `[DEBUG] Duplicate transaction filtered out: ${transactionKey}`
-            );
+//   `[DEBUG] Duplicate transaction filtered out: ${transactionKey}`
+// );
           }
         } else {
           // Debug why transaction was rejected
           // console.log(
-            `[DEBUG] Rejected transaction: amount=${amount}, description="${description}"`
-          );
+//   `[DEBUG] Rejected transaction: amount=${amount}, description="${description}"`
+// );
           // console.log(
-            `[DEBUG] isValidAmount: ${isValidTransactionAmount(amount)}, isValidDescription: ${isValidDescription(description)}`
-          );
+//   `[DEBUG] isValidAmount: ${isValidTransactionAmount(amount)}, isValidDescription: ${isValidDescription(description)}`
+// );
         }
       });
     });
@@ -392,8 +392,8 @@ function testImprovedExtraction() {
     // If we didn't get all expected transactions, try a more aggressive approach
     if (transactions.length < 27) {
       // console.log(
-        `[DEBUG] Only extracted ${transactions.length} transactions, trying alternative approach`
-      );
+//   `[DEBUG] Only extracted ${transactions.length} transactions, trying alternative approach`
+// );
 
       // Try to extract all lines that contain transaction information
       const lines = analysis.split("\n");
@@ -409,8 +409,8 @@ function testImprovedExtraction() {
         /Transaction\s+\d+:\s+(.*?)\s+-\s+\$?(\d+\.?\d*)\s+on\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})/gi;
       const flexibleMatches = [...analysis.matchAll(flexiblePattern)];
       // console.log(
-        `[DEBUG] Flexible pattern found ${flexibleMatches.length} matches`
-      );
+//   `[DEBUG] Flexible pattern found ${flexibleMatches.length} matches`
+// );
 
       flexibleMatches.forEach((match, matchIndex) => {
         if (
@@ -425,8 +425,8 @@ function testImprovedExtraction() {
 
     if (transactions.length === 0) {
       // console.log(
-        "[extractTransactionsFromAnalysis] No transactions found, creating fallback"
-      );
+//   "[extractTransactionsFromAnalysis] No transactions found, creating fallback"
+// );
       transactions.push({
         date: new Date().toISOString().split("T")[0],
         description: "Document analysis completed",
@@ -438,8 +438,8 @@ function testImprovedExtraction() {
     }
 
     // console.log(
-      `[extractTransactionsFromAnalysis] Final result: ${transactions.length} transactions`
-    );
+//   `[extractTransactionsFromAnalysis] Final result: ${transactions.length} transactions`
+// );
     return transactions;
   };
 
@@ -484,16 +484,16 @@ Payment 3: PAYMENT FROM CHK 7012 CONF#1ck0ygred - $1100.00 on 07/13/2025`;
   // console.log("\n=== Extracted Transactions ===");
   transactions.forEach((transaction, index) => {
     // console.log(
-      `${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category} | Confidence: ${transaction.confidence}`
-    );
+//   `${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category} | Confidence: ${transaction.confidence}`
+// );
   });
 
   // console.log("\n=== Test Summary ===");
   // console.log(`Transactions Extracted: ${transactions.length}`);
   // console.log(`Expected Transactions: 27 (based on test1.png)`);
   // console.log(
-    `Success Rate: ${((transactions.length / 27) * 100).toFixed(1)}%`
-  );
+//   `Success Rate: ${((transactions.length / 27) * 100).toFixed(1)}%`
+// );
 
   // Analyze transaction quality
   const validTransactions = transactions.filter(
@@ -504,8 +504,8 @@ Payment 3: PAYMENT FROM CHK 7012 CONF#1ck0ygred - $1100.00 on 07/13/2025`;
   );
   // console.log(`Valid Transactions: ${validTransactions.length}`);
   // console.log(
-    `Quality Score: ${((validTransactions.length / transactions.length) * 100).toFixed(1)}%`
-  );
+//   `Quality Score: ${((validTransactions.length / transactions.length) * 100).toFixed(1)}%`
+// );
 
   // Show categorization breakdown
   const categories = {};

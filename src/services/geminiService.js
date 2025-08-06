@@ -284,15 +284,15 @@ IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside t
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Gemini API Error Details:", {
-          status: response.status,
-          statusText: response.statusText,
-          errorData: errorData,
-          apiKeyLength: this.apiKey ? this.apiKey.length : 0,
-          apiKeyPrefix: this.apiKey
-            ? this.apiKey.substring(0, 10) + "..."
-            : "none",
-        });
+        // console.error("Gemini API Error Details:", {
+        //   status: response.status,
+        //   statusText: response.statusText,
+        //   errorData: errorData,
+        //   apiKeyLength: this.apiKey ? this.apiKey.length : 0,
+        //   apiKeyPrefix: this.apiKey
+        //     ? this.apiKey.substring(0, 10) + "..."
+        //     : "none",
+        // });
 
         // Throw user-friendly error based on the response
         if (response.status === 400) {

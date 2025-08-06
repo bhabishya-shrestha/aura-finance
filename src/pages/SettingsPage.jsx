@@ -71,7 +71,7 @@ const SettingsPage = () => {
       const stats = await aiService.getServerUsageStats();
       setServerUsageStats(stats);
     } catch (error) {
-      console.error("Failed to load server usage stats:", error);
+      // console.error("Failed to load server usage stats:", error);
     } finally {
       setIsLoadingUsage(false);
     }
@@ -1070,7 +1070,7 @@ const SettingsPage = () => {
                           // Reload usage stats after switching
                           loadServerUsageStats();
                         } catch (error) {
-                          console.error("Failed to switch provider:", error);
+                          // console.error("Failed to switch provider:", error);
                           // Show error message to user
                           setSaveMessage(
                             `Failed to switch provider: ${error.message}`

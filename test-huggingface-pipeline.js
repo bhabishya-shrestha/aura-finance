@@ -1,7 +1,6 @@
 // Test script for Hugging Face pipeline with test image
-import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 dirname(__filename);
@@ -18,7 +17,7 @@ global.localStorage = {
 };
 
 // Mock fetch for API calls
-global.fetch = async (url, options) => {
+global.fetch = async () => {
   // console.log('Mock API call to:', url);
   // console.log('Request body:', JSON.parse(options.body));
   
@@ -50,7 +49,7 @@ global.fetch = async (url, options) => {
 
 // Mock Tesseract.js
 {
-  recognize: async (imageData) => {
+  recognize: async () => {
     // console.log('Mock OCR processing...');
     // console.log('OCR processing...');
     
@@ -316,8 +315,8 @@ function testTransactionExtraction() {
   const transactions = extractTransactionsFromAnalysis(mockAnalysis);
   
   // console.log('\n=== Extracted Transactions ===');
-  transactions.forEach((transaction, index) => {
-    // console.log(`${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category} | Confidence: ${transaction.confidence}`);
+  transactions.forEach(() => {
+    // console.log(`Transaction extracted successfully`);
   });
   
   // console.log('\n=== Test Summary ===');

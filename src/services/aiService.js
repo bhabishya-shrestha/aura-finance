@@ -44,7 +44,7 @@ class AIService {
         }
       }
     } catch (error) {
-      console.warn("Failed to load AI provider settings:", error);
+      // console.warn("Failed to load AI provider settings:", error);
     }
 
     // Default to Gemini if no setting found
@@ -81,7 +81,7 @@ class AIService {
       settings.aiProvider = provider;
       localStorage.setItem("aura_settings", JSON.stringify(settings));
     } catch (error) {
-      console.warn("Failed to save AI provider setting:", error);
+      // console.warn("Failed to save AI provider setting:", error);
     }
   }
 
@@ -121,7 +121,7 @@ class AIService {
         approachingLimit: usageStats[key]?.approaching_limit || false,
       }));
     } catch (error) {
-      console.error("Failed to get provider comparison:", error);
+      // console.error("Failed to get provider comparison:", error);
       // Fallback to basic comparison without usage data
       return Object.entries(this.providers).map(([key, provider]) => ({
         key,
@@ -146,7 +146,7 @@ class AIService {
       const validation = await apiUsageService.validateApiUsage(provider);
       return validation.can_proceed;
     } catch (error) {
-      console.error("Provider availability check failed:", error);
+      // console.error("Provider availability check failed:", error);
       return false;
     }
   }
@@ -159,7 +159,7 @@ class AIService {
     try {
       return await apiUsageService.isApproachingLimit(provider);
     } catch (error) {
-      console.error("Approaching limits check failed:", error);
+      // console.error("Approaching limits check failed:", error);
       return false;
     }
   }
@@ -206,7 +206,7 @@ class AIService {
 
       return result;
     } catch (error) {
-      console.error("AI Service: Image analysis failed:", error);
+      // console.error("AI Service: Image analysis failed:", error);
       throw error;
     }
   }
@@ -255,7 +255,7 @@ class AIService {
 
       return result;
     } catch (error) {
-      console.error("AI Service: Text extraction failed:", error);
+      // console.error("AI Service: Text extraction failed:", error);
       throw error;
     }
   }
@@ -295,7 +295,7 @@ class AIService {
 
       return result;
     } catch (error) {
-      console.error("AI Service: Transaction conversion failed:", error);
+      // console.error("AI Service: Transaction conversion failed:", error);
       throw error;
     }
   }
@@ -319,7 +319,7 @@ class AIService {
         serverValidated: true,
       };
     } catch (error) {
-      console.error("Failed to get processing summary:", error);
+      // console.error("Failed to get processing summary:", error);
       // Fallback to client-side summary
       return this.providers[
         this.currentProvider
@@ -371,7 +371,7 @@ class AIService {
 
       return result;
     } catch (error) {
-      console.error("AI Service: Transaction analysis failed:", error);
+      // console.error("AI Service: Transaction analysis failed:", error);
       throw error;
     }
   }
@@ -397,7 +397,7 @@ class AIService {
       // Perform file validation
       return this.providers[this.currentProvider].service.validateFile(file);
     } catch (error) {
-      console.error("AI Service: File validation failed:", error);
+      // console.error("AI Service: File validation failed:", error);
       throw error;
     }
   }
@@ -410,7 +410,7 @@ class AIService {
     try {
       return await apiUsageService.getUserApiUsageStats();
     } catch (error) {
-      console.error("Failed to get server usage stats:", error);
+      // console.error("Failed to get server usage stats:", error);
       return {
         success: false,
         error: error.message,
