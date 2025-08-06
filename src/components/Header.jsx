@@ -175,7 +175,7 @@ const Header = ({
                   </div>
                 </div>
 
-                <div className="p-2 max-h-80 overflow-y-auto">
+                <div className="p-4 max-h-80 overflow-y-auto">
                   {/* Update Notification */}
                   {lastUpdateNotification && (
                     <div

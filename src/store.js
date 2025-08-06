@@ -80,6 +80,48 @@ const useStore = create(
         }
       },
 
+      // Remove test transactions from database
+      removeTestTransactions: async () => {
+        try {
+          const testTransactionDescriptions = [
+            "Grocery Shopping",
+            "Salary Payment",
+            "Gas Station",
+            "Restaurant Dinner",
+            "Movie Tickets",
+            "July Shopping",
+            "July Income",
+            "March Utilities",
+            "Old Transaction",
+          ];
+
+          const allTransactions = await db.transactions.toArray();
+          const testTransactions = allTransactions.filter(transaction =>
+            testTransactionDescriptions.includes(transaction.description)
+          );
+
+          if (testTransactions.length === 0) {
+            return { removed: 0, message: "No test transactions found" };
+          }
+
+          // Remove test transactions
+          for (const transaction of testTransactions) {
+            await db.transactions.delete(transaction.id);
+          }
+
+          // Reload transactions to update the store
+          await get().loadTransactions();
+
+          return {
+            removed: testTransactions.length,
+            message: `Removed ${testTransactions.length} test transactions`,
+          };
+        } catch (error) {
+          console.error("Error removing test transactions:", error);
+          return { removed: 0, message: "Error removing test transactions" };
+        }
+      },
+
       // Load accounts from database
       loadAccounts: async () => {
         try {

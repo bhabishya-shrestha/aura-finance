@@ -148,7 +148,6 @@ const DashboardPage = ({
               onAccountAssignmentComplete={handleAccountAssignmentComplete}
               isMobile={false}
             />
-
           </>
         ) : (
           <MobileStatementImporter
@@ -169,18 +168,6 @@ const DashboardPage = ({
           <p className="text-red-800 dark:text-red-200">{error}</p>
         </div>
       )}
-
-      {/* Header - Desktop only */}
-      <div className="hidden lg:flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-            Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Welcome back! Here&apos;s your financial overview.
-          </p>
-        </div>
-      </div>
 
       {/* Mobile Header - Simple */}
       <div className="lg:hidden">

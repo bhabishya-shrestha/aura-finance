@@ -302,7 +302,7 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
           {/* Sync Status */}
           {userSyncInfo &&
             (userSyncInfo.supabaseUser || userSyncInfo.firebaseUser) && (
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-3 p-3 rounded-lg">
                   {userSyncInfo.hasCrossDeviceSync ? (
                     syncStatus.syncInProgress ? (
@@ -349,7 +349,7 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
             )}
 
           {/* Sign Out */}
-          <div className="p-4">
+          <div className="px-4 py-2">
             <button
               onClick={handleSignOut}
               className="w-full flex items-center gap-3 p-3 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors active:scale-95"

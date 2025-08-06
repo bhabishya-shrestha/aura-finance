@@ -423,40 +423,7 @@ const TransactionsPage = () => {
 
   return (
     <div className="p-4 lg:p-6 max-w-7xl mx-auto">
-      {/* Header - Desktop only */}
-      <div className="hidden lg:block mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-              Transactions
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Manage and track all your financial transactions
-            </p>
-          </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={handleExport}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 shadow-sm"
-            >
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
-            <AddTransaction />
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Header - Simple */}
-      <div className="lg:hidden mb-4">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-          Transactions
-        </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Manage and track all your financial transactions
-        </p>
-      </div>
 
       {/* Mobile Search and Filters */}
       <div className="lg:hidden space-y-4 mb-6">

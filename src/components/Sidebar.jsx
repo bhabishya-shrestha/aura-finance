@@ -344,10 +344,10 @@ const Sidebar = ({
           <div className="pt-2">
             <button
               onClick={handleSignOut}
-              className={`w-full flex items-center gap-3 p-3 rounded-lg smooth-transition group text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800/50 ${isCollapsed ? "justify-center" : ""}`}
+              className={`w-full flex items-center gap-3 p-3 rounded-lg smooth-transition group text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 ${isCollapsed ? "justify-center" : ""}`}
               title={isCollapsed ? "Sign Out" : "Sign out of your account"}
             >
-              <LogOut className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white smooth-transition" />
+              <LogOut className="w-5 h-5 text-red-600 dark:text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 smooth-transition" />
               {!isCollapsed && (
                 <span className="font-medium text-base">Sign Out</span>
               )}

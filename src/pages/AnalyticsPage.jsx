@@ -711,7 +711,7 @@ const AnalyticsPage = () => {
         } = analyticsData;
 
         return (
-          <div className="flex-1 min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+          <div className="flex-1 min-h-screen bg-gray-50 dark:bg-gray-900">
             {/* Header content */}
             <div className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10" />
@@ -722,23 +722,8 @@ const AnalyticsPage = () => {
                 }}
               />
 
-              <div className="relative p-4 sm:p-6 lg:p-8">
-                {/* Header content */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg text-white">
-                        <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6" />
-                      </div>
-                      <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-600 to-purple-600 dark:from-white dark:via-blue-400 dark:to-purple-400 bg-clip-text text-transparent leading-tight">
-                        Financial Analytics
-                      </h1>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base lg:text-lg max-w-2xl">
-                      Comprehensive insights into your financial patterns and
-                      trends with real-time data visualization
-                    </p>
-                  </div>
+              <div className="relative p-4 lg:p-6">
+
 
                   {/* Controls */}
                   <div className="flex flex-col gap-3 flex-shrink-0 w-full sm:w-auto">

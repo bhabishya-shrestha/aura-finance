@@ -42,6 +42,7 @@ const SettingsPage = () => {
     loadTransactions,
     loadAccounts,
     resetUserData,
+    removeTestTransactions,
     triggerUpdateNotification,
   } = useStore();
 
@@ -996,6 +997,40 @@ const SettingsPage = () => {
                   >
                     <Trash2 className="w-4 h-4" />
                     Reset Data
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Test Data Cleanup */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-orange-600" />
+                  Test Data Cleanup
+                </h3>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Remove Test Transactions
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Clean up sample transactions from all accounts
+                    </div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const result = await removeTestTransactions();
+                      setSaveMessage(result.message);
+                      setIsNotificationVisible(true);
+                      setTimeout(() => setIsNotificationVisible(false), 3000);
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Clean Up
                   </button>
                 </div>
               </div>

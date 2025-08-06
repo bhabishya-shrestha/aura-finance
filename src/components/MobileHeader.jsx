@@ -135,7 +135,7 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
                 </div>
               </div>
 
-              <div className="p-2">
+              <div className="p-4">
                 {/* Update Notification */}
                 {lastUpdateNotification && (
                   <div

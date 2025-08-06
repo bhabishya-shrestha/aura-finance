@@ -644,26 +644,7 @@ const AccountsPage = () => {
 
   return (
     <div className="w-full h-full p-4 sm:p-6 lg:p-8 overflow-x-hidden">
-      {/* Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 lg:mb-8">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gradient mb-2">
-            Accounts
-          </h1>
-          <p className="text-muted text-sm sm:text-base lg:text-lg">
-            Manage your financial accounts and track their performance
-          </p>
-        </div>
 
-        {/* Desktop Add Account Button */}
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="hidden lg:flex btn-glass-primary px-6 py-3 items-center justify-center gap-2 hover:scale-105 transition-all duration-200 group text-base"
-        >
-          <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
-          <span className="font-medium">Add Account</span>
-        </button>
-      </div>
 
       {/* Mobile Add Account Button */}
       <div className="lg:hidden mb-6">
