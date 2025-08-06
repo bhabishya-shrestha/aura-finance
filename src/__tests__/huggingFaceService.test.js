@@ -275,7 +275,7 @@ describe("HuggingFaceService", () => {
         provider: "huggingface",
         source: "Hugging Face Analysis",
         documentType: "Financial Document",
-        notes: expect.any(String)
+        notes: expect.any(String),
       });
     });
 
@@ -310,7 +310,7 @@ describe("HuggingFaceService", () => {
         success: true,
         analysis: "Transaction analysis",
         model: "facebook/bart-large-cnn",
-        provider: "huggingface"
+        provider: "huggingface",
       });
     });
   });
@@ -358,7 +358,7 @@ describe("HuggingFaceService", () => {
       global.fetch.mockResolvedValue({
         ok: false,
         status: 401,
-        statusText: "Unauthorized"
+        statusText: "Unauthorized",
       });
 
       await expect(huggingFaceService.extractFromText("test")).rejects.toThrow(

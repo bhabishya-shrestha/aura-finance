@@ -316,9 +316,9 @@ class AIService {
     } catch (error) {
       // console.error("Failed to get processing summary:", error);
       // Fallback to client-side summary
-      return await this.providers[this.currentProvider].service.getProcessingSummary(
-        response
-      );
+      return await this.providers[
+        this.currentProvider
+      ].service.getProcessingSummary(response);
     }
   }
 
