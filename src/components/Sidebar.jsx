@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BarChart3,
   Wallet,
@@ -6,8 +6,15 @@ import {
   Home,
   TrendingUp,
   FileText,
+  Cloud,
+  CloudOff,
+  RefreshCw,
+  Unlink,
+  LogOut,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import firebaseSync from "../services/firebaseSync";
+import authBridge from "../services/authBridge";
 
 const Sidebar = ({
   onPageChange,
@@ -16,13 +23,31 @@ const Sidebar = ({
   onMobileToggle,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { user } = useAuth();
+  const [syncStatus, setSyncStatus] = useState({
+    isOnline: true,
+    syncInProgress: false,
+    lastSyncTime: null,
+  });
+  const [userSyncInfo, setUserSyncInfo] = useState(null);
+  const { user, logout } = useAuth();
+
+  // Update sync status every 2 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      setSyncStatus(firebaseSync.getSyncStatus());
+      const info = await authBridge.getUserSyncInfo();
+      setUserSyncInfo(info);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Generate personalized greeting based on time and user info
   const getPersonalizedGreeting = () => {
     const hour = new Date().getHours();
     const userName =
       user?.user_metadata?.full_name?.split(" ")[0] ||
+      user?.user_metadata?.name?.split(" ")[0] ||
       user?.email?.split("@")[0] ||
       "there";
 
@@ -131,6 +156,35 @@ const Sidebar = ({
     setIsCollapsed(!isCollapsed);
   };
 
+  const handleSignOut = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
+  const handleForceSync = async () => {
+    await firebaseSync.forceSync();
+  };
+
+  const formatLastSync = timestamp => {
+    if (!timestamp) return "Never";
+
+    const now = new Date();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes}m ago`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -232,9 +286,77 @@ const Sidebar = ({
             ))}
           </nav>
 
+          {/* Sync Status */}
+          {userSyncInfo &&
+            (userSyncInfo.supabaseUser || userSyncInfo.firebaseUser) && (
+              <div className="mt-auto pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div
+                  className={`flex items-center gap-3 p-3 rounded-lg ${isCollapsed ? "justify-center" : ""}`}
+                >
+                  {userSyncInfo.hasCrossDeviceSync ? (
+                    syncStatus.syncInProgress ? (
+                      <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />
+                    ) : syncStatus.isOnline ? (
+                      <Cloud className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <CloudOff className="w-4 h-4 text-red-500" />
+                    )
+                  ) : (
+                    <Unlink className="w-4 h-4 text-orange-500" />
+                  )}
+                  {!isCollapsed && (
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        {userSyncInfo.hasCrossDeviceSync
+                          ? syncStatus.syncInProgress
+                            ? "Syncing..."
+                            : syncStatus.isOnline
+                              ? "Synced"
+                              : "Offline"
+                          : "Local Only"}
+                      </div>
+                      {userSyncInfo.hasCrossDeviceSync &&
+                        syncStatus.isOnline &&
+                        !syncStatus.syncInProgress && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {formatLastSync(syncStatus.lastSyncTime)}
+                          </div>
+                        )}
+                    </div>
+                  )}
+                  {userSyncInfo.hasCrossDeviceSync &&
+                    syncStatus.isOnline &&
+                    !syncStatus.syncInProgress &&
+                    !isCollapsed && (
+                      <button
+                        onClick={handleForceSync}
+                        className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        title="Force sync now"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                      </button>
+                    )}
+                </div>
+              </div>
+            )}
+
+          {/* Sign Out */}
+          <div className="pt-2">
+            <button
+              onClick={handleSignOut}
+              className={`w-full flex items-center gap-3 p-3 rounded-lg smooth-transition group text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800/50 ${isCollapsed ? "justify-center" : ""}`}
+              title={isCollapsed ? "Sign Out" : "Sign out of your account"}
+            >
+              <LogOut className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white smooth-transition" />
+              {!isCollapsed && (
+                <span className="font-medium text-base">Sign Out</span>
+              )}
+            </button>
+          </div>
+
           {/* Footer */}
           <div
-            className={`mt-auto pt-3 border-t border-gray-200 dark:border-gray-700 ${isCollapsed ? "text-center" : ""}`}
+            className={`pt-3 border-t border-gray-200 dark:border-gray-700 ${isCollapsed ? "text-center" : ""}`}
           >
             <div
               className={`text-xs text-gray-500 dark:text-gray-400 ${isCollapsed ? "text-center" : ""}`}

@@ -22,7 +22,7 @@ const Header = ({
     clearUpdateNotification,
     markUpdateNotificationAsRead,
   } = useStore();
-  const [showUserMenu, setShowUserMenu] = useState(false);
+
   const [showNotifications, setShowNotifications] = useState(false);
   const headerRef = useRef(null);
 
@@ -31,7 +31,6 @@ const Header = ({
     const handleClickOutside = event => {
       if (headerRef.current && !headerRef.current.contains(event.target)) {
         setShowNotifications(false);
-        setShowUserMenu(false);
       }
     };
 
@@ -76,14 +75,7 @@ const Header = ({
     setShowNotifications(!showNotifications);
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      setShowUserMenu(false);
-    } catch (error) {
-      // Error handled silently - user will be redirected to login
-    }
-  };
+
 
   return (
     <header
@@ -298,62 +290,6 @@ const Header = ({
               </div>
             )}
           </div>
-
-          {/* User Profile */}
-          {user && (
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="hidden sm:block text-right min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {user.user_metadata?.full_name ||
-                    user.email?.split("@")[0] ||
-                    "User"}
-                </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                  {user.email}
-                </p>
-              </div>
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setShowUserMenu(!showUserMenu);
-                    // Close mobile sidebar if it's open
-                    if (onCloseMobileSidebar) {
-                      onCloseMobileSidebar();
-                    }
-                  }}
-                  onMouseEnter={() => setShowUserMenu(true)}
-                  className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium hover:scale-105 smooth-transition shadow-sm flex-shrink-0"
-                  aria-label="User menu"
-                  aria-expanded={showUserMenu}
-                >
-                  {(
-                    user.user_metadata?.full_name ||
-                    user.email?.split("@")[0] ||
-                    "U"
-                  )
-                    .charAt(0)
-                    .toUpperCase()}
-                </button>
-
-                {/* Dropdown Menu */}
-                {showUserMenu && (
-                  <div
-                    className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 animate-fade-in"
-                    onMouseLeave={() => setShowUserMenu(false)}
-                  >
-                    <div className="p-2">
-                      <button
-                        onClick={handleLogout}
-                        className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
-                      >
-                        Sign Out
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </header>

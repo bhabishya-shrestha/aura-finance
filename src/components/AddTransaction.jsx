@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { X, DollarSign, Calendar, FileText, Tag, Wallet } from "lucide-react";
+import {
+  X,
+  DollarSign,
+  Calendar,
+  FileText,
+  Tag,
+  Wallet,
+  Plus,
+} from "lucide-react";
 import useStore from "../store";
 import { CATEGORIES } from "../utils/statementParser";
 
@@ -123,6 +131,17 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
 
   return (
     <>
+      {/* Standalone Button (when not controlled externally) */}
+      {isOpen === undefined && (
+        <button
+          onClick={() => setShowModal(true)}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Transaction</span>
+        </button>
+      )}
+
       {/* Modal */}
       {shouldShowModal && (
         <div

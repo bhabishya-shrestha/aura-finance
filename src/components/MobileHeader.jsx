@@ -1,12 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  Bell,
-  User,
-  Settings,
-  Menu,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { Bell, Menu, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import useStore from "../store";
 
@@ -21,7 +14,7 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
     markUpdateNotificationAsRead,
   } = useStore();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
+
   const [expandedNotifications, setExpandedNotifications] = useState(new Set());
   const headerRef = useRef(null);
 
@@ -30,7 +23,6 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
     const handleClickOutside = event => {
       if (headerRef.current && !headerRef.current.contains(event.target)) {
         setShowNotifications(false);
-        setShowUserMenu(false);
       }
     };
 
@@ -293,44 +285,6 @@ const MobileHeader = ({ onMenuClick, onPageChange }) => {
                     ))}
                   </div>
                 )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* User Menu */}
-        <div className="relative">
-          <button
-            onClick={() => setShowUserMenu(!showUserMenu)}
-            className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors active:scale-95"
-            aria-label="User menu"
-          >
-            <User className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-          </button>
-
-          {/* User Menu Dropdown */}
-          {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
-              <div className="p-2">
-                <div className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
-                  {user?.email || "User"}
-                </div>
-                <button
-                  onClick={() => {
-                    onPageChange("settings");
-                    setShowUserMenu(false);
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center gap-2"
-                >
-                  <Settings className="w-4 h-4" />
-                  Settings
-                </button>
-                <button
-                  onClick={signOut}
-                  className="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                >
-                  Sign Out
-                </button>
               </div>
             </div>
           )}

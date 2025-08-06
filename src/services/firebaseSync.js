@@ -34,9 +34,12 @@ class FirebaseSyncService {
         console.log("🔄 Firebase sync initialized for user:", user.uid);
         await this.syncData();
         this.startPeriodicSync();
+      } else {
+        console.log("🔄 Firebase sync: No authenticated user found");
       }
     } catch (error) {
       console.log("Firebase sync not available:", error.message);
+      // Don't throw - sync is optional
     }
   }
 

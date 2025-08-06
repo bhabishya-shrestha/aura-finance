@@ -6,7 +6,6 @@ import {
   CreditCard,
   Upload,
   FileText,
-  Plus,
 } from "lucide-react";
 import useStore from "../store";
 import StatementImporter from "../components/StatementImporter";
@@ -28,8 +27,7 @@ const DashboardPage = ({
     loadAccounts,
   } = useStore();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isAddTransactionModalOpen, setIsAddTransactionModalOpen] =
-    useState(false);
+
   const [error, setError] = useState("");
 
   // Use mobile viewport handling
@@ -53,10 +51,6 @@ const DashboardPage = ({
     } else {
       setIsImportModalOpen(true);
     }
-  };
-
-  const handleAddTransactionClick = () => {
-    setIsAddTransactionModalOpen(true);
   };
 
   const handleImportComplete = async importedTransactions => {
@@ -154,11 +148,7 @@ const DashboardPage = ({
               onAccountAssignmentComplete={handleAccountAssignmentComplete}
               isMobile={false}
             />
-            <AddTransaction
-              isOpen={isAddTransactionModalOpen}
-              onClose={() => setIsAddTransactionModalOpen(false)}
-              isMobile={false}
-            />
+
           </>
         ) : (
           <MobileStatementImporter
@@ -251,20 +241,7 @@ const DashboardPage = ({
           Quick Actions
         </h2>
         <div className="grid grid-cols-1 gap-4">
-          <button
-            onClick={handleAddTransactionClick}
-            className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-          >
-            <Plus className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            <div className="text-left">
-              <p className="font-medium text-blue-900 dark:text-blue-100">
-                Add Transaction
-              </p>
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                Manually add a transaction
-              </p>
-            </div>
-          </button>
+          <AddTransaction />
           <button
             onClick={handleImportClick}
             className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors"

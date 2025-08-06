@@ -47,10 +47,28 @@ const useStore = create(
               .then(arr => arr.reverse());
           }
 
+          // Load accounts to establish relationships
+          const accounts = await get().loadAccounts();
+
+          // Join transactions with account information
+          const transactionsWithAccounts = transactions.map(transaction => {
+            const account = accounts.find(
+              acc => acc.id === transaction.accountId
+            );
+            return {
+              ...transaction,
+              account: account || null,
+              accountName:
+                account?.name ||
+                transaction.accountName ||
+                "Uncategorized Account",
+            };
+          });
+
           // Clear analytics cache when transactions are loaded
           // analyticsService.forceRefresh(); // Removed - not needed with batch calculations
 
-          set({ transactions });
+          set({ transactions: transactionsWithAccounts });
         } catch (error) {
           // Error handling - in production, this would use a proper error notification system
           if (import.meta.env.DEV) {
@@ -85,12 +103,14 @@ const useStore = create(
           // Clear analytics cache when accounts are loaded
           // analyticsService.forceRefresh(); // Removed - not needed with batch calculations
           set({ accounts });
+          return accounts;
         } catch (error) {
           // Error handling - in production, this would use a proper error notification system
           if (import.meta.env.DEV) {
             // eslint-disable-next-line no-console
             console.error("Error loading accounts:", error);
           }
+          return [];
         }
       },
 

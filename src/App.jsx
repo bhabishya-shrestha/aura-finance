@@ -24,7 +24,7 @@ import MobileNav from "./components/MobileNav";
 import ErrorBoundary from "./components/ErrorBoundary";
 import LoadingSpinner from "./components/LoadingSpinner";
 import FirebaseTest from "./components/FirebaseTest";
-import SyncStatus from "./components/SyncStatus";
+
 import { initializeDatabase } from "./database";
 import useStore from "./store";
 import { useMobileViewport } from "./hooks/useMobileViewport";
@@ -258,7 +258,6 @@ const AppLayout = () => {
       </div>
 
       {/* Sync Status Indicator */}
-      <SyncStatus />
 
       {/* Global Modals - Rendered outside main content for proper full-screen coverage */}
       {currentPage === "dashboard" && (
@@ -391,7 +390,12 @@ const AppContent = () => {
 const App = () => {
   // Initialize Firebase sync when app starts
   useEffect(() => {
+    let isInitializing = false;
+
     const initializeSync = async () => {
+      if (isInitializing) return;
+      isInitializing = true;
+
       try {
         // Initialize database first
         await initializeDatabase();
@@ -403,6 +407,8 @@ const App = () => {
         await firebaseSync.initialize();
       } catch (error) {
         console.log("App initialization error:", error);
+      } finally {
+        isInitializing = false;
       }
     };
 

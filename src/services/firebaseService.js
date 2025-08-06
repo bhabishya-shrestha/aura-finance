@@ -91,7 +91,8 @@ class FirebaseService {
       return { success: true, user };
     } catch (error) {
       console.error("Registration error:", error);
-      return { success: false, error: error.message };
+      // Throw the error so the auth bridge can handle it properly
+      throw error;
     }
   }
 
@@ -105,7 +106,8 @@ class FirebaseService {
       return { success: true, user: userCredential.user };
     } catch (error) {
       console.error("Login error:", error);
-      return { success: false, error: error.message };
+      // Throw the error so the auth bridge can handle it properly
+      throw error;
     }
   }
 

@@ -1,17 +1,102 @@
-import React, { useRef, useEffect, useCallback } from "react";
+import React, { useRef, useEffect, useCallback, useState } from "react";
 import {
-  User,
   Home,
   CreditCard,
   BarChart3,
   FileText,
   Settings,
   LogOut,
+  Cloud,
+  CloudOff,
+  RefreshCw,
+  Unlink,
 } from "lucide-react";
 import useStore from "../store";
+import firebaseSync from "../services/firebaseSync";
+import authBridge from "../services/authBridge";
 
 const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
   const { user, signOut } = useStore();
+  const [syncStatus, setSyncStatus] = useState({
+    isOnline: true,
+    syncInProgress: false,
+    lastSyncTime: null,
+  });
+  const [userSyncInfo, setUserSyncInfo] = useState(null);
+
+  // Update sync status every 2 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      setSyncStatus(firebaseSync.getSyncStatus());
+      const info = await authBridge.getUserSyncInfo();
+      setUserSyncInfo(info);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Generate personalized greeting based on time and user info
+  const getPersonalizedGreeting = () => {
+    const hour = new Date().getHours();
+    const userName =
+      user?.user_metadata?.full_name?.split(" ")[0] ||
+      user?.user_metadata?.name?.split(" ")[0] ||
+      user?.email?.split("@")[0] ||
+      "there";
+
+    let timeGreeting = "";
+    if (hour < 12) {
+      timeGreeting = "Good morning";
+    } else if (hour < 17) {
+      timeGreeting = "Good afternoon";
+    } else {
+      timeGreeting = "Good evening";
+    }
+
+    // Add some variety to the greetings
+    const greetings = [
+      `${timeGreeting}, ${userName}!`,
+      `${timeGreeting}, ${userName}! 👋`,
+      `Hello ${userName}! ✨`,
+      `Welcome back, ${userName}!`,
+      `Hey ${userName}! 💫`,
+      `${timeGreeting}, ${userName}! 🌟`,
+    ];
+
+    // Use a simple hash of the date to get consistent daily greeting
+    const today = new Date().toDateString();
+    const hash = today.split("").reduce((a, b) => {
+      a = (a << 5) - a + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+
+    return greetings[Math.abs(hash) % greetings.length];
+  };
+
+  // Generate daily motivational message
+  const getDailyMessage = () => {
+    const messages = [
+      "Ready to manage your finances?",
+      "Your financial future starts today!",
+      "Smart choices, bright future! 💰",
+      "Every transaction counts! 📊",
+      "Building wealth, one step at a time!",
+      "Your money, your control! 💪",
+      "Financial freedom awaits! 🚀",
+      "Track, plan, succeed! 📈",
+      "Your financial journey continues!",
+      "Making money work for you! 💎",
+    ];
+
+    // Use a different hash for the message to get variety
+    const today = new Date().toDateString();
+    const hash = today.split("").reduce((a, b) => {
+      a = (a << 7) - a + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+
+    return messages[Math.abs(hash) % messages.length];
+  };
   const sidebarRef = useRef(null);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
@@ -135,6 +220,27 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
     }
   };
 
+  const handleForceSync = async () => {
+    await firebaseSync.forceSync();
+  };
+
+  const formatLastSync = timestamp => {
+    if (!timestamp) return "Never";
+
+    const now = new Date();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes}m ago`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -153,18 +259,13 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
         <div className="flex flex-col h-full">
           {/* User Section */}
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {user?.email || "User"}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {user?.email ? "Signed in" : "Guest"}
-                </p>
-              </div>
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white leading-tight">
+                {getPersonalizedGreeting()}
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {getDailyMessage()}
+              </p>
             </div>
           </div>
           {/* Navigation */}
@@ -175,51 +276,80 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
                   key={item.id}
                   onClick={e => handleNavigationClick(item.id, e)}
                   onTouchEnd={e => handleNavigationClick(item.id, e)}
-                  className={`w-full flex items-center gap-3 p-3 text-left rounded-lg transition-colors active:scale-95 ${
+                  className={`w-full flex items-center gap-3 p-3 text-left rounded-lg transition-colors active:scale-95 relative ${
                     currentPage === item.id
-                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600"
+                      : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   }`}
                 >
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  <item.icon
+                    className={`w-5 h-5 transition-colors ${
                       currentPage === item.id
-                        ? "bg-blue-100 dark:bg-blue-900/30"
-                        : "bg-gray-100 dark:bg-gray-800"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                     }`}
-                  >
-                    <item.icon
-                      className={`w-4 h-4 ${
-                        currentPage === item.id
-                          ? "text-blue-600 dark:text-blue-400"
-                          : "text-gray-500 dark:text-gray-400"
-                      }`}
-                    />
-                  </div>
+                  />
                   <div className="flex-1 min-w-0">
-                    <p
-                      className={`text-sm font-medium ${
-                        currentPage === item.id
-                          ? "text-blue-600 dark:text-blue-400"
-                          : "text-gray-900 dark:text-white"
-                      }`}
-                    >
+                    <span className="font-medium text-base truncate">
                       {item.label}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {item.description}
-                    </p>
+                    </span>
                   </div>
-                  {currentPage === item.id && (
-                    <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
-                  )}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          {/* Sync Status */}
+          {userSyncInfo &&
+            (userSyncInfo.supabaseUser || userSyncInfo.firebaseUser) && (
+              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3 p-3 rounded-lg">
+                  {userSyncInfo.hasCrossDeviceSync ? (
+                    syncStatus.syncInProgress ? (
+                      <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />
+                    ) : syncStatus.isOnline ? (
+                      <Cloud className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <CloudOff className="w-4 h-4 text-red-500" />
+                    )
+                  ) : (
+                    <Unlink className="w-4 h-4 text-orange-500" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                      {userSyncInfo.hasCrossDeviceSync
+                        ? syncStatus.syncInProgress
+                          ? "Syncing..."
+                          : syncStatus.isOnline
+                            ? "Synced"
+                            : "Offline"
+                        : "Local Only"}
+                    </div>
+                    {userSyncInfo.hasCrossDeviceSync &&
+                      syncStatus.isOnline &&
+                      !syncStatus.syncInProgress && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatLastSync(syncStatus.lastSyncTime)}
+                        </div>
+                      )}
+                  </div>
+                  {userSyncInfo.hasCrossDeviceSync &&
+                    syncStatus.isOnline &&
+                    !syncStatus.syncInProgress && (
+                      <button
+                        onClick={handleForceSync}
+                        className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        title="Force sync now"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                      </button>
+                    )}
+                </div>
+              </div>
+            )}
+
+          {/* Sign Out */}
+          <div className="p-4">
             <button
               onClick={handleSignOut}
               className="w-full flex items-center gap-3 p-3 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors active:scale-95"
@@ -229,6 +359,13 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
               </div>
               <span className="text-sm font-medium">Sign Out</span>
             </button>
+          </div>
+
+          {/* Version */}
+          <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-3">
+            <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              Version 1.3.0
+            </div>
           </div>
         </div>
       </div>

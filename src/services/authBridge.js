@@ -10,13 +10,44 @@ class AuthBridgeService {
   constructor() {
     this.isLinked = false;
     this.firebaseUser = null;
+    this.isInitializing = false;
+    this.initializationPromise = null;
   }
 
   /**
    * Initialize the auth bridge
    */
   async initialize() {
+    // Prevent multiple simultaneous initializations
+    if (this.isInitializing) {
+      return this.initializationPromise;
+    }
+
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    this.isInitializing = true;
+    this.initializationPromise = this._initialize();
+
     try {
+      await this.initializationPromise;
+    } finally {
+      this.isInitializing = false;
+      this.initializationPromise = null;
+    }
+
+    return this.initializationPromise;
+  }
+
+  /**
+   * Internal initialization method
+   */
+  async _initialize() {
+    try {
+      // Add a small delay to prevent rapid-fire auth attempts
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Check if user is authenticated with Supabase
       const {
         data: { session },
@@ -48,27 +79,42 @@ class AuthBridgeService {
 
         try {
           // Try to sign in first (in case user was created before)
-          const loginResult = await firebaseService.login(
-            email,
-            tempPassword
-          );
+          const loginResult = await firebaseService.login(email, tempPassword);
           if (loginResult.success) {
             firebaseUser = loginResult.user;
             console.log("🔗 Auth bridge: Firebase login successful");
           }
-        } catch (error) {
-          // User doesn't exist, create new Firebase account
-          console.log(
-            "🔗 Auth bridge: Creating Firebase account for existing Supabase user"
-          );
-          const registerResult = await firebaseService.register(
-            email,
-            tempPassword,
-            supabaseUser.user_metadata?.full_name || supabaseUser.email
-          );
-          if (registerResult.success) {
-            firebaseUser = registerResult.user;
-            console.log("🔗 Auth bridge: Firebase account created");
+        } catch (loginError) {
+          // Only try to register if login failed due to user not existing
+          if (
+            loginError.code === "auth/user-not-found" ||
+            loginError.code === "auth/invalid-credential"
+          ) {
+            console.log(
+              "🔗 Auth bridge: Creating Firebase account for existing Supabase user"
+            );
+            try {
+              const registerResult = await firebaseService.register(
+                email,
+                tempPassword,
+                supabaseUser.user_metadata?.full_name || supabaseUser.email
+              );
+              if (registerResult.success) {
+                firebaseUser = registerResult.user;
+                console.log("🔗 Auth bridge: Firebase account created");
+              }
+            } catch (registerError) {
+              console.error(
+                "🔗 Auth bridge: Failed to create Firebase account:",
+                registerError
+              );
+              // Don't throw - user can still use the app without Firebase sync
+              return;
+            }
+          } else {
+            console.error("🔗 Auth bridge: Firebase login error:", loginError);
+            // Don't throw - user can still use the app without Firebase sync
+            return;
           }
         }
       }
