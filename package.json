@@ -39,6 +39,7 @@
     "db:migrate:manual": "node scripts/apply-migration-manual.js extract",
     "db:maintain": "node scripts/maintain-denormalized-data.js run",
     "db:test:performance": "node scripts/test-performance-improvements.js run",
+    "test:firebase": "node test-firebase-setup.js",
     "deploy:staging": "vercel --prod --target staging",
     "deploy:production": "vercel --prod",
     "deploy:rollback": "vercel rollback"

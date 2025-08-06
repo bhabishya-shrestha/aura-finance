@@ -23,9 +23,13 @@ import MobileSidebar from "./components/MobileSidebar";
 import MobileNav from "./components/MobileNav";
 import ErrorBoundary from "./components/ErrorBoundary";
 import LoadingSpinner from "./components/LoadingSpinner";
+import FirebaseTest from "./components/FirebaseTest";
+import SyncStatus from "./components/SyncStatus";
 import { initializeDatabase } from "./database";
 import useStore from "./store";
 import { useMobileViewport } from "./hooks/useMobileViewport";
+import firebaseSync from "./services/firebaseSync";
+import authBridge from "./services/authBridge";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -253,6 +257,9 @@ const AppLayout = () => {
         )}
       </div>
 
+      {/* Sync Status Indicator */}
+      <SyncStatus />
+
       {/* Global Modals - Rendered outside main content for proper full-screen coverage */}
       {currentPage === "dashboard" && (
         <DashboardPage
@@ -363,6 +370,16 @@ const AppContent = () => {
         }
       />
 
+      {/* Firebase Test Route */}
+      <Route
+        path="/firebase-test"
+        element={
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+            <FirebaseTest />
+          </div>
+        }
+      />
+
       {/* Default redirect */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
@@ -372,6 +389,26 @@ const AppContent = () => {
 
 // Main App Component with Providers
 const App = () => {
+  // Initialize Firebase sync when app starts
+  useEffect(() => {
+    const initializeSync = async () => {
+      try {
+        // Initialize database first
+        await initializeDatabase();
+
+        // Initialize auth bridge (links Supabase OAuth to Firebase)
+        await authBridge.initialize();
+
+        // Initialize Firebase sync (will be called by auth bridge if user is linked)
+        await firebaseSync.initialize();
+      } catch (error) {
+        console.log("App initialization error:", error);
+      }
+    };
+
+    initializeSync();
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider>
