@@ -1,7 +1,6 @@
 // Full pipeline test with actual test1.png image
-import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { dirname } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 dirname(__filename);
@@ -18,7 +17,7 @@ global.localStorage = {
 };
 
 // Mock fetch for API calls with realistic responses
-global.fetch = async (url, options) => {
+global.fetch = async () => {
   // console.log("Mock API call to:", url);
 
   // Simulate Hugging Face API response based on the actual test1.png content
@@ -66,7 +65,7 @@ Payment 3: PAYMENT FROM CHK 7012 CONF#1ck0ygred - $1100.00 on 07/13/2025`,
 
 // Mock Tesseract.js with realistic OCR output from test1.png
 const mockTesseract = {
-  recognize: async (imageData, lang, options) => {
+  recognize: async () => {
     // console.log("Mock OCR processing test1.png...");
 
     // Simulate realistic OCR text extraction from the actual test1.png image
@@ -298,22 +297,20 @@ function testImprovedExtraction() {
 
     if (!analysis || analysis.trim() === "") {
       // console.log(
-//   "[extractTransactionsFromAnalysis] Empty analysis, returning empty array"
-// );
+      //   "[extractTransactionsFromAnalysis] Empty analysis, returning empty array"
+      // );
       return transactions;
     }
 
     // console.log(
-//   "[extractTransactionsFromAnalysis] Processing analysis:",
-//   analysis
-// );
+    //   "[extractTransactionsFromAnalysis] Processing analysis:",
+    //   analysis
+    // );
 
     // Count expected transactions
-    const transactionMatches = analysis.match(/Transaction\s+\d+:/g);
-    const paymentMatches = analysis.match(/Payment\s+\d+:/g);
     // console.log(
-//   `[DEBUG] Found ${transactionMatches?.length || 0} transaction lines and ${paymentMatches?.length || 0} payment lines`
-// );
+    //   `[DEBUG] Found ${transactionMatches?.length || 0} transaction lines and ${paymentMatches?.length || 0} payment lines`
+    // );
 
     // More precise patterns specifically designed for bank statement format
     // Only use the most reliable patterns to avoid duplicates
@@ -328,14 +325,14 @@ function testImprovedExtraction() {
 
     const foundTransactions = new Set();
 
-    patterns.forEach((pattern, index) => {
+    patterns.forEach(pattern => {
       const matches = [...analysis.matchAll(pattern)];
       // console.log(
-//   `[extractTransactionsFromAnalysis] Pattern ${index + 1} found ${matches.length} matches`
-// );
+      //   `[extractTransactionsFromAnalysis] Pattern ${index + 1} found ${matches.length} matches`
+      // );
 
       // Debug: Show what matches were found
-      matches.forEach((match, matchIndex) => {
+      matches.forEach(() => {
         // console.log(`[DEBUG] Match ${matchIndex + 1}:`, match[0]);
       });
 
@@ -369,22 +366,22 @@ function testImprovedExtraction() {
 
             transactions.push(transaction);
             // console.log(
-//   `[extractTransactionsFromAnalysis] Added transaction:`,
-//   transaction
-// );
+            //   `[extractTransactionsFromAnalysis] Added transaction:`,
+            //   transaction
+            // );
           } else {
             // console.log(
-//   `[DEBUG] Duplicate transaction filtered out: ${transactionKey}`
-// );
+            //   `[DEBUG] Duplicate transaction filtered out: ${transactionKey}`
+            // );
           }
         } else {
           // Debug why transaction was rejected
           // console.log(
-//   `[DEBUG] Rejected transaction: amount=${amount}, description="${description}"`
-// );
+          //   `[DEBUG] Rejected transaction: amount=${amount}, description="${description}"`
+          // );
           // console.log(
-//   `[DEBUG] isValidAmount: ${isValidTransactionAmount(amount)}, isValidDescription: ${isValidDescription(description)}`
-// );
+          //   `[DEBUG] isValidAmount: ${isValidTransactionAmount(amount)}, isValidDescription: ${isValidDescription(description)}`
+          // );
         }
       });
     });
@@ -392,12 +389,12 @@ function testImprovedExtraction() {
     // If we didn't get all expected transactions, try a more aggressive approach
     if (transactions.length < 27) {
       // console.log(
-//   `[DEBUG] Only extracted ${transactions.length} transactions, trying alternative approach`
-// );
+      //   `[DEBUG] Only extracted ${transactions.length} transactions, trying alternative approach`
+      // );
 
       // Try to extract all lines that contain transaction information
       const lines = analysis.split("\n");
-      lines.forEach((line, lineIndex) => {
+      lines.forEach(line => {
         if (line.includes("Transaction") || line.includes("Payment")) {
           // console.log(`[DEBUG] Line ${lineIndex}: ${line}`);
         }
@@ -409,10 +406,10 @@ function testImprovedExtraction() {
         /Transaction\s+\d+:\s+(.*?)\s+-\s+\$?(\d+\.?\d*)\s+on\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})/gi;
       const flexibleMatches = [...analysis.matchAll(flexiblePattern)];
       // console.log(
-//   `[DEBUG] Flexible pattern found ${flexibleMatches.length} matches`
-// );
+      //   `[DEBUG] Flexible pattern found ${flexibleMatches.length} matches`
+      // );
 
-      flexibleMatches.forEach((match, matchIndex) => {
+      flexibleMatches.forEach(match => {
         if (
           !transactions.some(
             t => t.description === cleanDescription(match[1].trim())
@@ -425,8 +422,8 @@ function testImprovedExtraction() {
 
     if (transactions.length === 0) {
       // console.log(
-//   "[extractTransactionsFromAnalysis] No transactions found, creating fallback"
-// );
+      //   "[extractTransactionsFromAnalysis] No transactions found, creating fallback"
+      // );
       transactions.push({
         date: new Date().toISOString().split("T")[0],
         description: "Document analysis completed",
@@ -438,8 +435,8 @@ function testImprovedExtraction() {
     }
 
     // console.log(
-//   `[extractTransactionsFromAnalysis] Final result: ${transactions.length} transactions`
-// );
+    //   `[extractTransactionsFromAnalysis] Final result: ${transactions.length} transactions`
+    // );
     return transactions;
   };
 
@@ -482,18 +479,18 @@ Payment 3: PAYMENT FROM CHK 7012 CONF#1ck0ygred - $1100.00 on 07/13/2025`;
   const transactions = extractTransactionsFromAnalysis(comprehensiveAnalysis);
 
   // console.log("\n=== Extracted Transactions ===");
-  transactions.forEach((transaction, index) => {
+  transactions.forEach(() => {
     // console.log(
-//   `${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category} | Confidence: ${transaction.confidence}`
-// );
+    //   `${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category} | Confidence: ${transaction.confidence}`
+    // );
   });
 
   // console.log("\n=== Test Summary ===");
   // console.log(`Transactions Extracted: ${transactions.length}`);
   // console.log(`Expected Transactions: 27 (based on test1.png)`);
   // console.log(
-//   `Success Rate: ${((transactions.length / 27) * 100).toFixed(1)}%`
-// );
+  //   `Success Rate: ${((transactions.length / 27) * 100).toFixed(1)}%`
+  // );
 
   // Analyze transaction quality
   const validTransactions = transactions.filter(
@@ -504,8 +501,8 @@ Payment 3: PAYMENT FROM CHK 7012 CONF#1ck0ygred - $1100.00 on 07/13/2025`;
   );
   // console.log(`Valid Transactions: ${validTransactions.length}`);
   // console.log(
-//   `Quality Score: ${((validTransactions.length / transactions.length) * 100).toFixed(1)}%`
-// );
+  //   `Quality Score: ${((validTransactions.length / transactions.length) * 100).toFixed(1)}%`
+  // );
 
   // Show categorization breakdown
   const categories = {};
@@ -513,15 +510,11 @@ Payment 3: PAYMENT FROM CHK 7012 CONF#1ck0ygred - $1100.00 on 07/13/2025`;
     categories[t.category] = (categories[t.category] || 0) + 1;
   });
   // console.log("\n=== Category Breakdown ===");
-  Object.entries(categories).forEach(([category, count]) => {
+  Object.entries(categories).forEach(() => {
     // console.log(`${category}: ${count} transactions`);
   });
 
   // Show unique merchants
-  const uniqueMerchants = new Set();
-  validTransactions.forEach(t => {
-    uniqueMerchants.add(t.description);
-  });
   // console.log(`\nUnique Merchants: ${uniqueMerchants.size}`);
 }
 

@@ -1,13 +1,13 @@
 // Real image test with test1.png
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Mock environment variables for testing
-process.env.VITE_HUGGINGFACE_API_KEY = 'hf_JqanjMh...'; // Your actual key
+process.env.VITE_HUGGINGFACE_API_KEY = "hf_JqanjMh..."; // Your actual key
 
 // Mock localStorage for Node.js environment
 global.localStorage = {
@@ -18,14 +18,15 @@ global.localStorage = {
 };
 
 // Mock fetch for API calls with realistic responses based on test1.png
-global.fetch = async (url, options) => {
+global.fetch = async () => {
   // console.log('Mock API call to:', url);
-  
+
   // Simulate Hugging Face API response based on the actual test1.png content
   return {
     ok: true,
-    json: async () => [{
-      summary_text: `Extracted financial transactions from bank statement:
+    json: async () => [
+      {
+        summary_text: `Extracted financial transactions from bank statement:
 
 Transaction 1: EVEREST FOOD TRUCK 2 - $27.96 on 08/02/2025
 Transaction 2: WM SUPERCENTER #475 ROUND ROCK TX - $35.96 on 08/01/2025
@@ -57,16 +58,17 @@ Transaction 27: ATI*3806-078190352 ATM.TK CA - $100.00 on 07/07/2025
 
 Payment 1: PAYMENT FROM CHK 7012 CONF#162rrgson - $700.00 on 07/15/2025
 Payment 2: PAYMENT FROM CHK 7012 CONF#1jjh0j84x - $1487.16 on 07/14/2025
-Payment 3: PAYMENT FROM CHK 7012 CONF#1ck0ygred - $1100.00 on 07/13/2025`
-    }]
+Payment 3: PAYMENT FROM CHK 7012 CONF#1ck0ygred - $1100.00 on 07/13/2025`,
+      },
+    ],
   };
 };
 
 // Mock Tesseract.js with realistic OCR output from test1.png
 const mockTesseract = {
-  recognize: async (imageData, lang, options) => {
+  recognize: async () => {
     // console.log('Mock OCR processing test1.png...');
-    
+
     // Simulate realistic OCR text extraction from the actual test1.png image
     const ocrText = `Posting Date Description Type Amount Balance
 Pending EVEREST FOOD TRUCK 2 $27.96 $444.59
@@ -100,21 +102,21 @@ Pending EVEREST FOOD TRUCK 2 $27.96 $444.59
 07/15/2025 PAYMENT FROM CHK 7012 CONF#1jjh0j84x -$1487.16 $211.18
 07/14/2025 PAYMENT FROM CHK 7012 CONF#1ck0ygred -$1100.00 $1698.34
 Beginning balance as of 07/11/2025 $77.84`;
-    
+
     return {
       data: {
         text: ocrText,
         confidence: 85.5,
-        words: []
-      }
+        words: [],
+      },
     };
-  }
+  },
 };
 
 // Mock the Tesseract import
 const originalImport = global.import;
-global.import = async (module) => {
-  if (module === 'tesseract.js') {
+global.import = async module => {
+  if (module === "tesseract.js") {
     return { default: mockTesseract };
   }
   return originalImport(module);
@@ -124,31 +126,37 @@ async function testRealImage() {
   // console.log('=== Testing Real Image Processing with test1.png ===\n');
 
   // Read the actual test1.png image file
-  const imagePath = join(__dirname, 'src', 'assets', 'test1.png');
-  
+  const imagePath = join(__dirname, "src", "assets", "test1.png");
+
   try {
     const imageBuffer = readFileSync(imagePath);
-    `data:image/png;base64,${imageBuffer.toString('base64')}`;
-    
+    `data:image/png;base64,${imageBuffer.toString("base64")}`;
+
     // console.log(`✅ Successfully loaded test1.png from: ${imagePath}`);
     // console.log(`📊 Image size: ${imageBuffer.length} bytes`);
     // console.log(`🖼️  Image format: PNG (base64 encoded)`);
-    
+
     // Simulate the full pipeline process
     // console.log('\n🔄 Simulating OCR processing...');
-    const ocrResult = await mockTesseract.recognize('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'eng', {});
+    await mockTesseract.recognize(
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+      "eng",
+      {}
+    );
     // console.log(`✅ OCR completed with ${ocrResult.data.confidence}% confidence`);
     // console.log(`📝 Extracted ${ocrResult.data.text.split('\n').length} lines of text`);
-    
+
     // console.log('\n🔄 Simulating AI analysis...');
-    const aiResponse = await global.fetch('https://api-inference.huggingface.co/models/facebook/bart-large-cnn');
+    const aiResponse = await global.fetch(
+      "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
+    );
     const aiData = await aiResponse.json();
     // console.log(`✅ AI analysis completed`);
     // console.log(`📊 AI response length: ${aiData[0].summary_text.length} characters`);
-    
+
     // Test transaction extraction
     // console.log('\n🔄 Testing transaction extraction...');
-    
+
     // Define the transaction extraction logic directly to avoid import issues
     const normalizeDate = dateStr => {
       try {
@@ -180,23 +188,82 @@ async function testRealImage() {
 
     const determineTransactionType = (description, amount) => {
       const desc = description.toLowerCase();
-      const incomeKeywords = ["deposit", "credit", "refund", "payment", "transfer in", "income"];
-      if (incomeKeywords.some(keyword => desc.includes(keyword))) return "income";
-      const expenseKeywords = ["withdrawal", "debit", "purchase", "payment", "fee", "charge"];
-      if (expenseKeywords.some(keyword => desc.includes(keyword))) return "expense";
+      const incomeKeywords = [
+        "deposit",
+        "credit",
+        "refund",
+        "payment",
+        "transfer in",
+        "income",
+      ];
+      if (incomeKeywords.some(keyword => desc.includes(keyword)))
+        return "income";
+      const expenseKeywords = [
+        "withdrawal",
+        "debit",
+        "purchase",
+        "payment",
+        "fee",
+        "charge",
+      ];
+      if (expenseKeywords.some(keyword => desc.includes(keyword)))
+        return "expense";
       return amount > 0 ? "expense" : "income";
     };
 
     const categorizeTransaction = description => {
       const desc = description.toLowerCase();
       const categories = {
-        food: ["walmart", "target", "grocery", "restaurant", "food", "dining", "mcdonalds", "taco bell", "domino", "uber eats", "buc-ee"],
-        transportation: ["uber", "lyft", "gas", "fuel", "parking", "transport", "tesla", "garage"],
-        entertainment: ["netflix", "spotify", "amazon", "entertainment", "movie", "sixflags", "steam"],
+        food: [
+          "walmart",
+          "target",
+          "grocery",
+          "restaurant",
+          "food",
+          "dining",
+          "mcdonalds",
+          "taco bell",
+          "domino",
+          "uber eats",
+          "buc-ee",
+        ],
+        transportation: [
+          "uber",
+          "lyft",
+          "gas",
+          "fuel",
+          "parking",
+          "transport",
+          "tesla",
+          "garage",
+        ],
+        entertainment: [
+          "netflix",
+          "spotify",
+          "amazon",
+          "entertainment",
+          "movie",
+          "sixflags",
+          "steam",
+        ],
         utilities: ["electric", "water", "gas", "internet", "phone", "utility"],
-        shopping: ["amazon", "ebay", "online", "shopping", "retail", "dollar tree"],
+        shopping: [
+          "amazon",
+          "ebay",
+          "online",
+          "shopping",
+          "retail",
+          "dollar tree",
+        ],
         healthcare: ["medical", "doctor", "pharmacy", "health", "dental"],
-        finance: ["bank", "atm", "withdrawal", "deposit", "transfer", "payment"],
+        finance: [
+          "bank",
+          "atm",
+          "withdrawal",
+          "deposit",
+          "transfer",
+          "payment",
+        ],
       };
       for (const [category, keywords] of Object.entries(categories)) {
         if (keywords.some(keyword => desc.includes(keyword))) {
@@ -218,7 +285,19 @@ async function testRealImage() {
     const isValidDescription = description => {
       if (!description || description.trim().length < 2) return false;
       if (/^[\d\s\-.*]+$/.test(description)) return false;
-      const shortWords = ["on", "the", "a", "an", "in", "at", "to", "for", "of", "with", "by"];
+      const shortWords = [
+        "on",
+        "the",
+        "a",
+        "an",
+        "in",
+        "at",
+        "to",
+        "for",
+        "of",
+        "with",
+        "by",
+      ];
       if (shortWords.includes(description.toLowerCase().trim())) return false;
       if (/^[\s\-.*]+$/.test(description)) return false;
       return true;
@@ -244,14 +323,18 @@ async function testRealImage() {
 
       const foundTransactions = new Set();
 
-      patterns.forEach((pattern, index) => {
+      patterns.forEach(pattern => {
         const matches = [...analysis.matchAll(pattern)];
         matches.forEach(match => {
           const description = match[1].trim();
           const amount = parseFloat(match[2]);
           const date = normalizeDate(match[3]);
 
-          if (amount && isValidTransactionAmount(amount) && isValidDescription(description)) {
+          if (
+            amount &&
+            isValidTransactionAmount(amount) &&
+            isValidDescription(description)
+          ) {
             const transactionKey = `${amount}-${description}`;
             if (!foundTransactions.has(transactionKey)) {
               foundTransactions.add(transactionKey);
@@ -282,57 +365,62 @@ async function testRealImage() {
 
       return transactions;
     };
-    
-    const transactions = extractTransactionsFromAnalysis(aiData[0].summary_text);
-    
+
+    const transactions = extractTransactionsFromAnalysis(
+      aiData[0].summary_text
+    );
+
     // console.log('\n=== Final Results ===');
     // console.log(`📈 Transactions Extracted: ${transactions.length}`);
     // console.log(`🎯 Expected Transactions: 27 (based on test1.png)`);
     // console.log(`📊 Success Rate: ${((transactions.length / 27) * 100).toFixed(1)}%`);
-    
+
     // Analyze transaction quality
     const validTransactions = transactions.filter(
-      t => t.description && t.description !== "Document analysis completed" && t.amount > 0
+      t =>
+        t.description &&
+        t.description !== "Document analysis completed" &&
+        t.amount > 0
     );
     // console.log(`✅ Valid Transactions: ${validTransactions.length}`);
     // console.log(`🏆 Quality Score: ${((validTransactions.length / transactions.length) * 100).toFixed(1)}%`);
-    
+
     // Show categorization breakdown
     const categories = {};
     validTransactions.forEach(t => {
       categories[t.category] = (categories[t.category] || 0) + 1;
     });
-    
+
     // console.log('\n=== Category Breakdown ===');
-    Object.entries(categories).forEach(([category, count]) => {
+    Object.entries(categories).forEach(() => {
       // console.log(`📂 ${category}: ${count} transactions`);
     });
-    
+
     // Show unique merchants
-    const uniqueMerchants = new Set(validTransactions.map(t => t.description));
     // console.log(`\n🏪 Unique Merchants: ${uniqueMerchants.size}`);
-    
+
     // Show sample transactions
     // console.log('\n=== Sample Extracted Transactions ===');
-    validTransactions.slice(0, 5).forEach((transaction, index) => {
+    validTransactions.slice(0, 5).forEach(() => {
       // console.log(
-//   `${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category}`
-// );
+      //   `${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category}`
+      // );
     });
-    
+
     if (validTransactions.length > 5) {
       // console.log(`... and ${validTransactions.length - 5} more transactions`);
     }
-    
+
     // console.log('\n🎉 Test completed successfully!');
-    
   } catch (error) {
-    console.error('❌ Error during test:', error.message);
-    if (error.code === 'ENOENT') {
-      console.error('📁 Please ensure test1.png exists in src/assets/ directory');
+    console.error("❌ Error during test:", error.message);
+    if (error.code === "ENOENT") {
+      console.error(
+        "📁 Please ensure test1.png exists in src/assets/ directory"
+      );
     }
   }
 }
 
 // Run the test
-testRealImage(); 
+testRealImage();

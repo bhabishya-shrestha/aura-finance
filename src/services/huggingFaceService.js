@@ -227,17 +227,16 @@ class HuggingFaceService {
    * This is the second stage of our two-stage approach
    */
   async analyzeExtractedText(text) {
-    try {
-      await this.checkRateLimit();
+    await this.checkRateLimit();
 
-      // // console.log("[analyzeExtractedText] Input text:", text);
-      // // console.log(
-      //   "Hugging Face: Making API request with key:",
-      //   this.apiKey.substring(0, 10) + "..."
-      // );
+    // // console.log("[analyzeExtractedText] Input text:", text);
+    // // console.log(
+    //   "Hugging Face: Making API request with key:",
+    //   this.apiKey.substring(0, 10) + "..."
+    // );
 
-      // Enhanced prompt specifically designed for financial transaction extraction
-      const prompt = `Extract financial transactions from this bank statement text. 
+    // Enhanced prompt specifically designed for financial transaction extraction
+    const prompt = `Extract financial transactions from this bank statement text. 
 
 Instructions:
 1. Look for transaction amounts (numbers with $ or decimal points)
@@ -256,79 +255,74 @@ ${text}
 
 Please extract all financial transactions found in the text above using the exact format shown.`;
 
-      const response = await fetch(`${this.baseUrl}/${this.uniformModel}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          "Content-Type": "application/json",
+    const response = await fetch(`${this.baseUrl}/${this.uniformModel}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          max_length: 1500,
+          min_length: 100,
+          do_sample: false,
+          num_beams: 5,
+          early_stopping: true,
+          temperature: 0.1, // Lower temperature for more consistent output
+          top_p: 0.9,
+          repetition_penalty: 1.2,
         },
-        body: JSON.stringify({
-          inputs: prompt,
-          parameters: {
-            max_length: 1500,
-            min_length: 100,
-            do_sample: false,
-            num_beams: 5,
-            early_stopping: true,
-            temperature: 0.1, // Lower temperature for more consistent output
-            top_p: 0.9,
-            repetition_penalty: 1.2,
-          },
-        }),
-      });
+      }),
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        // console.error("Hugging Face API Error Response:", {
-        //   status: response.status,
-        //   statusText: response.statusText,
-        //   errorData,
-        // });
+    if (!response.ok) {
+      // console.error("Hugging Face API Error Response:", {
+      //   status: response.status,
+      //   statusText: response.statusText,
+      //   errorData,
+      // });
 
-        if (response.status === 404) {
-          throw new Error(
-            "Hugging Face model not available. Please switch to Google Gemini API in settings."
-          );
-        } else if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        } else {
-          throw new Error(
-            `Hugging Face API error: ${response.status} ${response.statusText}`
-          );
-        }
+      if (response.status === 404) {
+        throw new Error(
+          "Hugging Face model not available. Please switch to Google Gemini API in settings."
+        );
+      } else if (response.status === 429) {
+        throw new Error("Rate limit exceeded. Please try again later.");
+      } else {
+        throw new Error(
+          `Hugging Face API error: ${response.status} ${response.statusText}`
+        );
       }
-
-      const data = await response.json();
-      // // console.log("[analyzeExtractedText] API response data:", data);
-
-      // Extract the generated text from the response
-      const generatedText =
-        data[0]?.summary_text || data[0]?.generated_text || "";
-      // // console.log("[analyzeExtractedText] Generated text:", generatedText);
-
-      // Extract transactions from the generated text
-      const extractedTransactions =
-        this.extractTransactionsFromAnalysis(generatedText);
-      // // console.log(
-      //   "[analyzeExtractedText] Extracted transactions:",
-      //   extractedTransactions
-      // );
-
-      return {
-        success: true,
-        analysis: generatedText,
-        transactions: extractedTransactions,
-        model: this.uniformModel,
-        provider: "huggingface",
-        source: "Hugging Face Analysis",
-        documentType: "Financial Document",
-        notes:
-          "Document analyzed using Hugging Face BART-CNN. Please review and adjust transaction details.",
-      };
-    } catch (error) {
-      // console.error("[analyzeExtractedText] Hugging Face API Error:", error);
-      throw error;
     }
+
+    const data = await response.json();
+    // // console.log("[analyzeExtractedText] API response data:", data);
+
+    // Extract the generated text from the response
+    const generatedText =
+      data[0]?.summary_text || data[0]?.generated_text || "";
+    // // console.log("[analyzeExtractedText] Generated text:", generatedText);
+
+    // Extract transactions from the generated text
+    const extractedTransactions =
+      this.extractTransactionsFromAnalysis(generatedText);
+    // // console.log(
+    //   "[analyzeExtractedText] Extracted transactions:",
+    //   extractedTransactions
+    // );
+
+    return {
+      success: true,
+      analysis: generatedText,
+      transactions: extractedTransactions,
+      model: this.uniformModel,
+      provider: "huggingface",
+      source: "Hugging Face Analysis",
+      documentType: "Financial Document",
+      notes:
+        "Document analyzed using Hugging Face BART-CNN. Please review and adjust transaction details.",
+    };
   }
 
   /**
@@ -680,35 +674,27 @@ Please extract all financial transactions found in the text above using the exac
    * Stage 2: Hugging Face API for text analysis
    */
   async analyzeImage(imageData) {
-    try {
-      // // console.log("[analyzeImage] Starting two-stage document analysis...");
+    // // console.log("[analyzeImage] Starting two-stage document analysis...");
 
-      // Stage 1: Extract text using client-side OCR
-      const ocrResult = await this.extractTextFromImage(imageData);
-      // // console.log("[analyzeImage] OCR result:", ocrResult);
+    // Stage 1: Extract text using client-side OCR
+    const ocrResult = await this.extractTextFromImage(imageData);
+    // // console.log("[analyzeImage] OCR result:", ocrResult);
 
-      if (!ocrResult.success || !ocrResult.text.trim()) {
-        throw new Error("No text could be extracted from the document");
-      }
-
-      // Stage 2: Analyze extracted text using Hugging Face API
-      const analysisResult = await this.analyzeExtractedText(ocrResult.text);
-      // // console.log("[analyzeImage] Analysis result:", analysisResult);
-
-      // Combine results
-      return {
-        ...analysisResult,
-        ocrConfidence: ocrResult.confidence,
-        extractedText: ocrResult.text,
-        processingMethod: "Two-stage: OCR + AI Analysis",
-      };
-    } catch (error) {
-      // console.error(
-      //   "[analyzeImage] Hugging Face: Document analysis failed:",
-      //   error
-      // );
-      throw error;
+    if (!ocrResult.success || !ocrResult.text.trim()) {
+      throw new Error("No text could be extracted from the document");
     }
+
+    // Stage 2: Analyze extracted text using Hugging Face API
+    const analysisResult = await this.analyzeExtractedText(ocrResult.text);
+    // // console.log("[analyzeImage] Analysis result:", analysisResult);
+
+    // Combine results
+    return {
+      ...analysisResult,
+      ocrConfidence: ocrResult.confidence,
+      extractedText: ocrResult.text,
+      processingMethod: "Two-stage: OCR + AI Analysis",
+    };
   }
 
   /**
@@ -722,90 +708,82 @@ Please extract all financial transactions found in the text above using the exac
    * Convert analysis to transaction format
    */
   async convertToTransactions(analysis) {
-    try {
+    // // console.log(
+    //   "[convertToTransactions] Input analysis:",
+    //   analysis,
+    //   "Type:",
+    //   typeof analysis
+    // );
+    // Handle different possible input structures
+    let transactions = [];
+
+    if (analysis && analysis.transactions) {
       // // console.log(
-      //   "[convertToTransactions] Input analysis:",
-      //   analysis,
+      //   "[convertToTransactions] analysis.transactions:",
+      //   analysis.transactions,
       //   "Type:",
-      //   typeof analysis
+      //   typeof analysis.transactions
       // );
-      // Handle different possible input structures
-      let transactions = [];
-
-      if (analysis && analysis.transactions) {
-        // // console.log(
-        //   "[convertToTransactions] analysis.transactions:",
-        //   analysis.transactions,
-        //   "Type:",
-        //   typeof analysis.transactions
-        // );
-        transactions = Array.isArray(analysis.transactions)
-          ? analysis.transactions
-          : [];
-      } else if (Array.isArray(analysis)) {
-        // // console.log("[convertToTransactions] analysis is array:", analysis);
-        transactions = analysis;
-      } else if (analysis && typeof analysis === "object") {
-        // If analysis is an object but doesn't have transactions property
-        // Try to extract transactions from the analysis text
-        const analysisText =
-          analysis.analysis || analysis.text || JSON.stringify(analysis);
-        // // console.log(
-        //   "[convertToTransactions] analysisText for extraction:",
-        //   analysisText
-        // );
-        transactions = this.extractTransactionsFromAnalysis(analysisText);
-      } else {
-        // Fallback: return empty array
-        // console.warn(
-        //   "[convertToTransactions] No valid transaction data found in analysis:",
-        //   analysis
-        // );
-        return [];
-      }
-
-      // Ensure we have an array and map over it
-      if (!Array.isArray(transactions)) {
-        // console.warn(
-        //   "[convertToTransactions] Transactions is not an array:",
-        //   transactions,
-        //   "Type:",
-        //   typeof transactions
-        // );
-        return [];
-      }
+      transactions = Array.isArray(analysis.transactions)
+        ? analysis.transactions
+        : [];
+    } else if (Array.isArray(analysis)) {
+      // // console.log("[convertToTransactions] analysis is array:", analysis);
+      transactions = analysis;
+    } else if (analysis && typeof analysis === "object") {
+      // If analysis is an object but doesn't have transactions property
+      // Try to extract transactions from the analysis text
+      const analysisText =
+        analysis.analysis || analysis.text || JSON.stringify(analysis);
       // // console.log(
-      //   "[convertToTransactions] Final transactions array before map:",
-      //   transactions
+      //   "[convertToTransactions] analysisText for extraction:",
+      //   analysisText
       // );
-
-      return transactions
-        .map(transaction => {
-          if (!transaction || typeof transaction !== "object") {
-                        // console.warn(
-            //   "[convertToTransactions] Invalid transaction object:",
-            //   transaction
-            // );
-            return null;
-          }
-
-          return {
-            date: transaction.date || new Date().toISOString().split("T")[0],
-            description: transaction.description || "Unknown transaction",
-            amount: Math.abs(transaction.amount || 0),
-            type: transaction.type || "expense",
-            category: transaction.category || "Uncategorized",
-            confidence: transaction.confidence || 0.7,
-          };
-        })
-        .filter(Boolean); // Remove null entries
-    } catch (error) {
-            // console.error(
-      //   "[convertToTransactions] Error converting to transactions:",
-      //   error
+      transactions = this.extractTransactionsFromAnalysis(analysisText);
+    } else {
+      // Fallback: return empty array
+      // console.warn(
+      //   "[convertToTransactions] No valid transaction data found in analysis:",
+      //   analysis
       // );
       return [];
     }
+
+    // Ensure we have an array and map over it
+    if (!Array.isArray(transactions)) {
+      // console.warn(
+      //   "[convertToTransactions] Transactions is not an array:",
+      //   transactions,
+      //   "Type:",
+      //   typeof transactions
+      // );
+      return [];
+    }
+    // // console.log(
+    //   "[convertToTransactions] Final transactions array before map:",
+    //   transactions
+    // );
+
+    return transactions
+      .map(transaction => {
+        if (!transaction || typeof transaction !== "object") {
+                      // console.warn(
+          //   "[convertToTransactions] Invalid transaction object:",
+          //   transaction
+          // );
+          return null;
+        }
+
+        return {
+          date: transaction.date || new Date().toISOString().split("T")[0],
+          description: transaction.description || "Unknown transaction",
+          amount: Math.abs(transaction.amount || 0),
+          type: transaction.type || "expense",
+          category: transaction.category || "Uncategorized",
+          confidence: transaction.confidence || 0.7,
+        };
+      })
+      .filter(Boolean); // Remove null entries
   }
 
   /**
@@ -827,50 +805,49 @@ Please extract all financial transactions found in the text above using the exac
    * Analyze existing transactions
    */
   async analyzeTransactions(transactions) {
-    try {
-      await this.checkRateLimit();
+    await this.checkRateLimit();
 
-      // Ensure transactions is an array and handle different input types
-      let transactionArray = [];
+    // Ensure transactions is an array and handle different input types
+    let transactionArray = [];
 
-      if (Array.isArray(transactions)) {
-        transactionArray = transactions;
-      } else if (
-        transactions &&
-        transactions.transactions &&
-        Array.isArray(transactions.transactions)
-      ) {
-        transactionArray = transactions.transactions;
-      } else if (transactions && typeof transactions === "object") {
-        // Try to extract transactions from object
-        // console.warn(
-        //   "Hugging Face: Unexpected transactions format:",
-        //   transactions
-        // );
-        transactionArray = [];
-      } else {
-        // console.warn(
-        //   "Hugging Face: No valid transactions provided:",
-        //   transactions
-        // );
-        transactionArray = [];
-      }
+    if (Array.isArray(transactions)) {
+      transactionArray = transactions;
+    } else if (
+      transactions &&
+      transactions.transactions &&
+      Array.isArray(transactions.transactions)
+    ) {
+      transactionArray = transactions.transactions;
+    } else if (transactions && typeof transactions === "object") {
+      // Try to extract transactions from object
+      // console.warn(
+      //   "Hugging Face: Unexpected transactions format:",
+      //   transactions
+      // );
+      transactionArray = [];
+    } else {
+      // console.warn(
+      //   "Hugging Face: No valid transactions provided:",
+      //   transactions
+      // );
+      transactionArray = [];
+    }
 
-      const transactionText = transactionArray
-        .map(t => {
-          if (!t || typeof t !== "object") {
-            // console.warn(
-            //   "Hugging Face: Invalid transaction object in array:",
-            //   t
-            // );
-            return null;
-          }
-          return `${t.date || "Unknown date"}: ${t.description || "Unknown"} - $${t.amount || 0}`;
-        })
-        .filter(Boolean) // Remove null entries
-        .join("\n");
+    const transactionText = transactionArray
+      .map(t => {
+        if (!t || typeof t !== "object") {
+          // console.warn(
+          //   "Hugging Face: Invalid transaction object in array:",
+          //   t
+          // );
+          return null;
+        }
+        return `${t.date || "Unknown date"}: ${t.description || "Unknown"} - $${t.amount || 0}`;
+      })
+      .filter(Boolean) // Remove null entries
+      .join("\n");
 
-      const prompt = `Analyze these financial transactions and provide insights:
+    const prompt = `Analyze these financial transactions and provide insights:
 ${transactionText}
 
 Please provide:
@@ -879,45 +856,41 @@ Please provide:
 3. Anomalies or unusual transactions
 4. Summary of financial activity`;
 
-      const response = await fetch(`${this.baseUrl}/${this.uniformModel}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          "Content-Type": "application/json",
+    const response = await fetch(`${this.baseUrl}/${this.uniformModel}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          max_length: 800,
+          min_length: 100,
+          do_sample: false,
+          num_beams: 3,
+          temperature: 0.3,
         },
-        body: JSON.stringify({
-          inputs: prompt,
-          parameters: {
-            max_length: 800,
-            min_length: 100,
-            do_sample: false,
-            num_beams: 3,
-            temperature: 0.3,
-          },
-        }),
-      });
+      }),
+    });
 
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // Update counters
-      this.requestCount++;
-      this.dailyRequestCount++;
-      this.updateDailyCounter();
-
-      return {
-        success: true,
-        analysis: data[0]?.summary_text || "No analysis available",
-        model: this.uniformModel,
-        provider: "huggingface",
-      };
-    } catch (error) {
-      // console.error("Hugging Face: Transaction analysis failed:", error);
-      throw error;
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
     }
+
+    const data = await response.json();
+
+    // Update counters
+    this.requestCount++;
+    this.dailyRequestCount++;
+    this.updateDailyCounter();
+
+    return {
+      success: true,
+      analysis: data[0]?.summary_text || "No analysis available",
+      model: this.uniformModel,
+      provider: "huggingface",
+    };
   }
 
   /**

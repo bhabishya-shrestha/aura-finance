@@ -1,12 +1,12 @@
 // Test script for Hugging Face pipeline with test image
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 dirname(__filename);
 
 // Mock environment variables for testing
-process.env.VITE_HUGGINGFACE_API_KEY = 'hf_JqanjMh...'; // Your actual key
+process.env.VITE_HUGGINGFACE_API_KEY = "hf_JqanjMh..."; // Your actual key
 
 // Mock localStorage for Node.js environment
 global.localStorage = {
@@ -20,12 +20,13 @@ global.localStorage = {
 global.fetch = async () => {
   // console.log('Mock API call to:', url);
   // console.log('Request body:', JSON.parse(options.body));
-  
+
   // Simulate Hugging Face API response
   return {
     ok: true,
-    json: async () => [{
-      summary_text: `Extracted financial transactions from bank statement:
+    json: async () => [
+      {
+        summary_text: `Extracted financial transactions from bank statement:
       
       Transaction 1: EVEREST FOOD TRUCK 2 - $27.96 on 08/02/2025
       Transaction 2: WM SUPERCENTER #475 ROUND ROCK TX - $35.96 on 08/01/2025
@@ -42,102 +43,25 @@ global.fetch = async () => {
       Payment 2: PAYMENT FROM CHK 7012 CONF#1jjh0j84x - $1487.16 on 07/22/2025
       Payment 3: PAYMENT FROM CHK 7012 CONF#1ck0ygred - $1100.00 on 07/21/2025
       
-      Additional transactions include ATM withdrawals, Tesla services, Uber Eats, and various retail purchases.`
-    }]
+      Additional transactions include ATM withdrawals, Tesla services, Uber Eats, and various retail purchases.`,
+      },
+    ],
   };
 };
 
-// Mock Tesseract.js
-{
-  recognize: async () => {
-    // console.log('Mock OCR processing...');
-    // console.log('OCR processing...');
-    
-    // Simulate OCR text extraction from the test image
-    const ocrText = `EVEREST FOOD TRUCK 2
-    $27.96
-    
-    WM SUPERCENTER #475 ROUND ROCK TX
-    $35.96
-    
-    BUC-EE'S #35 TEMPLE TX
-    $15.13
-    
-    TACO BELL #030139 AUSTIN TX
-    $12.50
-    
-    DOLLAR TREE ROUND ROCK TX
-    $2.50
-    
-    WALMART.COM 800-925-6278 AR
-    $45.67
-    
-    BUC-EE'S #22 NEW BRAUNFELSTX
-    $18.75
-    
-    SIXFLAGS FT SAN ANTOTX 210-697-5000 TX
-    $89.99
-    
-    DOMINO'S 6615 979-695-9912 TX
-    $24.50
-    
-    AMAZON PRIME*BO4WE5D33 Amzn.com/billWA
-    $12.99
-    
-    PAYMENT FROM CHK 7012 CONF#162rrgson
-    -$700.00
-    
-    PAYMENT FROM CHK 7012 CONF#1jjh0j84x
-    -$1487.16
-    
-    PAYMENT FROM CHK 7012 CONF#1ck0ygred
-    -$1100.00
-    
-    ATI*3806-078190352 ATM.TK CA
-    $100.00
-    
-    TESLA SERVICE US 877-7983752 CA
-    $60.00
-    
-    UBER *EATS HELP.UBER.COMCA
-    $28.50
-    
-    Perry Brooks Garage Austin TX
-    -$60.00
-    
-    SP LUXE BIDET SAN DIEGO CA
-    -$42.20
-    
-    WL *STEAM PURCHASE 425-889-9642 WA
-    $15.99
-    
-    McDonalds 26418 151-2670263 TX
-    $8.75
-    
-    AMAZON MKTPL*W605N7YG3 Amzn.com/billWA
-    $9.99`;
-    
-    return {
-      data: {
-        text: ocrText,
-        confidence: 85.5,
-        words: []
-      }
-    };
-  }
-};
+
 
 // Test the transaction extraction logic directly
 function testTransactionExtraction() {
   // console.log('=== Testing Transaction Extraction Logic ===\n');
-  
+
   // Simulate the HuggingFaceService class methods
-  const normalizeDate = (dateStr) => {
+  const normalizeDate = dateStr => {
     try {
       if (!dateStr) return new Date().toISOString().split("T")[0];
-      
+
       let normalizedDate = dateStr;
-      
+
       if (dateStr.includes("/")) {
         const parts = dateStr.split("/");
         if (parts.length === 3) {
@@ -147,7 +71,7 @@ function testTransactionExtraction() {
           normalizedDate = `${year}-${month}-${day}`;
         }
       }
-      
+
       if (dateStr.includes("-")) {
         const parts = dateStr.split("-");
         if (parts.length === 3) {
@@ -157,7 +81,7 @@ function testTransactionExtraction() {
           normalizedDate = `${year}-${month}-${day}`;
         }
       }
-      
+
       return normalizedDate;
     } catch (error) {
       console.warn("[normalizeDate] Error normalizing date:", dateStr, error);
@@ -167,43 +91,92 @@ function testTransactionExtraction() {
 
   const determineTransactionType = (description, amount) => {
     const desc = description.toLowerCase();
-    
-    const incomeKeywords = ['deposit', 'credit', 'refund', 'payment', 'transfer in', 'income'];
+
+    const incomeKeywords = [
+      "deposit",
+      "credit",
+      "refund",
+      "payment",
+      "transfer in",
+      "income",
+    ];
     if (incomeKeywords.some(keyword => desc.includes(keyword))) {
-      return 'income';
+      return "income";
     }
-    
-    const expenseKeywords = ['withdrawal', 'debit', 'purchase', 'payment', 'fee', 'charge'];
+
+    const expenseKeywords = [
+      "withdrawal",
+      "debit",
+      "purchase",
+      "payment",
+      "fee",
+      "charge",
+    ];
     if (expenseKeywords.some(keyword => desc.includes(keyword))) {
-      return 'expense';
+      return "expense";
     }
-    
-    return amount > 0 ? 'expense' : 'income';
+
+    return amount > 0 ? "expense" : "income";
   };
 
-  const categorizeTransaction = (description) => {
+  const categorizeTransaction = description => {
     const desc = description.toLowerCase();
-    
+
     const categories = {
-      'food': ['walmart', 'target', 'grocery', 'restaurant', 'food', 'dining', 'mcdonalds', 'taco bell', 'domino', 'uber eats'],
-      'transportation': ['uber', 'lyft', 'gas', 'fuel', 'parking', 'transport', 'tesla', 'garage'],
-      'entertainment': ['netflix', 'spotify', 'amazon', 'entertainment', 'movie', 'sixflags', 'steam'],
-      'utilities': ['electric', 'water', 'gas', 'internet', 'phone', 'utility'],
-      'shopping': ['amazon', 'ebay', 'online', 'shopping', 'retail', 'dollar tree'],
-      'healthcare': ['medical', 'doctor', 'pharmacy', 'health', 'dental'],
-      'finance': ['bank', 'atm', 'withdrawal', 'deposit', 'transfer', 'payment']
+      food: [
+        "walmart",
+        "target",
+        "grocery",
+        "restaurant",
+        "food",
+        "dining",
+        "mcdonalds",
+        "taco bell",
+        "domino",
+        "uber eats",
+      ],
+      transportation: [
+        "uber",
+        "lyft",
+        "gas",
+        "fuel",
+        "parking",
+        "transport",
+        "tesla",
+        "garage",
+      ],
+      entertainment: [
+        "netflix",
+        "spotify",
+        "amazon",
+        "entertainment",
+        "movie",
+        "sixflags",
+        "steam",
+      ],
+      utilities: ["electric", "water", "gas", "internet", "phone", "utility"],
+      shopping: [
+        "amazon",
+        "ebay",
+        "online",
+        "shopping",
+        "retail",
+        "dollar tree",
+      ],
+      healthcare: ["medical", "doctor", "pharmacy", "health", "dental"],
+      finance: ["bank", "atm", "withdrawal", "deposit", "transfer", "payment"],
     };
-    
+
     for (const [category, keywords] of Object.entries(categories)) {
       if (keywords.some(keyword => desc.includes(keyword))) {
         return category.charAt(0).toUpperCase() + category.slice(1);
       }
     }
-    
-    return 'Uncategorized';
+
+    return "Uncategorized";
   };
 
-  const isValidTransactionAmount = (amount) => {
+  const isValidTransactionAmount = amount => {
     if (amount < 0.01) return false;
     if (amount >= 1900 && amount <= 2100) return false;
     if (amount >= 1 && amount <= 31 && Number.isInteger(amount)) return false;
@@ -211,7 +184,7 @@ function testTransactionExtraction() {
     return true;
   };
 
-  const extractTransactionsFromAnalysis = (analysis) => {
+  const extractTransactionsFromAnalysis = analysis => {
     const transactions = [];
 
     if (!analysis || analysis.trim() === "") {
@@ -253,12 +226,17 @@ function testTransactionExtraction() {
           description = "Transaction";
         }
 
-        if (amount && amount >= 0.01 && amount < 1000000 && isValidTransactionAmount(amount)) {
+        if (
+          amount &&
+          amount >= 0.01 &&
+          amount < 1000000 &&
+          isValidTransactionAmount(amount)
+        ) {
           const transactionKey = `${amount}-${description}`;
-          
+
           if (!foundTransactions.has(transactionKey)) {
             foundTransactions.add(transactionKey);
-            
+
             const transaction = {
               date: date || new Date().toISOString().split("T")[0],
               description: description || "Extracted transaction",
@@ -267,7 +245,7 @@ function testTransactionExtraction() {
               category: categorizeTransaction(description),
               confidence: 0.8,
             };
-            
+
             transactions.push(transaction);
             // console.log(`[extractTransactionsFromAnalysis] Added transaction:`, transaction);
           }
@@ -313,12 +291,12 @@ function testTransactionExtraction() {
 
   // console.log('Testing with mock AI analysis...\n');
   const transactions = extractTransactionsFromAnalysis(mockAnalysis);
-  
+
   // console.log('\n=== Extracted Transactions ===');
   transactions.forEach(() => {
     // console.log(`Transaction extracted successfully`);
   });
-  
+
   // console.log('\n=== Test Summary ===');
   // console.log(`Transactions Extracted: ${transactions.length}`);
   // console.log(`Expected Transactions: 13+ (from mock analysis)`);
@@ -326,4 +304,4 @@ function testTransactionExtraction() {
 }
 
 // Run the test
-testTransactionExtraction(); 
+testTransactionExtraction();

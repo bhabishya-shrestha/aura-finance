@@ -172,15 +172,15 @@ function testTransactionExtraction() {
 
     if (!analysis || analysis.trim() === "") {
       // console.log(
-//   "[extractTransactionsFromAnalysis] Empty analysis, returning empty array"
-// );
+      //   "[extractTransactionsFromAnalysis] Empty analysis, returning empty array"
+      // );
       return transactions;
     }
 
     // console.log(
-//   "[extractTransactionsFromAnalysis] Processing analysis:",
-//   analysis
-// );
+    //   "[extractTransactionsFromAnalysis] Processing analysis:",
+    //   analysis
+    // );
 
     // More precise patterns specifically designed for bank statement format
     const patterns = [
@@ -202,8 +202,8 @@ function testTransactionExtraction() {
     patterns.forEach((pattern, index) => {
       const matches = [...analysis.matchAll(pattern)];
       // console.log(
-//   `[extractTransactionsFromAnalysis] Pattern ${index + 1} found ${matches.length} matches`
-// );
+      //   `[extractTransactionsFromAnalysis] Pattern ${index + 1} found ${matches.length} matches`
+      // );
 
       matches.forEach(match => {
         let amount, description, date;
@@ -226,8 +226,8 @@ function testTransactionExtraction() {
         }
 
         // console.log(
-//   `[DEBUG] Extracted: amount=${amount}, description="${description}", date=${date}`
-// );
+        //   `[DEBUG] Extracted: amount=${amount}, description="${description}", date=${date}`
+        // );
 
         // Validate amount and description
         if (
@@ -251,22 +251,22 @@ function testTransactionExtraction() {
 
             transactions.push(transaction);
             // console.log(
-//   `[extractTransactionsFromAnalysis] Added transaction:`,
-//   transaction
-// );
+            //   `[extractTransactionsFromAnalysis] Added transaction:`,
+            //   transaction
+            // );
           }
         } else {
           // console.log(
-//   `[DEBUG] Rejected: amount=${amount} (valid: ${isValidTransactionAmount(amount)}), description="${description}" (valid: ${isValidDescription(description)})`
-// );
+          //   `[DEBUG] Rejected: amount=${amount} (valid: ${isValidTransactionAmount(amount)}), description="${description}" (valid: ${isValidDescription(description)})`
+          // );
         }
       });
     });
 
     if (transactions.length === 0) {
       // console.log(
-//   "[extractTransactionsFromAnalysis] No transactions found, creating fallback"
-// );
+      //   "[extractTransactionsFromAnalysis] No transactions found, creating fallback"
+      // );
       transactions.push({
         date: new Date().toISOString().split("T")[0],
         description: "Document analysis completed",
@@ -278,8 +278,8 @@ function testTransactionExtraction() {
     }
 
     // console.log(
-//   `[extractTransactionsFromAnalysis] Final result: ${transactions.length} transactions`
-// );
+    //   `[extractTransactionsFromAnalysis] Final result: ${transactions.length} transactions`
+    // );
     return transactions;
   };
 
@@ -292,10 +292,10 @@ Payment 1: PAYMENT FROM CHK 7012 CONF#162rrgson - $700.00 on 07/23/2025`;
   const transactions = extractTransactionsFromAnalysis(simpleAnalysis);
 
   // console.log("\n=== Extracted Transactions ===");
-  transactions.forEach((transaction, index) => {
+  transactions.forEach(() => {
     // console.log(
-//   `${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category} | Confidence: ${transaction.confidence}`
-// );
+    //   `${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category} | Confidence: ${transaction.confidence}`
+    // );
   });
 
   // console.log("\n=== Test Summary ===");

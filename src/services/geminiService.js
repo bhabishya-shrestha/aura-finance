@@ -283,7 +283,6 @@ IMPORTANT: Return ONLY valid JSON. Do not include any explanatory text outside t
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
         // console.error("Gemini API Error Details:", {
         //   status: response.status,
         //   statusText: response.statusText,
