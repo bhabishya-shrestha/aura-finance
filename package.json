@@ -35,6 +35,9 @@
     "oauth:setup": "node scripts/setup-oauth.cjs",
     "oauth:configure": "node scripts/configure-oauth.cjs",
     "oauth:verify": "node scripts/verify-oauth.cjs",
+    "db:migrate:denormalize": "node scripts/apply-denormalization-migration.js run",
+    "db:maintain": "node scripts/maintain-denormalized-data.js run",
+    "db:test:performance": "node scripts/test-performance-improvements.js run",
     "deploy:staging": "vercel --prod --target staging",
     "deploy:production": "vercel --prod",
     "deploy:rollback": "vercel rollback"
