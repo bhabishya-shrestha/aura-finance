@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Settings,
   User,
@@ -18,11 +18,13 @@ import {
   ArrowLeft,
   Trash2,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import { useSettings } from "../contexts/SettingsContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import useStore from "../store";
+import aiService from "../services/aiService";
 
 const SettingsPage = () => {
   const {
@@ -49,6 +51,8 @@ const SettingsPage = () => {
   const [isNotificationVisible, setIsNotificationVisible] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showDataResetConfirm, setShowDataResetConfirm] = useState(false);
+  const [serverUsageStats, setServerUsageStats] = useState(null);
+  const [isLoadingUsage, setIsLoadingUsage] = useState(false);
 
   const fileInputRef = useRef(null);
 
@@ -57,6 +61,28 @@ const SettingsPage = () => {
     loadTransactions();
     loadAccounts();
   }, [loadTransactions, loadAccounts]);
+
+  // Load server-side usage stats
+  const loadServerUsageStats = useCallback(async () => {
+    if (!user) return;
+
+    setIsLoadingUsage(true);
+    try {
+      const stats = await aiService.getServerUsageStats();
+      setServerUsageStats(stats);
+    } catch (error) {
+      // console.error("Failed to load server usage stats:", error);
+    } finally {
+      setIsLoadingUsage(false);
+    }
+  }, [user]);
+
+  // Load usage stats when AI Services tab is active
+  useEffect(() => {
+    if (activeTab === "ai-services") {
+      loadServerUsageStats();
+    }
+  }, [activeTab, user, loadServerUsageStats]);
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
@@ -189,6 +215,13 @@ const SettingsPage = () => {
       description: "Export, import, and data reset options",
       color: "indigo",
     },
+    {
+      id: "ai",
+      label: "AI Services",
+      icon: Sparkles,
+      description: "AI provider selection and configuration",
+      color: "emerald",
+    },
   ];
 
   const getColorClasses = (color, isActive = false) => {
@@ -211,6 +244,9 @@ const SettingsPage = () => {
       indigo: isActive
         ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400"
         : "text-indigo-600 dark:text-indigo-400",
+      emerald: isActive
+        ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400"
+        : "text-emerald-600 dark:text-emerald-400",
     };
     return colorMap[color] || colorMap.blue;
   };
@@ -961,6 +997,163 @@ const SettingsPage = () => {
                     <Trash2 className="w-4 h-4" />
                     Reset Data
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "ai":
+        return (
+          <div className="space-y-8 p-4">
+            {/* Professional Mobile Header */}
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4 -mx-4 -mt-4 mb-6 lg:hidden">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActiveTab(null);
+                  }}
+                  onTouchEnd={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActiveTab(null);
+                  }}
+                  className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative z-10"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    AI Services
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Choose your AI provider for document analysis
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Simple AI Provider Toggle */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-emerald-600" />
+                  AI Provider
+                </h3>
+              </div>
+              <div className="p-6 space-y-6">
+                {/* Simple Toggle */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      Use Hugging Face (500 Daily Requests)
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Switch between Gemini API and Hugging Face
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.aiProvider === "huggingface"}
+                      onChange={async e => {
+                        const newProvider = e.target.checked
+                          ? "huggingface"
+                          : "gemini";
+
+                        try {
+                          // Validate with server before switching
+                          await aiService.setProvider(newProvider);
+                          updateSetting("aiProvider", newProvider);
+                          // Reload usage stats after switching
+                          loadServerUsageStats();
+                        } catch (error) {
+                          // console.error("Failed to switch provider:", error);
+                          // Show error message to user
+                          setSaveMessage(
+                            `Failed to switch provider: ${error.message}`
+                          );
+                          setIsNotificationVisible(true);
+                          setTimeout(
+                            () => setIsNotificationVisible(false),
+                            3000
+                          );
+                        }
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
+                  </label>
+                </div>
+
+                {/* Current Provider Info */}
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                  <div className="text-sm">
+                    <div className="font-medium text-gray-900 dark:text-white mb-1">
+                      Current Provider:{" "}
+                      {settings.aiProvider === "huggingface"
+                        ? "Hugging Face"
+                        : "Gemini API"}
+                    </div>
+                    <div className="text-gray-600 dark:text-gray-400">
+                      Daily Limit:{" "}
+                      {settings.aiProvider === "huggingface"
+                        ? "500 requests"
+                        : "150 requests"}
+                    </div>
+
+                    {/* Server-side usage stats */}
+                    {isLoadingUsage ? (
+                      <div className="mt-2 text-gray-500 dark:text-gray-400">
+                        Loading usage data...
+                      </div>
+                    ) : serverUsageStats?.success ? (
+                      <div className="mt-3 space-y-2">
+                        <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                          Server-Validated Usage (Today)
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-xs">
+                          <div>
+                            <div className="text-gray-600 dark:text-gray-400">
+                              Gemini
+                            </div>
+                            <div className="font-medium">
+                              {serverUsageStats.gemini?.current_usage || 0} /{" "}
+                              {serverUsageStats.gemini?.max_requests || 150}
+                            </div>
+                            {serverUsageStats.gemini?.approaching_limit && (
+                              <div className="text-amber-600 dark:text-amber-400 text-xs">
+                                Approaching limit
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="text-gray-600 dark:text-gray-400">
+                              Hugging Face
+                            </div>
+                            <div className="font-medium">
+                              {serverUsageStats.huggingface?.current_usage || 0}{" "}
+                              /{" "}
+                              {serverUsageStats.huggingface?.max_requests ||
+                                500}
+                            </div>
+                            {serverUsageStats.huggingface
+                              ?.approaching_limit && (
+                              <div className="text-amber-600 dark:text-amber-400 text-xs">
+                                Approaching limit
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-gray-500 dark:text-gray-400 text-xs">
+                        Usage data unavailable
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

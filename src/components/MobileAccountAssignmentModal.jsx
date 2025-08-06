@@ -26,7 +26,7 @@ import {
   Save,
 } from "lucide-react";
 import useStore from "../store";
-import geminiService from "../services/geminiService";
+import aiService from "../services/aiService";
 
 const MobileAccountAssignmentModal = ({
   isOpen,
@@ -40,7 +40,7 @@ const MobileAccountAssignmentModal = ({
   const [newAccountData, setNewAccountData] = useState({
     name: "",
     type: "checking",
-    balance: 0,
+    balance: "",
   });
   const [suggestedAccounts, setSuggestedAccounts] = useState([]);
   const [localTransactions, setLocalTransactions] = useState([]);
@@ -49,38 +49,46 @@ const MobileAccountAssignmentModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState("overview"); // overview, create-account, edit-transaction
   const [showAISuggestions, setShowAISuggestions] = useState(false);
+  const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
   const hasGeneratedSuggestions = useRef(false);
   const transactionsRef = useRef(transactions);
 
   // Account type icons mapping
-  const accountTypeIcons = {
-    checking: Building2,
-    savings: PiggyBank,
-    credit: CreditCard,
-    investment: PiggyBank,
-    loan: CreditCard,
-  };
+  const accountTypeIcons = useMemo(
+    () => ({
+      checking: Building2,
+      savings: PiggyBank,
+      credit: CreditCard,
+      investment: PiggyBank,
+      loan: CreditCard,
+    }),
+    []
+  );
 
   // Category icons for better transaction identification
-  const categoryIcons = {
-    food: Utensils,
-    transportation: Car,
-    shopping: ShoppingBag,
-    travel: Plane,
-    healthcare: Heart,
-    education: GraduationCap,
-    work: Briefcase,
-    home: Home,
-    entertainment: Smartphone,
-    utilities: Building2,
-    default: DollarSign,
-  };
+  const categoryIcons = useMemo(
+    () => ({
+      food: Utensils,
+      transportation: Car,
+      shopping: ShoppingBag,
+      travel: Plane,
+      healthcare: Heart,
+      education: GraduationCap,
+      work: Briefcase,
+      home: Home,
+      entertainment: Smartphone,
+      utilities: Building2,
+      default: DollarSign,
+    }),
+    []
+  );
 
   // Generate account suggestions using AI
   const generateAccountSuggestions = useCallback(async () => {
     const currentTransactions = transactionsRef.current;
     if (currentTransactions.length === 0) return;
 
+    setIsGeneratingSuggestions(true);
     try {
       // Analyze transactions to suggest accounts
       const transactionTexts = currentTransactions
@@ -89,14 +97,14 @@ const MobileAccountAssignmentModal = ({
 
       const prompt = `Analyze these transactions and suggest 3-5 account names that would be appropriate for categorizing them. Consider the transaction descriptions, amounts, and categories. Return only the account names, one per line, without numbers or formatting.`;
 
-      // Use the actual Gemini service for AI suggestions
-      const response = await geminiService.analyzeTransactions(
-        transactionTexts,
+      // Use the unified AI service for suggestions
+      const response = await aiService.analyzeTransactions(
+        [transactionTexts],
         prompt
       );
 
       // Parse the response and create suggestions
-      const suggestions = response
+      const suggestions = response.suggestions
         .split("\n")
         .filter(line => line.trim())
         .map((name, index) => ({
@@ -109,6 +117,7 @@ const MobileAccountAssignmentModal = ({
       setSuggestedAccounts(suggestions);
       setShowAISuggestions(true);
     } catch (error) {
+      // console.error("Error generating AI suggestions:", error);
       // Fallback to basic suggestions
       const suggestions = [
         { name: "Primary Checking", type: "checking", confidence: 0.9 },
@@ -117,6 +126,8 @@ const MobileAccountAssignmentModal = ({
       ];
       setSuggestedAccounts(suggestions);
       setShowAISuggestions(true);
+    } finally {
+      setIsGeneratingSuggestions(false);
     }
   }, []);
 
@@ -125,35 +136,20 @@ const MobileAccountAssignmentModal = ({
     transactionsRef.current = transactions;
   }, [transactions]);
 
-  // Sync store accounts with local accounts when store accounts change
-  useEffect(() => {
-    if (isOpen) {
-      const baseAccounts =
-        propAccounts.length > 0 ? propAccounts : storeAccounts;
-      setLocalAccounts(prev => {
-        // Merge store accounts with staged accounts (newly created accounts)
-        const stagedAccountIds = new Set(stagedAccounts.map(acc => acc.id));
-        const existingStagedAccounts = prev.filter(acc =>
-          stagedAccountIds.has(acc.id)
-        );
-        const newStoreAccounts = baseAccounts.filter(
-          acc => !stagedAccountIds.has(acc.id)
-        );
-
-        return [...existingStagedAccounts, ...newStoreAccounts];
-      });
-    }
-  }, [storeAccounts, propAccounts, isOpen, stagedAccounts]);
-
   // Initialize local state when modal opens
   useEffect(() => {
-    if (isOpen && transactions.length > 0) {
+    // Only run when modal is actually open
+    if (!isOpen) return;
+
+    if (Array.isArray(transactions) && transactions.length > 0) {
       setLocalTransactions(transactions.map(t => ({ ...t, selected: true })));
 
       // Initialize localAccounts with store accounts if empty
       setLocalAccounts(prev => {
         if (prev.length === 0) {
-          return propAccounts.length > 0 ? propAccounts : storeAccounts;
+          const baseAccounts =
+            propAccounts.length > 0 ? propAccounts : storeAccounts;
+          return baseAccounts;
         }
         return prev;
       });
@@ -163,67 +159,96 @@ const MobileAccountAssignmentModal = ({
         generateAccountSuggestions();
         hasGeneratedSuggestions.current = true;
       }
-    } else if (!isOpen) {
-      // Reset the flag when modal closes
-      hasGeneratedSuggestions.current = false;
     }
   }, [
     isOpen,
     transactions,
-    generateAccountSuggestions,
     propAccounts,
     storeAccounts,
+    generateAccountSuggestions,
   ]);
 
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset the flag when modal closes
+      hasGeneratedSuggestions.current = false;
+      setShowAISuggestions(false);
+      setSuggestedAccounts([]);
+      setStagedAccounts([]);
+      setSelectedAccounts({});
+      setNewAccountData({ name: "", type: "checking", balance: "" });
+    }
+  }, [isOpen]);
+
   // Handle account creation
-  const handleCreateAccount = async () => {
+  const handleCreateAccount = useCallback(() => {
     if (!newAccountData.name.trim()) return;
 
-    try {
-      const newAccount = {
-        id: `temp-${Date.now()}`,
-        name: newAccountData.name,
-        type: newAccountData.type,
-        balance: newAccountData.balance,
-        isStaged: true,
-      };
+    const balance = parseFloat(newAccountData.balance) || 0;
 
-      setStagedAccounts(prev => [...prev, newAccount]);
-      setLocalAccounts(prev => [...prev, newAccount]);
-      setNewAccountData({ name: "", type: "checking", balance: 0 });
-      setCurrentStep("overview");
-    } catch (error) {
-      // Handle error silently for now
-    }
-  };
+    const newAccount = {
+      id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: newAccountData.name.trim(),
+      type: newAccountData.type,
+      balance: balance,
+      isStaged: true,
+    };
+
+    // Add to staged accounts first
+    setStagedAccounts(prev => [...prev, newAccount]);
+
+    // Then add to local accounts
+    setLocalAccounts(prev => {
+      // Check if account with same name already exists
+      const existingAccount = prev.find(acc => acc.name === newAccount.name);
+      if (existingAccount) {
+        return prev; // Don't add duplicate
+      }
+      return [...prev, newAccount];
+    });
+
+    setNewAccountData({ name: "", type: "checking", balance: "" });
+    setCurrentStep("overview");
+  }, [newAccountData]);
 
   // Create account from AI suggestion
-  const createAccountFromSuggestion = suggestion => {
+  const createAccountFromSuggestion = useCallback(suggestion => {
     const newAccount = {
-      id: `temp-${Date.now()}`,
+      id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name: suggestion.name,
       type: suggestion.type,
       balance: 0,
       isStaged: true,
     };
 
+    // Add to staged accounts first
     setStagedAccounts(prev => [...prev, newAccount]);
-    setLocalAccounts(prev => [...prev, newAccount]);
+
+    // Then add to local accounts
+    setLocalAccounts(prev => {
+      // Check if account with same name already exists
+      const existingAccount = prev.find(acc => acc.name === suggestion.name);
+      if (existingAccount) {
+        return prev; // Don't add duplicate
+      }
+      return [...prev, newAccount];
+    });
 
     // Remove the suggestion from the list
     setSuggestedAccounts(prev => prev.filter(s => s.name !== suggestion.name));
-  };
+  }, []);
 
   // Assign transaction to account
-  const assignTransactionToAccount = (transactionId, accountId) => {
+  const assignTransactionToAccount = useCallback((transactionId, accountId) => {
     setSelectedAccounts(prev => ({
       ...prev,
       [transactionId]: accountId,
     }));
-  };
+  }, []);
 
   // Handle completion
-  const handleComplete = async () => {
+  const handleComplete = useCallback(async () => {
     setIsSubmitting(true);
     try {
       // Process staged accounts first
@@ -234,19 +259,27 @@ const MobileAccountAssignmentModal = ({
       }
 
       // Prepare transactions with account assignments
-      const processedTransactions = localTransactions.map(transaction => ({
-        ...transaction,
-        accountId: selectedAccounts[transaction.id] || null,
-      }));
+      const processedTransactions = Array.isArray(localTransactions)
+        ? localTransactions.map(transaction => ({
+            ...transaction,
+            accountId: selectedAccounts[transaction.id] || null,
+          }))
+        : [];
 
       // Call the completion handler
       onComplete(processedTransactions);
     } catch (error) {
-      // Handle error silently for now
+      // console.error("Error completing account assignment:", error);
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [
+    stagedAccounts,
+    addAccount,
+    localTransactions,
+    selectedAccounts,
+    onComplete,
+  ]);
 
   // Get all accounts (no filtering needed for mobile)
   const filteredAccounts = useMemo(() => {
@@ -254,15 +287,32 @@ const MobileAccountAssignmentModal = ({
   }, [localAccounts]);
 
   // Get category icon
-  const getCategoryIcon = category => {
-    const iconKey = category.toLowerCase();
-    return categoryIcons[iconKey] || categoryIcons.default;
-  };
+  const getCategoryIcon = useCallback(
+    category => {
+      const iconKey = category.toLowerCase();
+      return categoryIcons[iconKey] || categoryIcons.default;
+    },
+    [categoryIcons]
+  );
 
   // Get account type icon
-  const getAccountTypeIcon = type => {
-    return accountTypeIcons[type] || Building2;
-  };
+  const getAccountTypeIcon = useCallback(
+    type => {
+      return accountTypeIcons[type] || Building2;
+    },
+    [accountTypeIcons]
+  );
+
+  // Handle balance input change
+  const handleBalanceChange = useCallback(value => {
+    // Allow empty string, numbers, and decimal points
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+      setNewAccountData(prev => ({
+        ...prev,
+        balance: value,
+      }));
+    }
+  }, []);
 
   if (!isOpen) return null;
 
@@ -320,6 +370,7 @@ const MobileAccountAssignmentModal = ({
             <div className="text-sm text-blue-700 dark:text-blue-300">
               <p>{transactions.length} transactions ready to import</p>
               <p>{Object.keys(selectedAccounts).length} accounts assigned</p>
+              <p>{stagedAccounts.length} new accounts to create</p>
             </div>
           </div>
 
@@ -331,6 +382,11 @@ const MobileAccountAssignmentModal = ({
                 <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
                   AI Suggestions
                 </h3>
+                {isGeneratingSuggestions && (
+                  <div className="text-sm text-purple-600 dark:text-purple-400">
+                    Generating...
+                  </div>
+                )}
               </div>
               <p className="text-sm text-purple-700 dark:text-purple-300 mb-3">
                 Based on your transactions, we suggest these accounts:
@@ -398,7 +454,11 @@ const MobileAccountAssignmentModal = ({
                 filteredAccounts.map(account => (
                   <div
                     key={account.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                    className={`flex items-center justify-between p-3 rounded-lg ${
+                      account.isStaged
+                        ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700"
+                        : "bg-gray-50 dark:bg-gray-700/50"
+                    }`}
                   >
                     <div className="flex items-center gap-3">
                       {React.createElement(getAccountTypeIcon(account.type), {
@@ -407,6 +467,11 @@ const MobileAccountAssignmentModal = ({
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white">
                           {account.name}
+                          {account.isStaged && (
+                            <span className="ml-2 text-xs bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded">
+                              New
+                            </span>
+                          )}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
                           {account.type}
@@ -431,65 +496,68 @@ const MobileAccountAssignmentModal = ({
             </h3>
 
             <div className="space-y-3">
-              {localTransactions.map(transaction => (
-                <div
-                  key={transaction.id}
-                  className="border border-gray-200 dark:border-gray-600 rounded-lg p-4"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      {React.createElement(
-                        getCategoryIcon(transaction.category),
-                        {
-                          className: "w-5 h-5 text-gray-600 dark:text-gray-400",
-                        }
-                      )}
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {transaction.description}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {new Date(transaction.date).toLocaleDateString()}
+              {Array.isArray(localTransactions)
+                ? localTransactions.map(transaction => (
+                    <div
+                      key={transaction.id}
+                      className="border border-gray-200 dark:border-gray-600 rounded-lg p-4"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          {React.createElement(
+                            getCategoryIcon(transaction.category),
+                            {
+                              className:
+                                "w-5 h-5 text-gray-600 dark:text-gray-400",
+                            }
+                          )}
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {transaction.description}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {new Date(transaction.date).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <p
+                          className={`font-semibold ${
+                            transaction.amount > 0
+                              ? "text-green-600 dark:text-green-400"
+                              : "text-red-600 dark:text-red-400"
+                          }`}
+                        >
+                          {transaction.amount > 0 ? "+" : ""}$
+                          {Math.abs(transaction.amount).toFixed(2)}
                         </p>
                       </div>
-                    </div>
-                    <p
-                      className={`font-semibold ${
-                        transaction.amount > 0
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-red-600 dark:text-red-400"
-                      }`}
-                    >
-                      {transaction.amount > 0 ? "+" : ""}$
-                      {Math.abs(transaction.amount).toFixed(2)}
-                    </p>
-                  </div>
 
-                  {/* Account Assignment */}
-                  <div className="mt-3">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Assign to Account:
-                    </label>
-                    <select
-                      value={selectedAccounts[transaction.id] || ""}
-                      onChange={e =>
-                        assignTransactionToAccount(
-                          transaction.id,
-                          e.target.value
-                        )
-                      }
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">Select an account...</option>
-                      {filteredAccounts.map(account => (
-                        <option key={account.id} value={account.id}>
-                          {account.name} ({account.type})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              ))}
+                      {/* Account Assignment */}
+                      <div className="mt-3">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Assign to Account:
+                        </label>
+                        <select
+                          value={selectedAccounts[transaction.id] || ""}
+                          onChange={e =>
+                            assignTransactionToAccount(
+                              transaction.id,
+                              e.target.value
+                            )
+                          }
+                          className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">Select an account...</option>
+                          {filteredAccounts.map(account => (
+                            <option key={account.id} value={account.id}>
+                              {account.name} ({account.type})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ))
+                : null}
             </div>
           </div>
         </div>
@@ -556,17 +624,11 @@ const MobileAccountAssignmentModal = ({
                     Current Balance
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     value={newAccountData.balance}
-                    onChange={e =>
-                      setNewAccountData(prev => ({
-                        ...prev,
-                        balance: parseFloat(e.target.value) || 0,
-                      }))
-                    }
+                    onChange={e => handleBalanceChange(e.target.value)}
                     className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="0.00"
-                    step="0.01"
                   />
                 </div>
 

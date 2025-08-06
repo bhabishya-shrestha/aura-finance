@@ -561,7 +561,7 @@ const AccountsPage = () => {
               <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Recent Transactions
               </h4>
-              {transactions.length > 0 ? (
+              {Array.isArray(transactions) && transactions.length > 0 ? (
                 <div className="space-y-3">
                   {transactions.map(transaction => (
                     <div

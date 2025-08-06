@@ -116,6 +116,12 @@ test.pdf
 test-*.pdf
 sample-*.pdf
 demo-*.pdf
+test*.png
+sample*.png
+demo*.png
+src/assets/test*.png
+src/assets/sample*.png
+src/assets/demo*.png
 
 # GitGuardian cache
 .cache_ggshield

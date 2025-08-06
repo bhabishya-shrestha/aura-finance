@@ -39,6 +39,9 @@ const defaultSettings = {
   autoBackup: true,
   backupFrequency: "weekly", // daily, weekly, monthly
   dataRetention: 365, // days
+
+  // AI Settings
+  aiProvider: "gemini", // gemini, huggingface
 };
 
 export const SettingsProvider = ({ children }) => {

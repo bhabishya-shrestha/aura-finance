@@ -37,14 +37,14 @@ const useStore = create(
               .where("userId")
               .equals(userId)
               .orderBy("date")
-              .reverse()
-              .toArray();
+              .toArray()
+              .then(arr => arr.reverse());
           } else {
             // Fallback to all transactions for demo
             transactions = await db.transactions
               .orderBy("date")
-              .reverse()
-              .toArray();
+              .toArray()
+              .then(arr => arr.reverse());
           }
 
           // Clear analytics cache when transactions are loaded

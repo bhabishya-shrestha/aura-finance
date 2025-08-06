@@ -176,12 +176,19 @@ const EnhancedAccountAssignmentModal = ({
 
   // Generate account suggestions when modal opens and transactions change
   useEffect(() => {
-    if (isOpen && transactions.length > 0 && !suggestionsGeneratedRef.current) {
+    if (
+      isOpen &&
+      Array.isArray(transactions) &&
+      transactions.length > 0 &&
+      !suggestionsGeneratedRef.current
+    ) {
       suggestionsGeneratedRef.current = true;
       const suggestions = [];
-      const transactionTexts = transactions.map(t =>
-        `${t.description || ""} ${t.category || ""}`.toLowerCase()
-      );
+      const transactionTexts = Array.isArray(transactions)
+        ? transactions.map(t =>
+            `${t.description || ""} ${t.category || ""}`.toLowerCase()
+          )
+        : [];
 
       // Analyze transaction patterns to suggest account types
       const patterns = {
@@ -301,7 +308,9 @@ const EnhancedAccountAssignmentModal = ({
 
       // Suggest based on transaction categories
       const categories = new Set(
-        transactions.map(t => t.category).filter(Boolean)
+        Array.isArray(transactions)
+          ? transactions.map(t => t.category).filter(Boolean)
+          : []
       );
 
       if (categories.size > 0) {
@@ -557,7 +566,13 @@ const EnhancedAccountAssignmentModal = ({
     if (selectedTransactions.size === localTransactions.length) {
       setSelectedTransactions(new Set());
     } else {
-      setSelectedTransactions(new Set(localTransactions.map(t => t.id)));
+      setSelectedTransactions(
+        new Set(
+          Array.isArray(localTransactions)
+            ? localTransactions.map(t => t.id)
+            : []
+        )
+      );
     }
   };
 
@@ -575,23 +590,25 @@ const EnhancedAccountAssignmentModal = ({
     if (selectedTransactions.size === 0) return;
 
     setLocalTransactions(prevTransactions =>
-      prevTransactions.map(transaction => {
-        if (selectedTransactions.has(transaction.id)) {
-          // Update the year of the transaction date
-          const currentDate = new Date(transaction.date);
-          const updatedDate = new Date(
-            batchYear,
-            currentDate.getMonth(),
-            currentDate.getDate()
-          );
+      Array.isArray(prevTransactions)
+        ? prevTransactions.map(transaction => {
+            if (selectedTransactions.has(transaction.id)) {
+              // Update the year of the transaction date
+              const currentDate = new Date(transaction.date);
+              const updatedDate = new Date(
+                batchYear,
+                currentDate.getMonth(),
+                currentDate.getDate()
+              );
 
-          return {
-            ...transaction,
-            date: updatedDate,
-          };
-        }
-        return transaction;
-      })
+              return {
+                ...transaction,
+                date: updatedDate,
+              };
+            }
+            return transaction;
+          })
+        : []
     );
 
     setShowBatchYearModal(false);
@@ -794,19 +811,21 @@ const EnhancedAccountAssignmentModal = ({
       }
 
       // Update transaction account assignments with real account IDs
-      const updatedTransactions = localTransactions.map(transaction => {
-        const assignedAccountId = selectedAccounts[transaction.id];
-        if (assignedAccountId) {
-          // If it's a staged account ID, map it to the real ID
-          const realAccountId =
-            accountIdMap.get(assignedAccountId) || assignedAccountId;
-          return {
-            ...transaction,
-            accountId: realAccountId,
-          };
-        }
-        return transaction;
-      });
+      const updatedTransactions = Array.isArray(localTransactions)
+        ? localTransactions.map(transaction => {
+            const assignedAccountId = selectedAccounts[transaction.id];
+            if (assignedAccountId) {
+              // If it's a staged account ID, map it to the real ID
+              const realAccountId =
+                accountIdMap.get(assignedAccountId) || assignedAccountId;
+              return {
+                ...transaction,
+                accountId: realAccountId,
+              };
+            }
+            return transaction;
+          })
+        : [];
 
       // Call the onComplete callback with updated transactions
       onComplete(updatedTransactions);
@@ -1195,149 +1214,158 @@ const EnhancedAccountAssignmentModal = ({
 
                   {/* Transactions in Group */}
                   <div className="divide-y divide-gray-200 dark:divide-gray-600">
-                    {group.transactions.map(transaction => {
-                      const CategoryIcon = getCategoryIcon(transaction);
-                      const isExpanded = expandedTransactions.has(
-                        transaction.id
-                      );
-                      const assignedAccount = selectedAccounts[transaction.id];
-                      const isSelected = selectedTransactions.has(
-                        transaction.id
-                      );
+                    {Array.isArray(group.transactions)
+                      ? group.transactions.map(transaction => {
+                          const CategoryIcon = getCategoryIcon(transaction);
+                          const isExpanded = expandedTransactions.has(
+                            transaction.id
+                          );
+                          const assignedAccount =
+                            selectedAccounts[transaction.id];
+                          const isSelected = selectedTransactions.has(
+                            transaction.id
+                          );
 
-                      return (
-                        <div
-                          key={transaction.id}
-                          className={`p-3 sm:p-4 ${
-                            isSelected ? "bg-blue-50 dark:bg-blue-900/20" : ""
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                              {/* Checkbox for bulk selection */}
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() =>
-                                  handleSelectTransaction(transaction.id)
-                                }
-                                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 flex-shrink-0"
-                              />
+                          return (
+                            <div
+                              key={transaction.id}
+                              className={`p-3 sm:p-4 ${
+                                isSelected
+                                  ? "bg-blue-50 dark:bg-blue-900/20"
+                                  : ""
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                                  {/* Checkbox for bulk selection */}
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() =>
+                                      handleSelectTransaction(transaction.id)
+                                    }
+                                    className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 flex-shrink-0"
+                                  />
 
-                              <div className="text-gray-500 flex-shrink-0">
-                                <CategoryIcon className="w-4 h-4" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-gray-900 dark:text-white truncate text-sm sm:text-base">
-                                  {transaction.description}
-                                </p>
-                                <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                                  <Calendar className="w-3 h-3" />
-                                  {new Date(
-                                    transaction.date
-                                  ).toLocaleDateString()}
-                                  {transaction.category && (
-                                    <>
-                                      <span>•</span>
-                                      <span className="capitalize">
-                                        {transaction.category}
-                                      </span>
-                                    </>
-                                  )}
+                                  <div className="text-gray-500 flex-shrink-0">
+                                    <CategoryIcon className="w-4 h-4" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-gray-900 dark:text-white truncate text-sm sm:text-base">
+                                      {transaction.description}
+                                    </p>
+                                    <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                                      <Calendar className="w-3 h-3" />
+                                      {new Date(
+                                        transaction.date
+                                      ).toLocaleDateString()}
+                                      {transaction.category && (
+                                        <>
+                                          <span>•</span>
+                                          <span className="capitalize">
+                                            {transaction.category}
+                                          </span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                  <div className="text-right">
+                                    <p
+                                      className={`font-semibold text-sm sm:text-base ${
+                                        transaction.amount > 0
+                                          ? "text-green-600 dark:text-green-400"
+                                          : "text-red-600 dark:text-red-400"
+                                      }`}
+                                    >
+                                      {formatCurrency(
+                                        Math.abs(transaction.amount)
+                                      )}
+                                    </p>
+                                    {assignedAccount && (
+                                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        Assigned
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  <button
+                                    onClick={() =>
+                                      handleEditTransaction(transaction)
+                                    }
+                                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex-shrink-0"
+                                    title="Edit transaction"
+                                  >
+                                    <Edit3 className="w-4 h-4 text-gray-500" />
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      toggleTransactionExpansion(transaction.id)
+                                    }
+                                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex-shrink-0"
+                                  >
+                                    {isExpanded ? (
+                                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                                    ) : (
+                                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                                    )}
+                                  </button>
                                 </div>
                               </div>
-                            </div>
 
-                            <div className="flex items-center gap-2 sm:gap-3">
-                              <div className="text-right">
-                                <p
-                                  className={`font-semibold text-sm sm:text-base ${
-                                    transaction.amount > 0
-                                      ? "text-green-600 dark:text-green-400"
-                                      : "text-red-600 dark:text-red-400"
-                                  }`}
-                                >
-                                  {formatCurrency(Math.abs(transaction.amount))}
-                                </p>
-                                {assignedAccount && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    Assigned
-                                  </p>
-                                )}
-                              </div>
-
-                              <button
-                                onClick={() =>
-                                  handleEditTransaction(transaction)
-                                }
-                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex-shrink-0"
-                                title="Edit transaction"
-                              >
-                                <Edit3 className="w-4 h-4 text-gray-500" />
-                              </button>
-                              <button
-                                onClick={() =>
-                                  toggleTransactionExpansion(transaction.id)
-                                }
-                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex-shrink-0"
-                              >
-                                {isExpanded ? (
-                                  <ChevronUp className="w-4 h-4 text-gray-500" />
-                                ) : (
-                                  <ChevronDown className="w-4 h-4 text-gray-500" />
-                                )}
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Expanded Details */}
-                          {isExpanded && (
-                            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                  Assign to:
-                                </span>
-                                {assignedAccount && (
-                                  <div className="flex items-center gap-2 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-sm">
-                                    <CheckCircle className="w-3 h-3" />
-                                    {
-                                      localAccounts.find(
-                                        a => a.id === assignedAccount
-                                      )?.name
-                                    }
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-2">
-                                {filteredAccounts.slice(0, 4).map(account => (
-                                  <button
-                                    key={account.id}
-                                    onClick={() =>
-                                      assignTransactionToAccount(
-                                        transaction.id,
-                                        account.id
-                                      )
-                                    }
-                                    className={`flex items-center gap-2 p-2 rounded border text-sm transition-colors ${
-                                      selectedAccounts[transaction.id] ===
-                                      account.id
-                                        ? "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300"
-                                        : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                    }`}
-                                  >
-                                    {getAccountIcon(account)}
-                                    <span className="truncate">
-                                      {account?.name || "Unnamed Account"}
+                              {/* Expanded Details */}
+                              {isExpanded && (
+                                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                      Assign to:
                                     </span>
-                                  </button>
-                                ))}
-                              </div>
+                                    {assignedAccount && (
+                                      <div className="flex items-center gap-2 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-sm">
+                                        <CheckCircle className="w-3 h-3" />
+                                        {
+                                          localAccounts.find(
+                                            a => a.id === assignedAccount
+                                          )?.name
+                                        }
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {filteredAccounts
+                                      .slice(0, 4)
+                                      .map(account => (
+                                        <button
+                                          key={account.id}
+                                          onClick={() =>
+                                            assignTransactionToAccount(
+                                              transaction.id,
+                                              account.id
+                                            )
+                                          }
+                                          className={`flex items-center gap-2 p-2 rounded border text-sm transition-colors ${
+                                            selectedAccounts[transaction.id] ===
+                                            account.id
+                                              ? "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300"
+                                              : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                          }`}
+                                        >
+                                          {getAccountIcon(account)}
+                                          <span className="truncate">
+                                            {account?.name || "Unnamed Account"}
+                                          </span>
+                                        </button>
+                                      ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                          );
+                        })
+                      : null}
                   </div>
                 </div>
               ))}

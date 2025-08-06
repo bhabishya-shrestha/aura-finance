@@ -108,7 +108,13 @@ const TransactionsPage = () => {
     if (selectedTransactions.size === filteredTransactions.length) {
       setSelectedTransactions(new Set());
     } else {
-      setSelectedTransactions(new Set(filteredTransactions.map(t => t.id)));
+      setSelectedTransactions(
+        new Set(
+          Array.isArray(filteredTransactions)
+            ? filteredTransactions.map(t => t.id)
+            : []
+        )
+      );
     }
   };
 
@@ -207,16 +213,18 @@ const TransactionsPage = () => {
     ];
     const csvContent = [
       headers.join(","),
-      ...filteredTransactions.map(transaction =>
-        [
-          formatDate(transaction.date),
-          `"${transaction.description || ""}"`,
-          transaction.category?.name || "Unknown",
-          transaction.account?.name || "Uncategorized Account",
-          transaction.amount,
-          transaction.type || "expense",
-        ].join(",")
-      ),
+      ...(Array.isArray(filteredTransactions)
+        ? filteredTransactions.map(transaction =>
+            [
+              formatDate(transaction.date),
+              `"${transaction.description || ""}"`,
+              transaction.category?.name || "Unknown",
+              transaction.account?.name || "Uncategorized Account",
+              transaction.amount,
+              transaction.type || "expense",
+            ].join(",")
+          )
+        : []),
     ].join("\n");
 
     // Create and download file
@@ -522,13 +530,16 @@ const TransactionsPage = () => {
 
       {/* Mobile Transaction List */}
       <div className="lg:hidden space-y-3">
-        {filteredTransactions.map(transaction => (
-          <MobileTransactionCard
-            key={transaction.id}
-            transaction={transaction}
-          />
-        ))}
-        {filteredTransactions.length === 0 && (
+        {Array.isArray(filteredTransactions)
+          ? filteredTransactions.map(transaction => (
+              <MobileTransactionCard
+                key={transaction.id}
+                transaction={transaction}
+              />
+            ))
+          : null}
+        {(!Array.isArray(filteredTransactions) ||
+          filteredTransactions.length === 0) && (
           <div className="text-center py-8">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400">
@@ -593,51 +604,55 @@ const TransactionsPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredTransactions.map(transaction => (
-                  <tr
-                    key={transaction.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={selectedTransactions.has(transaction.id)}
-                        onChange={() => handleSelectTransaction(transaction.id)}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {formatDate(transaction.date)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mr-3">
-                          {getTransactionIcon(transaction.type)}
-                        </div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {transaction.description || "No description"}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {transaction.category?.name || "Uncategorized"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {transaction.account?.name || "Uncategorized Account"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <span
-                        className={
-                          transaction.amount > 0
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }
+                {Array.isArray(filteredTransactions)
+                  ? filteredTransactions.map(transaction => (
+                      <tr
+                        key={transaction.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
-                        {formatCurrency(transaction.amount)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={selectedTransactions.has(transaction.id)}
+                            onChange={() =>
+                              handleSelectTransaction(transaction.id)
+                            }
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                          {formatDate(transaction.date)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mr-3">
+                              {getTransactionIcon(transaction.type)}
+                            </div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {transaction.description || "No description"}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {transaction.category?.name || "Uncategorized"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {transaction.account?.name || "Uncategorized Account"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <span
+                            className={
+                              transaction.amount > 0
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-red-600 dark:text-red-400"
+                            }
+                          >
+                            {formatCurrency(transaction.amount)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  : null}
               </tbody>
             </table>
           </div>

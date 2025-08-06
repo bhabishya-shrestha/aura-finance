@@ -106,7 +106,7 @@ const RecentTransactions = ({ onPageChange }) => {
               Import a statement to get started
             </p>
           </div>
-        ) : (
+        ) : Array.isArray(recentTransactions) ? (
           recentTransactions.map(transaction => (
             <div
               key={transaction.id}
@@ -258,7 +258,7 @@ const RecentTransactions = ({ onPageChange }) => {
               )}
             </div>
           ))
-        )}
+        ) : null}
       </div>
 
       {recentTransactions.length > 0 && (

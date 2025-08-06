@@ -295,7 +295,7 @@ const DashboardPage = ({
             View All
           </button>
         </div>
-        {recentTransactions.length > 0 ? (
+        {Array.isArray(recentTransactions) && recentTransactions.length > 0 ? (
           <div className="space-y-3">
             {recentTransactions.map(transaction => (
               <div
