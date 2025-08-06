@@ -1,5 +1,5 @@
 // Simple test for transaction extraction
-console.log("=== Simple Transaction Extraction Test ===\n");
+// console.log("=== Simple Transaction Extraction Test ===\n");
 
 // Test the transaction extraction logic directly
 function testTransactionExtraction() {
@@ -171,13 +171,13 @@ function testTransactionExtraction() {
     const transactions = [];
 
     if (!analysis || analysis.trim() === "") {
-      console.log(
+      // console.log(
         "[extractTransactionsFromAnalysis] Empty analysis, returning empty array"
       );
       return transactions;
     }
 
-    console.log(
+    // console.log(
       "[extractTransactionsFromAnalysis] Processing analysis:",
       analysis
     );
@@ -201,7 +201,7 @@ function testTransactionExtraction() {
 
     patterns.forEach((pattern, index) => {
       const matches = [...analysis.matchAll(pattern)];
-      console.log(
+      // console.log(
         `[extractTransactionsFromAnalysis] Pattern ${index + 1} found ${matches.length} matches`
       );
 
@@ -225,7 +225,7 @@ function testTransactionExtraction() {
           date = new Date().toISOString().split("T")[0];
         }
 
-        console.log(
+        // console.log(
           `[DEBUG] Extracted: amount=${amount}, description="${description}", date=${date}`
         );
 
@@ -250,13 +250,13 @@ function testTransactionExtraction() {
             };
 
             transactions.push(transaction);
-            console.log(
+            // console.log(
               `[extractTransactionsFromAnalysis] Added transaction:`,
               transaction
             );
           }
         } else {
-          console.log(
+          // console.log(
             `[DEBUG] Rejected: amount=${amount} (valid: ${isValidTransactionAmount(amount)}), description="${description}" (valid: ${isValidDescription(description)})`
           );
         }
@@ -264,7 +264,7 @@ function testTransactionExtraction() {
     });
 
     if (transactions.length === 0) {
-      console.log(
+      // console.log(
         "[extractTransactionsFromAnalysis] No transactions found, creating fallback"
       );
       transactions.push({
@@ -277,7 +277,7 @@ function testTransactionExtraction() {
       });
     }
 
-    console.log(
+    // console.log(
       `[extractTransactionsFromAnalysis] Final result: ${transactions.length} transactions`
     );
     return transactions;
@@ -288,20 +288,20 @@ function testTransactionExtraction() {
 Transaction 2: WM SUPERCENTER #475 ROUND ROCK TX - $35.96 on 08/01/2025
 Payment 1: PAYMENT FROM CHK 7012 CONF#162rrgson - $700.00 on 07/23/2025`;
 
-  console.log("Testing with simple analysis...\n");
+  // console.log("Testing with simple analysis...\n");
   const transactions = extractTransactionsFromAnalysis(simpleAnalysis);
 
-  console.log("\n=== Extracted Transactions ===");
+  // console.log("\n=== Extracted Transactions ===");
   transactions.forEach((transaction, index) => {
-    console.log(
+    // console.log(
       `${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category} | Confidence: ${transaction.confidence}`
     );
   });
 
-  console.log("\n=== Test Summary ===");
-  console.log(`Transactions Extracted: ${transactions.length}`);
-  console.log(`Expected Transactions: 3`);
-  console.log(`Success Rate: ${((transactions.length / 3) * 100).toFixed(1)}%`);
+  // console.log("\n=== Test Summary ===");
+  // console.log(`Transactions Extracted: ${transactions.length}`);
+  // console.log(`Expected Transactions: 3`);
+  // console.log(`Success Rate: ${((transactions.length / 3) * 100).toFixed(1)}%`);
 }
 
 // Run the test

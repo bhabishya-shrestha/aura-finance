@@ -54,16 +54,16 @@ const MobileAccountAssignmentModal = ({
   const transactionsRef = useRef(transactions);
 
   // Account type icons mapping
-  const accountTypeIcons = {
+  const accountTypeIcons = useMemo(() => ({
     checking: Building2,
     savings: PiggyBank,
     credit: CreditCard,
     investment: PiggyBank,
     loan: CreditCard,
-  };
+  }), []);
 
   // Category icons for better transaction identification
-  const categoryIcons = {
+  const categoryIcons = useMemo(() => ({
     food: Utensils,
     transportation: Car,
     shopping: ShoppingBag,
@@ -75,7 +75,7 @@ const MobileAccountAssignmentModal = ({
     entertainment: Smartphone,
     utilities: Building2,
     default: DollarSign,
-  };
+  }), []);
 
   // Generate account suggestions using AI
   const generateAccountSuggestions = useCallback(async () => {
@@ -153,7 +153,7 @@ const MobileAccountAssignmentModal = ({
         hasGeneratedSuggestions.current = true;
       }
     }
-  }, [isOpen, transactions.length, propAccounts, storeAccounts, generateAccountSuggestions]);
+  }, [isOpen, transactions, propAccounts, storeAccounts, generateAccountSuggestions]);
 
   // Reset state when modal closes
   useEffect(() => {
@@ -275,12 +275,12 @@ const MobileAccountAssignmentModal = ({
   const getCategoryIcon = useCallback(category => {
     const iconKey = category.toLowerCase();
     return categoryIcons[iconKey] || categoryIcons.default;
-  }, []);
+  }, [categoryIcons]);
 
   // Get account type icon
   const getAccountTypeIcon = useCallback(type => {
     return accountTypeIcons[type] || Building2;
-  }, []);
+  }, [accountTypeIcons]);
 
   // Handle balance input change
   const handleBalanceChange = useCallback(value => {

@@ -121,7 +121,7 @@ class HuggingFaceService {
    */
   async extractTextFromImage(imageData) {
     try {
-      console.log("Hugging Face: Starting client-side OCR extraction...");
+      // console.log("Hugging Face: Starting client-side OCR extraction...");
 
       // Skip preprocessing in test environments where canvas is not available
       let processedImageData = imageData;
@@ -142,7 +142,7 @@ class HuggingFaceService {
         {
           logger: m => {
             if (m.status === "recognizing text") {
-              console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
+              // console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
             }
           },
           // Enhanced OCR settings for financial documents
@@ -157,8 +157,8 @@ class HuggingFaceService {
       );
 
       const extractedText = result.data.text.trim();
-      console.log("Hugging Face: OCR extraction completed successfully");
-      console.log("OCR Raw Text:", extractedText);
+      // console.log("Hugging Face: OCR extraction completed successfully");
+      // console.log("OCR Raw Text:", extractedText);
 
       return {
         success: true,
@@ -230,8 +230,8 @@ class HuggingFaceService {
     try {
       await this.checkRateLimit();
 
-      console.log("[analyzeExtractedText] Input text:", text);
-      console.log(
+      // console.log("[analyzeExtractedText] Input text:", text);
+      // console.log(
         "Hugging Face: Making API request with key:",
         this.apiKey.substring(0, 10) + "..."
       );
@@ -299,17 +299,17 @@ Please extract all financial transactions found in the text above using the exac
       }
 
       const data = await response.json();
-      console.log("[analyzeExtractedText] API response data:", data);
+      // console.log("[analyzeExtractedText] API response data:", data);
 
       // Extract the generated text from the response
       const generatedText =
         data[0]?.summary_text || data[0]?.generated_text || "";
-      console.log("[analyzeExtractedText] Generated text:", generatedText);
+      // console.log("[analyzeExtractedText] Generated text:", generatedText);
 
       // Extract transactions from the generated text
       const extractedTransactions =
         this.extractTransactionsFromAnalysis(generatedText);
-      console.log(
+      // console.log(
         "[analyzeExtractedText] Extracted transactions:",
         extractedTransactions
       );
@@ -339,13 +339,13 @@ Please extract all financial transactions found in the text above using the exac
     const transactions = [];
 
     if (!analysis || analysis.trim() === "") {
-      console.log(
+      // console.log(
         "[extractTransactionsFromAnalysis] Empty analysis, returning empty array"
       );
       return transactions;
     }
 
-    console.log(
+    // console.log(
       "[extractTransactionsFromAnalysis] Processing analysis:",
       analysis
     );
@@ -353,7 +353,7 @@ Please extract all financial transactions found in the text above using the exac
     // Count expected transactions for debugging
     const transactionMatches = analysis.match(/Transaction\s+\d+:/g);
     const paymentMatches = analysis.match(/Payment\s+\d+:/g);
-    console.log(`[DEBUG] Found ${transactionMatches?.length || 0} transaction lines and ${paymentMatches?.length || 0} payment lines`);
+    // console.log(`[DEBUG] Found ${transactionMatches?.length || 0} transaction lines and ${paymentMatches?.length || 0} payment lines`);
 
     // More precise patterns specifically designed for bank statement format
     // Using flexible pattern that handles special characters and hyphens in descriptions
@@ -369,13 +369,13 @@ Please extract all financial transactions found in the text above using the exac
 
     patterns.forEach((pattern, index) => {
       const matches = [...analysis.matchAll(pattern)];
-      console.log(
+      // console.log(
         `[extractTransactionsFromAnalysis] Pattern ${index + 1} found ${matches.length} matches`
       );
 
       // Debug: Show what matches were found
       matches.forEach((match, matchIndex) => {
-        console.log(`[DEBUG] Match ${matchIndex + 1}:`, match[0]);
+        // console.log(`[DEBUG] Match ${matchIndex + 1}:`, match[0]);
       });
 
       matches.forEach(match => {
@@ -407,21 +407,21 @@ Please extract all financial transactions found in the text above using the exac
             };
 
             transactions.push(transaction);
-            console.log(
+            // console.log(
               `[extractTransactionsFromAnalysis] Added transaction:`,
               transaction
             );
           } else {
-            console.log(
+            // console.log(
               `[DEBUG] Duplicate transaction filtered out: ${transactionKey}`
             );
           }
         } else {
           // Debug why transaction was rejected
-          console.log(
+          // console.log(
             `[DEBUG] Rejected transaction: amount=${amount}, description="${description}"`
           );
-          console.log(
+          // console.log(
             `[DEBUG] isValidAmount: ${this.isValidTransactionAmount(amount)}, isValidDescription: ${this.isValidDescription(description)}`
           );
         }
@@ -430,31 +430,31 @@ Please extract all financial transactions found in the text above using the exac
 
     // If we didn't get all expected transactions, try a more aggressive approach
     if (transactions.length < 27) {
-      console.log(`[DEBUG] Only extracted ${transactions.length} transactions, trying alternative approach`);
+      // console.log(`[DEBUG] Only extracted ${transactions.length} transactions, trying alternative approach`);
       
       // Try to extract all lines that contain transaction information
       const lines = analysis.split('\n');
       lines.forEach((line, lineIndex) => {
         if (line.includes('Transaction') || line.includes('Payment')) {
-          console.log(`[DEBUG] Line ${lineIndex}: ${line}`);
+          // console.log(`[DEBUG] Line ${lineIndex}: ${line}`);
         }
       });
 
       // Try a more flexible regex pattern
-      console.log(`[DEBUG] Trying more flexible regex pattern`);
+      // console.log(`[DEBUG] Trying more flexible regex pattern`);
       const flexiblePattern = /Transaction\s+\d+:\s+(.*?)\s+-\s+\$?(\d+\.?\d*)\s+on\s+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})/gi;
       const flexibleMatches = [...analysis.matchAll(flexiblePattern)];
-      console.log(`[DEBUG] Flexible pattern found ${flexibleMatches.length} matches`);
+      // console.log(`[DEBUG] Flexible pattern found ${flexibleMatches.length} matches`);
       
       flexibleMatches.forEach((match, matchIndex) => {
         if (!transactions.some(t => t.description === this.cleanDescription(match[1].trim()))) {
-          console.log(`[DEBUG] Flexible match ${matchIndex + 1}:`, match[0]);
+          // console.log(`[DEBUG] Flexible match ${matchIndex + 1}:`, match[0]);
         }
       });
     }
 
     if (transactions.length === 0) {
-      console.log(
+      // console.log(
         "[extractTransactionsFromAnalysis] No transactions found, creating fallback"
       );
       transactions.push({
@@ -467,7 +467,7 @@ Please extract all financial transactions found in the text above using the exac
       });
     }
 
-    console.log(
+    // console.log(
       `[extractTransactionsFromAnalysis] Final result: ${transactions.length} transactions`
     );
     return transactions;
@@ -676,11 +676,11 @@ Please extract all financial transactions found in the text above using the exac
    */
   async analyzeImage(imageData) {
     try {
-      console.log("[analyzeImage] Starting two-stage document analysis...");
+      // console.log("[analyzeImage] Starting two-stage document analysis...");
 
       // Stage 1: Extract text using client-side OCR
       const ocrResult = await this.extractTextFromImage(imageData);
-      console.log("[analyzeImage] OCR result:", ocrResult);
+      // console.log("[analyzeImage] OCR result:", ocrResult);
 
       if (!ocrResult.success || !ocrResult.text.trim()) {
         throw new Error("No text could be extracted from the document");
@@ -688,7 +688,7 @@ Please extract all financial transactions found in the text above using the exac
 
       // Stage 2: Analyze extracted text using Hugging Face API
       const analysisResult = await this.analyzeExtractedText(ocrResult.text);
-      console.log("[analyzeImage] Analysis result:", analysisResult);
+      // console.log("[analyzeImage] Analysis result:", analysisResult);
 
       // Combine results
       return {
@@ -718,7 +718,7 @@ Please extract all financial transactions found in the text above using the exac
    */
   async convertToTransactions(analysis) {
     try {
-      console.log(
+      // console.log(
         "[convertToTransactions] Input analysis:",
         analysis,
         "Type:",
@@ -728,7 +728,7 @@ Please extract all financial transactions found in the text above using the exac
       let transactions = [];
 
       if (analysis && analysis.transactions) {
-        console.log(
+        // console.log(
           "[convertToTransactions] analysis.transactions:",
           analysis.transactions,
           "Type:",
@@ -738,14 +738,14 @@ Please extract all financial transactions found in the text above using the exac
           ? analysis.transactions
           : [];
       } else if (Array.isArray(analysis)) {
-        console.log("[convertToTransactions] analysis is array:", analysis);
+        // console.log("[convertToTransactions] analysis is array:", analysis);
         transactions = analysis;
       } else if (analysis && typeof analysis === "object") {
         // If analysis is an object but doesn't have transactions property
         // Try to extract transactions from the analysis text
         const analysisText =
           analysis.analysis || analysis.text || JSON.stringify(analysis);
-        console.log(
+        // console.log(
           "[convertToTransactions] analysisText for extraction:",
           analysisText
         );
@@ -769,7 +769,7 @@ Please extract all financial transactions found in the text above using the exac
         );
         return [];
       }
-      console.log(
+      // console.log(
         "[convertToTransactions] Final transactions array before map:",
         transactions
       );

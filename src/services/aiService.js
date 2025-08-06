@@ -36,7 +36,10 @@ class AIService {
       const settings = localStorage.getItem("aura_settings");
       if (settings) {
         const parsedSettings = JSON.parse(settings);
-        if (parsedSettings.aiProvider && this.providers[parsedSettings.aiProvider]) {
+        if (
+          parsedSettings.aiProvider &&
+          this.providers[parsedSettings.aiProvider]
+        ) {
           this.currentProvider = parsedSettings.aiProvider;
         }
       }
@@ -61,16 +64,20 @@ class AIService {
 
     // Validate that user can use this provider
     const validation = await apiUsageService.validateApiUsage(provider);
-    
+
     if (!validation.can_proceed) {
-      throw new Error(`Daily limit exceeded for ${this.providers[provider].name}. Please try again tomorrow or switch providers.`);
+      throw new Error(
+        `Daily limit exceeded for ${this.providers[provider].name}. Please try again tomorrow or switch providers.`
+      );
     }
 
     this.currentProvider = provider;
-    
+
     // Save to localStorage
     try {
-      const settings = JSON.parse(localStorage.getItem("aura_settings") || "{}");
+      const settings = JSON.parse(
+        localStorage.getItem("aura_settings") || "{}"
+      );
       settings.aiProvider = provider;
       localStorage.setItem("aura_settings", JSON.stringify(settings));
     } catch (error) {
@@ -87,13 +94,21 @@ class AIService {
   }
 
   /**
+   * Get all available providers
+   * @returns {Object} All available providers
+   */
+  getAvailableProviders() {
+    return this.providers;
+  }
+
+  /**
    * Get provider comparison with server-side usage data
    * @returns {Promise<Array>} Provider comparison with usage stats
    */
   async getProviderComparison() {
     try {
       const usageStats = await apiUsageService.getUserApiUsageStats();
-      
+
       return Object.entries(this.providers).map(([key, provider]) => ({
         key,
         name: provider.name,
@@ -157,22 +172,29 @@ class AIService {
   async analyzeImage(file) {
     try {
       // Validate usage before processing
-      const validation = await apiUsageService.validateApiUsage(this.currentProvider);
-      
+      const validation = await apiUsageService.validateApiUsage(
+        this.currentProvider
+      );
+
       if (!validation.can_proceed) {
-        throw new Error(`Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`);
+        throw new Error(
+          `Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`
+        );
       }
 
       // Increment usage counter
-      const incrementSuccess = await apiUsageService.incrementApiUsage(this.currentProvider);
-      
+      const incrementSuccess = await apiUsageService.incrementApiUsage(
+        this.currentProvider
+      );
+
       if (!incrementSuccess) {
         throw new Error("Failed to record API usage. Please try again.");
       }
 
       // Perform the analysis
-      const result = await this.providers[this.currentProvider].service.analyzeImage(file);
-      
+      const result =
+        await this.providers[this.currentProvider].service.analyzeImage(file);
+
       // Add server-side usage info to result
       result.serverUsageValidation = {
         provider: this.currentProvider,
@@ -197,22 +219,31 @@ class AIService {
   async extractFromText(text) {
     try {
       // Validate usage before processing
-      const validation = await apiUsageService.validateApiUsage(this.currentProvider);
-      
+      const validation = await apiUsageService.validateApiUsage(
+        this.currentProvider
+      );
+
       if (!validation.can_proceed) {
-        throw new Error(`Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`);
+        throw new Error(
+          `Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`
+        );
       }
 
       // Increment usage counter
-      const incrementSuccess = await apiUsageService.incrementApiUsage(this.currentProvider);
-      
+      const incrementSuccess = await apiUsageService.incrementApiUsage(
+        this.currentProvider
+      );
+
       if (!incrementSuccess) {
         throw new Error("Failed to record API usage. Please try again.");
       }
 
       // Perform the extraction
-      const result = await this.providers[this.currentProvider].service.extractFromText(text);
-      
+      const result =
+        await this.providers[this.currentProvider].service.extractFromText(
+          text
+        );
+
       // Add server-side usage info to result
       result.serverUsageValidation = {
         provider: this.currentProvider,
@@ -237,22 +268,31 @@ class AIService {
   async convertToTransactions(analysis) {
     try {
       // Validate usage before processing
-      const validation = await apiUsageService.validateApiUsage(this.currentProvider);
-      
+      const validation = await apiUsageService.validateApiUsage(
+        this.currentProvider
+      );
+
       if (!validation.can_proceed) {
-        throw new Error(`Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`);
+        throw new Error(
+          `Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`
+        );
       }
 
       // Increment usage counter
-      const incrementSuccess = await apiUsageService.incrementApiUsage(this.currentProvider);
-      
+      const incrementSuccess = await apiUsageService.incrementApiUsage(
+        this.currentProvider
+      );
+
       if (!incrementSuccess) {
         throw new Error("Failed to record API usage. Please try again.");
       }
 
       // Perform the conversion
-      const result = await this.providers[this.currentProvider].service.convertToTransactions(analysis);
-      
+      const result =
+        await this.providers[
+          this.currentProvider
+        ].service.convertToTransactions(analysis);
+
       return result;
     } catch (error) {
       console.error("AI Service: Transaction conversion failed:", error);
@@ -268,7 +308,7 @@ class AIService {
     try {
       const usageStats = await apiUsageService.getUserApiUsageStats();
       const currentProviderStats = usageStats[this.currentProvider];
-      
+
       return {
         provider: this.providers[this.currentProvider].name,
         model: this.providers[this.currentProvider].service.getBestModel(),
@@ -281,7 +321,9 @@ class AIService {
     } catch (error) {
       console.error("Failed to get processing summary:", error);
       // Fallback to client-side summary
-      return this.providers[this.currentProvider].service.getProcessingSummary();
+      return this.providers[
+        this.currentProvider
+      ].service.getProcessingSummary();
     }
   }
 
@@ -293,22 +335,31 @@ class AIService {
   async analyzeTransactions(transactions) {
     try {
       // Validate usage before processing
-      const validation = await apiUsageService.validateApiUsage(this.currentProvider);
-      
+      const validation = await apiUsageService.validateApiUsage(
+        this.currentProvider
+      );
+
       if (!validation.can_proceed) {
-        throw new Error(`Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`);
+        throw new Error(
+          `Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`
+        );
       }
 
       // Increment usage counter
-      const incrementSuccess = await apiUsageService.incrementApiUsage(this.currentProvider);
-      
+      const incrementSuccess = await apiUsageService.incrementApiUsage(
+        this.currentProvider
+      );
+
       if (!incrementSuccess) {
         throw new Error("Failed to record API usage. Please try again.");
       }
 
       // Perform the analysis
-      const result = await this.providers[this.currentProvider].service.analyzeTransactions(transactions);
-      
+      const result =
+        await this.providers[this.currentProvider].service.analyzeTransactions(
+          transactions
+        );
+
       // Add server-side usage info to result
       result.serverUsageValidation = {
         provider: this.currentProvider,
@@ -333,10 +384,14 @@ class AIService {
   async validateFile(file) {
     try {
       // Validate usage before processing
-      const validation = await apiUsageService.validateApiUsage(this.currentProvider);
-      
+      const validation = await apiUsageService.validateApiUsage(
+        this.currentProvider
+      );
+
       if (!validation.can_proceed) {
-        throw new Error(`Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`);
+        throw new Error(
+          `Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`
+        );
       }
 
       // Perform file validation

@@ -49,12 +49,14 @@ A modern, AI-powered personal finance management application built with React, f
 Aura Finance supports two AI providers for document analysis and transaction extraction:
 
 ### Google Gemini API (Free Tier)
+
 - **Daily Limit**: 150 requests
 - **Per Minute**: 15 requests
 - **Cost**: Free
 - **Best For**: Development, testing, and light usage
 
 ### Hugging Face Inference API (Recommended - Free)
+
 - **Daily Limit**: 500 requests
 - **Per Minute**: 5 requests
 - **Cost**: Free
@@ -83,7 +85,7 @@ Aura Finance supports two AI providers for document analysis and transaction ext
 
 1. Go to **Settings** → **AI Services**
 2. Toggle between **Gemini API** (150/day) and **Hugging Face** (500/day)
-3. The system automatically falls back to other providers if one fails
+3. Only the explicitly selected provider will be used (no automatic fallback)
 4. Monitor usage in the settings panel
 
 ## 🚀 Getting Started
@@ -96,45 +98,47 @@ Aura Finance supports two AI providers for document analysis and transaction ext
 
 ### Installation
 
-1. **Clone the repository**
+1.  **Clone the repository**
 
-   ```bash
-   git clone https://github.com/your-username/aura-finance.git
-   cd aura-finance
-   ```
+    ```bash
+    git clone https://github.com/your-username/aura-finance.git
+    cd aura-finance
+    ```
 
-2. **Install dependencies**
+2.  **Install dependencies**
 
-   ```bash
-   npm install
-   ```
+    ```bash
+    npm install
+    ```
 
-3. **Set up environment variables**
+3.  **Set up environment variables**
 
-   ```bash
-   cp env.example .env.local
-   ```
+    ```bash
+    cp env.example .env.local
+    ```
 
-   Configure your AI service provider:
+    Configure your AI service provider:
 
-   **Option A: Google Gemini API (Free Tier)**
-   ```env
-   VITE_GEMINI_API_KEY=your_gemini_api_key_here
-   ```
+    **Option A: Google Gemini API (Free Tier)**
 
-       **Option B: Hugging Face Inference API (Recommended for Higher Volume)**
+    ```env
+    VITE_GEMINI_API_KEY=your_gemini_api_key_here
+    ```
+
+        **Option B: Hugging Face Inference API (Recommended for Higher Volume)**
+
     ```env
     VITE_HUGGINGFACE_API_KEY=your_huggingface_api_key_here
     ```
 
-4. **Start the development server**
+4.  **Start the development server**
 
-   ```bash
-   npm run dev
-   ```
+    ```bash
+    npm run dev
+    ```
 
-5. **Open your browser**
-   Navigate to `http://localhost:5173`
+5.  **Open your browser**
+    Navigate to `http://localhost:5173`
 
 ## 📁 Project Structure
 

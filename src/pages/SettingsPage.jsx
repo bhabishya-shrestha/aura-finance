@@ -63,26 +63,26 @@ const SettingsPage = () => {
   }, [loadTransactions, loadAccounts]);
 
   // Load server-side usage stats
-  const loadServerUsageStats = async () => {
+  const loadServerUsageStats = useCallback(async () => {
     if (!user) return;
-    
+
     setIsLoadingUsage(true);
     try {
       const stats = await aiService.getServerUsageStats();
       setServerUsageStats(stats);
     } catch (error) {
-      console.error('Failed to load server usage stats:', error);
+      console.error("Failed to load server usage stats:", error);
     } finally {
       setIsLoadingUsage(false);
     }
-  };
+  }, [user]);
 
   // Load usage stats when AI Services tab is active
   useEffect(() => {
-    if (activeTab === 'ai-services') {
+    if (activeTab === "ai-services") {
       loadServerUsageStats();
     }
-  }, [activeTab, user]);
+  }, [activeTab, user, loadServerUsageStats]);
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
@@ -1062,7 +1062,7 @@ const SettingsPage = () => {
                         const newProvider = e.target.checked
                           ? "huggingface"
                           : "gemini";
-                        
+
                         try {
                           // Validate with server before switching
                           await aiService.setProvider(newProvider);
@@ -1070,11 +1070,16 @@ const SettingsPage = () => {
                           // Reload usage stats after switching
                           loadServerUsageStats();
                         } catch (error) {
-                          console.error('Failed to switch provider:', error);
+                          console.error("Failed to switch provider:", error);
                           // Show error message to user
-                          setSaveMessage(`Failed to switch provider: ${error.message}`);
+                          setSaveMessage(
+                            `Failed to switch provider: ${error.message}`
+                          );
                           setIsNotificationVisible(true);
-                          setTimeout(() => setIsNotificationVisible(false), 3000);
+                          setTimeout(
+                            () => setIsNotificationVisible(false),
+                            3000
+                          );
                         }
                       }}
                       className="sr-only peer"
@@ -1098,7 +1103,7 @@ const SettingsPage = () => {
                         ? "500 requests"
                         : "150 requests"}
                     </div>
-                    
+
                     {/* Server-side usage stats */}
                     {isLoadingUsage ? (
                       <div className="mt-2 text-gray-500 dark:text-gray-400">
@@ -1111,9 +1116,12 @@ const SettingsPage = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-4 text-xs">
                           <div>
-                            <div className="text-gray-600 dark:text-gray-400">Gemini</div>
+                            <div className="text-gray-600 dark:text-gray-400">
+                              Gemini
+                            </div>
                             <div className="font-medium">
-                              {serverUsageStats.gemini?.current_usage || 0} / {serverUsageStats.gemini?.max_requests || 150}
+                              {serverUsageStats.gemini?.current_usage || 0} /{" "}
+                              {serverUsageStats.gemini?.max_requests || 150}
                             </div>
                             {serverUsageStats.gemini?.approaching_limit && (
                               <div className="text-amber-600 dark:text-amber-400 text-xs">
@@ -1122,11 +1130,17 @@ const SettingsPage = () => {
                             )}
                           </div>
                           <div>
-                            <div className="text-gray-600 dark:text-gray-400">Hugging Face</div>
-                            <div className="font-medium">
-                              {serverUsageStats.huggingface?.current_usage || 0} / {serverUsageStats.huggingface?.max_requests || 500}
+                            <div className="text-gray-600 dark:text-gray-400">
+                              Hugging Face
                             </div>
-                            {serverUsageStats.huggingface?.approaching_limit && (
+                            <div className="font-medium">
+                              {serverUsageStats.huggingface?.current_usage || 0}{" "}
+                              /{" "}
+                              {serverUsageStats.huggingface?.max_requests ||
+                                500}
+                            </div>
+                            {serverUsageStats.huggingface
+                              ?.approaching_limit && (
                               <div className="text-amber-600 dark:text-amber-400 text-xs">
                                 Approaching limit
                               </div>

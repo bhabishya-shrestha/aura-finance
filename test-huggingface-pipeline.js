@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+dirname(__filename);
 
 // Mock environment variables for testing
 process.env.VITE_HUGGINGFACE_API_KEY = 'hf_JqanjMh...'; // Your actual key
@@ -19,8 +19,8 @@ global.localStorage = {
 
 // Mock fetch for API calls
 global.fetch = async (url, options) => {
-  console.log('Mock API call to:', url);
-  console.log('Request body:', JSON.parse(options.body));
+  // console.log('Mock API call to:', url);
+  // console.log('Request body:', JSON.parse(options.body));
   
   // Simulate Hugging Face API response
   return {
@@ -49,10 +49,10 @@ global.fetch = async (url, options) => {
 };
 
 // Mock Tesseract.js
-const mockTesseract = {
-  recognize: async (imageData, lang, options) => {
-    console.log('Mock OCR processing...');
-    console.log('OCR options:', options);
+{
+  recognize: async (imageData) => {
+    // console.log('Mock OCR processing...');
+    // console.log('OCR processing...');
     
     // Simulate OCR text extraction from the test image
     const ocrText = `EVEREST FOOD TRUCK 2
@@ -130,7 +130,7 @@ const mockTesseract = {
 
 // Test the transaction extraction logic directly
 function testTransactionExtraction() {
-  console.log('=== Testing Transaction Extraction Logic ===\n');
+  // console.log('=== Testing Transaction Extraction Logic ===\n');
   
   // Simulate the HuggingFaceService class methods
   const normalizeDate = (dateStr) => {
@@ -216,11 +216,11 @@ function testTransactionExtraction() {
     const transactions = [];
 
     if (!analysis || analysis.trim() === "") {
-      console.log("[extractTransactionsFromAnalysis] Empty analysis, returning empty array");
+      // console.log("[extractTransactionsFromAnalysis] Empty analysis, returning empty array");
       return transactions;
     }
 
-    console.log("[extractTransactionsFromAnalysis] Processing analysis:", analysis);
+    // console.log("[extractTransactionsFromAnalysis] Processing analysis:", analysis);
 
     const patterns = [
       /\$?(\d+\.?\d*)\s+([A-Za-z0-9\s-]+?)(?=\s+\$?\d+\.?\d*|$)/gi,
@@ -233,7 +233,7 @@ function testTransactionExtraction() {
 
     patterns.forEach((pattern, index) => {
       const matches = [...analysis.matchAll(pattern)];
-      console.log(`[extractTransactionsFromAnalysis] Pattern ${index + 1} found ${matches.length} matches:`, matches);
+      // console.log(`[extractTransactionsFromAnalysis] Pattern ${index + 1} found ${matches.length} matches:`, matches);
 
       matches.forEach(match => {
         let amount, description, date;
@@ -270,14 +270,14 @@ function testTransactionExtraction() {
             };
             
             transactions.push(transaction);
-            console.log(`[extractTransactionsFromAnalysis] Added transaction:`, transaction);
+            // console.log(`[extractTransactionsFromAnalysis] Added transaction:`, transaction);
           }
         }
       });
     });
 
     if (transactions.length === 0) {
-      console.log("[extractTransactionsFromAnalysis] No transactions found, creating fallback");
+      // console.log("[extractTransactionsFromAnalysis] No transactions found, creating fallback");
       transactions.push({
         date: new Date().toISOString().split("T")[0],
         description: "Document analysis completed",
@@ -288,7 +288,7 @@ function testTransactionExtraction() {
       });
     }
 
-    console.log(`[extractTransactionsFromAnalysis] Final result: ${transactions.length} transactions`);
+    // console.log(`[extractTransactionsFromAnalysis] Final result: ${transactions.length} transactions`);
     return transactions;
   };
 
@@ -312,18 +312,18 @@ function testTransactionExtraction() {
       
       Additional transactions include ATM withdrawals, Tesla services, Uber Eats, and various retail purchases.`;
 
-  console.log('Testing with mock AI analysis...\n');
+  // console.log('Testing with mock AI analysis...\n');
   const transactions = extractTransactionsFromAnalysis(mockAnalysis);
   
-  console.log('\n=== Extracted Transactions ===');
+  // console.log('\n=== Extracted Transactions ===');
   transactions.forEach((transaction, index) => {
-    console.log(`${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category} | Confidence: ${transaction.confidence}`);
+    // console.log(`${index + 1}. ${transaction.date} | ${transaction.description} | $${transaction.amount} | ${transaction.type} | ${transaction.category} | Confidence: ${transaction.confidence}`);
   });
   
-  console.log('\n=== Test Summary ===');
-  console.log(`Transactions Extracted: ${transactions.length}`);
-  console.log(`Expected Transactions: 13+ (from mock analysis)`);
-  console.log(`Success Rate: ${((transactions.length / 13) * 100).toFixed(1)}%`);
+  // console.log('\n=== Test Summary ===');
+  // console.log(`Transactions Extracted: ${transactions.length}`);
+  // console.log(`Expected Transactions: 13+ (from mock analysis)`);
+  // console.log(`Success Rate: ${((transactions.length / 13) * 100).toFixed(1)}%`);
 }
 
 // Run the test

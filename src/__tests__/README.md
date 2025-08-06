@@ -27,7 +27,7 @@ Tests the `aiService.js` that acts as a facade for both providers:
 - ✅ **Initialization**: Service setup and configuration
 - ✅ **Provider Management**: Switching and validation
 - ✅ **Service Delegation**: Method routing to correct provider
-- ✅ **Fallback Logic**: Automatic provider switching on errors
+- ✅ **Provider Selection**: Explicit provider selection without fallback
 - ✅ **Rate Limit Information**: Usage tracking and limits
 - ✅ **Integration Tests**: Complete workflows
 
