@@ -232,9 +232,9 @@ class HuggingFaceService {
 
       // console.log("[analyzeExtractedText] Input text:", text);
       // console.log(
-        "Hugging Face: Making API request with key:",
-        this.apiKey.substring(0, 10) + "..."
-      );
+      //   "Hugging Face: Making API request with key:",
+      //   this.apiKey.substring(0, 10) + "..."
+      // );
 
       // Enhanced prompt specifically designed for financial transaction extraction
       const prompt = `Extract financial transactions from this bank statement text. 
@@ -310,9 +310,9 @@ Please extract all financial transactions found in the text above using the exac
       const extractedTransactions =
         this.extractTransactionsFromAnalysis(generatedText);
       // console.log(
-        "[analyzeExtractedText] Extracted transactions:",
-        extractedTransactions
-      );
+      //   "[analyzeExtractedText] Extracted transactions:",
+      //   extractedTransactions
+      // );
 
       return {
         success: true,
@@ -340,19 +340,19 @@ Please extract all financial transactions found in the text above using the exac
 
     if (!analysis || analysis.trim() === "") {
       // console.log(
-        "[extractTransactionsFromAnalysis] Empty analysis, returning empty array"
-      );
+      //   "[extractTransactionsFromAnalysis] Empty analysis, returning empty array"
+      // );
       return transactions;
     }
 
     // console.log(
-      "[extractTransactionsFromAnalysis] Processing analysis:",
-      analysis
-    );
+    //   "[extractTransactionsFromAnalysis] Processing analysis:",
+    //   analysis
+    // );
 
     // Count expected transactions for debugging
-    const transactionMatches = analysis.match(/Transaction\s+\d+:/g);
-    const paymentMatches = analysis.match(/Payment\s+\d+:/g);
+    // const transactionMatches = analysis.match(/Transaction\s+\d+:/g);
+    // const paymentMatches = analysis.match(/Payment\s+\d+:/g);
     // console.log(`[DEBUG] Found ${transactionMatches?.length || 0} transaction lines and ${paymentMatches?.length || 0} payment lines`);
 
     // More precise patterns specifically designed for bank statement format
@@ -367,15 +367,15 @@ Please extract all financial transactions found in the text above using the exac
 
     const foundTransactions = new Set();
 
-    patterns.forEach((pattern, index) => {
+    patterns.forEach((pattern) => {
       const matches = [...analysis.matchAll(pattern)];
       // console.log(
-        `[extractTransactionsFromAnalysis] Pattern ${index + 1} found ${matches.length} matches`
-      );
+      //   `[extractTransactionsFromAnalysis] Pattern found ${matches.length} matches`
+      // );
 
       // Debug: Show what matches were found
-      matches.forEach((match, matchIndex) => {
-        // console.log(`[DEBUG] Match ${matchIndex + 1}:`, match[0]);
+      matches.forEach(() => {
+        // console.log(`[DEBUG] Match found`);
       });
 
       matches.forEach(match => {
@@ -408,22 +408,22 @@ Please extract all financial transactions found in the text above using the exac
 
             transactions.push(transaction);
             // console.log(
-              `[extractTransactionsFromAnalysis] Added transaction:`,
-              transaction
-            );
+            //   `[extractTransactionsFromAnalysis] Added transaction:`,
+            //   transaction
+            // );
           } else {
             // console.log(
-              `[DEBUG] Duplicate transaction filtered out: ${transactionKey}`
-            );
+//   `[DEBUG] Duplicate transaction filtered out: ${transactionKey}`
+// );
           }
         } else {
           // Debug why transaction was rejected
           // console.log(
-            `[DEBUG] Rejected transaction: amount=${amount}, description="${description}"`
-          );
+//   `[DEBUG] Rejected transaction: amount=${amount}, description="${description}"`
+// );
           // console.log(
-            `[DEBUG] isValidAmount: ${this.isValidTransactionAmount(amount)}, isValidDescription: ${this.isValidDescription(description)}`
-          );
+//   `[DEBUG] isValidAmount: ${this.isValidTransactionAmount(amount)}, isValidDescription: ${this.isValidDescription(description)}`
+// );
         }
       });
     });
@@ -434,9 +434,9 @@ Please extract all financial transactions found in the text above using the exac
       
       // Try to extract all lines that contain transaction information
       const lines = analysis.split('\n');
-      lines.forEach((line, lineIndex) => {
+      lines.forEach((line) => {
         if (line.includes('Transaction') || line.includes('Payment')) {
-          // console.log(`[DEBUG] Line ${lineIndex}: ${line}`);
+          // console.log(`[DEBUG] Line: ${line}`);
         }
       });
 
@@ -446,17 +446,17 @@ Please extract all financial transactions found in the text above using the exac
       const flexibleMatches = [...analysis.matchAll(flexiblePattern)];
       // console.log(`[DEBUG] Flexible pattern found ${flexibleMatches.length} matches`);
       
-      flexibleMatches.forEach((match, matchIndex) => {
+      flexibleMatches.forEach((match) => {
         if (!transactions.some(t => t.description === this.cleanDescription(match[1].trim()))) {
-          // console.log(`[DEBUG] Flexible match ${matchIndex + 1}:`, match[0]);
+          // console.log(`[DEBUG] Flexible match:`, match[0]);
         }
       });
     }
 
     if (transactions.length === 0) {
       // console.log(
-        "[extractTransactionsFromAnalysis] No transactions found, creating fallback"
-      );
+//   "[extractTransactionsFromAnalysis] No transactions found, creating fallback"
+// );
       transactions.push({
         date: new Date().toISOString().split("T")[0],
         description: "Document analysis completed",
@@ -468,8 +468,8 @@ Please extract all financial transactions found in the text above using the exac
     }
 
     // console.log(
-      `[extractTransactionsFromAnalysis] Final result: ${transactions.length} transactions`
-    );
+//   `[extractTransactionsFromAnalysis] Final result: ${transactions.length} transactions`
+// );
     return transactions;
   }
 
@@ -719,21 +719,21 @@ Please extract all financial transactions found in the text above using the exac
   async convertToTransactions(analysis) {
     try {
       // console.log(
-        "[convertToTransactions] Input analysis:",
-        analysis,
-        "Type:",
-        typeof analysis
-      );
+      //   "[convertToTransactions] Input analysis:",
+      //   analysis,
+      //   "Type:",
+      //   typeof analysis
+      // );
       // Handle different possible input structures
       let transactions = [];
 
       if (analysis && analysis.transactions) {
         // console.log(
-          "[convertToTransactions] analysis.transactions:",
-          analysis.transactions,
-          "Type:",
-          typeof analysis.transactions
-        );
+        //   "[convertToTransactions] analysis.transactions:",
+        //   analysis.transactions,
+        //   "Type:",
+        //   typeof analysis.transactions
+        // );
         transactions = Array.isArray(analysis.transactions)
           ? analysis.transactions
           : [];
@@ -746,9 +746,9 @@ Please extract all financial transactions found in the text above using the exac
         const analysisText =
           analysis.analysis || analysis.text || JSON.stringify(analysis);
         // console.log(
-          "[convertToTransactions] analysisText for extraction:",
-          analysisText
-        );
+        //   "[convertToTransactions] analysisText for extraction:",
+        //   analysisText
+        // );
         transactions = this.extractTransactionsFromAnalysis(analysisText);
       } else {
         // Fallback: return empty array
@@ -770,9 +770,9 @@ Please extract all financial transactions found in the text above using the exac
         return [];
       }
       // console.log(
-        "[convertToTransactions] Final transactions array before map:",
-        transactions
-      );
+      //   "[convertToTransactions] Final transactions array before map:",
+      //   transactions
+      // );
 
       return transactions
         .map(transaction => {
