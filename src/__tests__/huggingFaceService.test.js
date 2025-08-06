@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import huggingFaceService from "../services/huggingFaceService";
-import Tesseract from "tesseract.js";
 
 // Mock HTML5 Canvas API for jsdom
 Object.defineProperty(global, "HTMLCanvasElement", {
