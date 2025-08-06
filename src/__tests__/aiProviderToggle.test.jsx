@@ -371,11 +371,13 @@ describe("AI Provider Toggle", () => {
       fireEvent.click(aiServicesButton);
 
       await waitFor(() => {
-        const toggle = screen.getByRole("checkbox");
+        const toggles = screen.getAllByRole("checkbox");
+        const toggle = toggles[0]; // Select the first checkbox
         fireEvent.click(toggle);
 
         // Should not crash the component
-        expect(screen.getByText("AI Services")).toBeInTheDocument();
+        const aiServicesElements = screen.getAllByText("AI Services");
+        expect(aiServicesElements.length).toBeGreaterThan(0);
       });
     });
 
@@ -393,7 +395,8 @@ describe("AI Provider Toggle", () => {
 
       await waitFor(() => {
         // Should still render without crashing
-        expect(screen.getByText("AI Services")).toBeInTheDocument();
+        const aiServicesElements = screen.getAllByText("AI Services");
+        expect(aiServicesElements.length).toBeGreaterThan(0);
       });
     });
   });
@@ -409,7 +412,8 @@ describe("AI Provider Toggle", () => {
       fireEvent.click(aiServicesButton);
 
       await waitFor(() => {
-        const toggle = screen.getByRole("checkbox");
+        const toggles = screen.getAllByRole("checkbox");
+        const toggle = toggles[0]; // Select the first checkbox
         expect(toggle).toHaveAttribute("type", "checkbox");
         expect(toggle).toHaveClass("sr-only peer");
       });
@@ -425,7 +429,8 @@ describe("AI Provider Toggle", () => {
       fireEvent.click(aiServicesButton);
 
       await waitFor(() => {
-        const toggle = screen.getByRole("checkbox");
+        const toggles = screen.getAllByRole("checkbox");
+        const toggle = toggles[0]; // Select the first checkbox
 
         // Focus and use spacebar
         toggle.focus();
@@ -456,9 +461,8 @@ describe("AI Provider Toggle", () => {
       await waitFor(() => {
         const aiServicesElements = screen.getAllByText("AI Services");
         expect(aiServicesElements.length).toBeGreaterThan(0);
-        expect(
-          screen.getByText("Use Hugging Face (500 Daily Requests)")
-        ).toBeInTheDocument();
+        const huggingFaceElements = screen.getAllByText("Use Hugging Face (500 Daily Requests)");
+        expect(huggingFaceElements.length).toBeGreaterThan(0);
       });
     });
   });

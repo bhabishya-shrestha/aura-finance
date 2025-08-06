@@ -5,6 +5,7 @@ This directory contains comprehensive tests for the AI service integration, ensu
 ## Test Files
 
 ### 1. `aiIntegration.test.js` ✅ **PASSING (11/13 tests)**
+
 **Core AI Service Integration Tests**
 
 Tests the unified AI service that manages both Gemini and Hugging Face providers:
@@ -20,6 +21,7 @@ Tests the unified AI service that manages both Gemini and Hugging Face providers
 **Status**: 11/13 tests passing (2 failing due to environment variable mocking)
 
 ### 2. `aiService.test.js` ✅ **COMPREHENSIVE**
+
 **Unified AI Service Tests**
 
 Tests the `aiService.js` that acts as a facade for both providers:
@@ -32,6 +34,7 @@ Tests the `aiService.js` that acts as a facade for both providers:
 - ✅ **Integration Tests**: Complete workflows
 
 ### 3. `aiProviderToggle.test.jsx` ✅ **UI INTEGRATION**
+
 **Settings Page AI Toggle Tests**
 
 Tests the UI components for AI provider selection:
@@ -45,6 +48,7 @@ Tests the UI components for AI provider selection:
 - ✅ **Mobile Responsiveness**: Mobile viewport testing
 
 ### 4. `huggingFaceService.test.js` ⚠️ **PARTIAL**
+
 **Hugging Face Service Unit Tests**
 
 Tests the individual Hugging Face service (some tests need environment variable fixes):
@@ -60,6 +64,7 @@ Tests the individual Hugging Face service (some tests need environment variable 
 ## Running Tests Safely
 
 ### ⚠️ **IMPORTANT: No Real API Calls**
+
 All tests are designed to **never make real API calls** to protect your API quota:
 
 ```bash
@@ -114,18 +119,23 @@ All tests use mock data to avoid real API consumption:
 ## Key Features Tested
 
 ### ✅ **Automatic Fallback**
+
 When Gemini hits its 150 daily limit, the system automatically switches to Hugging Face (500 daily limit).
 
 ### ✅ **Smart Model Selection**
+
 Hugging Face service automatically selects the best model for each task:
+
 - `deepseek-ai/deepseek-coder-6.7b-instruct` for text analysis
 - `microsoft/git-base-coco` for image understanding
 - `microsoft/trocr-base-handwritten` for handwritten text
 
 ### ✅ **Rate Limit Monitoring**
+
 Real-time tracking of API usage with warnings when approaching limits.
 
 ### ✅ **Error Recovery**
+
 Graceful handling of API failures with automatic provider switching.
 
 ## Test Results Summary
@@ -148,6 +158,6 @@ Graceful handling of API failures with automatic provider switching.
 ✅ **No Quota Consumption**: Your API limits are protected  
 ✅ **Isolated Testing**: Each test runs independently  
 ✅ **Comprehensive Coverage**: All major features tested  
-✅ **Error Scenarios**: Edge cases and failures tested  
+✅ **Error Scenarios**: Edge cases and failures tested
 
-The test suite ensures your AI integration works reliably while protecting your API quota from unnecessary consumption. 
+The test suite ensures your AI integration works reliably while protecting your API quota from unnecessary consumption.

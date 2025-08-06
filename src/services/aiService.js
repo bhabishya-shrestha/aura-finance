@@ -195,13 +195,15 @@ class AIService {
       await this.providers[this.currentProvider].service.analyzeImage(file);
 
     // Add server-side usage info to result
-    result.serverUsageValidation = {
-      provider: this.currentProvider,
-      currentUsage: validation.current_usage + 1, // +1 for this request
-      maxRequests: validation.max_requests,
-      remainingRequests: validation.remaining_requests - 1,
-      approachingLimit: validation.approachingLimit,
-    };
+    if (result) {
+      result.serverUsageValidation = {
+        provider: this.currentProvider,
+        currentUsage: validation.current_usage + 1, // +1 for this request
+        maxRequests: validation.max_requests,
+        remainingRequests: validation.remaining_requests - 1,
+        approachingLimit: validation.approachingLimit,
+      };
+    }
 
     return result;
   }
@@ -234,18 +236,18 @@ class AIService {
 
     // Perform the extraction
     const result =
-      await this.providers[this.currentProvider].service.extractFromText(
-        text
-      );
+      await this.providers[this.currentProvider].service.extractFromText(text);
 
     // Add server-side usage info to result
-    result.serverUsageValidation = {
-      provider: this.currentProvider,
-      currentUsage: validation.current_usage + 1,
-      maxRequests: validation.max_requests,
-      remainingRequests: validation.remaining_requests - 1,
-      approachingLimit: validation.approachingLimit,
-    };
+    if (result) {
+      result.serverUsageValidation = {
+        provider: this.currentProvider,
+        currentUsage: validation.current_usage + 1,
+        maxRequests: validation.max_requests,
+        remainingRequests: validation.remaining_requests - 1,
+        approachingLimit: validation.approachingLimit,
+      };
+    }
 
     return result;
   }
@@ -278,23 +280,31 @@ class AIService {
 
     // Perform the conversion
     const result =
-      await this.providers[
-        this.currentProvider
-      ].service.convertToTransactions(analysis);
+      await this.providers[this.currentProvider].service.convertToTransactions(
+        analysis
+      );
 
     return result;
   }
 
   /**
    * Get processing summary with server-side usage data
+   * @param {Object} response - Optional response data
    * @returns {Promise<Object>} Processing summary
    */
-  async getProcessingSummary() {
+  async getProcessingSummary(response) {
     try {
       const usageStats = await apiUsageService.getUserApiUsageStats();
       const currentProviderStats = usageStats[this.currentProvider];
 
+      // Get provider-specific summary
+      const providerSummary =
+        await this.providers[this.currentProvider].service.getProcessingSummary(
+          response
+        );
+
       return {
+        ...providerSummary,
         provider: this.providers[this.currentProvider].name,
         model: this.providers[this.currentProvider].service.getBestModel(),
         dailyRequests: currentProviderStats?.current_usage || 0,
@@ -306,18 +316,19 @@ class AIService {
     } catch (error) {
       // console.error("Failed to get processing summary:", error);
       // Fallback to client-side summary
-      return this.providers[
-        this.currentProvider
-      ].service.getProcessingSummary();
+      return await this.providers[this.currentProvider].service.getProcessingSummary(
+        response
+      );
     }
   }
 
   /**
    * Analyze transactions with server-side validation
    * @param {Array} transactions - Transactions to analyze
+   * @param {string} prompt - Optional prompt for analysis
    * @returns {Promise<Object>} Analysis result
    */
-  async analyzeTransactions(transactions) {
+  async analyzeTransactions(transactions, prompt) {
     // Validate usage before processing
     const validation = await apiUsageService.validateApiUsage(
       this.currentProvider
@@ -339,19 +350,20 @@ class AIService {
     }
 
     // Perform the analysis
-    const result =
-      await this.providers[this.currentProvider].service.analyzeTransactions(
-        transactions
-      );
+    const result = await this.providers[
+      this.currentProvider
+    ].service.analyzeTransactions(transactions, prompt);
 
     // Add server-side usage info to result
-    result.serverUsageValidation = {
-      provider: this.currentProvider,
-      currentUsage: validation.current_usage + 1,
-      maxRequests: validation.max_requests,
-      remainingRequests: validation.remaining_requests - 1,
-      approachingLimit: validation.approachingLimit,
-    };
+    if (result) {
+      result.serverUsageValidation = {
+        provider: this.currentProvider,
+        currentUsage: validation.current_usage + 1,
+        maxRequests: validation.max_requests,
+        remainingRequests: validation.remaining_requests - 1,
+        approachingLimit: validation.approachingLimit,
+      };
+    }
 
     return result;
   }

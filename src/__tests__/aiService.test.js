@@ -1,15 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 
-// Mock environment variables BEFORE importing any services
-vi.mock("import.meta.env", () => ({
-  env: {
-    VITE_GEMINI_API_KEY: "test_gemini_key",
-    VITE_HUGGINGFACE_API_KEY: "test_huggingface_key",
-  },
-}));
-
 // Mock the individual services
-vi.mock("../services/geminiService", () => ({
+vi.mock("../services/geminiService.js", () => ({
   default: {
     analyzeImage: vi.fn(),
     extractFromText: vi.fn(),
@@ -23,7 +15,7 @@ vi.mock("../services/geminiService", () => ({
   },
 }));
 
-vi.mock("../services/huggingFaceService", () => ({
+vi.mock("../services/huggingFaceService.js", () => ({
   default: {
     analyzeImage: vi.fn(),
     extractFromText: vi.fn(),
@@ -90,15 +82,13 @@ global.localStorage = localStorageMock;
 
 // Now import the services after mocking
 import aiService from "../services/aiService";
+import geminiService from "../services/geminiService.js";
+import huggingFaceService from "../services/huggingFaceService.js";
 
 describe("AIService", () => {
-    beforeEach(async () => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    
-    // Mock environment variables
-    import.meta.env.VITE_GEMINI_API_KEY = 'test_gemini_key';
-    import.meta.env.VITE_HUGGINGFACE_API_KEY = 'test_huggingface_key';
-    
+
     // Ensure the mock is properly set up
     const apiUsageService = await import("../services/apiUsageService");
     apiUsageService.default.validateApiUsage.mockResolvedValue({
@@ -109,25 +99,39 @@ describe("AIService", () => {
       remaining_requests: 150,
     });
     apiUsageService.default.incrementApiUsage.mockResolvedValue(true);
-    
+
     // Mock the providers to avoid module loading issues
     aiService.providers = {
       gemini: {
         name: "Gemini API",
-        service: { extractFromText: vi.fn(), convertToTransactions: vi.fn(), getProcessingSummary: vi.fn(), validateFile: vi.fn(), analyzeTransactions: vi.fn() },
+        service: {
+          analyzeImage: vi.fn(),
+          extractFromText: vi.fn(),
+          convertToTransactions: vi.fn(),
+          getProcessingSummary: vi.fn(),
+          validateFile: vi.fn(),
+          analyzeTransactions: vi.fn(),
+        },
         quotas: { maxDailyRequests: 150, maxRequests: 15 },
         features: ["Document Analysis", "Transaction Extraction"],
-        pricing: "Free Tier"
+        pricing: "Free Tier",
       },
       huggingface: {
         name: "Hugging Face Inference API",
-        service: { extractFromText: vi.fn(), convertToTransactions: vi.fn(), getProcessingSummary: vi.fn(), validateFile: vi.fn(), analyzeTransactions: vi.fn() },
+        service: {
+          analyzeImage: vi.fn(),
+          extractFromText: vi.fn(),
+          convertToTransactions: vi.fn(),
+          getProcessingSummary: vi.fn(),
+          validateFile: vi.fn(),
+          analyzeTransactions: vi.fn(),
+        },
         quotas: { maxDailyRequests: 500, maxRequests: 5 },
         features: ["Document Analysis", "Transaction Extraction"],
-        pricing: "Free Tier"
-      }
+        pricing: "Free Tier",
+      },
     };
-    
+
     // Reset to default provider - skip server validation for tests
     try {
       await aiService.setProvider("gemini");
@@ -214,7 +218,7 @@ describe("AIService", () => {
         max_requests: 0,
         remaining_requests: 0,
       });
-      
+
       expect(await aiService.isProviderAvailable("unknown")).toBe(false);
     });
   });
@@ -254,9 +258,10 @@ describe("AIService", () => {
       const mockFile = new File(["test"], "test.jpg", { type: "image/jpeg" });
       const mockResponse = { success: true, text: "test" };
 
-      // Mock Gemini service
-      const geminiService = await import("../services/geminiService");
-      geminiService.default.analyzeImage.mockResolvedValue(mockResponse);
+      // Use the mocked provider directly
+      aiService.providers.gemini.service.analyzeImage.mockResolvedValue(
+        mockResponse
+      );
 
       try {
         await aiService.setProvider("gemini");
@@ -265,7 +270,9 @@ describe("AIService", () => {
       }
       const result = await aiService.analyzeImage(mockFile);
 
-      expect(geminiService.default.analyzeImage).toHaveBeenCalledWith(mockFile);
+      expect(
+        aiService.providers.gemini.service.analyzeImage
+      ).toHaveBeenCalledWith(mockFile);
       expect(result).toEqual(mockResponse);
     });
 
@@ -273,8 +280,10 @@ describe("AIService", () => {
       const mockText = "test text";
       const mockResponse = { transactions: [] };
 
-      const geminiService = require("../services/geminiService");
-      geminiService.default.extractFromText.mockReturnValue(mockResponse);
+      // Use the mocked provider directly
+      aiService.providers.gemini.service.extractFromText.mockReturnValue(
+        mockResponse
+      );
 
       try {
         await aiService.setProvider("gemini");
@@ -283,9 +292,9 @@ describe("AIService", () => {
       }
       const result = await aiService.extractFromText(mockText);
 
-      expect(geminiService.default.extractFromText).toHaveBeenCalledWith(
-        mockText
-      );
+      expect(
+        aiService.providers.gemini.service.extractFromText
+      ).toHaveBeenCalledWith(mockText);
       expect(result).toEqual(mockResponse);
     });
 
@@ -293,8 +302,8 @@ describe("AIService", () => {
       const mockResponse = { data: "test" };
       const mockTransactions = [{ id: 1 }];
 
-      const geminiService = require("../services/geminiService");
-      geminiService.default.convertToTransactions.mockReturnValue(
+      // Use the mocked provider directly
+      geminiService.convertToTransactions.mockReturnValue(
         mockTransactions
       );
 
@@ -305,9 +314,9 @@ describe("AIService", () => {
       }
       const result = await aiService.convertToTransactions(mockResponse);
 
-      expect(geminiService.default.convertToTransactions).toHaveBeenCalledWith(
-        mockResponse
-      );
+      expect(
+        geminiService.convertToTransactions
+      ).toHaveBeenCalledWith(mockResponse);
       expect(result).toEqual(mockTransactions);
     });
 
@@ -315,8 +324,10 @@ describe("AIService", () => {
       const mockResponse = { data: "test" };
       const mockSummary = { total: 1 };
 
-      const geminiService = require("../services/geminiService");
-      geminiService.default.getProcessingSummary.mockReturnValue(mockSummary);
+      // Use the mocked provider directly
+      geminiService.getProcessingSummary.mockReturnValue(
+        mockSummary
+      );
 
       try {
         await aiService.setProvider("gemini");
@@ -325,9 +336,9 @@ describe("AIService", () => {
       }
       const result = await aiService.getProcessingSummary(mockResponse);
 
-      expect(geminiService.default.getProcessingSummary).toHaveBeenCalledWith(
-        mockResponse
-      );
+      expect(
+        geminiService.getProcessingSummary
+      ).toHaveBeenCalledWith(mockResponse);
       expect(result).toEqual(mockSummary);
     });
 
@@ -336,8 +347,10 @@ describe("AIService", () => {
       const mockPrompt = "test prompt";
       const mockResponse = { suggestions: "test" };
 
-      const geminiService = await import("../services/geminiService");
-      geminiService.default.analyzeTransactions.mockResolvedValue(mockResponse);
+      // Use the mocked provider directly
+      geminiService.analyzeTransactions.mockResolvedValue(
+        mockResponse
+      );
 
       try {
         await aiService.setProvider("gemini");
@@ -346,18 +359,17 @@ describe("AIService", () => {
       }
       const result = await aiService.analyzeTransactions(mockTexts, mockPrompt);
 
-      expect(geminiService.default.analyzeTransactions).toHaveBeenCalledWith(
-        mockTexts,
-        mockPrompt
-      );
+      expect(
+        geminiService.analyzeTransactions
+      ).toHaveBeenCalledWith(mockTexts, mockPrompt);
       expect(result).toEqual(mockResponse);
     });
 
     it("should delegate validateFile to current provider", async () => {
       const mockFile = new File(["test"], "test.jpg", { type: "image/jpeg" });
 
-      const geminiService = require("../services/geminiService");
-      geminiService.default.validateFile.mockReturnValue(true);
+      // Use the mocked provider directly
+      geminiService.validateFile.mockReturnValue(true);
 
       try {
         await aiService.setProvider("gemini");
@@ -366,7 +378,9 @@ describe("AIService", () => {
       }
       const result = await aiService.validateFile(mockFile);
 
-      expect(geminiService.default.validateFile).toHaveBeenCalledWith(mockFile);
+      expect(
+        geminiService.validateFile
+      ).toHaveBeenCalledWith(mockFile);
       expect(result).toBe(true);
     });
   });
@@ -375,10 +389,18 @@ describe("AIService", () => {
     it("should not fallback from Gemini to Hugging Face on error", async () => {
       const mockFile = new File(["test"], "test.jpg", { type: "image/jpeg" });
 
-      const geminiService = await import("../services/geminiService");
-      const huggingFaceService = await import("../services/huggingFaceService");
+      const apiUsageService = await import("../services/apiUsageService");
 
-      geminiService.default.analyzeImage.mockRejectedValue(
+      // Mock API usage service to allow provider switching
+      apiUsageService.default.validateApiUsage.mockResolvedValue({
+        success: true,
+        can_proceed: true,
+        current_usage: 0,
+        max_requests: 150,
+        remaining_requests: 150,
+      });
+
+      geminiService.analyzeImage.mockRejectedValue(
         new Error("Gemini failed")
       );
 
@@ -389,7 +411,7 @@ describe("AIService", () => {
       );
 
       // Verify that Hugging Face was never called
-      expect(huggingFaceService.default.analyzeImage).not.toHaveBeenCalled();
+      expect(huggingFaceService.analyzeImage).not.toHaveBeenCalled();
       // Verify provider didn't change
       expect(aiService.currentProvider).toBe("gemini");
     });
@@ -397,10 +419,18 @@ describe("AIService", () => {
     it("should not fallback from Hugging Face to Gemini on error", async () => {
       const mockFile = new File(["test"], "test.jpg", { type: "image/jpeg" });
 
-      const geminiService = await import("../services/geminiService");
-      const huggingFaceService = await import("../services/huggingFaceService");
+      const apiUsageService = await import("../services/apiUsageService");
 
-      huggingFaceService.default.analyzeImage.mockRejectedValue(
+      // Mock API usage service to allow provider switching
+      apiUsageService.default.validateApiUsage.mockResolvedValue({
+        success: true,
+        can_proceed: true,
+        current_usage: 0,
+        max_requests: 500,
+        remaining_requests: 500,
+      });
+
+      huggingFaceService.analyzeImage.mockRejectedValue(
         new Error("Hugging Face failed")
       );
 
@@ -411,7 +441,7 @@ describe("AIService", () => {
       );
 
       // Verify that Gemini was never called
-      expect(geminiService.default.analyzeImage).not.toHaveBeenCalled();
+      expect(geminiService.analyzeImage).not.toHaveBeenCalled();
       // Verify provider didn't change
       expect(aiService.currentProvider).toBe("huggingface");
     });
@@ -442,12 +472,20 @@ describe("AIService", () => {
       const mockImageResponse = { success: true, text: "extracted text" };
       const mockTransactionResponse = { transactions: [{ id: 1 }] };
 
-      const geminiService = await import("../services/geminiService");
-      const huggingFaceService = await import("../services/huggingFaceService");
+      const apiUsageService = await import("../services/apiUsageService");
+
+      // Mock API usage service to allow provider switching
+      apiUsageService.default.validateApiUsage.mockResolvedValue({
+        success: true,
+        can_proceed: true,
+        current_usage: 0,
+        max_requests: 150,
+        remaining_requests: 150,
+      });
 
       // Test with Gemini provider
-      geminiService.default.analyzeImage.mockResolvedValue(mockImageResponse);
-      geminiService.default.extractFromText.mockResolvedValue(
+      geminiService.analyzeImage.mockResolvedValue(mockImageResponse);
+      geminiService.extractFromText.mockResolvedValue(
         mockTransactionResponse
       );
 
@@ -463,12 +501,21 @@ describe("AIService", () => {
       expect(transactionResult).toEqual(mockTransactionResponse);
 
       // Switch to Hugging Face
-      huggingFaceService.default.analyzeImage.mockResolvedValue(
+      huggingFaceService.analyzeImage.mockResolvedValue(
         mockImageResponse
       );
-      huggingFaceService.default.extractFromText.mockResolvedValue(
+      huggingFaceService.extractFromText.mockResolvedValue(
         mockTransactionResponse
       );
+
+      // Update mock for Hugging Face limits
+      apiUsageService.default.validateApiUsage.mockResolvedValue({
+        success: true,
+        can_proceed: true,
+        current_usage: 0,
+        max_requests: 500,
+        remaining_requests: 500,
+      });
 
       await aiService.setProvider("huggingface");
 
@@ -482,9 +529,19 @@ describe("AIService", () => {
       const mockFile = new File(["test"], "test.jpg", { type: "image/jpeg" });
       const mockResponse = { success: true, text: "test" };
 
-      const huggingFaceService = await import("../services/huggingFaceService");
-      huggingFaceService.default.analyzeImage.mockResolvedValue(mockResponse);
-      huggingFaceService.default.validateFile.mockReturnValue(true);
+      const apiUsageService = await import("../services/apiUsageService");
+
+      // Mock API usage service to allow provider switching
+      apiUsageService.default.validateApiUsage.mockResolvedValue({
+        success: true,
+        can_proceed: true,
+        current_usage: 0,
+        max_requests: 500,
+        remaining_requests: 500,
+      });
+
+      huggingFaceService.analyzeImage.mockResolvedValue(mockResponse);
+      huggingFaceService.validateFile.mockReturnValue(true);
 
       await aiService.setProvider("huggingface");
 

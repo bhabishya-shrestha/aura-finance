@@ -49,8 +49,6 @@ global.fetch = async () => {
   };
 };
 
-
-
 // Test the transaction extraction logic directly
 function testTransactionExtraction() {
   // console.log('=== Testing Transaction Extraction Logic ===\n');

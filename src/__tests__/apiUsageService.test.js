@@ -155,10 +155,13 @@ describe("ApiUsageService", () => {
       const result = await apiUsageService.incrementApiUsage("gemini");
 
       expect(result).toBe(true);
-      expect(mockSupabase.supabase.rpc).toHaveBeenCalledWith("increment_api_usage", {
-        p_user_id: "test-user-id",
-        p_provider: "gemini",
-      });
+      expect(mockSupabase.supabase.rpc).toHaveBeenCalledWith(
+        "increment_api_usage",
+        {
+          p_user_id: "test-user-id",
+          p_provider: "gemini",
+        }
+      );
     });
 
     it("should handle increment failure", async () => {
@@ -388,4 +391,4 @@ describe("ApiUsageService", () => {
       expect(configs.huggingface.maxDailyRequests).toBe(500);
     });
   });
-}); 
+});

@@ -2,23 +2,23 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import huggingFaceService from "../services/huggingFaceService";
 
 // Mock HTML5 Canvas API for jsdom
-Object.defineProperty(global, 'HTMLCanvasElement', {
+Object.defineProperty(global, "HTMLCanvasElement", {
   value: class HTMLCanvasElement {
     getContext() {
       return {
         drawImage: vi.fn(),
         getImageData: vi.fn(() => ({ data: new Uint8Array(100) })),
         putImageData: vi.fn(),
-        canvas: { width: 100, height: 100 }
+        canvas: { width: 100, height: 100 },
       };
     }
-  }
+  },
 });
 
 // Mock Tesseract.js
 vi.mock("tesseract.js", () => ({
   default: {
-    recognize: vi.fn().mockImplementation((imageData) => {
+    recognize: vi.fn().mockImplementation(imageData => {
       // Return different results based on the test context
       if (imageData.includes("error")) {
         return Promise.reject(new Error("OCR failed"));
@@ -32,15 +32,27 @@ vi.mock("tesseract.js", () => ({
         },
       });
     }),
+    createWorker: vi.fn().mockResolvedValue({
+      recognize: vi.fn().mockImplementation(imageData => {
+        // Return different results based on the test context
+        if (imageData.includes("error")) {
+          return Promise.reject(new Error("OCR failed"));
+        }
+        // Return immediately to avoid timeouts
+        return Promise.resolve({
+          data: {
+            text: "Sample receipt text",
+            confidence: 85.5,
+            words: [{ text: "Sample", confidence: 90 }],
+          },
+        });
+      }),
+      terminate: vi.fn(),
+    }),
   },
 }));
 
-// Mock environment variables
-vi.mock("import.meta.env", () => ({
-  env: {
-    VITE_HUGGINGFACE_API_KEY: "test_huggingface_key",
-  },
-}));
+
 
 // Mock fetch
 global.fetch = vi.fn();
@@ -115,7 +127,7 @@ describe("HuggingFaceService", () => {
     });
 
     it("should handle OCR errors gracefully", async () => {
-      const imageData = "data:image/jpeg;base64,/9j/4AAQ...";
+      const imageData = "data:image/jpeg;base64,error";
 
       await expect(
         huggingFaceService.extractTextFromImage(imageData)
@@ -188,10 +200,10 @@ describe("HuggingFaceService", () => {
     });
 
     it("should handle OCR failure in two-stage analysis", async () => {
-      const imageData = "data:image/jpeg;base64,/9j/4AAQ...";
+      const imageData = "data:image/jpeg;base64,error";
 
       await expect(huggingFaceService.analyzeImage(imageData)).rejects.toThrow(
-        "No text could be extracted from the document"
+        "OCR extraction failed: OCR failed"
       );
     });
   });

@@ -1,13 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import geminiService from "../services/geminiService";
 
-// Mock environment variables
-vi.mock("import.meta.env", () => ({
-  env: {
-    VITE_GEMINI_API_KEY: "test-api-key",
-  },
-}));
-
 describe("GeminiService", () => {
   let service;
 

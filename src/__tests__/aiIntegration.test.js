@@ -1,14 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-
-// Mock environment variables before importing services
-vi.mock("import.meta.env", () => ({
-  env: {
-    VITE_GEMINI_API_KEY: "test_gemini_key",
-    VITE_HUGGINGFACE_API_KEY: "test_huggingface_key",
-  },
-}));
-
-// Import services after mocking
 import aiService from "../services/aiService";
 
 describe("AI Integration Tests", () => {
@@ -42,7 +32,7 @@ describe("AI Integration Tests", () => {
     it("should detect approaching limits for Gemini", () => {
       aiService.setProvider("gemini");
       const info = aiService.getCurrentProvider();
-      
+
       expect(info.quotas).toBeDefined();
       expect(info.quotas.maxDailyRequests).toBe(150);
       expect(info.quotas.maxRequests).toBe(15);
@@ -51,7 +41,7 @@ describe("AI Integration Tests", () => {
     it("should detect approaching limits for Hugging Face", () => {
       aiService.setProvider("huggingface");
       const info = aiService.getCurrentProvider();
-      
+
       expect(info.quotas).toBeDefined();
       expect(info.quotas.maxDailyRequests).toBe(500);
       expect(info.quotas.maxRequests).toBe(5);
@@ -82,13 +72,13 @@ describe("AI Integration Tests", () => {
 
     it("should warn for unknown provider", () => {
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-      
+
       aiService.setProvider("unknown");
-      
+
       expect(consoleSpy).toHaveBeenCalledWith(
         "AI Service: Unknown provider unknown, keeping current provider"
       );
-      
+
       consoleSpy.mockRestore();
     });
   });
@@ -97,14 +87,14 @@ describe("AI Integration Tests", () => {
     it("should provide rate limit information for settings UI", () => {
       aiService.setProvider("gemini");
       const geminiInfo = aiService.getCurrentProvider();
-      
+
       expect(geminiInfo.quotas).toBeDefined();
       expect(geminiInfo.quotas.maxDailyRequests).toBe(150);
       expect(geminiInfo.quotas.maxRequests).toBe(15);
 
       aiService.setProvider("huggingface");
       const huggingFaceInfo = aiService.getCurrentProvider();
-      
+
       expect(huggingFaceInfo.quotas).toBeDefined();
       expect(huggingFaceInfo.quotas.maxDailyRequests).toBe(500);
       expect(huggingFaceInfo.quotas.maxRequests).toBe(5);

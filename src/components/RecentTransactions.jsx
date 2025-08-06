@@ -106,8 +106,8 @@ const RecentTransactions = ({ onPageChange }) => {
               Import a statement to get started
             </p>
           </div>
-        ) : (
-          Array.isArray(recentTransactions) ? recentTransactions.map(transaction => (
+        ) : Array.isArray(recentTransactions) ? (
+          recentTransactions.map(transaction => (
             <div
               key={transaction.id}
               className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200"
@@ -257,8 +257,8 @@ const RecentTransactions = ({ onPageChange }) => {
                 </div>
               )}
             </div>
-          )) : null
-        )}
+          ))
+        ) : null}
       </div>
 
       {recentTransactions.length > 0 && (

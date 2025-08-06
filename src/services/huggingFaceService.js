@@ -767,7 +767,7 @@ Please extract all financial transactions found in the text above using the exac
     return transactions
       .map(transaction => {
         if (!transaction || typeof transaction !== "object") {
-                      // console.warn(
+          // console.warn(
           //   "[convertToTransactions] Invalid transaction object:",
           //   transaction
           // );

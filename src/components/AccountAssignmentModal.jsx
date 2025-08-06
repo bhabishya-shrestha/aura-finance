@@ -50,10 +50,12 @@ const AccountAssignmentModal = ({
   const handleComplete = () => {
     if (selectedAccountId) {
       // Assign all transactions to the selected account
-      const updatedTransactions = Array.isArray(transactions) ? transactions.map(transaction => ({
-        ...transaction,
-        accountId: selectedAccountId,
-      })) : [];
+      const updatedTransactions = Array.isArray(transactions)
+        ? transactions.map(transaction => ({
+            ...transaction,
+            accountId: selectedAccountId,
+          }))
+        : [];
 
       onComplete(updatedTransactions);
       onClose();

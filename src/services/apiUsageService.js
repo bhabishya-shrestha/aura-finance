@@ -1,7 +1,7 @@
 // API Usage Service for server-side validation
 // Prevents users from bypassing client-side rate limits
 
-import { supabase } from '../lib/supabase.js';
+import { supabase } from "../lib/supabase.js";
 
 class ApiUsageService {
   constructor() {
@@ -24,30 +24,34 @@ class ApiUsageService {
    */
   async validateApiUsage(provider) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
-        throw new Error('User not authenticated');
+        throw new Error("User not authenticated");
       }
 
       if (!this.providers[provider]) {
         throw new Error(`Invalid provider: ${provider}`);
       }
 
-      const { data, error } = await supabase.rpc('validate_api_usage', {
+      const { data, error } = await supabase.rpc("validate_api_usage", {
         p_user_id: user.id,
         p_provider: provider,
       });
 
       if (error) {
         // console.error('API usage validation error:', error);
-        throw new Error('Failed to validate API usage');
+        throw new Error("Failed to validate API usage");
       }
 
       return {
         success: true,
         ...data,
-        approachingLimit: data.current_usage >= this.providers[provider].approachingLimitThreshold,
+        approachingLimit:
+          data.current_usage >=
+          this.providers[provider].approachingLimitThreshold,
       };
     } catch (error) {
       // console.error('API usage validation failed:', error);
@@ -69,24 +73,26 @@ class ApiUsageService {
    */
   async incrementApiUsage(provider) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
-        throw new Error('User not authenticated');
+        throw new Error("User not authenticated");
       }
 
       if (!this.providers[provider]) {
         throw new Error(`Invalid provider: ${provider}`);
       }
 
-      const { data, error } = await supabase.rpc('increment_api_usage', {
+      const { data, error } = await supabase.rpc("increment_api_usage", {
         p_user_id: user.id,
         p_provider: provider,
       });
 
       if (error) {
         // console.error('API usage increment error:', error);
-        throw new Error('Failed to increment API usage');
+        throw new Error("Failed to increment API usage");
       }
 
       return data;
@@ -102,19 +108,21 @@ class ApiUsageService {
    */
   async getUserApiUsageStats() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
-        throw new Error('User not authenticated');
+        throw new Error("User not authenticated");
       }
 
-      const { data, error } = await supabase.rpc('get_user_api_usage_stats', {
+      const { data, error } = await supabase.rpc("get_user_api_usage_stats", {
         p_user_id: user.id,
       });
 
       if (error) {
         // console.error('Get usage stats error:', error);
-        throw new Error('Failed to get usage statistics');
+        throw new Error("Failed to get usage statistics");
       }
 
       return {
@@ -149,8 +157,10 @@ class ApiUsageService {
    */
   async getDailyApiUsage(provider) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         return 0;
       }
@@ -159,7 +169,7 @@ class ApiUsageService {
         return 0;
       }
 
-      const { data, error } = await supabase.rpc('get_daily_api_usage', {
+      const { data, error } = await supabase.rpc("get_daily_api_usage", {
         p_user_id: user.id,
         p_provider: provider,
       });
@@ -216,4 +226,4 @@ class ApiUsageService {
   }
 }
 
-export default new ApiUsageService(); 
+export default new ApiUsageService();
