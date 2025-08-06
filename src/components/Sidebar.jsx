@@ -30,6 +30,7 @@ const Sidebar = ({
     lastSyncTime: null,
   });
   const [userSyncInfo, setUserSyncInfo] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const { user, logout } = useAuth();
   const { syncToFirebase } = useStore();
 
@@ -168,9 +169,12 @@ const Sidebar = ({
 
   const handleForceSync = async () => {
     try {
+      setIsSyncing(true);
       await syncToFirebase();
     } catch (error) {
       console.error("Force sync failed:", error);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -300,7 +304,7 @@ const Sidebar = ({
                   className={`flex items-center gap-3 p-3 rounded-lg ${isCollapsed ? "justify-center" : ""}`}
                 >
                   {userSyncInfo.hasCrossDeviceSync ? (
-                    syncStatus.syncInProgress ? (
+                    syncStatus.syncInProgress || isSyncing ? (
                       <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />
                     ) : syncStatus.isOnline ? (
                       <Cloud className="w-4 h-4 text-green-500" />
@@ -314,7 +318,7 @@ const Sidebar = ({
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
                         {userSyncInfo.hasCrossDeviceSync
-                          ? syncStatus.syncInProgress
+                          ? syncStatus.syncInProgress || isSyncing
                             ? "Syncing..."
                             : syncStatus.isOnline
                               ? "Synced"
@@ -333,6 +337,7 @@ const Sidebar = ({
                   {userSyncInfo.hasCrossDeviceSync &&
                     syncStatus.isOnline &&
                     !syncStatus.syncInProgress &&
+                    !isSyncing &&
                     !isCollapsed && (
                       <button
                         onClick={handleForceSync}
