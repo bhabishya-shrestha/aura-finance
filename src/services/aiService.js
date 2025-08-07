@@ -186,10 +186,17 @@ class AIService {
       const provider = this.getCurrentProvider();
       console.log("🤖 [AI Service] Using provider:", provider.name);
 
+      // Check provider availability
+      console.log("🤖 [AI Service] Checking provider availability...");
+      const huggingFaceAvailable = huggingFaceService.isProviderAvailable();
+      const geminiAvailable = geminiService.isProviderAvailable();
+      console.log("🤖 [AI Service] Hugging Face available:", huggingFaceAvailable);
+      console.log("🤖 [AI Service] Gemini available:", geminiAvailable);
+
       let result = null;
 
       // Try Hugging Face first
-      if (provider.name === "Hugging Face" && huggingFaceService.isProviderAvailable()) {
+      if (provider.name === "Hugging Face Inference API" && huggingFaceService.isProviderAvailable()) {
         console.log("🤖 [AI Service] Attempting Hugging Face analysis...");
         try {
           result = await huggingFaceService.analyzeImage(file);
@@ -243,7 +250,7 @@ class AIService {
       }
 
       // Try Gemini if it's the primary provider
-      if (provider.name === "Google Gemini" && geminiService.isProviderAvailable()) {
+      if (provider.name === "Gemini API" && geminiService.isProviderAvailable()) {
         console.log("🤖 [AI Service] Attempting Gemini analysis...");
         try {
           result = await geminiService.analyzeImage(file);
