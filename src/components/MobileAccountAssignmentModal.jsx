@@ -171,13 +171,7 @@ const MobileAccountAssignmentModal = ({
         hasGeneratedSuggestions.current = true;
       }
     }
-  }, [
-    isOpen,
-    transactions,
-    propAccounts,
-    storeAccounts,
-    generateAccountSuggestions,
-  ]);
+  }, [isOpen, transactions, propAccounts, storeAccounts]); // Removed generateAccountSuggestions from dependencies
 
   // Reset state when modal closes
   useEffect(() => {
@@ -530,7 +524,7 @@ const MobileAccountAssignmentModal = ({
               <div className="space-y-2">
                 {suggestedAccounts.map((suggestion, index) => (
                   <div
-                    key={index}
+                    key={`suggestion-${suggestion.name}-${suggestion.type}-${index}`}
                     className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-600"
                   >
                     <div className="flex items-center gap-3">
@@ -822,7 +816,7 @@ const MobileAccountAssignmentModal = ({
                   </label>
                   <input
                     type="text"
-                    value={newAccountData.balance}
+                    value={newAccountData.balance || ""}
                     onChange={e => handleBalanceChange(e.target.value)}
                     className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="0.00"

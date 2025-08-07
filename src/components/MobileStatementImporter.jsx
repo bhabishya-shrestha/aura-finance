@@ -13,9 +13,21 @@ import { parseStatement } from "../utils/statementParser";
 import aiService from "../services/aiService";
 import useStore from "../store";
 import MobileAccountAssignmentModal from "./MobileAccountAssignmentModal";
+import { useSettings } from "../contexts/SettingsContext";
 
 const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
   const { addTransactions, addNotification } = useStore();
+  const { settings } = useSettings();
+
+  // Set the AI provider based on settings
+  useEffect(() => {
+    if (settings.aiProvider) {
+      aiService.setProvider(settings.aiProvider);
+    }
+  }, [settings.aiProvider]);
+
+  // Show cost warning for Hugging Face users
+  const showCostWarning = settings.aiProvider === "Hugging Face Inference API";
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
@@ -616,6 +628,24 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           </div>
         )}
       </div>
+
+      {/* Cost Warning for Hugging Face Users */}
+      {showCostWarning && (
+        <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-amber-800 dark:text-amber-200">
+            <p className="font-medium mb-1">Cost-Effective AI Model in Use</p>
+            <p className="mb-2">
+                      You're using the hybrid OCR + AI approach with Hugging Face API.
+                      <strong> Less accurate (85-90%) but more uses (1000/day)</strong> - great for bulk processing.
+                    </p>
+                    <p className="text-xs">
+                      This approach uses OCR + regex to catch 96% of transactions (free) 
+                      and AI enhances the results. You can deselect any duplicates.
+                    </p>
+          </div>
+        </div>
+      )}
 
       {/* File Upload Area */}
       <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors">

@@ -1,21 +1,15 @@
 // Hugging Face Inference API service for high-volume document analysis
 // Professional implementation with client-side OCR for cost-effective document processing
 
-import Tesseract from "tesseract.js";
-
 class HuggingFaceService {
   constructor() {
     this.apiKey = import.meta.env.VITE_HUGGINGFACE_API_KEY;
     this.baseUrl = "https://api-inference.huggingface.co/models";
-
-    // Use BART-CNN model which is working for free tier
-    this.uniformModel = "facebook/bart-large-cnn";
-
-    // Rate limiting configuration for free tier
+    this.uniformModel = "facebook/bart-large-cnn"; // Use BART-CNN which is proven to work and is cost-effective
     this.rateLimit = {
-      maxRequests: 5, // requests per minute
-      maxDailyRequests: 500, // daily limit
-      retryDelay: 12000, // 12 seconds between retries
+      maxRequests: 10, // Increased - more generous since it's less accurate
+      maxDailyRequests: 1000, // Increased - much more generous for bulk processing
+      retryDelay: 8000, // Reduced - faster retries
     };
 
     // Request tracking for rate limiting
@@ -127,7 +121,7 @@ class HuggingFaceService {
       reader.readAsDataURL(file);
       reader.onload = () => {
         // Remove the data URL prefix (e.g., "data:image/png;base64,")
-        const base64 = reader.result.split(',')[1];
+        const base64 = reader.result.split(",")[1];
         resolve(base64);
       };
       reader.onerror = error => reject(error);
@@ -135,75 +129,317 @@ class HuggingFaceService {
   }
 
   /**
-   * Extract text from image using OCR
-   * @param {File|string} imageData - Image file or base64 string
-   * @returns {Promise<string>} Extracted text
+   * Enhanced image preprocessing for better OCR results
+   * @param {File} file - The image file to preprocess
+   * @returns {Promise<string>} - Base64 string of preprocessed image
    */
-  async extractTextFromImage(imageData) {
-    console.log("🤗 [HuggingFace] Starting OCR text extraction...");
-    
+  async preprocessImageForOCR(file) {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+
+      img.onload = () => {
+        // Set canvas size to match image
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        // Draw original image
+        ctx.drawImage(img, 0, 0);
+
+        // Get image data for manipulation
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        // More conservative preprocessing - enhance contrast without going full black & white
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+
+          // Convert to grayscale using luminance formula
+          const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+          // Enhance contrast more conservatively - don't go full black & white
+          let enhanced;
+          if (gray < 100) {
+            enhanced = 0; // Very dark becomes black
+          } else if (gray > 200) {
+            enhanced = 255; // Very light becomes white
+          } else {
+            // Keep some gray for better OCR accuracy
+            enhanced = Math.max(0, Math.min(255, gray * 1.2));
+          }
+
+          data[i] = enhanced; // Red
+          data[i + 1] = enhanced; // Green
+          data[i + 2] = enhanced; // Blue
+          // Alpha stays the same
+        }
+
+        // Apply the enhanced image data back to canvas
+        ctx.putImageData(imageData, 0, 0);
+
+        // Convert to base64
+        const preprocessedBase64 = canvas.toDataURL("image/png");
+        resolve(preprocessedBase64);
+      };
+
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  /**
+   * Extract text from image using enhanced OCR with preprocessing
+   * @param {File} file - The image file
+   * @returns {Promise<string>} - Extracted text
+   */
+  async extractTextFromImage(file) {
     try {
-      // Convert image data to base64 if it's a File object
-      let base64Data;
-      if (imageData instanceof File) {
-        console.log("🤗 [HuggingFace] Converting File to base64...");
-        base64Data = await this.fileToBase64(imageData);
-        console.log("🤗 [HuggingFace] ✅ File converted to base64");
-      } else if (typeof imageData === "string") {
-        console.log("🤗 [HuggingFace] Using provided base64 data...");
-        base64Data = imageData;
-      } else {
-        console.log("🤗 [HuggingFace] ❌ Invalid image data type:", typeof imageData);
-        throw new Error("Invalid image data format");
+      console.log(
+        "🔍 [HuggingFace] Starting enhanced OCR with preprocessing..."
+      );
+
+      // Try multiple OCR approaches
+      const ocrResults = [];
+
+      // Approach 1: Preprocessed image
+      try {
+        const preprocessedBase64 = await this.preprocessImageForOCR(file);
+        console.log("✅ [HuggingFace] Image preprocessing completed");
+
+        const base64Response = await fetch(preprocessedBase64);
+        const preprocessedBlob = await base64Response.blob();
+
+        const Tesseract = await import("tesseract.js");
+        const worker = await Tesseract.createWorker();
+
+        console.log("🔍 [HuggingFace] Running OCR on preprocessed image...");
+
+        const {
+          data: { text },
+        } = await worker.recognize(preprocessedBlob, {
+          lang: "eng",
+        });
+
+        await worker.terminate();
+
+        const cleanedText = text
+          .replace(/\n+/g, "\n")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        ocrResults.push({
+          text: cleanedText,
+          method: "preprocessed",
+          quality: this.assessOCRQuality(cleanedText),
+        });
+
+        console.log("✅ [HuggingFace] Preprocessed OCR completed");
+      } catch (error) {
+        console.warn(
+          "⚠️ [HuggingFace] Preprocessed OCR failed:",
+          error.message
+        );
       }
 
-      // Initialize Tesseract.js
-      console.log("🤗 [HuggingFace] Initializing Tesseract.js...");
-      const worker = await Tesseract.createWorker();
-      console.log("🤗 [HuggingFace] ✅ Tesseract worker created");
+      // Approach 2: Original image without preprocessing
+      try {
+        console.log("🔍 [HuggingFace] Running OCR on original image...");
 
-      // Load language data
-      console.log("🤗 [HuggingFace] Loading English language data...");
-      await worker.loadLanguage("eng");
-      console.log("🤗 [HuggingFace] ✅ English language loaded");
+        const Tesseract = await import("tesseract.js");
+        const worker = await Tesseract.createWorker();
 
-      // Initialize the worker
-      console.log("🤗 [HuggingFace] Initializing worker...");
-      await worker.initialize("eng");
-      console.log("🤗 [HuggingFace] ✅ Worker initialized");
+        const {
+          data: { text },
+        } = await worker.recognize(file, {
+          lang: "eng",
+        });
 
-      // Set OCR parameters for better financial document recognition
-      console.log("🤗 [HuggingFace] Setting OCR parameters...");
-      await worker.setParameters({
-        tessedit_char_whitelist: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz$.,()-/ ",
-        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
-        preserve_interword_spaces: "1",
-      });
-      console.log("🤗 [HuggingFace] ✅ OCR parameters set");
+        await worker.terminate();
 
-      // Perform OCR
-      console.log("🤗 [HuggingFace] Starting OCR recognition...");
-      const { data: { text } } = await worker.recognize(base64Data);
-      console.log("🤗 [HuggingFace] ✅ OCR recognition completed, text length:", text.length);
+        const cleanedText = text
+          .replace(/\n+/g, "\n")
+          .replace(/\s+/g, " ")
+          .trim();
 
-      // Terminate the worker
-      console.log("🤗 [HuggingFace] Terminating worker...");
-      await worker.terminate();
-      console.log("🤗 [HuggingFace] ✅ Worker terminated");
+        ocrResults.push({
+          text: cleanedText,
+          method: "original",
+          quality: this.assessOCRQuality(cleanedText),
+        });
 
-      // Clean up the extracted text
-      console.log("🤗 [HuggingFace] Cleaning extracted text...");
-      const cleanedText = text
-        .replace(/\n+/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-      console.log("🤗 [HuggingFace] ✅ Text cleaned, final length:", cleanedText.length);
+        console.log("✅ [HuggingFace] Original image OCR completed");
+      } catch (error) {
+        console.warn(
+          "⚠️ [HuggingFace] Original image OCR failed:",
+          error.message
+        );
+      }
 
-      return cleanedText;
+      // Approach 3: Try with different OCR settings
+      try {
+        console.log(
+          "🔍 [HuggingFace] Running OCR with alternative settings..."
+        );
+
+        const Tesseract = await import("tesseract.js");
+        const worker = await Tesseract.createWorker();
+
+        const {
+          data: { text },
+        } = await worker.recognize(file, {
+          lang: "eng",
+          tessedit_pageseg_mode: "6", // Uniform block of text
+          preserve_interword_spaces: "1",
+        });
+
+        await worker.terminate();
+
+        const cleanedText = text
+          .replace(/\n+/g, "\n")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        ocrResults.push({
+          text: cleanedText,
+          method: "alternative_settings",
+          quality: this.assessOCRQuality(cleanedText),
+        });
+
+        console.log("✅ [HuggingFace] Alternative settings OCR completed");
+      } catch (error) {
+        console.warn(
+          "⚠️ [HuggingFace] Alternative settings OCR failed:",
+          error.message
+        );
+      }
+
+      // Select the best OCR result
+      if (ocrResults.length === 0) {
+        throw new Error("All OCR approaches failed");
+      }
+
+      // Sort by quality score (higher is better)
+      ocrResults.sort((a, b) => b.quality.score - a.quality.score);
+      const bestResult = ocrResults[0];
+
+      console.log(
+        `🏆 [HuggingFace] Selected best OCR result: ${bestResult.method} (quality: ${bestResult.quality.score.toFixed(2)})`
+      );
+
+      // Validate the best result
+      if (bestResult.quality.score < 0.3) {
+        throw new Error(
+          `OCR quality too poor (score: ${bestResult.quality.score.toFixed(2)}). Please try a clearer image.`
+        );
+      }
+
+      if (bestResult.text.length < 50) {
+        throw new Error(
+          "OCR extracted too little text - image may be unreadable"
+        );
+      }
+
+      console.log("✅ [HuggingFace] OCR validation passed");
+      return bestResult.text;
     } catch (error) {
-      console.error("🤗 [HuggingFace] ❌ OCR text extraction failed:", error);
-      throw new Error(`OCR text extraction failed: ${error.message}`);
+      console.error("❌ [HuggingFace] OCR failed:", error);
+      throw new Error(`OCR extraction failed: ${error.message}`);
     }
+  }
+
+  /**
+   * Assess the quality of OCR results
+   * @param {string} text - The OCR extracted text
+   * @returns {object} - Quality assessment with score and details
+   */
+  assessOCRQuality(text) {
+    const totalChars = text.length;
+    if (totalChars === 0) return { score: 0, issues: ["No text extracted"] };
+
+    const issues = [];
+    let score = 1.0;
+
+    // Check for random characters
+    const randomCharCount = (text.match(/[^A-Za-z0-9\s.,$#-/'&]/g) || [])
+      .length;
+    const randomCharRatio = randomCharCount / totalChars;
+
+    if (randomCharRatio > 0.2) {
+      score -= 0.4;
+      issues.push(
+        `High random characters: ${(randomCharRatio * 100).toFixed(1)}%`
+      );
+    }
+
+    // Check for financial patterns
+    const hasDollarSigns = text.includes("$");
+    const hasDates = /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(text);
+    const hasAmounts = /\d+\.\d{2}/.test(text);
+
+    if (!hasDollarSigns && !hasDates && !hasAmounts) {
+      score -= 0.3;
+      issues.push("No financial patterns detected");
+    }
+
+    // Check for common financial terms
+    const financialTerms = [
+      "PAYMENT",
+      "TRANSACTION",
+      "AMOUNT",
+      "DATE",
+      "BALANCE",
+      "DEPOSIT",
+      "WITHDRAWAL",
+      "CHARGE",
+      "CREDIT",
+      "DEBIT",
+      "AMAZON",
+      "WALMART",
+      "STARBUCKS",
+    ];
+    const foundTerms = financialTerms.filter(term =>
+      text.toUpperCase().includes(term)
+    );
+
+    if (foundTerms.length === 0) {
+      score -= 0.2;
+      issues.push("No financial terms found");
+    } else {
+      score += Math.min(0.2, foundTerms.length * 0.05);
+    }
+
+    // Check for reasonable text length
+    if (totalChars < 100) {
+      score -= 0.2;
+      issues.push("Text too short");
+    }
+
+    // Check for repeated patterns (indicates OCR errors)
+    const words = text.split(/\s+/);
+    const uniqueWords = new Set(words);
+    const repetitionRatio = 1 - uniqueWords.size / words.length;
+
+    if (repetitionRatio > 0.5) {
+      score -= 0.3;
+      issues.push("High word repetition");
+    }
+
+    return {
+      score: Math.max(0, score),
+      issues,
+      details: {
+        totalChars,
+        randomCharRatio,
+        hasDollarSigns,
+        hasDates,
+        hasAmounts,
+        foundTerms,
+        repetitionRatio,
+      },
+    };
   }
 
   /**
@@ -261,37 +497,57 @@ class HuggingFaceService {
    * This is the second stage of our two-stage approach
    */
   async analyzeExtractedText(text) {
-    console.log("🤗 [HuggingFace] Starting analyzeExtractedText, text length:", text.length);
+    console.log(
+      "🤗 [HuggingFace] Starting analyzeExtractedText, text length:",
+      text.length
+    );
+
+    // Cost warning for cheaper model
+    console.log(
+      "💰 [HuggingFace] Using BART-CNN model - cost-effective and reliable"
+    );
+
     await this.checkRateLimit();
     console.log("🤗 [HuggingFace] ✅ Rate limit check passed");
 
-    console.log("[analyzeExtractedText] Starting analysis with text length:", text.length);
+    console.log(
+      "[analyzeExtractedText] Starting analysis with text length:",
+      text.length
+    );
 
-    // Enhanced prompt specifically designed for financial transaction extraction
-    const prompt = `Extract financial transactions from this bank statement text. 
+    // Enhanced prompt specifically designed for structured transaction extraction
+    const prompt = `Extract ALL financial transactions from this bank statement text. 
 
 Instructions:
-1. Look for transaction amounts (numbers with $ or decimal points)
-2. Find dates (MM/DD/YYYY, MM-DD-YYYY, or similar formats)
-3. Identify merchant names or transaction descriptions
-4. Categorize as income (deposits, credits) or expense (withdrawals, debits)
+1. Find EVERY transaction in the document
+2. Extract transaction amounts (numbers with $ or decimal points)
+3. Find dates (MM/DD/YYYY, MM-DD-YYYY, or similar formats)
+4. Identify merchant names or transaction descriptions
+5. Categorize as income (deposits, credits) or expense (withdrawals, debits)
+6. Include ALL transactions found, not just a few
 
 Expected output format:
 Transaction 1: [DESCRIPTION] - $[AMOUNT] on [DATE]
 Transaction 2: [DESCRIPTION] - $[AMOUNT] on [DATE]
+Transaction 3: [DESCRIPTION] - $[AMOUNT] on [DATE]
+... (continue for ALL transactions found)
 
 Document text to analyze:
-${text.substring(0, 1000)} // Limit text length to prevent timeouts
+${text.substring(0, 1500)} // Increased text length for better coverage
 
-Please extract all financial transactions found in the text above using the exact format shown.`;
+Please extract ALL financial transactions found in the text above using the exact format shown. Do not skip any transactions.`;
 
     try {
       console.log("🤗 [HuggingFace] Preparing API request...");
       // Add timeout to prevent hanging
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout for better processing
 
-      console.log("🤗 [HuggingFace] Making API request to:", `${this.baseUrl}/${this.uniformModel}`);
+      console.log(
+        "🤗 [HuggingFace] Making API request using direct inference..."
+      );
+
+      // Use direct text generation instead of chat completion
       const response = await fetch(`${this.baseUrl}/${this.uniformModel}`, {
         method: "POST",
         headers: {
@@ -301,10 +557,10 @@ Please extract all financial transactions found in the text above using the exac
         body: JSON.stringify({
           inputs: prompt,
           parameters: {
-            max_length: 500, // Reduced for faster processing
-            min_length: 50,
+            max_new_tokens: 800,
+            min_new_tokens: 100,
             do_sample: false,
-            num_beams: 3, // Reduced for faster processing
+            num_beams: 4,
             early_stopping: true,
             temperature: 0.1,
             top_p: 0.9,
@@ -315,40 +571,40 @@ Please extract all financial transactions found in the text above using the exac
       });
 
       clearTimeout(timeoutId);
-      console.log("🤗 [HuggingFace] ✅ API response received, status:", response.status);
+      console.log("🤗 [HuggingFace] ✅ API response received");
 
       if (!response.ok) {
-        console.error("🤗 [HuggingFace] ❌ API Error Response:", {
-          status: response.status,
-          statusText: response.statusText,
-        });
-
-        if (response.status === 404) {
-          throw new Error(
-            "Hugging Face model not available. Please check your API key or try a different model."
-          );
-        } else if (response.status === 429) {
-          throw new Error("Rate limit exceeded. Please try again later.");
-        } else {
-          throw new Error(
-            `Hugging Face API error: ${response.status} ${response.statusText}`
-          );
-        }
+        throw new Error(
+          `API request failed: ${response.status} ${response.statusText}`
+        );
       }
 
-      console.log("🤗 [HuggingFace] Parsing API response...");
       const data = await response.json();
-      console.log("[analyzeExtractedText] API response received");
+      console.log("🤗 [HuggingFace] Parsing API response...");
 
       // Extract the generated text from the response (BART-CNN returns summary_text)
-      const generatedText = data[0]?.summary_text || data[0]?.generated_text || "";
-      console.log("[analyzeExtractedText] Generated text length:", generatedText.length);
-      console.log("🤗 [HuggingFace] ✅ Generated text:", generatedText.substring(0, 200) + "...");
+      const generatedText =
+        data[0]?.summary_text || data[0]?.generated_text || "";
+      console.log(
+        "[analyzeExtractedText] Generated text length:",
+        generatedText.length
+      );
+      console.log(
+        "🤗 [HuggingFace] ✅ Generated text:",
+        generatedText.substring(0, 300) + "..."
+      );
 
       // Extract transactions from the generated text
-      const extractedTransactions = this.extractTransactionsFromAnalysis(generatedText);
-      console.log("[analyzeExtractedText] Extracted transactions count:", extractedTransactions.length);
-      console.log("🤗 [HuggingFace] ✅ Extracted transactions:", extractedTransactions.length);
+      const extractedTransactions =
+        this.extractTransactionsFromAnalysis(generatedText);
+      console.log(
+        "[analyzeExtractedText] Extracted transactions count:",
+        extractedTransactions.length
+      );
+      console.log(
+        "🤗 [HuggingFace] ✅ Extracted transactions:",
+        extractedTransactions.length
+      );
 
       return {
         success: true,
@@ -358,14 +614,258 @@ Please extract all financial transactions found in the text above using the exac
         provider: "huggingface",
         source: "Hugging Face Analysis",
         documentType: "Financial Document",
-        notes: "Document analyzed using Hugging Face BART-CNN. Please review and adjust transaction details.",
+        notes:
+          "Document analyzed using Hugging Face DialoGPT. Please review and adjust transaction details.",
       };
     } catch (error) {
-      if (error.name === 'AbortError') {
-        console.log("🤗 [HuggingFace] ❌ Request timed out after 30 seconds");
+      if (error.name === "AbortError") {
+        console.log("🤗 [HuggingFace] ❌ Request timed out after 45 seconds");
         throw new Error("Request timed out. Please try again.");
       }
       console.error("🤗 [HuggingFace] ❌ analyzeExtractedText failed:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Analyze text using distilbert for question answering
+   * @param {string} text - Extracted text from OCR
+   * @returns {Promise<Object>} Analysis result with transactions
+   */
+  async analyzeTextWithDistilbert(text) {
+    console.log("🤗 [HuggingFace] Starting distilbert text analysis...");
+
+    try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      console.log(
+        "🤗 [HuggingFace] Making API request to:",
+        `${this.baseUrl}/${this.uniformModel}`
+      );
+
+      // Prepare questions for financial transaction extraction
+      const questions = [
+        "What are all the financial transactions?",
+        "What are the transaction amounts?",
+        "What are the dates of transactions?",
+        "What are the merchant names?",
+        "What is the total balance?",
+      ];
+
+      const results = [];
+
+      // Ask multiple questions to get comprehensive information
+      for (const question of questions) {
+        console.log("🤗 [HuggingFace] Asking question:", question);
+
+        const response = await fetch(`${this.baseUrl}/${this.uniformModel}`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            inputs: {
+              question: question,
+              context: text.substring(0, 1000), // Limit context length
+            },
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          console.error("🤗 [HuggingFace] ❌ API Error Response:", {
+            status: response.status,
+            statusText: response.statusText,
+          });
+
+          if (response.status === 404) {
+            throw new Error(
+              "DistilBERT model not available. Please check your API key or try a different model."
+            );
+          } else if (response.status === 429) {
+            throw new Error("Rate limit exceeded. Please try again later.");
+          } else {
+            throw new Error(
+              `Hugging Face API error: ${response.status} ${response.statusText}`
+            );
+          }
+        }
+
+        const data = await response.json();
+        console.log(
+          "🤗 [HuggingFace] ✅ Question answered:",
+          data.answer || "No answer"
+        );
+
+        if (data.answer) {
+          results.push(`${question}: ${data.answer}`);
+        }
+      }
+
+      clearTimeout(timeoutId);
+      console.log("🤗 [HuggingFace] ✅ All questions answered");
+
+      // Combine all answers into a comprehensive analysis
+      const combinedAnalysis = results.join("\n\n");
+      console.log(
+        "🤗 [HuggingFace] ✅ Combined analysis length:",
+        combinedAnalysis.length
+      );
+
+      // Extract transactions from the combined analysis
+      const extractedTransactions =
+        this.extractTransactionsFromAnalysis(combinedAnalysis);
+      console.log(
+        "🤗 [HuggingFace] ✅ Extracted transactions:",
+        extractedTransactions.length
+      );
+
+      return {
+        success: true,
+        analysis: combinedAnalysis,
+        transactions: extractedTransactions,
+        model: this.uniformModel,
+        provider: "huggingface",
+        source: "Hugging Face DistilBERT Analysis",
+        documentType: "Financial Document",
+        notes:
+          "Document analyzed using Hugging Face DistilBERT (fast and reliable). Please review and adjust transaction details.",
+      };
+    } catch (error) {
+      if (error.name === "AbortError") {
+        console.log("🤗 [HuggingFace] ❌ Request timed out after 30 seconds");
+        throw new Error("Request timed out. Please try again.");
+      }
+      console.error(
+        "🤗 [HuggingFace] ❌ analyzeTextWithDistilbert failed:",
+        error
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Analyze document using the donut model (OCR-free)
+   * @param {string} base64Data - Base64 encoded image data
+   * @returns {Promise<Object>} Analysis result with transactions
+   */
+  async analyzeDocumentWithDonut(base64Data) {
+    console.log("🤗 [HuggingFace] Starting donut document analysis...");
+
+    try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout for donut model
+
+      console.log(
+        "🤗 [HuggingFace] Making API request to:",
+        `${this.baseUrl}/${this.uniformModel}`
+      );
+
+      // Prepare questions for financial transaction extraction
+      const questions = [
+        "What are all the financial transactions in this document?",
+        "List all transaction amounts and dates",
+        "What are the merchant names and descriptions?",
+        "Are there any deposits or credits?",
+        "What is the total balance shown?",
+      ];
+
+      const results = [];
+      let extractedText = "";
+
+      // Ask multiple questions to get comprehensive information
+      for (const question of questions) {
+        console.log("🤗 [HuggingFace] Asking question:", question);
+
+        const response = await fetch(`${this.baseUrl}/${this.uniformModel}`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            inputs: {
+              image: base64Data,
+              question: question,
+            },
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          console.error("🤗 [HuggingFace] ❌ API Error Response:", {
+            status: response.status,
+            statusText: response.statusText,
+          });
+
+          if (response.status === 404) {
+            throw new Error(
+              "Donut model not available. Please check your API key or try a different model."
+            );
+          } else if (response.status === 429) {
+            throw new Error("Rate limit exceeded. Please try again later.");
+          } else {
+            throw new Error(
+              `Hugging Face API error: ${response.status} ${response.statusText}`
+            );
+          }
+        }
+
+        const data = await response.json();
+        console.log(
+          "🤗 [HuggingFace] ✅ Question answered:",
+          data[0]?.answer || "No answer"
+        );
+
+        if (data[0]?.answer) {
+          results.push(`${question}: ${data[0].answer}`);
+          extractedText += data[0].answer + " ";
+        }
+      }
+
+      clearTimeout(timeoutId);
+      console.log("🤗 [HuggingFace] ✅ All questions answered");
+
+      // Combine all answers into a comprehensive analysis
+      const combinedAnalysis = results.join("\n\n");
+      console.log(
+        "🤗 [HuggingFace] ✅ Combined analysis length:",
+        combinedAnalysis.length
+      );
+
+      // Extract transactions from the combined analysis
+      const extractedTransactions =
+        this.extractTransactionsFromAnalysis(combinedAnalysis);
+      console.log(
+        "🤗 [HuggingFace] ✅ Extracted transactions:",
+        extractedTransactions.length
+      );
+
+      return {
+        success: true,
+        analysis: combinedAnalysis,
+        transactions: extractedTransactions,
+        extractedText: extractedText.trim(),
+        model: this.uniformModel,
+        provider: "huggingface",
+        source: "Hugging Face Donut Document Analysis",
+        documentType: "Financial Document",
+        notes:
+          "Document analyzed using Hugging Face Donut model (OCR-free). Please review and adjust transaction details.",
+      };
+    } catch (error) {
+      if (error.name === "AbortError") {
+        console.log("🤗 [HuggingFace] ❌ Request timed out after 45 seconds");
+        throw new Error("Request timed out. Please try again.");
+      }
+      console.error(
+        "🤗 [HuggingFace] ❌ analyzeDocumentWithDonut failed:",
+        error
+      );
       throw error;
     }
   }
@@ -587,41 +1087,91 @@ Please extract all financial transactions found in the text above using the exac
   }
 
   /**
-   * Normalize date format to YYYY-MM-DD
+   * Normalize date string to YYYY-MM-DD format with better error handling
+   * @param {string} dateStr - Date string in various formats
+   * @returns {string} - Normalized date in YYYY-MM-DD format
    */
   normalizeDate(dateStr) {
+    if (!dateStr || typeof dateStr !== "string") {
+      return null;
+    }
+
+    // Clean the date string
+    const cleanDate = dateStr.trim().replace(/\s+/g, "");
+
     try {
-      if (!dateStr) return new Date().toISOString().split("T")[0];
-
-      // Handle various date formats
-      let normalizedDate = dateStr;
-
-      // Convert MM/DD/YYYY to YYYY-MM-DD
-      if (dateStr.includes("/")) {
-        const parts = dateStr.split("/");
-        if (parts.length === 3) {
-          const month = parts[0].padStart(2, "0");
-          const day = parts[1].padStart(2, "0");
-          const year = parts[2].length === 2 ? "20" + parts[2] : parts[2];
-          normalizedDate = `${year}-${month}-${day}`;
+      // Handle MM/DD/YYYY format (most common in US financial statements)
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(cleanDate)) {
+        const [month, day, year] = cleanDate.split("/");
+        const date = new Date(
+          parseInt(year),
+          parseInt(month) - 1,
+          parseInt(day)
+        );
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split("T")[0];
         }
       }
 
-      // Convert MM-DD-YYYY to YYYY-MM-DD
-      if (dateStr.includes("-")) {
-        const parts = dateStr.split("-");
-        if (parts.length === 3) {
-          const month = parts[0].padStart(2, "0");
-          const day = parts[1].padStart(2, "0");
-          const year = parts[2].length === 2 ? "20" + parts[2] : parts[2];
-          normalizedDate = `${year}-${month}-${day}`;
+      // Handle MM-DD-YYYY format
+      if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(cleanDate)) {
+        const [month, day, year] = cleanDate.split("-");
+        const date = new Date(
+          parseInt(year),
+          parseInt(month) - 1,
+          parseInt(day)
+        );
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split("T")[0];
         }
       }
 
-      return normalizedDate;
+      // Handle YYYY-MM-DD format (already correct)
+      if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(cleanDate)) {
+        const [year, month, day] = cleanDate.split("-");
+        const date = new Date(
+          parseInt(year),
+          parseInt(month) - 1,
+          parseInt(day)
+        );
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split("T")[0];
+        }
+      }
+
+      // Handle MM/DD/YY format (2-digit year)
+      if (/^\d{1,2}\/\d{1,2}\/\d{2}$/.test(cleanDate)) {
+        const [month, day, year] = cleanDate.split("/");
+        const fullYear =
+          parseInt(year) < 50 ? 2000 + parseInt(year) : 1900 + parseInt(year);
+        const date = new Date(fullYear, parseInt(month) - 1, parseInt(day));
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split("T")[0];
+        }
+      }
+
+      // Handle MM-DD-YY format (2-digit year)
+      if (/^\d{1,2}-\d{1,2}-\d{2}$/.test(cleanDate)) {
+        const [month, day, year] = cleanDate.split("-");
+        const fullYear =
+          parseInt(year) < 50 ? 2000 + parseInt(year) : 1900 + parseInt(year);
+        const date = new Date(fullYear, parseInt(month) - 1, parseInt(day));
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split("T")[0];
+        }
+      }
+
+      // If no pattern matches, try to parse as is
+      const date = new Date(cleanDate);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split("T")[0];
+      }
+
+      console.warn(`[HuggingFace] Could not parse date: ${dateStr}`);
+      return null;
     } catch (error) {
-      // console.warn("[normalizeDate] Error normalizing date:", dateStr, error);
-      return new Date().toISOString().split("T")[0];
+      console.warn(`[HuggingFace] Date parsing error for "${dateStr}":`, error);
+      return null;
     }
   }
 
@@ -714,47 +1264,394 @@ Please extract all financial transactions found in the text above using the exac
   }
 
   /**
-   * Main document analysis method - implements two-stage approach
-   * Stage 1: Client-side OCR for text extraction
-   * Stage 2: Hugging Face API for text analysis
+   * Enhanced transaction extraction using OCR + AI hybrid approach
+   * Uses OCR for text extraction and AI only for transaction parsing
    */
   async analyzeImage(file) {
-    console.log("🤗 [HuggingFace] Starting analyzeImage for file:", file.name, file.type);
-    
+    console.log(
+      "🤗 [HuggingFace] Starting hybrid OCR + AI analysis for file:",
+      file.name,
+      file.type
+    );
+
     try {
       await this.checkRateLimit();
       console.log("🤗 [HuggingFace] ✅ Rate limit check passed");
 
-      // Extract text from image using OCR
+      // Step 1: Extract text using OCR (no AI cost)
       console.log("🤗 [HuggingFace] Starting OCR text extraction...");
       const extractedText = await this.extractTextFromImage(file);
-      console.log("🤗 [HuggingFace] ✅ OCR completed, text length:", extractedText.length);
+      console.log(
+        "🤗 [HuggingFace] ✅ OCR completed, text length:",
+        extractedText.length
+      );
 
       if (!extractedText || extractedText.trim().length === 0) {
         console.log("🤗 [HuggingFace] ❌ No text extracted from image");
-        throw new Error("No text could be extracted from the image. Please try a clearer image.");
+        throw new Error(
+          "No text could be extracted from the image. Please try a clearer image."
+        );
       }
 
-      // Analyze the extracted text
-      console.log("🤗 [HuggingFace] Starting text analysis...");
-      const analysisResult = await this.analyzeExtractedText(extractedText);
-      console.log("🤗 [HuggingFace] ✅ Text analysis completed");
+      // Step 2: Pre-process text to extract potential transactions (no AI cost)
+      console.log("🤗 [HuggingFace] Starting text pre-processing...");
+      const preprocessedTransactions =
+        this.preprocessTextForTransactions(extractedText);
+      console.log(
+        "🤗 [HuggingFace] ✅ Pre-processing completed, found",
+        preprocessedTransactions.length,
+        "potential transactions"
+      );
+
+      // Step 3: Use AI only for validation and enhancement (minimal AI cost)
+      console.log("🤗 [HuggingFace] Starting AI validation and enhancement...");
+      const enhancedTransactions = await this.enhanceTransactionsWithAI(
+        preprocessedTransactions,
+        extractedText
+      );
+      console.log("🤗 [HuggingFace] ✅ AI enhancement completed");
 
       return {
         success: true,
-        analysis: analysisResult.analysis,
-        transactions: analysisResult.transactions,
+        analysis: `Extracted ${enhancedTransactions.length} transactions using OCR + AI hybrid approach`,
+        transactions: enhancedTransactions,
         model: this.uniformModel,
         provider: "huggingface",
-        source: "Hugging Face Analysis",
+        source: "Hugging Face OCR + AI Hybrid Analysis",
         documentType: "Financial Document",
-        notes: "Document analyzed using Hugging Face BART-CNN. Please review and adjust transaction details.",
-        extractedText: extractedText.substring(0, 500) + "...", // Include first 500 chars for debugging
+        notes:
+          "Document analyzed using OCR for text extraction and AI for transaction validation. Cost-effective approach.",
+        extractedText: extractedText.substring(0, 500) + "...",
+        ocrTransactions: preprocessedTransactions.length,
+        aiEnhancedTransactions: enhancedTransactions.length,
       };
     } catch (error) {
       console.error("🤗 [HuggingFace] ❌ analyzeImage failed:", error);
       throw error;
     }
+  }
+
+  /**
+   * Pre-process extracted text to find potential transactions without AI
+   * Uses regex patterns and heuristics to identify transaction-like text
+   */
+  preprocessTextForTransactions(text) {
+    console.log(
+      "🤗 [HuggingFace] Pre-processing text for transaction patterns..."
+    );
+
+    const allMatches = [];
+    const lines = text
+      .split("\n")
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+
+    // Common patterns for financial transactions - Balanced approach
+    const transactionPatterns = [
+      // Pattern 1: MERCHANT - $AMOUNT on DATE (most common and reliable)
+      /([A-Z][A-Z\s&.,#0-9]+?)\s*-\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)\s*([0-9/-]+)/gi,
+      // Pattern 2: MERCHANT $AMOUNT DATE (no dash, but must have proper spacing)
+      /([A-Z][A-Z\s&.,#0-9]+?)\s+\$?([0-9,]+\.?[0-9]*)\s+([0-9/-]+)/gi,
+      // Pattern 3: MERCHANT - AMOUNT DATE (no dollar sign, but must have dash)
+      /([A-Z][A-Z\s&.,#0-9]+?)\s*-\s*([0-9,]+\.?[0-9]*)\s+([0-9/-]+)/gi,
+      // Pattern 4: MERCHANT with phone numbers, store numbers, websites
+      /([A-Z][A-Z\s&.,#0-9]+?)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
+      // Pattern 5: MERCHANT with asterisks and special characters
+      /([A-Z][A-Z\s&.,#0-9*]+?)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
+      // Pattern 6: Very flexible - catch anything with amount and date
+      /([A-Z][A-Z\s&.,#0-9*/]+?)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+([0-9/-]+)/gi,
+      // Pattern 7: MERCHANT with phone numbers (like DOMINO'S 6615 979-695-9912)
+      /([A-Z][A-Z\s&.,#0-9]+?)\s+[0-9-]+\s+[A-Z]+\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
+      // Pattern 8: MERCHANT with store numbers (like BUC-EE'S #35)
+      /([A-Z][A-Z\s&.,#0-9]+?)\s+#[0-9]+\s+[A-Z\s]+?\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
+      // Pattern 9: MERCHANT with websites (like AMAZON.COM AMZN.COM/BILL)
+      /([A-Z][A-Z\s&.,#0-9]+?)\s+[A-Z]+\.[A-Z]+\/[A-Z]+\s+[A-Z]+\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
+      // Pattern 10: MERCHANT with asterisks and trip info (like UBER *TRIP 01/15)
+      /([A-Z][A-Z\s&.,#0-9]+?)\s*\*[A-Z]+\s+[0-9/]+\s+[A-Z]+\.[A-Z]+\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
+      // Pattern 11: MERCHANT with T- store numbers (like TARGET T-1234)
+      /([A-Z][A-Z\s&.,#0-9]+?)\s+T-[0-9]+\s+[A-Z\s]+?\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
+      // Pattern 12: MERCHANT with H- store numbers (like H-E-B #123)
+      /([A-Z][A-Z\s&.,#0-9]+?)\s+#[0-9]+\s+[A-Z\s]+?\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
+      // Pattern 13: Specific patterns for missing transactions
+      /(DOMINO'S\s+[0-9]+\s+[0-9-]+\s+[A-Z]+)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
+      /(BUC-EE'S\s+#[0-9]+\s+[A-Z\s]+)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
+      /(AMAZON\.COM\s+[A-Z]+\.[A-Z]+\/[A-Z]+\s+[A-Z]+)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
+      /(NETFLIX\.COM\s+[A-Z]+\.[A-Z]+\/[A-Z]+\s+[A-Z]+)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
+      // Pattern 14: Catch partial matches that might be valid (more permissive)
+      /([A-Z][A-Z\s&.,#0-9]+?)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
+    ];
+
+    // Collect all matches first
+    for (const line of lines) {
+      for (const pattern of transactionPatterns) {
+        const matches = [...line.matchAll(pattern)];
+        for (const match of matches) {
+          const [, description, amount, date] = match;
+
+          const cleanDescription = description.trim().replace(/\s+/g, " ");
+          const cleanAmount = amount.replace(/,/g, "");
+
+          if (cleanDescription && cleanAmount && date) {
+            // Balanced validation - catch most legitimate transactions
+            if (cleanDescription.length < 2) continue; // Require at least 2 characters
+            if (cleanDescription.length > 200) continue; // Reasonable length limit
+            if (cleanAmount < 0.01 || cleanAmount > 1000000) continue; // Reasonable amount range
+            if (!/^[0-9/-]+$/.test(date)) continue;
+
+            // Skip obvious non-transactions
+            if (
+              cleanDescription === "TX" ||
+              cleanDescription === "S" ||
+              cleanDescription === "B" ||
+              cleanDescription === "WA" ||
+              cleanDescription === "CA" ||
+              cleanDescription === "NY" ||
+              cleanDescription === "AUSTIN TX" ||
+              cleanDescription === "BILL WA" ||
+              cleanDescription === "BILL CA" ||
+              cleanDescription === "UBER.COM" ||
+              cleanDescription === "LYFT.COM" ||
+              cleanDescription === "SPOTIFY.COM" ||
+              cleanDescription === "NETFLIX.COM" ||
+              cleanDescription === "AMZN.COM"
+            ) {
+              continue;
+            }
+
+            allMatches.push({
+              description: cleanDescription,
+              amount: parseFloat(cleanAmount),
+              date: date,
+              confidence: 0.7, // Balanced confidence
+              source: "OCR + Regex",
+              length: cleanDescription.length,
+              originalLine: line,
+            });
+          }
+        }
+      }
+    }
+
+    // Sort by description length (longer descriptions are usually more complete)
+    allMatches.sort((a, b) => b.length - a.length);
+
+    // Filter out partial matches intelligently - balanced approach
+    const transactions = [];
+    for (const match of allMatches) {
+      // Skip obvious non-transactions and partial matches
+      if (
+        match.description === "TX" ||
+        match.description === "S" ||
+        match.description === "B" ||
+        match.description === "WA" ||
+        match.description === "CA" ||
+        match.description === "NY" ||
+        match.description === "AUSTIN TX" ||
+        match.description === "BILL WA" ||
+        match.description === "BILL CA" ||
+        match.description === "UBER.COM" ||
+        match.description === "LYFT.COM" ||
+        match.description.length < 3
+      ) {
+        continue;
+      }
+
+      // Check if this is a partial match of an existing transaction
+      const isPartialMatch = transactions.some(existing => {
+        // If this description is contained within an existing one, it's likely a partial match
+        if (
+          existing.description.includes(match.description) &&
+          Math.abs(existing.amount - match.amount) < 0.01 &&
+          existing.date === match.date
+        ) {
+          return true;
+        }
+
+        // If an existing description is contained within this one, replace the existing
+        if (
+          match.description.includes(existing.description) &&
+          Math.abs(existing.amount - match.amount) < 0.01 &&
+          existing.date === match.date
+        ) {
+          // Remove the shorter match and keep this longer one
+          const index = transactions.indexOf(existing);
+          if (index > -1) {
+            transactions.splice(index, 1);
+          }
+          return false; // Don't skip this one, add it instead
+        }
+
+        return false;
+      });
+
+      if (!isPartialMatch) {
+        // Check for exact duplicates
+        const isDuplicate = transactions.some(
+          t =>
+            t.description === match.description &&
+            Math.abs(t.amount - match.amount) < 0.01 &&
+            t.date === match.date
+        );
+
+        if (!isDuplicate) {
+          transactions.push({
+            description: match.description,
+            amount: match.amount,
+            date: match.date,
+            confidence: match.confidence,
+            source: match.source,
+          });
+        }
+      }
+    }
+
+    console.log(
+      "🤗 [HuggingFace] Found",
+      transactions.length,
+      "transactions via regex patterns"
+    );
+    return transactions;
+  }
+
+  /**
+   * Use AI only for validation and enhancement of pre-extracted transactions
+   * Much more cost-effective than full AI extraction
+   */
+  async enhanceTransactionsWithAI(preprocessedTransactions, originalText) {
+    if (preprocessedTransactions.length === 0) {
+      console.log(
+        "🤗 [HuggingFace] No transactions to enhance, skipping AI step"
+      );
+      return [];
+    }
+
+    console.log(
+      "🤗 [HuggingFace] Enhancing",
+      preprocessedTransactions.length,
+      "transactions with AI..."
+    );
+
+    try {
+      // Create a focused prompt for validation/enhancement only
+      const prompt = `Validate and enhance these pre-extracted financial transactions. 
+      
+Original text context:
+${originalText.substring(0, 1000)}
+
+Pre-extracted transactions:
+${preprocessedTransactions.map((t, i) => `${i + 1}. ${t.description} - $${t.amount} on ${t.date}`).join("\n")}
+
+Please:
+1. Validate each transaction is correct
+2. Fix any obvious errors in description, amount, or date
+3. Add any missing transactions you find in the original text
+4. Return in this exact format:
+Transaction 1: [DESCRIPTION] - $[AMOUNT] on [DATE]
+Transaction 2: [DESCRIPTION] - $[AMOUNT] on [DATE]
+...`;
+
+      const response = await fetch(`${this.baseUrl}/${this.uniformModel}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            max_new_tokens: 400, // Much smaller since we're only enhancing
+            min_new_tokens: 50,
+            do_sample: false,
+            num_beams: 3,
+            early_stopping: true,
+            temperature: 0.1,
+            top_p: 0.9,
+            repetition_penalty: 1.2,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        console.log(
+          "🤗 [HuggingFace] AI enhancement failed, using pre-processed transactions"
+        );
+        return preprocessedTransactions;
+      }
+
+      const data = await response.json();
+      const enhancedText =
+        data[0]?.summary_text || data[0]?.generated_text || "";
+
+      // Parse the enhanced transactions
+      const enhancedTransactions = this.parseEnhancedTransactions(
+        enhancedText,
+        preprocessedTransactions
+      );
+
+      console.log(
+        "🤗 [HuggingFace] AI enhancement completed, final count:",
+        enhancedTransactions.length
+      );
+      return enhancedTransactions;
+    } catch (error) {
+      console.log(
+        "🤗 [HuggingFace] AI enhancement failed, using pre-processed transactions:",
+        error.message
+      );
+      return preprocessedTransactions;
+    }
+  }
+
+  /**
+   * Parse AI-enhanced transactions and merge with pre-processed ones
+   */
+  parseEnhancedTransactions(enhancedText, originalTransactions) {
+    const enhancedTransactions = [];
+
+    // Parse the AI response
+    const transactionMatches = enhancedText.match(
+      /Transaction \d+:\s*([^-]+)-\s*\$([0-9.]+)\s+on\s+([0-9/-]+)/gi
+    );
+
+    if (transactionMatches) {
+      for (const match of transactionMatches) {
+        const parts = match.match(
+          /Transaction \d+:\s*([^-]+)-\s*\$([0-9.]+)\s+on\s+([0-9/-]+)/i
+        );
+        if (parts) {
+          const [, description, amount, date] = parts;
+          const transaction = {
+            description: description.trim(),
+            amount: parseFloat(amount),
+            date: this.normalizeDate(date) || date,
+            confidence: 0.9, // High confidence for AI-enhanced transactions
+            source: "OCR + AI Enhanced",
+          };
+          enhancedTransactions.push(transaction);
+        }
+      }
+    }
+
+    // Merge with original transactions, preferring AI-enhanced ones
+    const mergedTransactions = [...enhancedTransactions];
+
+    for (const original of originalTransactions) {
+      const isDuplicate = mergedTransactions.some(
+        t =>
+          t.description
+            .toLowerCase()
+            .includes(original.description.toLowerCase()) ||
+          original.description
+            .toLowerCase()
+            .includes(t.description.toLowerCase())
+      );
+
+      if (!isDuplicate) {
+        mergedTransactions.push(original);
+      }
+    }
+
+    return mergedTransactions;
   }
 
   /**

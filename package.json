@@ -45,6 +45,7 @@
     "deploy:rollback": "vercel rollback"
   },
   "dependencies": {
+    "@huggingface/inference": "^4.6.1",
     "@supabase/supabase-js": "^2.38.4",
     "dexie": "^3.2.4",
     "dotenv": "^17.2.1",
