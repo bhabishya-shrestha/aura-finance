@@ -3,11 +3,7 @@ import { CreditCard, Wallet, PiggyBank, BarChart3 } from "lucide-react";
 import useStore from "../store";
 
 const Accounts = () => {
-  const {
-    accounts,
-    getAccountBalance,
-    calculateAccountStats,
-  } = useStore();
+  const { accounts, getAccountBalance, calculateAccountStats } = useStore();
 
   const getAccountIcon = type => {
     switch (type) {

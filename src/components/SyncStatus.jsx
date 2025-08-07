@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Cloud,
-  CloudOff,
-  RefreshCw,
-  Link,
-  Unlink,
-} from "lucide-react";
+import { Cloud, CloudOff, RefreshCw, Link, Unlink } from "lucide-react";
 import firebaseSync from "../services/firebaseSync";
 import authBridge from "../services/authBridge";
 

@@ -9,6 +9,7 @@ This guide will help you complete the implementation of strategic denormalizatio
 Before starting, ensure you have:
 
 1. **Environment Variables**: Add your Supabase service role key to `.env`:
+
    ```bash
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_anon_key
@@ -28,6 +29,7 @@ npm run db:migrate:denormalize
 ```
 
 This will:
+
 - Add denormalized columns to transactions, accounts, and categories tables
 - Create materialized views for analytics
 - Implement database triggers for automatic updates
@@ -58,13 +60,15 @@ Now update your frontend components to use the optimized database client. Here a
 #### 4.1 Update Transaction Components
 
 **Before (slow 3NF approach):**
+
 ```javascript
 // src/components/RecentTransactions.jsx
-import { supabase } from '../lib/supabase';
+import { supabase } from "../lib/supabase";
 
 const { data: transactions } = await supabase
   .from("transactions")
-  .select(`
+  .select(
+    `
     *,
     account:accounts(name, account_type_id),
     account_types(code, icon_id, color_id),
@@ -73,16 +77,18 @@ const { data: transactions } = await supabase
     categories(name, icon_id, color_id),
     category_icons(ui_icons(name)),
     ui_colors(hex_code)
-  `)
+  `
+  )
   .eq("user_id", userId)
   .order("date", { ascending: false })
   .limit(10);
 ```
 
 **After (fast denormalized approach):**
+
 ```javascript
 // src/components/RecentTransactions.jsx
-import { dbOptimized } from '../lib/supabase-optimized';
+import { dbOptimized } from "../lib/supabase-optimized";
 
 const { data: transactions } = await dbOptimized.getRecentTransactions(10);
 ```
@@ -90,6 +96,7 @@ const { data: transactions } = await dbOptimized.getRecentTransactions(10);
 #### 4.2 Update Dashboard Components
 
 **Before (multiple queries):**
+
 ```javascript
 // src/components/NetWorth.jsx
 const { data: accounts } = await supabase
@@ -105,14 +112,20 @@ const { data: transactions } = await supabase
 // Client-side calculations
 const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
 const monthlyIncome = transactions
-  .filter(t => t.amount > 0 && new Date(t.date) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+  .filter(
+    t =>
+      t.amount > 0 &&
+      new Date(t.date) >=
+        new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  )
   .reduce((sum, t) => sum + t.amount, 0);
 ```
 
 **After (single optimized query):**
+
 ```javascript
 // src/components/NetWorth.jsx
-import { dbOptimized } from '../lib/supabase-optimized';
+import { dbOptimized } from "../lib/supabase-optimized";
 
 const { data: dashboardData } = await dbOptimized.getDashboardData();
 // Returns: { total_balance, monthly_income, monthly_expenses, net_worth, ... }
@@ -121,15 +134,18 @@ const { data: dashboardData } = await dbOptimized.getDashboardData();
 #### 4.3 Update Search Components
 
 **Before (complex search):**
+
 ```javascript
 // src/components/SearchBar.jsx
 const { data: results } = await supabase
   .from("transactions")
-  .select(`
+  .select(
+    `
     *,
     account:accounts(name),
     category:categories(name)
-  `)
+  `
+  )
   .eq("user_id", userId)
   .or(
     `description.ilike.%${searchTerm}%,account.name.ilike.%${searchTerm}%,category.name.ilike.%${searchTerm}%`
@@ -137,9 +153,10 @@ const { data: results } = await supabase
 ```
 
 **After (simple search):**
+
 ```javascript
 // src/components/SearchBar.jsx
-import { dbOptimized } from '../lib/supabase-optimized';
+import { dbOptimized } from "../lib/supabase-optimized";
 
 const { data: results } = await dbOptimized.searchTransactions(searchTerm, {
   accountId: selectedAccount,
@@ -151,24 +168,28 @@ const { data: results } = await dbOptimized.searchTransactions(searchTerm, {
 #### 4.4 Update Account Components
 
 **Before (complex joins):**
+
 ```javascript
 // src/components/Accounts.jsx
 const { data: accounts } = await supabase
   .from("accounts")
-  .select(`
+  .select(
+    `
     *,
     account_types(code, name, icon_id, color_id),
     ui_icons(name),
     ui_colors(hex_code),
     currencies(code, symbol)
-  `)
+  `
+  )
   .eq("user_id", userId);
 ```
 
 **After (materialized view):**
+
 ```javascript
 // src/components/Accounts.jsx
-import { dbOptimized } from '../lib/supabase-optimized';
+import { dbOptimized } from "../lib/supabase-optimized";
 
 const { data: accounts } = await dbOptimized.getAccounts();
 // Returns accounts with pre-computed analytics
@@ -190,7 +211,7 @@ Or use a service like GitHub Actions:
 name: Maintain Database
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Every 5 minutes
+    - cron: "*/5 * * * *" # Every 5 minutes
 
 jobs:
   maintain:
@@ -199,7 +220,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
       - run: npm install
       - run: npm run db:maintain
         env:
@@ -237,7 +258,7 @@ Update your Zustand store to use the optimized client:
 
 ```javascript
 // src/store.js
-import { dbOptimized } from './lib/supabase-optimized';
+import { dbOptimized } from "./lib/supabase-optimized";
 
 // Replace supabase calls with dbOptimized calls
 const fetchTransactions = async () => {
@@ -306,4 +327,4 @@ If you encounter issues:
 3. Run the validation commands to identify specific issues
 4. Check the Supabase logs for any database errors
 
-The denormalization implementation is designed to be robust and self-maintaining, but regular monitoring ensures optimal performance. 
+The denormalization implementation is designed to be robust and self-maintaining, but regular monitoring ensures optimal performance.

@@ -2,7 +2,7 @@
 
 /**
  * Apply Denormalization Migration Script
- * 
+ *
  * This script applies the strategic denormalization migration to your Supabase database.
  * It can be run to apply the migration and initialize the denormalized data.
  */
@@ -70,7 +70,12 @@ class MigrationApplier {
 
     try {
       // Read the migration file
-      const migrationPath = join(process.cwd(), "supabase", "migrations", "20250101000008_strategic_denormalization.sql");
+      const migrationPath = join(
+        process.cwd(),
+        "supabase",
+        "migrations",
+        "20250101000008_strategic_denormalization.sql"
+      );
       const migrationSQL = readFileSync(migrationPath, "utf8");
 
       // Split the migration into individual statements
@@ -83,28 +88,39 @@ class MigrationApplier {
 
       for (let i = 0; i < statements.length; i++) {
         const statement = statements[i];
-        
+
         if (statement.trim()) {
           try {
-            console.log(`   Executing statement ${i + 1}/${statements.length}...`);
-            
+            console.log(
+              `   Executing statement ${i + 1}/${statements.length}...`
+            );
+
             // Execute SQL directly using the service role client
-            const { error } = await supabase.rpc("exec_sql", { sql: statement });
-            
+            const { error } = await supabase.rpc("exec_sql", {
+              sql: statement,
+            });
+
             if (error) {
               // Some statements might fail if objects already exist (IF NOT EXISTS)
-              if (error.message.includes("already exists") || error.message.includes("duplicate key")) {
-                console.log(`   ⚠️  Statement ${i + 1} skipped (already exists): ${error.message}`);
+              if (
+                error.message.includes("already exists") ||
+                error.message.includes("duplicate key")
+              ) {
+                console.log(
+                  `   ⚠️  Statement ${i + 1} skipped (already exists): ${error.message}`
+                );
               } else {
                 throw new Error(`Statement ${i + 1} failed: ${error.message}`);
               }
             } else {
               console.log(`   ✅ Statement ${i + 1} executed successfully`);
             }
-            
+
             this.stats.stepsCompleted++;
           } catch (stmtError) {
-            console.log(`   ⚠️  Statement ${i + 1} skipped: ${stmtError.message}`);
+            console.log(
+              `   ⚠️  Statement ${i + 1} skipped: ${stmtError.message}`
+            );
           }
         }
       }
@@ -138,7 +154,7 @@ class MigrationApplier {
             ADD COLUMN IF NOT EXISTS transaction_type_color TEXT,
             ADD COLUMN IF NOT EXISTS currency_code TEXT DEFAULT 'USD',
             ADD COLUMN IF NOT EXISTS currency_symbol TEXT DEFAULT '$';
-          `
+          `,
         },
         // Step 2: Add denormalized columns to accounts table
         {
@@ -153,7 +169,7 @@ class MigrationApplier {
             ADD COLUMN IF NOT EXISTS last_transaction_date TIMESTAMP WITH TIME ZONE,
             ADD COLUMN IF NOT EXISTS monthly_income DECIMAL(15,2) DEFAULT 0,
             ADD COLUMN IF NOT EXISTS monthly_expenses DECIMAL(15,2) DEFAULT 0;
-          `
+          `,
         },
         // Step 3: Add denormalized columns to categories table
         {
@@ -165,7 +181,7 @@ class MigrationApplier {
             ADD COLUMN IF NOT EXISTS color_hex TEXT,
             ADD COLUMN IF NOT EXISTS transaction_count INTEGER DEFAULT 0,
             ADD COLUMN IF NOT EXISTS total_amount DECIMAL(15,2) DEFAULT 0;
-          `
+          `,
         },
         // Step 4: Create indexes
         {
@@ -178,32 +194,37 @@ class MigrationApplier {
             CREATE INDEX IF NOT EXISTS idx_accounts_account_type_name ON public.accounts(account_type_name);
             CREATE INDEX IF NOT EXISTS idx_accounts_transaction_count ON public.accounts(transaction_count);
             CREATE INDEX IF NOT EXISTS idx_categories_transaction_count ON public.categories(transaction_count);
-          `
-        }
+          `,
+        },
       ];
 
       this.stats.totalSteps = migrationSteps.length;
 
       for (let i = 0; i < migrationSteps.length; i++) {
         const step = migrationSteps[i];
-        
+
         try {
           console.log(`   Executing: ${step.name}...`);
-          
+
           // Execute SQL directly using the service role client
           const { error } = await supabase.rpc("exec_sql", { sql: step.sql });
-          
+
           if (error) {
             // Some statements might fail if objects already exist (IF NOT EXISTS)
-            if (error.message.includes("already exists") || error.message.includes("duplicate key")) {
-              console.log(`   ⚠️  Step ${i + 1} skipped (already exists): ${error.message}`);
+            if (
+              error.message.includes("already exists") ||
+              error.message.includes("duplicate key")
+            ) {
+              console.log(
+                `   ⚠️  Step ${i + 1} skipped (already exists): ${error.message}`
+              );
             } else {
               throw new Error(`Step ${i + 1} failed: ${error.message}`);
             }
           } else {
             console.log(`   ✅ Step ${i + 1} executed successfully`);
           }
-          
+
           this.stats.stepsCompleted++;
         } catch (stmtError) {
           console.log(`   ⚠️  Step ${i + 1} skipped: ${stmtError.message}`);
@@ -223,7 +244,8 @@ class MigrationApplier {
       // Update transaction denormalized data
       const { data: transactions, error: txError } = await supabase
         .from("transactions")
-        .select(`
+        .select(
+          `
           id,
           account_id,
           category_id,
@@ -249,7 +271,8 @@ class MigrationApplier {
             ui_icons(name),
             ui_colors(hex_code)
           )
-        `)
+        `
+        )
         .is("account_name", null);
 
       if (txError) {
@@ -258,7 +281,7 @@ class MigrationApplier {
 
       if (transactions && transactions.length > 0) {
         console.log(`   Updating ${transactions.length} transactions...`);
-        
+
         for (const transaction of transactions) {
           await this.updateTransactionDenormalization(transaction);
         }
@@ -269,7 +292,8 @@ class MigrationApplier {
       // Update account denormalized data
       const { data: accounts, error: accError } = await supabase
         .from("accounts")
-        .select(`
+        .select(
+          `
           id,
           account_type_id,
           currency_id,
@@ -277,7 +301,8 @@ class MigrationApplier {
           currencies(name),
           ui_icons(name),
           ui_colors(hex_code)
-        `)
+        `
+        )
         .is("account_type_name", null);
 
       if (accError) {
@@ -286,7 +311,7 @@ class MigrationApplier {
 
       if (accounts && accounts.length > 0) {
         console.log(`   Updating ${accounts.length} accounts...`);
-        
+
         for (const account of accounts) {
           await this.updateAccountDenormalization(account);
         }
@@ -297,13 +322,15 @@ class MigrationApplier {
       // Update category denormalized data
       const { data: categories, error: catError } = await supabase
         .from("categories")
-        .select(`
+        .select(
+          `
           id,
           icon_id,
           color_id,
           category_icons(ui_icons(name, icon_class)),
           ui_colors(hex_code)
-        `)
+        `
+        )
         .is("icon_name", null);
 
       if (catError) {
@@ -312,7 +339,7 @@ class MigrationApplier {
 
       if (categories && categories.length > 0) {
         console.log(`   Updating ${categories.length} categories...`);
-        
+
         for (const category of categories) {
           await this.updateCategoryDenormalization(category);
         }
@@ -322,7 +349,9 @@ class MigrationApplier {
 
       console.log("✅ Denormalized data initialized successfully");
     } catch (error) {
-      throw new Error(`Failed to initialize denormalized data: ${error.message}`);
+      throw new Error(
+        `Failed to initialize denormalized data: ${error.message}`
+      );
     }
   }
 
@@ -339,10 +368,12 @@ class MigrationApplier {
       if (transaction.account.account_types) {
         const { data: accountTypeUI } = await supabase
           .from("account_types")
-          .select(`
+          .select(
+            `
             ui_icons(name),
             ui_colors(hex_code)
-          `)
+          `
+          )
           .eq("id", transaction.account.account_types.id)
           .single();
 
@@ -355,14 +386,17 @@ class MigrationApplier {
 
     if (transaction.category) {
       updates.category_name = transaction.category.name;
-      updates.category_icon = transaction.category.category_icons?.ui_icons?.name;
+      updates.category_icon =
+        transaction.category.category_icons?.ui_icons?.name;
       updates.category_color = transaction.category.ui_colors?.hex_code;
     }
 
     if (transaction.transaction_types) {
       updates.transaction_type_code = transaction.transaction_types.code;
-      updates.transaction_type_icon = transaction.transaction_types.ui_icons?.name;
-      updates.transaction_type_color = transaction.transaction_types.ui_colors?.hex_code;
+      updates.transaction_type_icon =
+        transaction.transaction_types.ui_icons?.name;
+      updates.transaction_type_color =
+        transaction.transaction_types.ui_colors?.hex_code;
     }
 
     const { error } = await supabase
@@ -371,7 +405,9 @@ class MigrationApplier {
       .eq("id", transaction.id);
 
     if (error) {
-      throw new Error(`Failed to update transaction ${transaction.id}: ${error.message}`);
+      throw new Error(
+        `Failed to update transaction ${transaction.id}: ${error.message}`
+      );
     }
   }
 
@@ -390,10 +426,12 @@ class MigrationApplier {
     if (account.account_types) {
       const { data: accountTypeUI } = await supabase
         .from("account_types")
-        .select(`
+        .select(
+          `
           ui_icons(name),
           ui_colors(hex_code)
-        `)
+        `
+        )
         .eq("id", account.account_types.id)
         .single();
 
@@ -411,14 +449,25 @@ class MigrationApplier {
 
     if (transactionStats) {
       updates.transaction_count = transactionStats.length;
-      updates.last_transaction_date = transactionStats.length > 0 
-        ? Math.max(...transactionStats.map(t => new Date(t.date)))
-        : null;
+      updates.last_transaction_date =
+        transactionStats.length > 0
+          ? Math.max(...transactionStats.map(t => new Date(t.date)))
+          : null;
       updates.monthly_income = transactionStats
-        .filter(t => t.amount > 0 && new Date(t.date) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+        .filter(
+          t =>
+            t.amount > 0 &&
+            new Date(t.date) >=
+              new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+        )
         .reduce((sum, t) => sum + t.amount, 0);
       updates.monthly_expenses = transactionStats
-        .filter(t => t.amount < 0 && new Date(t.date) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+        .filter(
+          t =>
+            t.amount < 0 &&
+            new Date(t.date) >=
+              new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+        )
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
     }
 
@@ -428,7 +477,9 @@ class MigrationApplier {
       .eq("id", account.id);
 
     if (error) {
-      throw new Error(`Failed to update account ${account.id}: ${error.message}`);
+      throw new Error(
+        `Failed to update account ${account.id}: ${error.message}`
+      );
     }
   }
 
@@ -452,7 +503,10 @@ class MigrationApplier {
 
     if (transactionStats) {
       updates.transaction_count = transactionStats.length;
-      updates.total_amount = transactionStats.reduce((sum, t) => sum + t.amount, 0);
+      updates.total_amount = transactionStats.reduce(
+        (sum, t) => sum + t.amount,
+        0
+      );
     }
 
     const { error } = await supabase
@@ -461,7 +515,9 @@ class MigrationApplier {
       .eq("id", category.id);
 
     if (error) {
-      throw new Error(`Failed to update category ${category.id}: ${error.message}`);
+      throw new Error(
+        `Failed to update category ${category.id}: ${error.message}`
+      );
     }
   }
 
@@ -476,7 +532,9 @@ class MigrationApplier {
         .limit(1);
 
       if (denormError) {
-        throw new Error(`Denormalized columns not accessible: ${denormError.message}`);
+        throw new Error(
+          `Denormalized columns not accessible: ${denormError.message}`
+        );
       }
 
       console.log("✅ Migration validation successful");
@@ -490,7 +548,9 @@ class MigrationApplier {
 
     console.log("\n📊 Migration Statistics:");
     console.log(`⏱️  Duration: ${duration}ms`);
-    console.log(`📋 Steps completed: ${this.stats.stepsCompleted}/${this.stats.totalSteps}`);
+    console.log(
+      `📋 Steps completed: ${this.stats.stepsCompleted}/${this.stats.totalSteps}`
+    );
 
     if (this.stats.errors.length > 0) {
       console.log(`❌ Errors: ${this.stats.errors.length}`);
@@ -501,8 +561,12 @@ class MigrationApplier {
 
     console.log("\n🎉 Denormalization migration completed successfully!");
     console.log("\nNext steps:");
-    console.log("1. Run the data pipeline: node scripts/maintain-denormalized-data.js run");
-    console.log("2. Test performance: node scripts/test-performance-improvements.js run");
+    console.log(
+      "1. Run the data pipeline: node scripts/maintain-denormalized-data.js run"
+    );
+    console.log(
+      "2. Test performance: node scripts/test-performance-improvements.js run"
+    );
     console.log("3. Update frontend components to use dbOptimized");
   }
 }
@@ -535,7 +599,9 @@ Examples:
 
     default:
       console.error(`Unknown command: ${command}`);
-      console.log('Run "node apply-denormalization-migration.js help" for usage information');
+      console.log(
+        'Run "node apply-denormalization-migration.js help" for usage information'
+      );
       process.exit(1);
   }
 }
@@ -555,4 +621,4 @@ process.on("SIGTERM", () => {
 main().catch(error => {
   console.error("❌ Migration failed:", error);
   process.exit(1);
-}); 
+});

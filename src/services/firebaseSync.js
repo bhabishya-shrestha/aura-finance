@@ -190,12 +190,16 @@ class FirebaseSyncService {
       if (dataType === "transactions") {
         const result = await firebaseService.deleteTransaction(itemId);
         if (!result.success) {
-          throw new Error(result.error || "Failed to delete transaction from Firebase");
+          throw new Error(
+            result.error || "Failed to delete transaction from Firebase"
+          );
         }
       } else if (dataType === "accounts") {
         const result = await firebaseService.deleteAccount(itemId);
         if (!result.success) {
-          throw new Error(result.error || "Failed to delete account from Firebase");
+          throw new Error(
+            result.error || "Failed to delete account from Firebase"
+          );
         }
       }
     } catch (error) {

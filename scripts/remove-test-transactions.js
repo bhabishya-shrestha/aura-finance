@@ -3,14 +3,14 @@ import db from "../src/database.js";
 // Test transaction descriptions to identify and remove
 const testTransactionDescriptions = [
   "Grocery Shopping",
-  "Salary Payment", 
+  "Salary Payment",
   "Gas Station",
   "Restaurant Dinner",
   "Movie Tickets",
   "July Shopping",
   "July Income",
   "March Utilities",
-  "Old Transaction"
+  "Old Transaction",
 ];
 
 async function removeTestTransactions() {
@@ -19,9 +19,9 @@ async function removeTestTransactions() {
 
     // Get all transactions
     const allTransactions = await db.transactions.toArray();
-    
+
     // Filter out test transactions
-    const testTransactions = allTransactions.filter(transaction => 
+    const testTransactions = allTransactions.filter(transaction =>
       testTransactionDescriptions.includes(transaction.description)
     );
 
@@ -30,20 +30,27 @@ async function removeTestTransactions() {
       return;
     }
 
-    console.log(`📊 Found ${testTransactions.length} test transactions to remove`);
+    console.log(
+      `📊 Found ${testTransactions.length} test transactions to remove`
+    );
 
     // Remove test transactions
     for (const transaction of testTransactions) {
       await db.transactions.delete(transaction.id);
-      console.log(`🗑️ Removed: ${transaction.description} (${transaction.amount})`);
+      console.log(
+        `🗑️ Removed: ${transaction.description} (${transaction.amount})`
+      );
     }
 
-    console.log(`✅ Successfully removed ${testTransactions.length} test transactions`);
+    console.log(
+      `✅ Successfully removed ${testTransactions.length} test transactions`
+    );
     console.log("\nTest transactions removed:");
     testTransactions.forEach(t => {
-      console.log(`- ${t.description} (${t.amount}) - ${new Date(t.date).toLocaleDateString()}`);
+      console.log(
+        `- ${t.description} (${t.amount}) - ${new Date(t.date).toLocaleDateString()}`
+      );
     });
-
   } catch (error) {
     console.error("❌ Error removing test transactions:", error);
   } finally {
@@ -52,4 +59,4 @@ async function removeTestTransactions() {
 }
 
 // Run the script
-removeTestTransactions(); 
+removeTestTransactions();

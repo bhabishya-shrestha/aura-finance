@@ -99,8 +99,6 @@ const ReportsPage = () => {
     return icons[categoryName] || DollarSign;
   };
 
-
-
   const getPeriodLabel = () => {
     const labels = {
       week: "This Week",
@@ -344,8 +342,6 @@ const ReportsPage = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-
-
       {/* Controls */}
       <div className="mb-6 space-y-4">
         {/* Period Selection */}

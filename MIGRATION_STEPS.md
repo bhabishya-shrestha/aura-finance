@@ -17,7 +17,7 @@ Go to your Supabase Dashboard → SQL Editor and run:
 
 ```sql
 -- Add denormalized columns to transactions table
-ALTER TABLE public.transactions 
+ALTER TABLE public.transactions
 ADD COLUMN IF NOT EXISTS account_name TEXT,
 ADD COLUMN IF NOT EXISTS account_type_code TEXT,
 ADD COLUMN IF NOT EXISTS account_type_icon TEXT,
@@ -36,7 +36,7 @@ ADD COLUMN IF NOT EXISTS currency_symbol TEXT DEFAULT '$';
 
 ```sql
 -- Add denormalized columns to accounts table
-ALTER TABLE public.accounts 
+ALTER TABLE public.accounts
 ADD COLUMN IF NOT EXISTS account_type_name TEXT,
 ADD COLUMN IF NOT EXISTS account_type_icon TEXT,
 ADD COLUMN IF NOT EXISTS account_type_color TEXT,
@@ -51,7 +51,7 @@ ADD COLUMN IF NOT EXISTS monthly_expenses DECIMAL(15,2) DEFAULT 0;
 
 ```sql
 -- Add denormalized columns to categories table
-ALTER TABLE public.categories 
+ALTER TABLE public.categories
 ADD COLUMN IF NOT EXISTS icon_name TEXT,
 ADD COLUMN IF NOT EXISTS icon_class TEXT,
 ADD COLUMN IF NOT EXISTS color_hex TEXT,
@@ -77,7 +77,7 @@ CREATE INDEX IF NOT EXISTS idx_categories_transaction_count ON public.categories
 ```sql
 -- Create materialized view for dashboard analytics
 CREATE MATERIALIZED VIEW IF NOT EXISTS public.dashboard_analytics AS
-SELECT 
+SELECT
   u.id as user_id,
   u.email,
   u.name as user_name,
@@ -133,7 +133,8 @@ npm run db:test:performance
 ## Performance Expectations
 
 After implementation, you should see:
+
 - **Transaction List**: 10x faster (150-300ms → 15-30ms)
 - **Dashboard Load**: 8x faster (500-800ms → 50-100ms)
 - **Search Operations**: 10x faster (300-600ms → 30-60ms)
-- **Account Overview**: 10x faster (200-400ms → 20-40ms) 
+- **Account Overview**: 10x faster (200-400ms → 20-40ms)

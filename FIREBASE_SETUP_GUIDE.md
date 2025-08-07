@@ -1,6 +1,7 @@
 # Firebase Setup Guide - Free Cross-Device Sync
 
 ## 🆓 **Why Firebase?**
+
 - **Completely FREE** for personal finance apps
 - **1GB storage** - enough for years of transactions
 - **50,000 reads/day** - more than you'll ever need
@@ -26,6 +27,7 @@
 ## 🔑 **Step 3: Get Configuration**
 
 You'll get a config like this:
+
 ```javascript
 const firebaseConfig = {
   apiKey: "your-api-key",
@@ -33,13 +35,14 @@ const firebaseConfig = {
   projectId: "your-project-id",
   storageBucket: "your-project.appspot.com",
   messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef"
+  appId: "1:123456789:web:abcdef",
 };
 ```
 
 ## 📝 **Step 4: Update Environment Variables**
 
 Add these to your `.env` file:
+
 ```env
 VITE_FIREBASE_API_KEY=your-api-key
 VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
@@ -68,6 +71,7 @@ VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
 ## 🛡️ **Step 7: Set Up Security Rules**
 
 In Firestore Database → Rules, replace with:
+
 ```javascript
 rules_version = '2';
 service cloud.firestore {
@@ -76,16 +80,16 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-    
+
     // Users can only access their own transactions
     match /transactions/{transactionId} {
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
         request.auth.uid == resource.data.userId;
     }
-    
+
     // Users can only access their own accounts
     match /accounts/{accountId} {
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
         request.auth.uid == resource.data.userId;
     }
   }
@@ -97,15 +101,22 @@ service cloud.firestore {
 The Firebase service is already created. You can test it by:
 
 ```javascript
-import firebaseService from './services/firebaseService';
+import firebaseService from "./services/firebaseService";
 
 // Test registration
-const result = await firebaseService.register('test@example.com', 'password123', 'Test User');
-console.log('Registration result:', result);
+const result = await firebaseService.register(
+  "test@example.com",
+  "password123",
+  "Test User"
+);
+console.log("Registration result:", result);
 
 // Test login
-const loginResult = await firebaseService.login('test@example.com', 'password123');
-console.log('Login result:', loginResult);
+const loginResult = await firebaseService.login(
+  "test@example.com",
+  "password123"
+);
+console.log("Login result:", loginResult);
 ```
 
 ## 📱 **Step 9: Cross-Device Sync**
@@ -119,12 +130,14 @@ Now your data will automatically sync across devices:
 ## 💰 **Cost Breakdown**
 
 ### **Free Tier Limits:**
+
 - **Storage**: 1GB (≈ 100,000 transactions)
 - **Reads**: 50,000/day (≈ 1,667 per hour)
 - **Writes**: 20,000/day (≈ 667 per hour)
 - **Deletes**: 20,000/day
 
 ### **For Personal Finance:**
+
 - **Typical usage**: 10-50 transactions/day
 - **Storage needed**: ~1MB/year
 - **Reads needed**: ~100/day
@@ -147,6 +160,7 @@ const importResult = await firebaseService.importData(exportData);
 ## 🚀 **Benefits You Get**
 
 ### **Immediate Benefits:**
+
 - ✅ **Cross-device sync** - Data everywhere
 - ✅ **Real-time updates** - Instant changes
 - ✅ **Data backup** - Never lose data
@@ -154,6 +168,7 @@ const importResult = await firebaseService.importData(exportData);
 - ✅ **Free forever** - No monthly costs
 
 ### **Advanced Features:**
+
 - 🔄 **Real-time listeners** - Live updates
 - 📊 **Query capabilities** - Filter and sort
 - 🔐 **Security** - Google-grade protection
@@ -170,12 +185,14 @@ const importResult = await firebaseService.importData(exportData);
 ## 🆘 **Troubleshooting**
 
 ### **Common Issues:**
+
 - **Config errors**: Double-check environment variables
 - **Auth issues**: Make sure Email/Password is enabled
 - **Permission errors**: Check Firestore security rules
 - **Network issues**: Check internet connection
 
 ### **Support:**
+
 - [Firebase Documentation](https://firebase.google.com/docs)
 - [Firebase Console](https://console.firebase.google.com/)
 - [Stack Overflow](https://stackoverflow.com/questions/tagged/firebase)
@@ -184,4 +201,4 @@ const importResult = await firebaseService.importData(exportData);
 
 With Firebase, you get enterprise-grade cross-device sync for **$0/month**. Your financial data will be available on all your devices, backed up in the cloud, and synced in real-time.
 
-**No more data isolation between devices!** 🚀 
+**No more data isolation between devices!** 🚀
