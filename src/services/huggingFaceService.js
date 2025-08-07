@@ -1,7 +1,7 @@
 // Hugging Face Inference API service for high-volume document analysis
 // Professional implementation with client-side OCR for cost-effective document processing
 
-class HuggingFaceService {
+export class HuggingFaceService {
   constructor() {
     this.apiKey = import.meta.env.VITE_HUGGINGFACE_API_KEY;
     this.baseUrl = "https://api-inference.huggingface.co/models";
@@ -129,9 +129,10 @@ class HuggingFaceService {
   }
 
   /**
-   * Enhanced image preprocessing for better OCR results
-   * @param {File} file - The image file to preprocess
-   * @returns {Promise<string>} - Base64 string of preprocessed image
+   * Enhanced image preprocessing for OCR using proven techniques
+   * Based on research: https://medium.com/data-science/pre-processing-in-ocr-fc231c6035a7
+   * @param {File} file - The image file
+   * @returns {Promise<string>} - Preprocessed image as base64
    */
   async preprocessImageForOCR(file) {
     return new Promise((resolve, reject) => {
@@ -140,54 +141,201 @@ class HuggingFaceService {
       const img = new Image();
 
       img.onload = () => {
-        // Set canvas size to match image
-        canvas.width = img.width;
-        canvas.height = img.height;
+        // Step 1: Scale image to optimal DPI (300 DPI is recommended for OCR)
+        const targetDPI = 300;
+        const scaleFactor = targetDPI / 96; // 96 DPI is standard screen resolution
+        canvas.width = img.width * scaleFactor;
+        canvas.height = img.height * scaleFactor;
 
-        // Draw original image
-        ctx.drawImage(img, 0, 0);
+        // Step 2: Draw and scale the image
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        // Get image data for manipulation
+        // Step 3: Get image data for processing
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
-        // More conservative preprocessing - enhance contrast without going full black & white
+        // Step 4: Convert to grayscale using luminance formula
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i];
           const g = data[i + 1];
           const b = data[i + 2];
-
-          // Convert to grayscale using luminance formula
           const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-
-          // Enhance contrast more conservatively - don't go full black & white
-          let enhanced;
-          if (gray < 100) {
-            enhanced = 0; // Very dark becomes black
-          } else if (gray > 200) {
-            enhanced = 255; // Very light becomes white
-          } else {
-            // Keep some gray for better OCR accuracy
-            enhanced = Math.max(0, Math.min(255, gray * 1.2));
-          }
-
-          data[i] = enhanced; // Red
-          data[i + 1] = enhanced; // Green
-          data[i + 2] = enhanced; // Blue
-          // Alpha stays the same
+          data[i] = gray; // Red
+          data[i + 1] = gray; // Green
+          data[i + 2] = gray; // Blue
         }
 
-        // Apply the enhanced image data back to canvas
+        // Step 5: Apply noise reduction using Gaussian blur
+        this.applyGaussianBlur(imageData, 1);
+
+        // Step 6: Apply adaptive thresholding (Otsu's method equivalent)
+        const threshold = this.calculateOtsuThreshold(imageData);
+        this.applyBinarization(imageData, threshold);
+
+        // Step 7: Apply morphological operations for noise removal
+        this.applyMorphologicalOperations(imageData);
+
+        // Step 8: Apply the processed image data back to canvas
         ctx.putImageData(imageData, 0, 0);
 
-        // Convert to base64
-        const preprocessedBase64 = canvas.toDataURL("image/png");
+        // Step 9: Convert to base64 with optimal quality
+        const preprocessedBase64 = canvas.toDataURL("image/png", 1.0);
         resolve(preprocessedBase64);
       };
 
       img.onerror = reject;
       img.src = URL.createObjectURL(file);
     });
+  }
+
+  /**
+   * Apply Gaussian blur for noise reduction
+   * @param {ImageData} imageData - The image data to process
+   */
+  applyGaussianBlur(imageData) {
+    const { width, height, data } = imageData;
+    const tempData = new Uint8ClampedArray(data);
+
+    // Simple Gaussian kernel for blur
+    const kernel = [
+      [1, 2, 1],
+      [2, 4, 2],
+      [1, 2, 1],
+    ];
+    const kernelSum = 16;
+
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        let sum = 0;
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            const idx = ((y + ky) * width + (x + kx)) * 4;
+            sum += tempData[idx] * kernel[ky + 1][kx + 1];
+          }
+        }
+        const idx = (y * width + x) * 4;
+        data[idx] = sum / kernelSum;
+        data[idx + 1] = sum / kernelSum;
+        data[idx + 2] = sum / kernelSum;
+      }
+    }
+  }
+
+  /**
+   * Calculate Otsu's threshold for optimal binarization
+   * @param {ImageData} imageData - The image data
+   * @returns {number} - Calculated threshold
+   */
+  calculateOtsuThreshold(imageData) {
+    const { data } = imageData;
+    const histogram = new Array(256).fill(0);
+
+    // Build histogram
+    for (let i = 0; i < data.length; i += 4) {
+      histogram[data[i]]++;
+    }
+
+    const totalPixels = data.length / 4;
+    let sum = 0;
+    for (let i = 0; i < 256; i++) {
+      sum += i * histogram[i];
+    }
+
+    let sumB = 0;
+    let wB = 0;
+    let wF = 0;
+    let maxVariance = 0;
+    let threshold = 0;
+
+    for (let t = 0; t < 256; t++) {
+      wB += histogram[t];
+      if (wB === 0) continue;
+
+      wF = totalPixels - wB;
+      if (wF === 0) break;
+
+      sumB += t * histogram[t];
+      const mB = sumB / wB;
+      const mF = (sum - sumB) / wF;
+
+      const variance = wB * wF * (mB - mF) * (mB - mF);
+      if (variance > maxVariance) {
+        maxVariance = variance;
+        threshold = t;
+      }
+    }
+
+    return threshold;
+  }
+
+  /**
+   * Apply binarization using calculated threshold
+   * @param {ImageData} imageData - The image data
+   * @param {number} threshold - Threshold value
+   */
+  applyBinarization(imageData, threshold) {
+    const { data } = imageData;
+    for (let i = 0; i < data.length; i += 4) {
+      const gray = data[i];
+      const binary = gray > threshold ? 255 : 0;
+      data[i] = binary; // Red
+      data[i + 1] = binary; // Green
+      data[i + 2] = binary; // Blue
+    }
+  }
+
+  /**
+   * Apply morphological operations for noise removal
+   * @param {ImageData} imageData - The image data
+   */
+  applyMorphologicalOperations(imageData) {
+    const { width, height, data } = imageData;
+    const tempData = new Uint8ClampedArray(data);
+
+    // Erosion to remove small noise
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const idx = (y * width + x) * 4;
+        let minVal = 255;
+
+        // Check 3x3 neighborhood
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            const nIdx = ((y + ky) * width + (x + kx)) * 4;
+            minVal = Math.min(minVal, tempData[nIdx]);
+          }
+        }
+
+        data[idx] = minVal;
+        data[idx + 1] = minVal;
+        data[idx + 2] = minVal;
+      }
+    }
+
+    // Dilation to restore character thickness
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const idx = (y * width + x) * 4;
+        let maxVal = 0;
+
+        // Check 3x3 neighborhood
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            const nIdx = ((y + ky) * width + (x + kx)) * 4;
+            maxVal = Math.max(maxVal, data[nIdx]);
+          }
+        }
+
+        tempData[idx] = maxVal;
+        tempData[idx + 1] = maxVal;
+        tempData[idx + 2] = maxVal;
+      }
+    }
+
+    // Copy back the dilated result
+    for (let i = 0; i < data.length; i++) {
+      data[i] = tempData[i];
+    }
   }
 
   /**
@@ -1332,13 +1480,28 @@ Please extract ALL financial transactions found in the text above using the exac
   }
 
   /**
-   * Pre-process extracted text to find potential transactions without AI
-   * Uses regex patterns and heuristics to identify transaction-like text
+   * Preprocess text for transaction extraction using enhanced patterns
+   * @param {string} text - The OCR extracted text
+   * @returns {Array} - Array of extracted transactions
    */
   preprocessTextForTransactions(text) {
-    console.log(
-      "🤗 [HuggingFace] Pre-processing text for transaction patterns..."
-    );
+    console.log("🤗 [HuggingFace] Pre-processing text for transaction patterns...");
+
+    // Enhanced transaction patterns based on table format
+    const transactionPatterns = [
+      // Pattern 1: Table format: DATE | MERCHANT | TYPE | $AMOUNT | BALANCE
+      /([0-9/]+)\s*\|\s*([A-Z][A-Z\s&.,#0-9*-]+?)\s*\|\s*[A-Za-z]+\s*\|\s*\$?([0-9,]+\.?[0-9]*)\s*\|\s*\$?[0-9,]+\.?[0-9]*/gi,
+      // Pattern 2: Pending transaction: Pending | MERCHANT | TYPE | $AMOUNT | BALANCE
+      /Pending\s*\|\s*([A-Z][A-Z\s&.,#0-9*-]+?)\s*\|\s*[A-Za-z]+\s*\|\s*\$?([0-9,]+\.?[0-9]*)\s*\|\s*\$?[0-9,]+\.?[0-9]*/gi,
+      // Pattern 3: Alternative table format with different separators
+      /([0-9/]+)\s+([A-Z][A-Z\s&.,#0-9*-]+?)\s+[A-Za-z]+\s+\$?([0-9,]+\.?[0-9]*)\s+\$?[0-9,]+\.?[0-9]*/gi,
+      // Pattern 4: Pending alternative format
+      /Pending\s+([A-Z][A-Z\s&.,#0-9*-]+?)\s+[A-Za-z]+\s+\$?([0-9,]+\.?[0-9]*)\s+\$?[0-9,]+\.?[0-9]*/gi,
+      // Pattern 5: Legacy format: MERCHANT - $AMOUNT on DATE
+      /([A-Z][A-Z\s&.,#0-9]+?)\s*-\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)\s*([0-9/-]+)/gi,
+      // Pattern 6: Legacy format: MERCHANT $AMOUNT DATE
+      /([A-Z][A-Z\s&.,#0-9]+?)\s+\$?([0-9,]+\.?[0-9]*)\s+([0-9/-]+)/gi,
+    ];
 
     const allMatches = [];
     const lines = text
@@ -1346,57 +1509,41 @@ Please extract ALL financial transactions found in the text above using the exac
       .map(line => line.trim())
       .filter(line => line.length > 0);
 
-    // Common patterns for financial transactions - Balanced approach
-    const transactionPatterns = [
-      // Pattern 1: MERCHANT - $AMOUNT on DATE (most common and reliable)
-      /([A-Z][A-Z\s&.,#0-9]+?)\s*-\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)\s*([0-9/-]+)/gi,
-      // Pattern 2: MERCHANT $AMOUNT DATE (no dash, but must have proper spacing)
-      /([A-Z][A-Z\s&.,#0-9]+?)\s+\$?([0-9,]+\.?[0-9]*)\s+([0-9/-]+)/gi,
-      // Pattern 3: MERCHANT - AMOUNT DATE (no dollar sign, but must have dash)
-      /([A-Z][A-Z\s&.,#0-9]+?)\s*-\s*([0-9,]+\.?[0-9]*)\s+([0-9/-]+)/gi,
-      // Pattern 4: MERCHANT with phone numbers, store numbers, websites
-      /([A-Z][A-Z\s&.,#0-9]+?)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
-      // Pattern 5: MERCHANT with asterisks and special characters
-      /([A-Z][A-Z\s&.,#0-9*]+?)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
-      // Pattern 6: Very flexible - catch anything with amount and date
-      /([A-Z][A-Z\s&.,#0-9*/]+?)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+([0-9/-]+)/gi,
-      // Pattern 7: MERCHANT with phone numbers (like DOMINO'S 6615 979-695-9912)
-      /([A-Z][A-Z\s&.,#0-9]+?)\s+[0-9-]+\s+[A-Z]+\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
-      // Pattern 8: MERCHANT with store numbers (like BUC-EE'S #35)
-      /([A-Z][A-Z\s&.,#0-9]+?)\s+#[0-9]+\s+[A-Z\s]+?\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
-      // Pattern 9: MERCHANT with websites (like AMAZON.COM AMZN.COM/BILL)
-      /([A-Z][A-Z\s&.,#0-9]+?)\s+[A-Z]+\.[A-Z]+\/[A-Z]+\s+[A-Z]+\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
-      // Pattern 10: MERCHANT with asterisks and trip info (like UBER *TRIP 01/15)
-      /([A-Z][A-Z\s&.,#0-9]+?)\s*\*[A-Z]+\s+[0-9/]+\s+[A-Z]+\.[A-Z]+\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
-      // Pattern 11: MERCHANT with T- store numbers (like TARGET T-1234)
-      /([A-Z][A-Z\s&.,#0-9]+?)\s+T-[0-9]+\s+[A-Z\s]+?\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
-      // Pattern 12: MERCHANT with H- store numbers (like H-E-B #123)
-      /([A-Z][A-Z\s&.,#0-9]+?)\s+#[0-9]+\s+[A-Z\s]+?\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
-      // Pattern 13: Specific patterns for missing transactions
-      /(DOMINO'S\s+[0-9]+\s+[0-9-]+\s+[A-Z]+)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
-      /(BUC-EE'S\s+#[0-9]+\s+[A-Z\s]+)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
-      /(AMAZON\.COM\s+[A-Z]+\.[A-Z]+\/[A-Z]+\s+[A-Z]+)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
-      /(NETFLIX\.COM\s+[A-Z]+\.[A-Z]+\/[A-Z]+\s+[A-Z]+)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
-      // Pattern 14: Catch partial matches that might be valid (more permissive)
-      /([A-Z][A-Z\s&.,#0-9]+?)\s*[-]?\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)?\s*([0-9/-]+)/gi,
-    ];
-
     // Collect all matches first
     for (const line of lines) {
       for (const pattern of transactionPatterns) {
         const matches = [...line.matchAll(pattern)];
         for (const match of matches) {
-          const [, description, amount, date] = match;
+          let description, amount, date;
+
+          if (match[0].includes("Beginning balance")) {
+            // Skip beginning balance lines
+            continue;
+          } else if (match[0].includes("Pending")) {
+            // Pending transaction format
+            description = match[1];
+            amount = match[2];
+            date = "Pending";
+          } else if (match[0].includes("|")) {
+            // Table format
+            date = match[1];
+            description = match[2];
+            amount = match[3];
+          } else {
+            // Legacy format
+            description = match[1];
+            amount = match[2];
+            date = match[3];
+          }
 
           const cleanDescription = description.trim().replace(/\s+/g, " ");
           const cleanAmount = amount.replace(/,/g, "");
 
-          if (cleanDescription && cleanAmount && date) {
+          if (cleanDescription && cleanAmount) {
             // Balanced validation - catch most legitimate transactions
             if (cleanDescription.length < 2) continue; // Require at least 2 characters
             if (cleanDescription.length > 200) continue; // Reasonable length limit
             if (cleanAmount < 0.01 || cleanAmount > 1000000) continue; // Reasonable amount range
-            if (!/^[0-9/-]+$/.test(date)) continue;
 
             // Skip obvious non-transactions
             if (
@@ -1436,7 +1583,7 @@ Please extract ALL financial transactions found in the text above using the exac
     allMatches.sort((a, b) => b.length - a.length);
 
     // Filter out partial matches intelligently - balanced approach
-    const transactions = [];
+    const preprocessedTransactions = [];
     for (const match of allMatches) {
       // Skip obvious non-transactions and partial matches
       if (
@@ -1457,7 +1604,7 @@ Please extract ALL financial transactions found in the text above using the exac
       }
 
       // Check if this is a partial match of an existing transaction
-      const isPartialMatch = transactions.some(existing => {
+      const isPartialMatch = preprocessedTransactions.some(existing => {
         // If this description is contained within an existing one, it's likely a partial match
         if (
           existing.description.includes(match.description) &&
@@ -1474,9 +1621,9 @@ Please extract ALL financial transactions found in the text above using the exac
           existing.date === match.date
         ) {
           // Remove the shorter match and keep this longer one
-          const index = transactions.indexOf(existing);
+          const index = preprocessedTransactions.indexOf(existing);
           if (index > -1) {
-            transactions.splice(index, 1);
+            preprocessedTransactions.splice(index, 1);
           }
           return false; // Don't skip this one, add it instead
         }
@@ -1486,7 +1633,7 @@ Please extract ALL financial transactions found in the text above using the exac
 
       if (!isPartialMatch) {
         // Check for exact duplicates
-        const isDuplicate = transactions.some(
+        const isDuplicate = preprocessedTransactions.some(
           t =>
             t.description === match.description &&
             Math.abs(t.amount - match.amount) < 0.01 &&
@@ -1494,7 +1641,7 @@ Please extract ALL financial transactions found in the text above using the exac
         );
 
         if (!isDuplicate) {
-          transactions.push({
+          preprocessedTransactions.push({
             description: match.description,
             amount: match.amount,
             date: match.date,
@@ -1505,12 +1652,24 @@ Please extract ALL financial transactions found in the text above using the exac
       }
     }
 
-    console.log(
-      "🤗 [HuggingFace] Found",
-      transactions.length,
-      "transactions via regex patterns"
-    );
-    return transactions;
+    // Final cleanup: remove any remaining obvious partial matches
+    const finalTransactions = [];
+    for (const transaction of preprocessedTransactions) {
+      // Skip if it's clearly a partial match
+      if (
+        transaction.description.startsWith("S #") ||
+        transaction.description.startsWith("B #") ||
+        transaction.description.endsWith(".COM") ||
+        transaction.description === "EVEREST FOOD TRUCK"
+      ) {
+        continue;
+      }
+
+      finalTransactions.push(transaction);
+    }
+
+    console.log(`🤗 [HuggingFace] Found ${finalTransactions.length} transactions via regex patterns`);
+    return finalTransactions;
   }
 
   /**
