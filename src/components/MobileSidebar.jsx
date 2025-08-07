@@ -10,6 +10,7 @@ import {
   CloudOff,
   RefreshCw,
   Unlink,
+  TrendingUp,
 } from "lucide-react";
 import useStore from "../store";
 import firebaseSync from "../services/firebaseSync";
@@ -184,6 +185,12 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
       label: "Transactions",
       icon: FileText,
       description: "View & manage transactions",
+    },
+    {
+      id: "reports",
+      label: "Reports",
+      icon: TrendingUp,
+      description: "Generate reports",
     },
     {
       id: "settings",

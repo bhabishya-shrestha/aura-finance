@@ -28,7 +28,8 @@ const TransactionsPage = () => {
   const [selectedTransactions, setSelectedTransactions] = useState(new Set());
   const [showBulkAssignment, setShowBulkAssignment] = useState(false);
   const [showBulkYearAssignment, setShowBulkYearAssignment] = useState(false);
-  const [showBulkCategoryAssignment, setShowBulkCategoryAssignment] = useState(false);
+  const [showBulkCategoryAssignment, setShowBulkCategoryAssignment] =
+    useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -136,13 +137,21 @@ const TransactionsPage = () => {
 
   const handleBulkAccountAssignment = async selectedAccountId => {
     try {
+      // Get the account name for the selected account
+      const selectedAccount = accounts.find(
+        acc => acc.id === selectedAccountId
+      );
+      const accountName = selectedAccount
+        ? selectedAccount.name
+        : "Uncategorized Account";
+
       const updatePromises = Array.from(selectedTransactions).map(
         transactionId => {
           const transaction = transactions.find(t => t.id === transactionId);
           if (transaction) {
             return updateTransaction(transactionId, {
-              ...transaction,
               accountId: selectedAccountId,
+              accountName: accountName,
             });
           }
           return Promise.resolve();
@@ -154,12 +163,20 @@ const TransactionsPage = () => {
       setSelectedTransactions(new Set());
       await loadTransactions();
     } catch (error) {
-      // Error updating transactions
+      if (import.meta.env.DEV) {
+        console.error("Error in bulk account assignment:", error);
+      }
     }
   };
 
   const handleBulkYearAssignment = async year => {
     try {
+      if (import.meta.env.DEV) {
+        console.log(
+          `Starting bulk year assignment for ${selectedTransactions.size} transactions to year ${year}`
+        );
+      }
+
       const updatePromises = Array.from(selectedTransactions).map(
         transactionId => {
           const transaction = transactions.find(t => t.id === transactionId);
@@ -173,8 +190,7 @@ const TransactionsPage = () => {
             );
 
             return updateTransaction(transactionId, {
-              ...transaction,
-              date: newDate,
+              date: newDate.toISOString(),
             });
           }
           return Promise.resolve();
@@ -185,19 +201,30 @@ const TransactionsPage = () => {
       setShowBulkYearAssignment(false);
       setSelectedTransactions(new Set());
       await loadTransactions();
+
+      if (import.meta.env.DEV) {
+        console.log("Bulk year assignment completed successfully");
+      }
     } catch (error) {
-      // Error updating transactions
+      if (import.meta.env.DEV) {
+        console.error("Error in bulk year assignment:", error);
+      }
     }
   };
 
   const handleBulkCategoryAssignment = async selectedCategory => {
     try {
+      if (import.meta.env.DEV) {
+        console.log(
+          `Starting bulk category assignment for ${selectedTransactions.size} transactions to category ${selectedCategory}`
+        );
+      }
+
       const updatePromises = Array.from(selectedTransactions).map(
         transactionId => {
           const transaction = transactions.find(t => t.id === transactionId);
           if (transaction) {
             return updateTransaction(transactionId, {
-              ...transaction,
               category: selectedCategory,
             });
           }
@@ -209,30 +236,50 @@ const TransactionsPage = () => {
       setShowBulkCategoryAssignment(false);
       setSelectedTransactions(new Set());
       await loadTransactions();
+
+      if (import.meta.env.DEV) {
+        console.log("Bulk category assignment completed successfully");
+      }
     } catch (error) {
-      // Error updating transactions
+      if (import.meta.env.DEV) {
+        console.error("Error in bulk category assignment:", error);
+      }
     }
   };
 
-  const handleEditTransaction = (transaction) => {
+  const handleEditTransaction = transaction => {
     setEditingTransaction(transaction);
     setShowCategoryModal(true);
   };
 
-  const handleUpdateTransactionCategory = async (transactionId, newCategory) => {
+  const handleUpdateTransactionCategory = async (
+    transactionId,
+    newCategory
+  ) => {
     try {
+      if (import.meta.env.DEV) {
+        console.log(
+          `Updating transaction ${transactionId} category to ${newCategory}`
+        );
+      }
+
       const transaction = transactions.find(t => t.id === transactionId);
       if (transaction) {
         await updateTransaction(transactionId, {
-          ...transaction,
           category: newCategory,
         });
         setShowCategoryModal(false);
         setEditingTransaction(null);
         await loadTransactions();
+
+        if (import.meta.env.DEV) {
+          console.log("Transaction category updated successfully");
+        }
       }
     } catch (error) {
-      // Error updating transaction
+      if (import.meta.env.DEV) {
+        console.error("Error updating transaction category:", error);
+      }
     }
   };
 
@@ -423,8 +470,6 @@ const TransactionsPage = () => {
 
   return (
     <div className="p-4 lg:p-6 max-w-7xl mx-auto">
-
-
       {/* Mobile Search and Filters */}
       <div className="lg:hidden space-y-4 mb-6">
         {/* Search Bar */}
@@ -669,7 +714,9 @@ const TransactionsPage = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           <div className="flex items-center justify-between">
-                            <span>{transaction.category || "Uncategorized"}</span>
+                            <span>
+                              {transaction.category || "Uncategorized"}
+                            </span>
                             <button
                               onClick={() => handleEditTransaction(transaction)}
                               className="ml-2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
@@ -780,14 +827,20 @@ const TransactionsPage = () => {
                 Transaction: {editingTransaction.description}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Current Category: {editingTransaction.category || "Uncategorized"}
+                Current Category:{" "}
+                {editingTransaction.category || "Uncategorized"}
               </p>
             </div>
             <div className="space-y-2 mb-6">
               {CATEGORIES.map(category => (
                 <button
                   key={category}
-                  onClick={() => handleUpdateTransactionCategory(editingTransaction.id, category)}
+                  onClick={() =>
+                    handleUpdateTransactionCategory(
+                      editingTransaction.id,
+                      category
+                    )
+                  }
                   className="w-full p-3 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
                   <div className="font-medium text-gray-900 dark:text-white">

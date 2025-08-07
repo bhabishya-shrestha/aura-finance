@@ -269,10 +269,27 @@ class FirebaseService {
     }
 
     try {
-      await deleteDoc(doc(db, "transactions", transactionId));
+      // Check if the transaction exists and belongs to the current user
+      const transactionDoc = doc(db, "transactions", transactionId);
+      const transactionSnapshot = await getDoc(transactionDoc);
+      
+      if (!transactionSnapshot.exists()) {
+        return { success: true }; // Transaction doesn't exist, consider it deleted
+      }
+      
+      const transactionData = transactionSnapshot.data();
+      if (transactionData.userId !== this.currentUser.uid) {
+        return { success: false, error: "Transaction does not belong to current user" };
+      }
+
+      await deleteDoc(transactionDoc);
       return { success: true };
     } catch (error) {
       console.error("Delete transaction error:", error);
+      // Check if it's a permissions error
+      if (error.code === 'permission-denied' || error.message.includes('permission')) {
+        return { success: false, error: "Insufficient permissions to delete transaction" };
+      }
       return { success: false, error: error.message };
     }
   }
@@ -353,6 +370,22 @@ class FirebaseService {
     }
 
     try {
+      // Check if the account exists and belongs to the current user
+      const accountDoc = doc(db, "accounts", accountId);
+      const accountSnapshot = await getDoc(accountDoc);
+
+      if (!accountSnapshot.exists()) {
+        return { success: true }; // Account doesn't exist, consider it deleted
+      }
+
+      const accountData = accountSnapshot.data();
+      if (accountData.userId !== this.currentUser.uid) {
+        return {
+          success: false,
+          error: "Account does not belong to current user",
+        };
+      }
+
       // First delete all transactions for this account
       const transactionsQuery = query(
         collection(db, "transactions"),
@@ -367,11 +400,21 @@ class FirebaseService {
       await Promise.all(deletePromises);
 
       // Then delete the account
-      await deleteDoc(doc(db, "accounts", accountId));
+      await deleteDoc(accountDoc);
 
       return { success: true };
     } catch (error) {
       console.error("Delete account error:", error);
+      // Check if it's a permissions error
+      if (
+        error.code === "permission-denied" ||
+        error.message.includes("permission")
+      ) {
+        return {
+          success: false,
+          error: "Insufficient permissions to delete account",
+        };
+      }
       return { success: false, error: error.message };
     }
   }

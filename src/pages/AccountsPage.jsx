@@ -18,6 +18,7 @@ const AccountsPage = () => {
     accounts,
     getAccountBalance,
     getTransactionsByAccount,
+    calculateAccountStats,
     addAccount,
     updateAccountBalance,
     deleteAccount,
@@ -81,32 +82,6 @@ const AccountsPage = () => {
       default:
         return "bg-gray-50 dark:bg-gray-700";
     }
-  };
-
-  const getAccountTransactions = accountId => {
-    return getTransactionsByAccount(accountId).slice(0, 5); // Last 5 transactions
-  };
-
-  const calculateAccountStats = accountId => {
-    const transactions = getTransactionsByAccount(accountId);
-    const recentTransactions = transactions.slice(0, 30); // Last 30 days
-
-    const income = recentTransactions
-      .filter(t => t.amount > 0)
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const expenses = recentTransactions
-      .filter(t => t.amount < 0)
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-    const netFlow = income - expenses;
-
-    return {
-      income,
-      expenses,
-      netFlow,
-      transactionCount: transactions.length,
-    };
   };
 
   const handleAddAccount = async () => {
@@ -322,48 +297,50 @@ const AccountsPage = () => {
               <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
                 Recent Transactions
               </h4>
-              {getAccountTransactions(account.id).length > 0 ? (
+              {getTransactionsByAccount(account.id).slice(0, 5).length > 0 ? (
                 <div className="space-y-2">
-                  {getAccountTransactions(account.id).map(transaction => (
-                    <div
-                      key={transaction.id}
-                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`p-1 rounded ${
+                  {getTransactionsByAccount(account.id)
+                    .slice(0, 5)
+                    .map(transaction => (
+                      <div
+                        key={transaction.id}
+                        className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`p-1 rounded ${
+                              transaction.amount > 0
+                                ? "bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400"
+                                : "bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+                            }`}
+                          >
+                            {transaction.amount > 0 ? (
+                              <TrendingUp className="w-3 h-3" />
+                            ) : (
+                              <TrendingDown className="w-3 h-3" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-gray-900 dark:text-white truncate max-w-32">
+                              {transaction.description}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {new Date(transaction.date).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <p
+                          className={`text-xs font-semibold ${
                             transaction.amount > 0
-                              ? "bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400"
-                              : "bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+                              ? "text-green-600 dark:text-green-400"
+                              : "text-red-600 dark:text-red-400"
                           }`}
                         >
-                          {transaction.amount > 0 ? (
-                            <TrendingUp className="w-3 h-3" />
-                          ) : (
-                            <TrendingDown className="w-3 h-3" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-gray-900 dark:text-white truncate max-w-32">
-                            {transaction.description}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {new Date(transaction.date).toLocaleDateString()}
-                          </p>
-                        </div>
+                          {transaction.amount > 0 ? "+" : ""}
+                          {formatCurrency(transaction.amount)}
+                        </p>
                       </div>
-                      <p
-                        className={`text-xs font-semibold ${
-                          transaction.amount > 0
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      >
-                        {transaction.amount > 0 ? "+" : ""}
-                        {formatCurrency(transaction.amount)}
-                      </p>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               ) : (
                 <div className="text-center py-4 text-gray-500 dark:text-gray-400">
@@ -407,7 +384,7 @@ const AccountsPage = () => {
   const DesktopAccountCard = ({ account }) => {
     const balance = getAccountBalance(account.id);
     const stats = calculateAccountStats(account.id);
-    const transactions = getAccountTransactions(account.id);
+    const transactions = getTransactionsByAccount(account.id).slice(0, 5); // Last 5 transactions
     const isSelected = selectedAccount?.id === account.id;
 
     return (
@@ -644,8 +621,6 @@ const AccountsPage = () => {
 
   return (
     <div className="w-full h-full p-4 sm:p-6 lg:p-8 overflow-x-hidden">
-
-
       {/* Mobile Add Account Button */}
       <div className="lg:hidden mb-6">
         <button

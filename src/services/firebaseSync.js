@@ -106,15 +106,15 @@ class FirebaseSyncService {
       const localItem = localMap.get(id);
       const remoteItem = remoteMap.get(id);
 
-      if (!localItem) {
+      if (!localItem && remoteItem) {
         // Remote item doesn't exist locally - add it
         mergedData.push(remoteItem);
         await this.addToLocal(remoteItem, dataType);
-      } else if (!remoteItem) {
+      } else if (localItem && !remoteItem) {
         // Local item doesn't exist remotely - upload it
         mergedData.push(localItem);
         await this.uploadToFirebase(localItem, dataType);
-      } else {
+      } else if (localItem && remoteItem) {
         // Both exist - resolve conflict (use most recent)
         const localUpdated = new Date(
           localItem.updatedAt || localItem.createdAt
@@ -131,6 +131,7 @@ class FirebaseSyncService {
           await this.updateLocal(remoteItem, dataType);
         }
       }
+      // If neither local nor remote item exists, it was deleted on both sides
     }
 
     return mergedData;
@@ -178,6 +179,43 @@ class FirebaseSyncService {
       }
     } catch (error) {
       console.error(`Error uploading ${dataType} to Firebase:`, error);
+    }
+  }
+
+  /**
+   * Delete item from Firebase
+   */
+  async deleteFromFirebase(itemId, dataType) {
+    try {
+      if (dataType === "transactions") {
+        const result = await firebaseService.deleteTransaction(itemId);
+        if (!result.success) {
+          throw new Error(result.error || "Failed to delete transaction from Firebase");
+        }
+      } else if (dataType === "accounts") {
+        const result = await firebaseService.deleteAccount(itemId);
+        if (!result.success) {
+          throw new Error(result.error || "Failed to delete account from Firebase");
+        }
+      }
+    } catch (error) {
+      console.error(`Error deleting ${dataType} from Firebase:`, error);
+      // Don't re-throw - we want local operations to succeed even if Firebase fails
+    }
+  }
+
+  /**
+   * Delete item from local IndexedDB
+   */
+  async deleteFromLocal(itemId, dataType) {
+    try {
+      if (dataType === "transactions") {
+        await db.transactions.delete(itemId);
+      } else if (dataType === "accounts") {
+        await db.accounts.delete(itemId);
+      }
+    } catch (error) {
+      console.error(`Error deleting ${dataType} from local DB:`, error);
     }
   }
 

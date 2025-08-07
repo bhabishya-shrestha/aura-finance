@@ -64,8 +64,8 @@ const RecentTransactions = ({ onPageChange }) => {
   const handleSave = async transactionId => {
     try {
       await updateTransaction(transactionId, {
-        ...editData,
-        date: new Date(editData.date),
+        description: editData.description,
+        date: new Date(editData.date).toISOString(),
         amount: parseFloat(editData.amount),
       });
       setEditingId(null);
