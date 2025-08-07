@@ -240,12 +240,12 @@ const MobileHeader = ({ onMenuClick }) => {
 
                 {/* Regular Notifications */}
                 {notifications.length === 0 && !lastUpdateNotification ? (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <div key="no-notifications" className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No notifications</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div key="notifications-list" className="space-y-2">
                     {notifications.slice(0, 10).map(notification => (
                       <div
                         key={notification.id}

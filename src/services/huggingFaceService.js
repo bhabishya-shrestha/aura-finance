@@ -8,8 +8,8 @@ class HuggingFaceService {
     this.apiKey = import.meta.env.VITE_HUGGINGFACE_API_KEY;
     this.baseUrl = "https://api-inference.huggingface.co/models";
 
-    // Use the verified working model for text analysis
-    this.uniformModel = "facebook/bart-large-cnn";
+    // Use a more appropriate model for text generation
+    this.uniformModel = "gpt2"; // Fallback to GPT-2 for text generation
 
     // Rate limiting configuration for free tier
     this.rateLimit = {
@@ -229,11 +229,7 @@ class HuggingFaceService {
   async analyzeExtractedText(text) {
     await this.checkRateLimit();
 
-    // // console.log("[analyzeExtractedText] Input text:", text);
-    // // console.log(
-    //   "Hugging Face: Making API request with key:",
-    //   this.apiKey.substring(0, 10) + "..."
-    // );
+    console.log("[analyzeExtractedText] Starting analysis with text length:", text.length);
 
     // Enhanced prompt specifically designed for financial transaction extraction
     const prompt = `Extract financial transactions from this bank statement text. 
@@ -247,82 +243,87 @@ Instructions:
 Expected output format:
 Transaction 1: [DESCRIPTION] - $[AMOUNT] on [DATE]
 Transaction 2: [DESCRIPTION] - $[AMOUNT] on [DATE]
-Payment 1: [DESCRIPTION] - $[AMOUNT] on [DATE]
-Payment 2: [DESCRIPTION] - $[AMOUNT] on [DATE]
 
 Document text to analyze:
-${text}
+${text.substring(0, 1000)} // Limit text length to prevent timeouts
 
 Please extract all financial transactions found in the text above using the exact format shown.`;
 
-    const response = await fetch(`${this.baseUrl}/${this.uniformModel}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          max_length: 1500,
-          min_length: 100,
-          do_sample: false,
-          num_beams: 5,
-          early_stopping: true,
-          temperature: 0.1, // Lower temperature for more consistent output
-          top_p: 0.9,
-          repetition_penalty: 1.2,
+    try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      const response = await fetch(`${this.baseUrl}/${this.uniformModel}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
         },
-      }),
-    });
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            max_length: 500, // Reduced for faster processing
+            min_length: 50,
+            do_sample: false,
+            num_beams: 3, // Reduced for faster processing
+            early_stopping: true,
+            temperature: 0.1,
+            top_p: 0.9,
+            repetition_penalty: 1.2,
+          },
+        }),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      // console.error("Hugging Face API Error Response:", {
-      //   status: response.status,
-      //   statusText: response.statusText,
-      //   errorData,
-      // });
+      clearTimeout(timeoutId);
 
-      if (response.status === 404) {
-        throw new Error(
-          "Hugging Face model not available. Please switch to Google Gemini API in settings."
-        );
-      } else if (response.status === 429) {
-        throw new Error("Rate limit exceeded. Please try again later.");
-      } else {
-        throw new Error(
-          `Hugging Face API error: ${response.status} ${response.statusText}`
-        );
+      if (!response.ok) {
+        console.error("Hugging Face API Error Response:", {
+          status: response.status,
+          statusText: response.statusText,
+        });
+
+        if (response.status === 404) {
+          throw new Error(
+            "Hugging Face model not available. Please switch to Google Gemini API in settings."
+          );
+        } else if (response.status === 429) {
+          throw new Error("Rate limit exceeded. Please try again later.");
+        } else {
+          throw new Error(
+            `Hugging Face API error: ${response.status} ${response.statusText}`
+          );
+        }
       }
+
+      const data = await response.json();
+      console.log("[analyzeExtractedText] API response received");
+
+      // Extract the generated text from the response
+      const generatedText = data[0]?.generated_text || "";
+      console.log("[analyzeExtractedText] Generated text length:", generatedText.length);
+
+      // Extract transactions from the generated text
+      const extractedTransactions = this.extractTransactionsFromAnalysis(generatedText);
+      console.log("[analyzeExtractedText] Extracted transactions count:", extractedTransactions.length);
+
+      return {
+        success: true,
+        analysis: generatedText,
+        transactions: extractedTransactions,
+        model: this.uniformModel,
+        provider: "huggingface",
+        source: "Hugging Face Analysis",
+        documentType: "Financial Document",
+        notes: "Document analyzed using Hugging Face. Please review and adjust transaction details.",
+      };
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new Error("Request timed out. Please try again or switch to Google Gemini API.");
+      }
+      throw error;
     }
-
-    const data = await response.json();
-    // // console.log("[analyzeExtractedText] API response data:", data);
-
-    // Extract the generated text from the response
-    const generatedText =
-      data[0]?.summary_text || data[0]?.generated_text || "";
-    // // console.log("[analyzeExtractedText] Generated text:", generatedText);
-
-    // Extract transactions from the generated text
-    const extractedTransactions =
-      this.extractTransactionsFromAnalysis(generatedText);
-    // // console.log(
-    //   "[analyzeExtractedText] Extracted transactions:",
-    //   extractedTransactions
-    // );
-
-    return {
-      success: true,
-      analysis: generatedText,
-      transactions: extractedTransactions,
-      model: this.uniformModel,
-      provider: "huggingface",
-      source: "Hugging Face Analysis",
-      documentType: "Financial Document",
-      notes:
-        "Document analyzed using Hugging Face BART-CNN. Please review and adjust transaction details.",
-    };
   }
 
   /**

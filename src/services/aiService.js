@@ -198,21 +198,44 @@ class AIService {
         console.warn("Failed to record API usage, continuing with analysis:", error.message);
       }
 
-      // Perform the analysis
-      const result = await this.providers[this.currentProvider].service.analyzeImage(file);
+      // Perform the analysis with fallback
+      try {
+        const result = await this.providers[this.currentProvider].service.analyzeImage(file);
 
-      // Add server-side usage info to result
-      if (result) {
-        result.serverUsageValidation = {
-          provider: this.currentProvider,
-          currentUsage: validation.current_usage + 1, // +1 for this request
-          maxRequests: validation.max_requests,
-          remainingRequests: validation.remaining_requests - 1,
-          approachingLimit: validation.approachingLimit,
-        };
+        // Add server-side usage info to result
+        if (result) {
+          result.serverUsageValidation = {
+            provider: this.currentProvider,
+            currentUsage: validation.current_usage + 1, // +1 for this request
+            maxRequests: validation.max_requests,
+            remainingRequests: validation.remaining_requests - 1,
+            approachingLimit: validation.approachingLimit,
+          };
+        }
+
+        return result;
+      } catch (error) {
+        console.warn(`Primary provider (${this.currentProvider}) failed:`, error.message);
+        
+        // Try fallback to Gemini if Hugging Face fails
+        if (this.currentProvider === "huggingface" && this.providers.gemini.service.isProviderAvailable()) {
+          console.log("🔄 Falling back to Gemini API...");
+          const fallbackResult = await this.providers.gemini.service.analyzeImage(file);
+          
+          if (fallbackResult) {
+            fallbackResult.serverUsageValidation = {
+              provider: "gemini",
+              fallbackUsed: true,
+              originalProvider: this.currentProvider,
+              fallbackReason: error.message,
+            };
+          }
+          
+          return fallbackResult;
+        }
+        
+        throw error;
       }
-
-      return result;
     } catch (error) {
       console.error("AI analysis failed:", error);
       throw error;
