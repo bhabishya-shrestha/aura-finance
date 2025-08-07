@@ -153,8 +153,23 @@ class FirebaseService {
 
   // Transaction management
   async addTransaction(transactionData) {
+    // Check if user is authenticated either directly or through auth bridge
     if (!this.currentUser) {
-      return { success: false, error: "User not authenticated" };
+      // Try to get user from auth bridge
+      try {
+        const { default: authBridge } = await import("./authBridge.js");
+        const userInfo = await authBridge.getUserSyncInfo();
+        if (!userInfo?.firebaseUser) {
+          return {
+            success: false,
+            error: "User not authenticated with Firebase",
+          };
+        }
+        // Set the current user from auth bridge
+        this.currentUser = userInfo.firebaseUser;
+      } catch (error) {
+        return { success: false, error: "User not authenticated" };
+      }
     }
 
     try {
@@ -181,8 +196,23 @@ class FirebaseService {
   }
 
   async getTransactionsSimple() {
+    // Check if user is authenticated either directly or through auth bridge
     if (!this.currentUser) {
-      return { success: false, error: "User not authenticated" };
+      // Try to get user from auth bridge
+      try {
+        const { default: authBridge } = await import("./authBridge.js");
+        const userInfo = await authBridge.getUserSyncInfo();
+        if (!userInfo?.firebaseUser) {
+          return {
+            success: false,
+            error: "User not authenticated with Firebase",
+          };
+        }
+        // Set the current user from auth bridge
+        this.currentUser = userInfo.firebaseUser;
+      } catch (error) {
+        return { success: false, error: "User not authenticated" };
+      }
     }
 
     try {
@@ -206,8 +236,23 @@ class FirebaseService {
   }
 
   async getTransactions(filters = {}) {
+    // Check if user is authenticated either directly or through auth bridge
     if (!this.currentUser) {
-      return { success: false, error: "User not authenticated" };
+      // Try to get user from auth bridge
+      try {
+        const { default: authBridge } = await import("./authBridge.js");
+        const userInfo = await authBridge.getUserSyncInfo();
+        if (!userInfo?.firebaseUser) {
+          return {
+            success: false,
+            error: "User not authenticated with Firebase",
+          };
+        }
+        // Set the current user from auth bridge
+        this.currentUser = userInfo.firebaseUser;
+      } catch (error) {
+        return { success: false, error: "User not authenticated" };
+      }
     }
 
     try {
@@ -244,8 +289,23 @@ class FirebaseService {
   }
 
   async updateTransaction(transactionId, updates) {
+    // Check if user is authenticated either directly or through auth bridge
     if (!this.currentUser) {
-      return { success: false, error: "User not authenticated" };
+      // Try to get user from auth bridge
+      try {
+        const { default: authBridge } = await import("./authBridge.js");
+        const userInfo = await authBridge.getUserSyncInfo();
+        if (!userInfo?.firebaseUser) {
+          return {
+            success: false,
+            error: "User not authenticated with Firebase",
+          };
+        }
+        // Set the current user from auth bridge
+        this.currentUser = userInfo.firebaseUser;
+      } catch (error) {
+        return { success: false, error: "User not authenticated" };
+      }
     }
 
     try {
@@ -263,8 +323,23 @@ class FirebaseService {
   }
 
   async deleteTransaction(transactionId) {
+    // Check if user is authenticated either directly or through auth bridge
     if (!this.currentUser) {
-      return { success: false, error: "User not authenticated" };
+      // Try to get user from auth bridge
+      try {
+        const { default: authBridge } = await import("./authBridge.js");
+        const userInfo = await authBridge.getUserSyncInfo();
+        if (!userInfo?.firebaseUser) {
+          return {
+            success: false,
+            error: "User not authenticated with Firebase",
+          };
+        }
+        // Set the current user from auth bridge
+        this.currentUser = userInfo.firebaseUser;
+      } catch (error) {
+        return { success: false, error: "User not authenticated" };
+      }
     }
 
     try {
@@ -329,8 +404,23 @@ class FirebaseService {
   }
 
   async getAccounts() {
+    // Check if user is authenticated either directly or through auth bridge
     if (!this.currentUser) {
-      return { success: false, error: "User not authenticated" };
+      // Try to get user from auth bridge
+      try {
+        const { default: authBridge } = await import("./authBridge.js");
+        const userInfo = await authBridge.getUserSyncInfo();
+        if (!userInfo?.firebaseUser) {
+          return {
+            success: false,
+            error: "User not authenticated with Firebase",
+          };
+        }
+        // Set the current user from auth bridge
+        this.currentUser = userInfo.firebaseUser;
+      } catch (error) {
+        return { success: false, error: "User not authenticated" };
+      }
     }
 
     try {
@@ -373,8 +463,23 @@ class FirebaseService {
   }
 
   async deleteAccount(accountId) {
+    // Check if user is authenticated either directly or through auth bridge
     if (!this.currentUser) {
-      return { success: false, error: "User not authenticated" };
+      // Try to get user from auth bridge
+      try {
+        const { default: authBridge } = await import("./authBridge.js");
+        const userInfo = await authBridge.getUserSyncInfo();
+        if (!userInfo?.firebaseUser) {
+          return {
+            success: false,
+            error: "User not authenticated with Firebase",
+          };
+        }
+        // Set the current user from auth bridge
+        this.currentUser = userInfo.firebaseUser;
+      } catch (error) {
+        return { success: false, error: "User not authenticated" };
+      }
     }
 
     try {
