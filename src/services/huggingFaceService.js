@@ -8,7 +8,7 @@ class HuggingFaceService {
     this.apiKey = import.meta.env.VITE_HUGGINGFACE_API_KEY;
     this.baseUrl = "https://api-inference.huggingface.co/models";
 
-    // Use the verified working model for text analysis
+    // Use BART-CNN model which is working for free tier
     this.uniformModel = "facebook/bart-large-cnn";
 
     // Rate limiting configuration for free tier
@@ -306,7 +306,7 @@ Please extract all financial transactions found in the text above using the exac
 
         if (response.status === 404) {
           throw new Error(
-            "Hugging Face model not available. Please switch to Google Gemini API in settings."
+            "Hugging Face model not available. Please check your API key or try a different model."
           );
         } else if (response.status === 429) {
           throw new Error("Rate limit exceeded. Please try again later.");
@@ -344,7 +344,7 @@ Please extract all financial transactions found in the text above using the exac
     } catch (error) {
       if (error.name === 'AbortError') {
         console.log("🤗 [HuggingFace] ❌ Request timed out after 30 seconds");
-        throw new Error("Request timed out. Please try again or switch to Google Gemini API.");
+        throw new Error("Request timed out. Please try again.");
       }
       console.error("🤗 [HuggingFace] ❌ analyzeExtractedText failed:", error);
       throw error;

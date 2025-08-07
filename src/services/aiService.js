@@ -189,14 +189,12 @@ class AIService {
       // Check provider availability
       console.log("🤖 [AI Service] Checking provider availability...");
       const huggingFaceAvailable = huggingFaceService.isProviderAvailable();
-      const geminiAvailable = geminiService.isProviderAvailable();
       console.log("🤖 [AI Service] Hugging Face available:", huggingFaceAvailable);
-      console.log("🤖 [AI Service] Gemini available:", geminiAvailable);
 
       let result = null;
 
-      // Try Hugging Face first
-      if (provider.name === "Hugging Face Inference API" && huggingFaceService.isProviderAvailable()) {
+      // Use the selected provider only (no fallback)
+      if (provider.name === "Hugging Face Inference API" && huggingFaceAvailable) {
         console.log("🤖 [AI Service] Attempting Hugging Face analysis...");
         try {
           result = await huggingFaceService.analyzeImage(file);
@@ -213,44 +211,12 @@ class AIService {
           return result;
         } catch (error) {
           console.log("🤖 [AI Service] ❌ Hugging Face failed:", error.message);
-          
-          // Try Gemini as fallback
-          if (geminiService.isProviderAvailable()) {
-            console.log("🤖 [AI Service] 🔄 Falling back to Gemini...");
-            try {
-              result = await geminiService.analyzeImage(file);
-              console.log("🤖 [AI Service] ✅ Gemini fallback successful");
-              
-              // Increment API usage
-              try {
-                await apiUsageService.incrementApiUsage("gemini");
-                console.log("🤖 [AI Service] ✅ Gemini API usage incremented");
-              } catch (error) {
-                console.log("🤖 [AI Service] ⚠️ Gemini API usage increment failed:", error.message);
-              }
-              
-              return {
-                ...result,
-                serverUsageValidation: {
-                  fallbackUsed: true,
-                  originalProvider: "huggingface",
-                  fallbackProvider: "gemini",
-                  originalError: error.message
-                }
-              };
-            } catch (geminiError) {
-              console.log("🤖 [AI Service] ❌ Gemini fallback also failed:", geminiError.message);
-              throw new Error(`Both Hugging Face and Gemini failed. Hugging Face: ${error.message}, Gemini: ${geminiError.message}`);
-            }
-          } else {
-            console.log("🤖 [AI Service] ❌ No fallback available");
-            throw error;
-          }
+          throw error; // No fallback, just throw the error
         }
       }
 
       // Try Gemini if it's the primary provider
-      if (provider.name === "Gemini API" && geminiService.isProviderAvailable()) {
+      if (provider.name === "Gemini API") {
         console.log("🤖 [AI Service] Attempting Gemini analysis...");
         try {
           result = await geminiService.analyzeImage(file);
@@ -267,39 +233,7 @@ class AIService {
           return result;
         } catch (error) {
           console.log("🤖 [AI Service] ❌ Gemini failed:", error.message);
-          
-          // Try Hugging Face as fallback
-          if (huggingFaceService.isProviderAvailable()) {
-            console.log("🤖 [AI Service] 🔄 Falling back to Hugging Face...");
-            try {
-              result = await huggingFaceService.analyzeImage(file);
-              console.log("🤖 [AI Service] ✅ Hugging Face fallback successful");
-              
-              // Increment API usage
-              try {
-                await apiUsageService.incrementApiUsage("huggingface");
-                console.log("🤖 [AI Service] ✅ Hugging Face API usage incremented");
-              } catch (error) {
-                console.log("🤖 [AI Service] ⚠️ Hugging Face API usage increment failed:", error.message);
-              }
-              
-              return {
-                ...result,
-                serverUsageValidation: {
-                  fallbackUsed: true,
-                  originalProvider: "gemini",
-                  fallbackProvider: "huggingface",
-                  originalError: error.message
-                }
-              };
-            } catch (huggingFaceError) {
-              console.log("🤖 [AI Service] ❌ Hugging Face fallback also failed:", huggingFaceError.message);
-              throw new Error(`Both Gemini and Hugging Face failed. Gemini: ${error.message}, Hugging Face: ${huggingFaceError.message}`);
-            }
-          } else {
-            console.log("🤖 [AI Service] ❌ No fallback available");
-            throw error;
-          }
+          throw error; // No fallback, just throw the error
         }
       }
 
