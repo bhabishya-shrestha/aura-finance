@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Search,
-  Download,
   TrendingUp,
   TrendingDown,
   FileText,
@@ -10,13 +9,10 @@ import {
   SortAsc,
   SortDesc,
   X,
-  Tag,
   Edit,
   Trash2,
-  MoreVertical,
 } from "lucide-react";
 import useStore from "../store";
-import AddTransaction from "../components/AddTransaction";
 import { CATEGORIES } from "../utils/statementParser";
 
 const TransactionsPage = () => {
@@ -43,7 +39,6 @@ const TransactionsPage = () => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
-  const [showMobileBatchActions, setShowMobileBatchActions] = useState(false);
 
   useEffect(() => {
     loadTransactions();
@@ -317,7 +312,6 @@ const TransactionsPage = () => {
 
       await deleteTransactions(Array.from(selectedTransactions));
       setSelectedTransactions(new Set());
-      setShowMobileBatchActions(false);
       await loadTransactions();
 
       if (import.meta.env.DEV) {
@@ -350,44 +344,6 @@ const TransactionsPage = () => {
       setSortBy(field);
       setSortOrder("desc");
     }
-  };
-
-  const handleExport = () => {
-    // Create CSV content
-    const headers = [
-      "Date",
-      "Description",
-      "Category",
-      "Account",
-      "Amount",
-      "Type",
-    ];
-    const csvContent = [
-      headers.join(","),
-      ...(Array.isArray(filteredTransactions)
-        ? filteredTransactions.map(transaction =>
-            [
-              formatDate(transaction.date),
-              `"${transaction.description || ""}"`,
-              transaction.category?.name || "Unknown",
-              transaction.account?.name || "Uncategorized Account",
-              transaction.amount,
-              transaction.type || "expense",
-            ].join(",")
-          )
-        : []),
-    ].join("\n");
-
-    // Create and download file
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `transactions-${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
   };
 
   // Mobile-specific components
@@ -1040,7 +996,8 @@ const TransactionsPage = () => {
                   {transactionToDelete.description || "No description"}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {formatCurrency(transactionToDelete.amount)} • {formatDate(transactionToDelete.date)}
+                  {formatCurrency(transactionToDelete.amount)} •{" "}
+                  {formatDate(transactionToDelete.date)}
                 </p>
               </div>
             </div>

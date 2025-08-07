@@ -5,7 +5,6 @@ import {
   DollarSign,
   PieChart,
   BarChart3,
-  Download,
   CreditCard,
   PiggyBank,
   ShoppingCart,
@@ -100,38 +99,7 @@ const ReportsPage = () => {
     return icons[categoryName] || DollarSign;
   };
 
-  const handleExportReport = () => {
-    const exportData = {
-      period: selectedPeriod,
-      report: selectedReport,
-      generatedAt: new Date().toISOString(),
-      data: {
-        overview: {
-          totalIncome: reportData.incomeVsSpending.income || 0,
-          totalExpenses: reportData.incomeVsSpending.spending || 0,
-          netSavings: reportData.incomeVsSpending.net || 0,
-          categoryBreakdown: reportData.categoryBreakdown,
-          topCategories: reportData.topCategories,
-          avgDailySpending: reportData.avgDailySpending,
-        },
-        monthlyTrends: reportData.monthlyTrends,
-        spendingTrends: reportData.spendingTrends,
-      },
-    };
 
-    // Create and download JSON file
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: "application/json",
-    });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `financial-report-${selectedPeriod}-${new Date().toISOString().split("T")[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-  };
 
   const getPeriodLabel = () => {
     const labels = {

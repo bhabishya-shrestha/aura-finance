@@ -1,17 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Bell, Menu, Sun, Moon, X } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+// import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import useStore from "../store";
 import SearchBar from "./SearchBar";
 import auraLogo from "../assets/aura-finance.png";
 
-const Header = ({
-  onMenuToggle,
-  showMenuButton = false,
-  onCloseMobileSidebar,
-}) => {
-  const { user, logout } = useAuth();
+const Header = ({ onMenuToggle, showMenuButton = false }) => {
+  // const { } = useAuth();
   const { toggleTheme, currentTheme } = useTheme();
   const {
     notifications,
@@ -74,8 +70,6 @@ const Header = ({
   const toggleNotifications = () => {
     setShowNotifications(!showNotifications);
   };
-
-
 
   return (
     <header

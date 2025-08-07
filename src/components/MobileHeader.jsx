@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Bell, Menu, ChevronDown, ChevronUp } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+// import { useAuth } from "../contexts/AuthContext";
 import useStore from "../store";
 
-const MobileHeader = ({ onMenuClick, onPageChange }) => {
-  const { user, signOut } = useAuth();
+const MobileHeader = ({ onMenuClick }) => {
+  // const { } = useAuth();
   const {
     notifications,
     unreadCount,

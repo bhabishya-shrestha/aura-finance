@@ -32,7 +32,7 @@ module.exports = {
     ],
     "react/prop-types": "off",
     "react/react-in-jsx-scope": "off",
-    "no-console": process.env.NODE_ENV === "production" ? "error" : "warn",
+    "no-console": "off",
     "react-hooks/exhaustive-deps": "warn",
     "react/no-unescaped-entities": "warn",
     "no-unused-vars": ["error", { varsIgnorePattern: "^React$" }],

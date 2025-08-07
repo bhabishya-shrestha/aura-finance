@@ -4,6 +4,8 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
+  useNavigate,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -56,6 +58,8 @@ const ProtectedRoute = ({ children }) => {
 
 // Main App Layout Component
 const AppLayout = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [triggerImport, setTriggerImport] = useState(false);
@@ -161,6 +165,22 @@ const AppLayout = () => {
     }
   }, [currentPage, isMobile, updateViewportHeight]);
 
+  // Sync currentPage with URL pathname
+  useEffect(() => {
+    const pathname = location.pathname;
+    const pageFromUrl = pathname.substring(1); // Remove leading slash
+    if (pageFromUrl && pageFromUrl !== currentPage) {
+      setCurrentPage(pageFromUrl);
+    }
+  }, [location.pathname, currentPage]);
+
+  // Update URL when currentPage changes
+  useEffect(() => {
+    if (location.pathname !== `/${currentPage}`) {
+      navigate(`/${currentPage}`, { replace: true });
+    }
+  }, [currentPage, navigate, location.pathname]);
+
   // Save current page to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("aura-finance-currentPage", currentPage);
@@ -176,7 +196,7 @@ const AppLayout = () => {
 
   const handleImportClick = () => {
     // Navigate to dashboard and trigger import modal
-    setCurrentPage("dashboard");
+    navigate("/dashboard");
     setTriggerImport(true);
     // Reset trigger after a short delay
     setTimeout(() => setTriggerImport(false), 100);
@@ -189,7 +209,10 @@ const AppLayout = () => {
       {/* Sidebar - Hidden on mobile */}
       <div className="hidden lg:block">
         <Sidebar
-          onPageChange={setCurrentPage}
+          onPageChange={page => {
+            setCurrentPage(page);
+            navigate(`/${page}`);
+          }}
           currentPage={currentPage}
           isMobileOpen={showMobileSidebar}
           onMobileToggle={toggleMobileSidebar}
@@ -201,7 +224,10 @@ const AppLayout = () => {
         isOpen={showMobileSidebar}
         onClose={closeMobileSidebar}
         currentPage={currentPage}
-        onPageChange={setCurrentPage}
+        onPageChange={page => {
+          setCurrentPage(page);
+          navigate(`/${page}`);
+        }}
       />
 
       {/* Main Content */}
@@ -221,7 +247,10 @@ const AppLayout = () => {
         <div className="lg:hidden">
           <MobileHeader
             onMenuClick={toggleMobileSidebar}
-            onPageChange={setCurrentPage}
+            onPageChange={page => {
+              setCurrentPage(page);
+              navigate(`/${page}`);
+            }}
           />
         </div>
 
@@ -232,7 +261,10 @@ const AppLayout = () => {
           <div className="w-full h-full">
             {currentPage === "dashboard" && (
               <DashboardPage
-                onPageChange={setCurrentPage}
+                onPageChange={page => {
+                  setCurrentPage(page);
+                  navigate(`/${page}`);
+                }}
                 triggerImport={triggerImport}
                 onImportClick={handleImportClick}
               />
@@ -242,7 +274,12 @@ const AppLayout = () => {
             {currentPage === "transactions" && <TransactionsPage />}
             {currentPage === "reports" && <ReportsPage />}
             {currentPage === "settings" && (
-              <SettingsPage onPageChange={setCurrentPage} />
+              <SettingsPage
+                onPageChange={page => {
+                  setCurrentPage(page);
+                  navigate(`/${page}`);
+                }}
+              />
             )}
           </div>
         </main>
@@ -250,7 +287,10 @@ const AppLayout = () => {
         {/* Mobile Quick Actions (Floating Action Button) - Hidden on Settings */}
         {currentPage !== "settings" && (
           <MobileNav
-            onPageChange={setCurrentPage}
+            onPageChange={page => {
+              setCurrentPage(page);
+              navigate(`/${page}`);
+            }}
             currentPage={currentPage}
             onImportClick={handleImportClick}
           />
@@ -262,7 +302,10 @@ const AppLayout = () => {
       {/* Global Modals - Rendered outside main content for proper full-screen coverage */}
       {currentPage === "dashboard" && (
         <DashboardPage
-          onPageChange={setCurrentPage}
+          onPageChange={(page) => {
+            setCurrentPage(page);
+            navigate(`/${page}`);
+          }}
           triggerImport={triggerImport}
           onImportClick={handleImportClick}
           isModalOnly={true}

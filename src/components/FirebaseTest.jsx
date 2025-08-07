@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import firebaseService from "../services/firebaseService";
 
 const FirebaseTest = () => {
@@ -84,11 +84,11 @@ const FirebaseTest = () => {
 
       // Test 5: Try to get transactions
       addResult("📊 Testing transaction retrieval...", "info");
-      
+
       // Try a simpler query first
       addResult("   Testing simple query without ordering...", "info");
       const simpleQueryResult = await firebaseService.getTransactionsSimple();
-      
+
       if (simpleQueryResult.success) {
         addResult(
           `✅ Simple query successful - Found ${simpleQueryResult.data.length} transactions`,
@@ -100,7 +100,7 @@ const FirebaseTest = () => {
           "error"
         );
       }
-      
+
       // Now try the full query with ordering
       addResult("   Testing full query with ordering...", "info");
       const getTransactionsResult = await firebaseService.getTransactions();
@@ -115,7 +115,10 @@ const FirebaseTest = () => {
           `❌ Full query failed: ${getTransactionsResult.error}`,
           "error"
         );
-        addResult("   (This is expected if the index is still building)", "info");
+        addResult(
+          "   (This is expected if the index is still building)",
+          "info"
+        );
       }
 
       // Test 6: Try to add a test account
@@ -159,7 +162,7 @@ const FirebaseTest = () => {
 
       addResult("🎉 All Firebase tests passed!", "success");
       addResult("🚀 Your Firebase setup is working perfectly!", "success");
-      addResult("   You now have cross-device sync for $0/month!", "success");
+      addResult(`   You now have cross-device sync for $0/month!`, "success");
     } catch (error) {
       addResult(`❌ Test failed with error: ${error.message}`, "error");
       addResult("🔧 Please check:", "info");
@@ -200,7 +203,7 @@ const FirebaseTest = () => {
       <div className="bg-gray-100 p-4 rounded-lg max-h-96 overflow-y-auto">
         {testResults.length === 0 ? (
           <p className="text-gray-500">
-            Click "Run Firebase Tests" to start testing...
+            Click &quot;Run Firebase Tests&quot; to start testing...
           </p>
         ) : (
           <div className="space-y-2">

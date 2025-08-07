@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Bar,
   XAxis,
@@ -12,8 +12,8 @@ import {
   LineChart,
   Line,
   Area,
-  AreaChart,
   ComposedChart,
+  BarChart,
 } from "recharts";
 import {
   TrendingUp,
@@ -48,11 +48,11 @@ const ChartContainer = ({
   className = "",
   isMobile,
 }) => {
-  const handleCardClick = (e) => {
+  const handleCardClick = e => {
     // Only handle clicks on mobile and only if the click is not on the chart area
     if (isMobile && onToggleExpand) {
       // Check if the click is on the chart area (children)
-      const chartArea = e.currentTarget.querySelector('[data-chart-area]');
+      const chartArea = e.currentTarget.querySelector("[data-chart-area]");
       if (chartArea && chartArea.contains(e.target)) {
         return; // Don't toggle if clicking on chart
       }
@@ -63,7 +63,7 @@ const ChartContainer = ({
   return (
     <div
       className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 ${className} ${
-        isMobile && onToggleExpand ? 'cursor-pointer' : ''
+        isMobile && onToggleExpand ? "cursor-pointer" : ""
       }`}
       onClick={handleCardClick}
     >
@@ -74,7 +74,7 @@ const ChartContainer = ({
         {/* Only show collapse button on mobile */}
         {onToggleExpand && isMobile && (
           <button
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation(); // Prevent card click
               onToggleExpand();
             }}
@@ -88,7 +88,9 @@ const ChartContainer = ({
           </button>
         )}
       </div>
-      <div className="p-4" data-chart-area>{children}</div>
+      <div className="p-4" data-chart-area>
+        {children}
+      </div>
     </div>
   );
 };
@@ -101,7 +103,6 @@ const MetricCard = ({
   icon: Icon,
   color = "blue",
   trend,
-  animateCards = true,
 }) => {
   const getColorClasses = () => {
     switch (color) {

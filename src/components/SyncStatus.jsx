@@ -3,7 +3,6 @@ import {
   Cloud,
   CloudOff,
   RefreshCw,
-  CheckCircle,
   Link,
   Unlink,
 } from "lucide-react";

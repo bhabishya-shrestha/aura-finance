@@ -19,7 +19,6 @@ import {
   query,
   where,
   orderBy,
-  limit,
   onSnapshot,
   serverTimestamp,
 } from "firebase/firestore";
@@ -272,14 +271,17 @@ class FirebaseService {
       // Check if the transaction exists and belongs to the current user
       const transactionDoc = doc(db, "transactions", transactionId);
       const transactionSnapshot = await getDoc(transactionDoc);
-      
+
       if (!transactionSnapshot.exists()) {
         return { success: true }; // Transaction doesn't exist, consider it deleted
       }
-      
+
       const transactionData = transactionSnapshot.data();
       if (transactionData.userId !== this.currentUser.uid) {
-        return { success: false, error: "Transaction does not belong to current user" };
+        return {
+          success: false,
+          error: "Transaction does not belong to current user",
+        };
       }
 
       await deleteDoc(transactionDoc);
@@ -287,8 +289,14 @@ class FirebaseService {
     } catch (error) {
       console.error("Delete transaction error:", error);
       // Check if it's a permissions error
-      if (error.code === 'permission-denied' || error.message.includes('permission')) {
-        return { success: false, error: "Insufficient permissions to delete transaction" };
+      if (
+        error.code === "permission-denied" ||
+        error.message.includes("permission")
+      ) {
+        return {
+          success: false,
+          error: "Insufficient permissions to delete transaction",
+        };
       }
       return { success: false, error: error.message };
     }

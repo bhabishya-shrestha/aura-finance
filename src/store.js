@@ -586,12 +586,22 @@ const useStore = create(
 
             // Delete from Firebase
             try {
-              const { default: firebaseSync } = await import(
-                "./services/firebaseSync.js"
+              const { default: firebaseService } = await import(
+                "./services/firebaseService.js"
               );
-              await firebaseSync.deleteFromFirebase(accountId, "accounts");
-              if (import.meta.env.DEV) {
-                console.log("Account deleted from Firebase");
+              const result = await firebaseService.deleteAccount(accountId);
+              if (result.success) {
+                if (import.meta.env.DEV) {
+                  console.log("Account deleted from Firebase");
+                }
+              } else {
+                if (import.meta.env.DEV) {
+                  console.warn(
+                    "Failed to delete account from Firebase:",
+                    result.error
+                  );
+                  console.log("Account deletion will work locally only");
+                }
               }
             } catch (firebaseError) {
               if (import.meta.env.DEV) {
@@ -741,7 +751,7 @@ const useStore = create(
         },
 
         // Get monthly spending
-        getMonthlySpending: (period = "year") => {
+        getMonthlySpending: () => {
           const { transactions } = get();
           const now = new Date();
           const months = [];
@@ -1041,9 +1051,6 @@ const useStore = create(
         // Check Firebase permissions
         checkFirebasePermissions: async () => {
           try {
-            const { default: firebaseSync } = await import(
-              "./services/firebaseSync.js"
-            );
             const { default: firebaseService } = await import(
               "./services/firebaseService.js"
             );

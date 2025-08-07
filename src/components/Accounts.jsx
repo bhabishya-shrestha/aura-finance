@@ -6,7 +6,6 @@ const Accounts = () => {
   const {
     accounts,
     getAccountBalance,
-    getTransactionsByAccount,
     calculateAccountStats,
   } = useStore();
 

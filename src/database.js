@@ -13,14 +13,20 @@ db.version(3).stores({
 });
 
 // Initialize database without sample data
+let isInitialized = false;
+
 export const initializeDatabase = async () => {
+  if (isInitialized) {
+    return; // Already initialized
+  }
+
   try {
     // Clean up any existing test data
     await cleanupTestData();
+    isInitialized = true;
   } catch (error) {
     // Log error for development, could be replaced with proper error handling
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.error("Error initializing database:", error);
     }
   }
@@ -36,7 +42,7 @@ export const cleanupTestData = async () => {
     // Remove test transactions with various patterns
     const testTransactionPatterns = [
       "Grocery Store",
-      "Gas Station", 
+      "Gas Station",
       "Salary Deposit",
       "Grocery Shopping",
       "Salary Payment",
@@ -47,7 +53,7 @@ export const cleanupTestData = async () => {
       "March Utilities",
       "Old Transaction",
       "Test Transaction",
-      "Sample Transaction"
+      "Sample Transaction",
     ];
 
     const testTransactions = await db.transactions
@@ -57,7 +63,9 @@ export const cleanupTestData = async () => {
 
     if (testTransactions.length > 0) {
       if (import.meta.env.DEV) {
-        console.log(`Found ${testTransactions.length} test transactions to delete`);
+        console.log(
+          `Found ${testTransactions.length} test transactions to delete`
+        );
       }
       await db.transactions.bulkDelete(testTransactions.map(t => t.id));
       if (import.meta.env.DEV) {
@@ -68,11 +76,11 @@ export const cleanupTestData = async () => {
     // Remove test accounts with various patterns
     const testAccountPatterns = [
       "Bank of America Checking",
-      "Bank of America Credit Card", 
+      "Bank of America Credit Card",
       "Savings Account",
       "Test Account",
       "Sample Account",
-      "Demo Account"
+      "Demo Account",
     ];
 
     const testAccounts = await db.accounts
@@ -98,7 +106,9 @@ export const cleanupTestData = async () => {
 
     if (demoTransactions.length > 0) {
       if (import.meta.env.DEV) {
-        console.log(`Found ${demoTransactions.length} demo transactions to delete`);
+        console.log(
+          `Found ${demoTransactions.length} demo transactions to delete`
+        );
       }
       await db.transactions.bulkDelete(demoTransactions.map(t => t.id));
       if (import.meta.env.DEV) {
@@ -128,7 +138,6 @@ export const cleanupTestData = async () => {
   } catch (error) {
     // Only log in development and only if it's not a schema-related error
     if (import.meta.env.DEV && !error.message?.includes("Schema")) {
-      // eslint-disable-next-line no-console
       console.warn(
         "Note: Some test data cleanup operations were skipped:",
         error.message
@@ -143,7 +152,7 @@ export const forceClearAllData = async () => {
     if (import.meta.env.DEV) {
       console.log("Force clearing all data...");
     }
-    
+
     // Clear all transactions
     const allTransactions = await db.transactions.toArray();
     if (allTransactions.length > 0) {
@@ -152,7 +161,7 @@ export const forceClearAllData = async () => {
         console.log(`Deleted ${allTransactions.length} transactions`);
       }
     }
-    
+
     // Clear all accounts
     const allAccounts = await db.accounts.toArray();
     if (allAccounts.length > 0) {
@@ -161,7 +170,7 @@ export const forceClearAllData = async () => {
         console.log(`Deleted ${allAccounts.length} accounts`);
       }
     }
-    
+
     if (import.meta.env.DEV) {
       console.log("All data cleared successfully");
     }
@@ -178,25 +187,25 @@ export const debugDatabaseState = async () => {
   try {
     const allTransactions = await db.transactions.toArray();
     const allAccounts = await db.accounts.toArray();
-    
+
     console.log("=== Database State ===");
     console.log(`Total transactions: ${allTransactions.length}`);
     console.log(`Total accounts: ${allAccounts.length}`);
-    
+
     if (allTransactions.length > 0) {
       console.log("Sample transactions:");
       allTransactions.slice(0, 5).forEach(t => {
         console.log(`- ${t.description} (${t.amount}) - User: ${t.userId}`);
       });
     }
-    
+
     if (allAccounts.length > 0) {
       console.log("Sample accounts:");
       allAccounts.slice(0, 5).forEach(a => {
         console.log(`- ${a.name} (${a.type}) - User: ${a.userId}`);
       });
     }
-    
+
     console.log("=====================");
   } catch (error) {
     console.error("Error debugging database state:", error);

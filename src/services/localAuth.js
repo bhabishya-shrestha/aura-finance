@@ -34,7 +34,6 @@ export const localAuthService = {
     try {
       // Log for development purposes only
       if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
         console.log("🔧 Registering user:", userData.email);
       }
 
@@ -62,7 +61,6 @@ export const localAuthService = {
 
       // Log for development purposes only
       if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
         console.log("🔧 User created with ID:", user);
       }
 
@@ -76,7 +74,6 @@ export const localAuthService = {
 
       // Log for development purposes only
       if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
         console.log("🔧 Token generated:", token.substring(0, 50) + "...");
       }
 
