@@ -117,8 +117,27 @@ class HuggingFaceService {
   }
 
   /**
-   * Extract text from image using client-side OCR (Tesseract.js)
-   * This is the first stage of our two-stage approach
+   * Convert File object to base64 string
+   * @param {File} file - File object to convert
+   * @returns {Promise<string>} Base64 string
+   */
+  async fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        // Remove the data URL prefix (e.g., "data:image/png;base64,")
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = error => reject(error);
+    });
+  }
+
+  /**
+   * Extract text from image using OCR
+   * @param {File|string} imageData - Image file or base64 string
+   * @returns {Promise<string>} Extracted text
    */
   async extractTextFromImage(imageData) {
     console.log("🤗 [HuggingFace] Starting OCR text extraction...");
