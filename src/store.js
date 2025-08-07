@@ -392,15 +392,23 @@ const useStore = create(
 
             // Delete from Firebase
             try {
-              const { default: firebaseSync } = await import(
-                "./services/firebaseSync.js"
+              const { default: firebaseService } = await import(
+                "./services/firebaseService.js"
               );
-              await firebaseSync.deleteFromFirebase(
-                transactionId,
-                "transactions"
-              );
-              if (import.meta.env.DEV) {
-                console.log("Transaction deleted from Firebase");
+
+              const result =
+                await firebaseService.deleteTransaction(transactionId);
+              if (result.success) {
+                if (import.meta.env.DEV) {
+                  console.log("Transaction deleted from Firebase");
+                }
+              } else {
+                if (import.meta.env.DEV) {
+                  console.warn(
+                    "Failed to delete transaction from Firebase:",
+                    result.error
+                  );
+                }
               }
             } catch (firebaseError) {
               if (import.meta.env.DEV) {
@@ -421,6 +429,71 @@ const useStore = create(
           } catch (error) {
             if (import.meta.env.DEV) {
               console.error("Error deleting transaction:", error);
+            }
+          } finally {
+            set({ isLoading: false });
+          }
+        },
+
+        // Delete multiple transactions
+        deleteTransactions: async transactionIds => {
+          try {
+            set({ isLoading: true });
+
+            if (import.meta.env.DEV) {
+              console.log(
+                `Starting batch deletion for ${transactionIds.length} transactions`
+              );
+            }
+
+            // Delete from local database
+            const deletePromises = transactionIds.map(transactionId =>
+              db.transactions.delete(transactionId)
+            );
+            await Promise.all(deletePromises);
+
+            if (import.meta.env.DEV) {
+              console.log("Transactions deleted from local database");
+            }
+
+            // Delete from Firebase
+            try {
+              const { default: firebaseService } = await import(
+                "./services/firebaseService.js"
+              );
+
+              const deleteFirebasePromises = transactionIds.map(transactionId =>
+                firebaseService.deleteTransaction(transactionId)
+              );
+              const results = await Promise.all(deleteFirebasePromises);
+
+              const successCount = results.filter(
+                result => result.success
+              ).length;
+              if (import.meta.env.DEV) {
+                console.log(
+                  `${successCount}/${transactionIds.length} transactions deleted from Firebase`
+                );
+              }
+            } catch (firebaseError) {
+              if (import.meta.env.DEV) {
+                console.warn(
+                  "Failed to delete transactions from Firebase:",
+                  firebaseError
+                );
+                console.log("Transaction deletion will work locally only");
+              }
+              // Continue with local operation - Firebase failure shouldn't break local functionality
+            }
+
+            await get().loadTransactions();
+
+            if (import.meta.env.DEV) {
+              console.log("Batch transaction deletion completed successfully");
+            }
+          } catch (error) {
+            if (import.meta.env.DEV) {
+              console.error("Error deleting transactions:", error);
             }
           } finally {
             set({ isLoading: false });

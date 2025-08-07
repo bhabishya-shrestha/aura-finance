@@ -135,10 +135,17 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
       {isOpen === undefined && (
         <button
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm"
+          className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          <span>Add Transaction</span>
+          <Plus className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div className="text-left">
+            <p className="font-medium text-blue-900 dark:text-blue-100">
+              Add Transaction
+            </p>
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              Create a new transaction
+            </p>
+          </div>
         </button>
       )}
 
