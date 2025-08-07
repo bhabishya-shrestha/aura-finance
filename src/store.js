@@ -269,6 +269,9 @@ const useStore = create(
         addTransactions: async transactionsData => {
           try {
             set({ isLoading: true });
+            console.log("🔄 Starting bulk transaction import...");
+            console.log("📊 Input transactions:", transactionsData);
+
             const token = tokenManager.getToken();
             let userId = null;
 
@@ -286,18 +289,30 @@ const useStore = create(
             const transactionsWithIds = transactionsData.map(transaction => ({
               ...transaction,
               id:
+                transaction.id ||
                 Date.now().toString() + Math.random().toString(36).substr(2, 9),
               userId: userId || "demo",
               createdAt: new Date().toISOString(),
             }));
 
+            console.log(
+              "✅ Processed transactions with IDs:",
+              transactionsWithIds
+            );
+
             await db.transactions.bulkAdd(transactionsWithIds);
+            console.log("✅ Transactions added to local database");
+
             await get().loadTransactions();
+            console.log("✅ Transactions loaded from database");
+
             set({ parsedTransactions: [] });
 
             // Sync to Firebase
             await syncToFirebase();
+            console.log("✅ Transactions synced to Firebase");
           } catch (error) {
+            console.error("❌ Error adding transactions:", error);
             if (import.meta.env.DEV) {
               console.error("Error adding transactions:", error);
             }
