@@ -9,7 +9,7 @@ service cloud.firestore {
     // Users can perform all operations on their own transactions
     match /transactions/{transactionId} {
       allow read, write, delete: if request.auth != null && 
-        request.auth.uid == resource.data.userId;
+        (resource == null || request.auth.uid == resource.data.userId);
       allow create: if request.auth != null && 
         request.auth.uid == request.resource.data.userId;
     }
@@ -17,7 +17,7 @@ service cloud.firestore {
     // Users can perform all operations on their own accounts
     match /accounts/{accountId} {
       allow read, write, delete: if request.auth != null && 
-        request.auth.uid == resource.data.userId;
+        (resource == null || request.auth.uid == resource.data.userId);
       allow create: if request.auth != null && 
         request.auth.uid == request.resource.data.userId;
     }

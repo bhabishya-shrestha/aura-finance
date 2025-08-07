@@ -16,8 +16,13 @@ const FirebaseTest = () => {
     setIsRunning(true);
     setTestResults([]);
 
+    // Use a unique test email to avoid conflicts
+    const testEmail = `test-${Date.now()}@aura-finance.com`;
+    const testPassword = "testpassword123";
+
     try {
       addResult("🧪 Starting Firebase tests...", "info");
+      addResult(`📧 Using test email: ${testEmail}`, "info");
 
       // Test 1: Check if Firebase is initialized
       addResult("✅ Firebase service loaded successfully", "success");
@@ -25,8 +30,8 @@ const FirebaseTest = () => {
       // Test 2: Try to register a test user (or login if already exists)
       addResult("📝 Testing user registration...", "info");
       const registerResult = await firebaseService.register(
-        "test@aura-finance.com",
-        "testpassword123",
+        testEmail,
+        testPassword,
         "Test User"
       );
 
@@ -47,10 +52,7 @@ const FirebaseTest = () => {
 
       // Test 3: Try to login
       addResult("🔐 Testing user login...", "info");
-      const loginResult = await firebaseService.login(
-        "test@aura-finance.com",
-        "testpassword123"
-      );
+      const loginResult = await firebaseService.login(testEmail, testPassword);
 
       if (loginResult.success) {
         addResult("✅ User login successful", "success");

@@ -17,15 +17,20 @@ import firebaseService from "./src/services/firebaseService.js";
 async function testFirebaseSetup() {
   console.log("🧪 Testing Firebase Setup...\n");
 
+  // Use a unique test email to avoid conflicts
+  const testEmail = `test-${Date.now()}@aura-finance.com`;
+  const testPassword = "testpassword123";
+
   try {
     // Test 1: Check if Firebase is initialized
     console.log("✅ Firebase service loaded successfully");
 
     // Test 2: Try to register a test user
     console.log("\n📝 Testing user registration...");
+    console.log(`   Using test email: ${testEmail}`);
     const registerResult = await firebaseService.register(
-      "test@aura-finance.com",
-      "testpassword123",
+      testEmail,
+      testPassword,
       "Test User"
     );
 
@@ -39,10 +44,7 @@ async function testFirebaseSetup() {
 
     // Test 3: Try to login
     console.log("\n🔐 Testing user login...");
-    const loginResult = await firebaseService.login(
-      "test@aura-finance.com",
-      "testpassword123"
-    );
+    const loginResult = await firebaseService.login(testEmail, testPassword);
 
     if (loginResult.success) {
       console.log("✅ User login successful");
@@ -117,7 +119,20 @@ async function testFirebaseSetup() {
       return;
     }
 
-    // Test 8: Test real-time subscription
+    // Test 8: Test account deletion
+    console.log("\n🗑️ Testing account deletion...");
+    if (getAccountsResult.data.length > 0) {
+      const accountToDelete = getAccountsResult.data[0];
+      const deleteResult = await firebaseService.deleteAccount(accountToDelete.id);
+      
+      if (deleteResult.success) {
+        console.log("✅ Account deletion successful");
+      } else {
+        console.log("❌ Account deletion failed:", deleteResult.error);
+      }
+    }
+
+    // Test 9: Test real-time subscription
     console.log("\n🔄 Testing real-time subscription...");
     const unsubscribe = firebaseService.subscribeToTransactions(
       transactions => {
@@ -139,6 +154,12 @@ async function testFirebaseSetup() {
     console.log("\n🎉 All Firebase tests passed!");
     console.log("\n🚀 Your Firebase setup is working perfectly!");
     console.log("   You now have cross-device sync for $0/month!");
+    
+    // Cleanup: Sign out the test user
+    console.log("\n🧹 Cleaning up test user...");
+    await firebaseService.logout();
+    console.log("✅ Test user signed out");
+    
   } catch (error) {
     console.error("❌ Test failed with error:", error);
     console.log("\n🔧 Please check:");

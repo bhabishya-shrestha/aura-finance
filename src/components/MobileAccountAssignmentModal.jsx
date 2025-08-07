@@ -24,6 +24,10 @@ import {
   Briefcase,
   ArrowLeft,
   Save,
+  CheckSquare,
+  Square,
+  Users,
+  Calendar,
 } from "lucide-react";
 import useStore from "../store";
 import aiService from "../services/aiService";
@@ -47,11 +51,18 @@ const MobileAccountAssignmentModal = ({
   const [localAccounts, setLocalAccounts] = useState([]);
   const [stagedAccounts, setStagedAccounts] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentStep, setCurrentStep] = useState("overview"); // overview, create-account, edit-transaction
+  const [currentStep, setCurrentStep] = useState("overview"); // overview, create-account, edit-transaction, mass-assign
   const [showAISuggestions, setShowAISuggestions] = useState(false);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
   const hasGeneratedSuggestions = useRef(false);
   const transactionsRef = useRef(transactions);
+
+  // Mass assignment state
+  const [selectedTransactions, setSelectedTransactions] = useState(new Set());
+  const [showMassAssignModal, setShowMassAssignModal] = useState(false);
+  const [massAssignAccount, setMassAssignAccount] = useState("");
+  const [showBatchYearModal, setShowBatchYearModal] = useState(false);
+  const [batchYear, setBatchYear] = useState(new Date().getFullYear());
 
   // Account type icons mapping
   const accountTypeIcons = useMemo(
@@ -314,6 +325,77 @@ const MobileAccountAssignmentModal = ({
     }
   }, []);
 
+  // Mass assignment functions
+  const toggleTransactionSelection = useCallback(transactionId => {
+    setSelectedTransactions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(transactionId)) {
+        newSet.delete(transactionId);
+      } else {
+        newSet.add(transactionId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const selectAllTransactions = useCallback(() => {
+    const allTransactionIds = Array.isArray(localTransactions)
+      ? localTransactions.map(t => t.id)
+      : [];
+    setSelectedTransactions(new Set(allTransactionIds));
+  }, [localTransactions]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedTransactions(new Set());
+  }, []);
+
+  const handleMassAssign = useCallback(() => {
+    if (selectedTransactions.size === 0) return;
+
+    const newSelectedAccounts = { ...selectedAccounts };
+    selectedTransactions.forEach(transactionId => {
+      newSelectedAccounts[transactionId] = massAssignAccount;
+    });
+    setSelectedAccounts(newSelectedAccounts);
+    setSelectedTransactions(new Set());
+    setShowMassAssignModal(false);
+    setMassAssignAccount("");
+  }, [selectedTransactions, selectedAccounts, massAssignAccount]);
+
+  const handleBatchYearAssign = useCallback(() => {
+    if (selectedTransactions.size === 0) return;
+
+    const newSelectedAccounts = { ...selectedAccounts };
+    selectedTransactions.forEach(transactionId => {
+      const transaction = localTransactions.find(t => t.id === transactionId);
+      if (transaction) {
+        const transactionYear = new Date(transaction.date).getFullYear();
+        if (transactionYear === batchYear) {
+          newSelectedAccounts[transactionId] = massAssignAccount;
+        }
+      }
+    });
+    setSelectedAccounts(newSelectedAccounts);
+    setSelectedTransactions(new Set());
+    setShowBatchYearModal(false);
+    setMassAssignAccount("");
+  }, [
+    selectedTransactions,
+    selectedAccounts,
+    massAssignAccount,
+    localTransactions,
+    batchYear,
+  ]);
+
+  const openBatchYearModal = useCallback(() => {
+    setShowBatchYearModal(true);
+  }, []);
+
+  const closeBatchYearModal = useCallback(() => {
+    setShowBatchYearModal(false);
+    setMassAssignAccount("");
+  }, []);
+
   if (!isOpen) return null;
 
   return (
@@ -367,10 +449,16 @@ const MobileAccountAssignmentModal = ({
             <h2 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
               Import Summary
             </h2>
-            <div className="text-sm text-blue-700 dark:text-blue-300">
+            <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
               <p>{transactions.length} transactions ready to import</p>
               <p>{Object.keys(selectedAccounts).length} accounts assigned</p>
               <p>{stagedAccounts.length} new accounts to create</p>
+              {selectedTransactions.size > 0 && (
+                <p className="font-medium text-blue-800 dark:text-blue-200">
+                  {selectedTransactions.size} transactions selected for mass
+                  assignment
+                </p>
+              )}
             </div>
           </div>
 
@@ -491,19 +579,80 @@ const MobileAccountAssignmentModal = ({
 
           {/* Transactions Section */}
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Transactions
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Transactions
+              </h3>
+              {selectedTransactions.size > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedTransactions.size} selected
+                  </span>
+                  <button
+                    onClick={() => setShowMassAssignModal(true)}
+                    className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center gap-1"
+                  >
+                    <Users className="w-3 h-3" />
+                    Mass Assign
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Mass Assignment Controls */}
+            <div className="mb-4 flex items-center gap-2">
+              <button
+                onClick={selectAllTransactions}
+                className="px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-1"
+              >
+                <CheckSquare className="w-4 h-4" />
+                Select All
+              </button>
+              {selectedTransactions.size > 0 && (
+                <>
+                  <button
+                    onClick={clearSelection}
+                    className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    onClick={openBatchYearModal}
+                    className="px-3 py-1 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors flex items-center gap-1"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Batch by Year
+                  </button>
+                </>
+              )}
+            </div>
 
             <div className="space-y-3">
               {Array.isArray(localTransactions)
                 ? localTransactions.map(transaction => (
                     <div
                       key={transaction.id}
-                      className="border border-gray-200 dark:border-gray-600 rounded-lg p-4"
+                      className={`border rounded-lg p-4 ${
+                        selectedTransactions.has(transaction.id)
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                          : "border-gray-200 dark:border-gray-600"
+                      }`}
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
+                      {/* Selection Checkbox */}
+                      <div className="flex items-center gap-3 mb-3">
+                        <button
+                          onClick={() =>
+                            toggleTransactionSelection(transaction.id)
+                          }
+                          className="flex items-center justify-center w-5 h-5"
+                        >
+                          {selectedTransactions.has(transaction.id) ? (
+                            <CheckSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          ) : (
+                            <Square className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                          )}
+                        </button>
+                        <div className="flex items-center gap-3 flex-1">
                           {React.createElement(
                             getCategoryIcon(transaction.category),
                             {
@@ -511,7 +660,7 @@ const MobileAccountAssignmentModal = ({
                                 "w-5 h-5 text-gray-600 dark:text-gray-400",
                             }
                           )}
-                          <div>
+                          <div className="flex-1">
                             <p className="font-medium text-gray-900 dark:text-white">
                               {transaction.description}
                             </p>
@@ -645,6 +794,149 @@ const MobileAccountAssignmentModal = ({
                     className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Create Account
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mass Assignment Modal */}
+        {showMassAssignModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Mass Assign Transactions
+                </h3>
+                <button
+                  onClick={() => setShowMassAssignModal(false)}
+                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    Assign {selectedTransactions.size} selected transactions to
+                    an account
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Select Account
+                  </label>
+                  <select
+                    value={massAssignAccount}
+                    onChange={e => setMassAssignAccount(e.target.value)}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Choose an account...</option>
+                    {filteredAccounts.map(account => (
+                      <option key={account.id} value={account.id}>
+                        {account.name} ({account.type})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => setShowMassAssignModal(false)}
+                    className="flex-1 px-4 py-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleMassAssign}
+                    disabled={!massAssignAccount}
+                    className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Assign {selectedTransactions.size} Transactions
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Batch Year Assignment Modal */}
+        {showBatchYearModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Batch Assign by Year
+                </h3>
+                <button
+                  onClick={closeBatchYearModal}
+                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3">
+                  <p className="text-sm text-purple-700 dark:text-purple-300">
+                    Assign transactions from {batchYear} to an account
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Year
+                  </label>
+                  <select
+                    value={batchYear}
+                    onChange={e => setBatchYear(parseInt(e.target.value))}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {Array.from(
+                      { length: 10 },
+                      (_, i) => new Date().getFullYear() - i
+                    ).map(year => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Select Account
+                  </label>
+                  <select
+                    value={massAssignAccount}
+                    onChange={e => setMassAssignAccount(e.target.value)}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Choose an account...</option>
+                    {filteredAccounts.map(account => (
+                      <option key={account.id} value={account.id}>
+                        {account.name} ({account.type})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={closeBatchYearModal}
+                    className="flex-1 px-4 py-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleBatchYearAssign}
+                    disabled={!massAssignAccount}
+                    className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Assign {batchYear} Transactions
                   </button>
                 </div>
               </div>

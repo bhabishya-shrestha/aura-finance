@@ -488,7 +488,9 @@ class FirebaseService {
       const accountSnapshot = await getDoc(accountDoc);
 
       if (!accountSnapshot.exists()) {
-        return { success: true }; // Account doesn't exist, consider it deleted
+        // Account doesn't exist in Firebase, but that's okay for deletion
+        console.log("Account not found in Firebase, proceeding with local deletion only");
+        return { success: true, localOnly: true };
       }
 
       const accountData = accountSnapshot.data();
@@ -521,7 +523,8 @@ class FirebaseService {
       // Check if it's a permissions error
       if (
         error.code === "permission-denied" ||
-        error.message.includes("permission")
+        error.message.includes("permission") ||
+        error.message.includes("Missing or insufficient permissions")
       ) {
         return {
           success: false,
