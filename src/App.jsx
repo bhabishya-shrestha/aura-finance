@@ -60,9 +60,11 @@ const ProtectedRoute = ({ children }) => {
 const AppLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState("dashboard");
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [triggerImport, setTriggerImport] = useState(false);
+
+  // Derive currentPage from URL
+  const currentPage = location.pathname.substring(1) || "dashboard";
   const {
     loadTransactions,
     loadAccounts,
@@ -165,22 +167,6 @@ const AppLayout = () => {
     }
   }, [currentPage, isMobile, updateViewportHeight]);
 
-  // Sync currentPage with URL pathname
-  useEffect(() => {
-    const pathname = location.pathname;
-    const pageFromUrl = pathname.substring(1); // Remove leading slash
-    if (pageFromUrl && pageFromUrl !== currentPage) {
-      setCurrentPage(pageFromUrl);
-    }
-  }, [location.pathname, currentPage]);
-
-  // Update URL when currentPage changes
-  useEffect(() => {
-    if (location.pathname !== `/${currentPage}`) {
-      navigate(`/${currentPage}`, { replace: true });
-    }
-  }, [currentPage, navigate, location.pathname]);
-
   // Save current page to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("aura-finance-currentPage", currentPage);
@@ -210,7 +196,6 @@ const AppLayout = () => {
       <div className="hidden lg:block">
         <Sidebar
           onPageChange={page => {
-            setCurrentPage(page);
             navigate(`/${page}`);
           }}
           currentPage={currentPage}
@@ -225,7 +210,6 @@ const AppLayout = () => {
         onClose={closeMobileSidebar}
         currentPage={currentPage}
         onPageChange={page => {
-          setCurrentPage(page);
           navigate(`/${page}`);
         }}
       />
@@ -248,7 +232,6 @@ const AppLayout = () => {
           <MobileHeader
             onMenuClick={toggleMobileSidebar}
             onPageChange={page => {
-              setCurrentPage(page);
               navigate(`/${page}`);
             }}
           />
@@ -262,7 +245,6 @@ const AppLayout = () => {
             {currentPage === "dashboard" && (
               <DashboardPage
                 onPageChange={page => {
-                  setCurrentPage(page);
                   navigate(`/${page}`);
                 }}
                 triggerImport={triggerImport}
@@ -276,7 +258,6 @@ const AppLayout = () => {
             {currentPage === "settings" && (
               <SettingsPage
                 onPageChange={page => {
-                  setCurrentPage(page);
                   navigate(`/${page}`);
                 }}
               />
@@ -288,7 +269,6 @@ const AppLayout = () => {
         {currentPage !== "settings" && (
           <MobileNav
             onPageChange={page => {
-              setCurrentPage(page);
               navigate(`/${page}`);
             }}
             currentPage={currentPage}
@@ -302,8 +282,7 @@ const AppLayout = () => {
       {/* Global Modals - Rendered outside main content for proper full-screen coverage */}
       {currentPage === "dashboard" && (
         <DashboardPage
-          onPageChange={(page) => {
-            setCurrentPage(page);
+          onPageChange={page => {
             navigate(`/${page}`);
           }}
           triggerImport={triggerImport}
@@ -440,9 +419,6 @@ const App = () => {
       isInitializing = true;
 
       try {
-        // Initialize database first
-        await initializeDatabase();
-
         // Initialize auth bridge (links Supabase OAuth to Firebase)
         await authBridge.initialize();
 
