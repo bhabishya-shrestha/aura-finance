@@ -121,55 +121,69 @@ class HuggingFaceService {
    * This is the first stage of our two-stage approach
    */
   async extractTextFromImage(imageData) {
+    console.log("🤗 [HuggingFace] Starting OCR text extraction...");
+    
     try {
-      // // console.log("Hugging Face: Starting client-side OCR extraction...");
-
-      // Skip preprocessing in test environments where canvas is not available
-      let processedImageData = imageData;
-      try {
-        processedImageData = await this.preprocessImage(imageData);
-      } catch (error) {
-        // console.warn(
-        //   "Image preprocessing failed, using original image:",
-        //   error.message
-        // );
-        processedImageData = imageData;
+      // Convert image data to base64 if it's a File object
+      let base64Data;
+      if (imageData instanceof File) {
+        console.log("🤗 [HuggingFace] Converting File to base64...");
+        base64Data = await this.fileToBase64(imageData);
+        console.log("🤗 [HuggingFace] ✅ File converted to base64");
+      } else if (typeof imageData === "string") {
+        console.log("🤗 [HuggingFace] Using provided base64 data...");
+        base64Data = imageData;
+      } else {
+        console.log("🤗 [HuggingFace] ❌ Invalid image data type:", typeof imageData);
+        throw new Error("Invalid image data format");
       }
 
-      // Enhanced OCR configuration for better financial document recognition
-      const result = await Tesseract.recognize(
-        processedImageData,
-        "eng", // English language
-        {
-          logger: m => {
-            if (m.status === "recognizing text") {
-              // // console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
-            }
-          },
-          // Enhanced OCR settings for financial documents
-          tessedit_char_whitelist:
-            "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz$.,()-/: ",
-          tessedit_pageseg_mode: "6", // Uniform block of text
-          tessedit_ocr_engine_mode: "3", // Default, based on what is available
-          preserve_interword_spaces: "1",
-          textord_heavy_nr: "1", // More aggressive noise removal
-          textord_min_linesize: "2.0", // Minimum line size
-        }
-      );
+      // Initialize Tesseract.js
+      console.log("🤗 [HuggingFace] Initializing Tesseract.js...");
+      const worker = await Tesseract.createWorker();
+      console.log("🤗 [HuggingFace] ✅ Tesseract worker created");
 
-      const extractedText = result.data.text.trim();
-      // // console.log("Hugging Face: OCR extraction completed successfully");
-      // // console.log("OCR Raw Text:", extractedText);
+      // Load language data
+      console.log("🤗 [HuggingFace] Loading English language data...");
+      await worker.loadLanguage("eng");
+      console.log("🤗 [HuggingFace] ✅ English language loaded");
 
-      return {
-        success: true,
-        text: extractedText,
-        confidence: result.data.confidence,
-        words: result.data.words,
-      };
+      // Initialize the worker
+      console.log("🤗 [HuggingFace] Initializing worker...");
+      await worker.initialize("eng");
+      console.log("🤗 [HuggingFace] ✅ Worker initialized");
+
+      // Set OCR parameters for better financial document recognition
+      console.log("🤗 [HuggingFace] Setting OCR parameters...");
+      await worker.setParameters({
+        tessedit_char_whitelist: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz$.,()-/ ",
+        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
+        preserve_interword_spaces: "1",
+      });
+      console.log("🤗 [HuggingFace] ✅ OCR parameters set");
+
+      // Perform OCR
+      console.log("🤗 [HuggingFace] Starting OCR recognition...");
+      const { data: { text } } = await worker.recognize(base64Data);
+      console.log("🤗 [HuggingFace] ✅ OCR recognition completed, text length:", text.length);
+
+      // Terminate the worker
+      console.log("🤗 [HuggingFace] Terminating worker...");
+      await worker.terminate();
+      console.log("🤗 [HuggingFace] ✅ Worker terminated");
+
+      // Clean up the extracted text
+      console.log("🤗 [HuggingFace] Cleaning extracted text...");
+      const cleanedText = text
+        .replace(/\n+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      console.log("🤗 [HuggingFace] ✅ Text cleaned, final length:", cleanedText.length);
+
+      return cleanedText;
     } catch (error) {
-      // console.error("Hugging Face: OCR extraction failed:", error);
-      throw new Error(`OCR extraction failed: ${error.message}`);
+      console.error("🤗 [HuggingFace] ❌ OCR text extraction failed:", error);
+      throw new Error(`OCR text extraction failed: ${error.message}`);
     }
   }
 
@@ -228,12 +242,11 @@ class HuggingFaceService {
    * This is the second stage of our two-stage approach
    */
   async analyzeExtractedText(text) {
+    console.log("🤗 [HuggingFace] Starting analyzeExtractedText, text length:", text.length);
     await this.checkRateLimit();
+    console.log("🤗 [HuggingFace] ✅ Rate limit check passed");
 
-    console.log(
-      "[analyzeExtractedText] Starting analysis with text length:",
-      text.length
-    );
+    console.log("[analyzeExtractedText] Starting analysis with text length:", text.length);
 
     // Enhanced prompt specifically designed for financial transaction extraction
     const prompt = `Extract financial transactions from this bank statement text. 
@@ -254,10 +267,12 @@ ${text.substring(0, 1000)} // Limit text length to prevent timeouts
 Please extract all financial transactions found in the text above using the exact format shown.`;
 
     try {
+      console.log("🤗 [HuggingFace] Preparing API request...");
       // Add timeout to prevent hanging
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
+      console.log("🤗 [HuggingFace] Making API request to:", `${this.baseUrl}/${this.uniformModel}`);
       const response = await fetch(`${this.baseUrl}/${this.uniformModel}`, {
         method: "POST",
         headers: {
@@ -281,9 +296,10 @@ Please extract all financial transactions found in the text above using the exac
       });
 
       clearTimeout(timeoutId);
+      console.log("🤗 [HuggingFace] ✅ API response received, status:", response.status);
 
       if (!response.ok) {
-        console.error("Hugging Face API Error Response:", {
+        console.error("🤗 [HuggingFace] ❌ API Error Response:", {
           status: response.status,
           statusText: response.statusText,
         });
@@ -301,24 +317,19 @@ Please extract all financial transactions found in the text above using the exac
         }
       }
 
+      console.log("🤗 [HuggingFace] Parsing API response...");
       const data = await response.json();
       console.log("[analyzeExtractedText] API response received");
 
       // Extract the generated text from the response (BART-CNN returns summary_text)
-      const generatedText =
-        data[0]?.summary_text || data[0]?.generated_text || "";
-      console.log(
-        "[analyzeExtractedText] Generated text length:",
-        generatedText.length
-      );
+      const generatedText = data[0]?.summary_text || data[0]?.generated_text || "";
+      console.log("[analyzeExtractedText] Generated text length:", generatedText.length);
+      console.log("🤗 [HuggingFace] ✅ Generated text:", generatedText.substring(0, 200) + "...");
 
       // Extract transactions from the generated text
-      const extractedTransactions =
-        this.extractTransactionsFromAnalysis(generatedText);
-      console.log(
-        "[analyzeExtractedText] Extracted transactions count:",
-        extractedTransactions.length
-      );
+      const extractedTransactions = this.extractTransactionsFromAnalysis(generatedText);
+      console.log("[analyzeExtractedText] Extracted transactions count:", extractedTransactions.length);
+      console.log("🤗 [HuggingFace] ✅ Extracted transactions:", extractedTransactions.length);
 
       return {
         success: true,
@@ -328,15 +339,14 @@ Please extract all financial transactions found in the text above using the exac
         provider: "huggingface",
         source: "Hugging Face Analysis",
         documentType: "Financial Document",
-        notes:
-          "Document analyzed using Hugging Face BART-CNN. Please review and adjust transaction details.",
+        notes: "Document analyzed using Hugging Face BART-CNN. Please review and adjust transaction details.",
       };
     } catch (error) {
-      if (error.name === "AbortError") {
-        throw new Error(
-          "Request timed out. Please try again or switch to Google Gemini API."
-        );
+      if (error.name === 'AbortError') {
+        console.log("🤗 [HuggingFace] ❌ Request timed out after 30 seconds");
+        throw new Error("Request timed out. Please try again or switch to Google Gemini API.");
       }
+      console.error("🤗 [HuggingFace] ❌ analyzeExtractedText failed:", error);
       throw error;
     }
   }
@@ -689,28 +699,43 @@ Please extract all financial transactions found in the text above using the exac
    * Stage 1: Client-side OCR for text extraction
    * Stage 2: Hugging Face API for text analysis
    */
-  async analyzeImage(imageData) {
-    // // console.log("[analyzeImage] Starting two-stage document analysis...");
+  async analyzeImage(file) {
+    console.log("🤗 [HuggingFace] Starting analyzeImage for file:", file.name, file.type);
+    
+    try {
+      await this.checkRateLimit();
+      console.log("🤗 [HuggingFace] ✅ Rate limit check passed");
 
-    // Stage 1: Extract text using client-side OCR
-    const ocrResult = await this.extractTextFromImage(imageData);
-    // // console.log("[analyzeImage] OCR result:", ocrResult);
+      // Extract text from image using OCR
+      console.log("🤗 [HuggingFace] Starting OCR text extraction...");
+      const extractedText = await this.extractTextFromImage(file);
+      console.log("🤗 [HuggingFace] ✅ OCR completed, text length:", extractedText.length);
 
-    if (!ocrResult.success || !ocrResult.text.trim()) {
-      throw new Error("No text could be extracted from the document");
+      if (!extractedText || extractedText.trim().length === 0) {
+        console.log("🤗 [HuggingFace] ❌ No text extracted from image");
+        throw new Error("No text could be extracted from the image. Please try a clearer image.");
+      }
+
+      // Analyze the extracted text
+      console.log("🤗 [HuggingFace] Starting text analysis...");
+      const analysisResult = await this.analyzeExtractedText(extractedText);
+      console.log("🤗 [HuggingFace] ✅ Text analysis completed");
+
+      return {
+        success: true,
+        analysis: analysisResult.analysis,
+        transactions: analysisResult.transactions,
+        model: this.uniformModel,
+        provider: "huggingface",
+        source: "Hugging Face Analysis",
+        documentType: "Financial Document",
+        notes: "Document analyzed using Hugging Face BART-CNN. Please review and adjust transaction details.",
+        extractedText: extractedText.substring(0, 500) + "...", // Include first 500 chars for debugging
+      };
+    } catch (error) {
+      console.error("🤗 [HuggingFace] ❌ analyzeImage failed:", error);
+      throw error;
     }
-
-    // Stage 2: Analyze extracted text using Hugging Face API
-    const analysisResult = await this.analyzeExtractedText(ocrResult.text);
-    // // console.log("[analyzeImage] Analysis result:", analysisResult);
-
-    // Combine results
-    return {
-      ...analysisResult,
-      ocrConfidence: ocrResult.confidence,
-      extractedText: ocrResult.text,
-      processingMethod: "Two-stage: OCR + AI Analysis",
-    };
   }
 
   /**

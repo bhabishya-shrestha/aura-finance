@@ -170,97 +170,136 @@ class AIService {
    * @returns {Promise<Object>} Analysis result
    */
   async analyzeImage(file) {
+    console.log("🤖 [AI Service] Starting analyzeImage for file:", file.name, file.type);
+    
     try {
-      // Try to validate usage before processing
-      let validation = {
-        can_proceed: true,
-        current_usage: 0,
-        max_requests: 100,
-        remaining_requests: 100,
-      };
-
+      // Validate API usage first
+      console.log("🤖 [AI Service] Validating API usage...");
       try {
-        validation = await apiUsageService.validateApiUsage(
-          this.currentProvider
-        );
+        await apiUsageService.validateApiUsage();
+        console.log("🤖 [AI Service] ✅ API usage validated");
       } catch (error) {
-        console.warn(
-          "API usage validation failed, proceeding with client-side limits:",
-          error.message
-        );
-        // Fallback to client-side validation
-        const provider = this.providers[this.currentProvider];
-        if (!provider.service.isProviderAvailable()) {
-          throw new Error(
-            `${provider.name} is not available. Please check your API key or try switching providers.`
-          );
-        }
+        console.log("🤖 [AI Service] ⚠️ API usage validation failed, proceeding with client-side limits:", error.message);
       }
 
-      if (!validation.can_proceed) {
-        throw new Error(
-          `Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`
-        );
-      }
+      // Get current provider
+      const provider = this.getCurrentProvider();
+      console.log("🤖 [AI Service] Using provider:", provider.name);
 
-      // Try to increment usage counter (optional)
-      try {
-        await apiUsageService.incrementApiUsage(this.currentProvider);
-      } catch (error) {
-        console.warn(
-          "Failed to record API usage, continuing with analysis:",
-          error.message
-        );
-      }
+      let result = null;
 
-      // Perform the analysis with fallback
-      try {
-        const result =
-          await this.providers[this.currentProvider].service.analyzeImage(file);
-
-        // Add server-side usage info to result
-        if (result) {
-          result.serverUsageValidation = {
-            provider: this.currentProvider,
-            currentUsage: validation.current_usage + 1, // +1 for this request
-            maxRequests: validation.max_requests,
-            remainingRequests: validation.remaining_requests - 1,
-            approachingLimit: validation.approachingLimit,
-          };
-        }
-
-        return result;
-      } catch (error) {
-        console.warn(
-          `Primary provider (${this.currentProvider}) failed:`,
-          error.message
-        );
-
-        // Try fallback to Gemini if Hugging Face fails
-        if (
-          this.currentProvider === "huggingface" &&
-          this.providers.gemini.service.isProviderAvailable()
-        ) {
-          console.log("🔄 Falling back to Gemini API...");
-          const fallbackResult =
-            await this.providers.gemini.service.analyzeImage(file);
-
-          if (fallbackResult) {
-            fallbackResult.serverUsageValidation = {
-              provider: "gemini",
-              fallbackUsed: true,
-              originalProvider: this.currentProvider,
-              fallbackReason: error.message,
-            };
+      // Try Hugging Face first
+      if (provider.name === "Hugging Face" && huggingFaceService.isProviderAvailable()) {
+        console.log("🤖 [AI Service] Attempting Hugging Face analysis...");
+        try {
+          result = await huggingFaceService.analyzeImage(file);
+          console.log("🤖 [AI Service] ✅ Hugging Face analysis successful");
+          
+          // Increment API usage
+          try {
+            await apiUsageService.incrementApiUsage("huggingface");
+            console.log("🤖 [AI Service] ✅ API usage incremented");
+          } catch (error) {
+            console.log("🤖 [AI Service] ⚠️ API usage increment failed:", error.message);
           }
-
-          return fallbackResult;
+          
+          return result;
+        } catch (error) {
+          console.log("🤖 [AI Service] ❌ Hugging Face failed:", error.message);
+          
+          // Try Gemini as fallback
+          if (geminiService.isProviderAvailable()) {
+            console.log("🤖 [AI Service] 🔄 Falling back to Gemini...");
+            try {
+              result = await geminiService.analyzeImage(file);
+              console.log("🤖 [AI Service] ✅ Gemini fallback successful");
+              
+              // Increment API usage
+              try {
+                await apiUsageService.incrementApiUsage("gemini");
+                console.log("🤖 [AI Service] ✅ Gemini API usage incremented");
+              } catch (error) {
+                console.log("🤖 [AI Service] ⚠️ Gemini API usage increment failed:", error.message);
+              }
+              
+              return {
+                ...result,
+                serverUsageValidation: {
+                  fallbackUsed: true,
+                  originalProvider: "huggingface",
+                  fallbackProvider: "gemini",
+                  originalError: error.message
+                }
+              };
+            } catch (geminiError) {
+              console.log("🤖 [AI Service] ❌ Gemini fallback also failed:", geminiError.message);
+              throw new Error(`Both Hugging Face and Gemini failed. Hugging Face: ${error.message}, Gemini: ${geminiError.message}`);
+            }
+          } else {
+            console.log("🤖 [AI Service] ❌ No fallback available");
+            throw error;
+          }
         }
-
-        throw error;
       }
+
+      // Try Gemini if it's the primary provider
+      if (provider.name === "Google Gemini" && geminiService.isProviderAvailable()) {
+        console.log("🤖 [AI Service] Attempting Gemini analysis...");
+        try {
+          result = await geminiService.analyzeImage(file);
+          console.log("🤖 [AI Service] ✅ Gemini analysis successful");
+          
+          // Increment API usage
+          try {
+            await apiUsageService.incrementApiUsage("gemini");
+            console.log("🤖 [AI Service] ✅ API usage incremented");
+          } catch (error) {
+            console.log("🤖 [AI Service] ⚠️ API usage increment failed:", error.message);
+          }
+          
+          return result;
+        } catch (error) {
+          console.log("🤖 [AI Service] ❌ Gemini failed:", error.message);
+          
+          // Try Hugging Face as fallback
+          if (huggingFaceService.isProviderAvailable()) {
+            console.log("🤖 [AI Service] 🔄 Falling back to Hugging Face...");
+            try {
+              result = await huggingFaceService.analyzeImage(file);
+              console.log("🤖 [AI Service] ✅ Hugging Face fallback successful");
+              
+              // Increment API usage
+              try {
+                await apiUsageService.incrementApiUsage("huggingface");
+                console.log("🤖 [AI Service] ✅ Hugging Face API usage incremented");
+              } catch (error) {
+                console.log("🤖 [AI Service] ⚠️ Hugging Face API usage increment failed:", error.message);
+              }
+              
+              return {
+                ...result,
+                serverUsageValidation: {
+                  fallbackUsed: true,
+                  originalProvider: "gemini",
+                  fallbackProvider: "huggingface",
+                  originalError: error.message
+                }
+              };
+            } catch (huggingFaceError) {
+              console.log("🤖 [AI Service] ❌ Hugging Face fallback also failed:", huggingFaceError.message);
+              throw new Error(`Both Gemini and Hugging Face failed. Gemini: ${error.message}, Hugging Face: ${huggingFaceError.message}`);
+            }
+          } else {
+            console.log("🤖 [AI Service] ❌ No fallback available");
+            throw error;
+          }
+        }
+      }
+
+      console.log("🤖 [AI Service] ❌ No available providers");
+      throw new Error("No AI providers are available. Please check your API keys and try again.");
     } catch (error) {
-      console.error("AI analysis failed:", error);
+      console.error("🤖 [AI Service] ❌ analyzeImage failed:", error);
       throw error;
     }
   }
