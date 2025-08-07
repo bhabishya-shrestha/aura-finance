@@ -8,8 +8,8 @@ class HuggingFaceService {
     this.apiKey = import.meta.env.VITE_HUGGINGFACE_API_KEY;
     this.baseUrl = "https://api-inference.huggingface.co/models";
 
-    // Use a more appropriate model for text generation
-    this.uniformModel = "gpt2"; // Fallback to GPT-2 for text generation
+    // Use the verified working model for text analysis
+    this.uniformModel = "facebook/bart-large-cnn";
 
     // Rate limiting configuration for free tier
     this.rateLimit = {
@@ -74,6 +74,7 @@ class HuggingFaceService {
    * Get current model (uniform model approach)
    */
   getBestModel() {
+    // Return the verified working model
     return this.uniformModel;
   }
 
@@ -229,7 +230,10 @@ class HuggingFaceService {
   async analyzeExtractedText(text) {
     await this.checkRateLimit();
 
-    console.log("[analyzeExtractedText] Starting analysis with text length:", text.length);
+    console.log(
+      "[analyzeExtractedText] Starting analysis with text length:",
+      text.length
+    );
 
     // Enhanced prompt specifically designed for financial transaction extraction
     const prompt = `Extract financial transactions from this bank statement text. 
@@ -300,13 +304,21 @@ Please extract all financial transactions found in the text above using the exac
       const data = await response.json();
       console.log("[analyzeExtractedText] API response received");
 
-      // Extract the generated text from the response
-      const generatedText = data[0]?.generated_text || "";
-      console.log("[analyzeExtractedText] Generated text length:", generatedText.length);
+      // Extract the generated text from the response (BART-CNN returns summary_text)
+      const generatedText =
+        data[0]?.summary_text || data[0]?.generated_text || "";
+      console.log(
+        "[analyzeExtractedText] Generated text length:",
+        generatedText.length
+      );
 
       // Extract transactions from the generated text
-      const extractedTransactions = this.extractTransactionsFromAnalysis(generatedText);
-      console.log("[analyzeExtractedText] Extracted transactions count:", extractedTransactions.length);
+      const extractedTransactions =
+        this.extractTransactionsFromAnalysis(generatedText);
+      console.log(
+        "[analyzeExtractedText] Extracted transactions count:",
+        extractedTransactions.length
+      );
 
       return {
         success: true,
@@ -316,11 +328,14 @@ Please extract all financial transactions found in the text above using the exac
         provider: "huggingface",
         source: "Hugging Face Analysis",
         documentType: "Financial Document",
-        notes: "Document analyzed using Hugging Face. Please review and adjust transaction details.",
+        notes:
+          "Document analyzed using Hugging Face BART-CNN. Please review and adjust transaction details.",
       };
     } catch (error) {
-      if (error.name === 'AbortError') {
-        throw new Error("Request timed out. Please try again or switch to Google Gemini API.");
+      if (error.name === "AbortError") {
+        throw new Error(
+          "Request timed out. Please try again or switch to Google Gemini API."
+        );
       }
       throw error;
     }

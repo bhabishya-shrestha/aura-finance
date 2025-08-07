@@ -172,16 +172,28 @@ class AIService {
   async analyzeImage(file) {
     try {
       // Try to validate usage before processing
-      let validation = { can_proceed: true, current_usage: 0, max_requests: 100, remaining_requests: 100 };
-      
+      let validation = {
+        can_proceed: true,
+        current_usage: 0,
+        max_requests: 100,
+        remaining_requests: 100,
+      };
+
       try {
-        validation = await apiUsageService.validateApiUsage(this.currentProvider);
+        validation = await apiUsageService.validateApiUsage(
+          this.currentProvider
+        );
       } catch (error) {
-        console.warn("API usage validation failed, proceeding with client-side limits:", error.message);
+        console.warn(
+          "API usage validation failed, proceeding with client-side limits:",
+          error.message
+        );
         // Fallback to client-side validation
         const provider = this.providers[this.currentProvider];
         if (!provider.service.isProviderAvailable()) {
-          throw new Error(`${provider.name} is not available. Please check your API key or try switching providers.`);
+          throw new Error(
+            `${provider.name} is not available. Please check your API key or try switching providers.`
+          );
         }
       }
 
@@ -195,12 +207,16 @@ class AIService {
       try {
         await apiUsageService.incrementApiUsage(this.currentProvider);
       } catch (error) {
-        console.warn("Failed to record API usage, continuing with analysis:", error.message);
+        console.warn(
+          "Failed to record API usage, continuing with analysis:",
+          error.message
+        );
       }
 
       // Perform the analysis with fallback
       try {
-        const result = await this.providers[this.currentProvider].service.analyzeImage(file);
+        const result =
+          await this.providers[this.currentProvider].service.analyzeImage(file);
 
         // Add server-side usage info to result
         if (result) {
@@ -215,13 +231,20 @@ class AIService {
 
         return result;
       } catch (error) {
-        console.warn(`Primary provider (${this.currentProvider}) failed:`, error.message);
-        
+        console.warn(
+          `Primary provider (${this.currentProvider}) failed:`,
+          error.message
+        );
+
         // Try fallback to Gemini if Hugging Face fails
-        if (this.currentProvider === "huggingface" && this.providers.gemini.service.isProviderAvailable()) {
+        if (
+          this.currentProvider === "huggingface" &&
+          this.providers.gemini.service.isProviderAvailable()
+        ) {
           console.log("🔄 Falling back to Gemini API...");
-          const fallbackResult = await this.providers.gemini.service.analyzeImage(file);
-          
+          const fallbackResult =
+            await this.providers.gemini.service.analyzeImage(file);
+
           if (fallbackResult) {
             fallbackResult.serverUsageValidation = {
               provider: "gemini",
@@ -230,10 +253,10 @@ class AIService {
               fallbackReason: error.message,
             };
           }
-          
+
           return fallbackResult;
         }
-        
+
         throw error;
       }
     } catch (error) {
@@ -250,16 +273,28 @@ class AIService {
   async extractFromText(text) {
     try {
       // Try to validate usage before processing
-      let validation = { can_proceed: true, current_usage: 0, max_requests: 100, remaining_requests: 100 };
-      
+      let validation = {
+        can_proceed: true,
+        current_usage: 0,
+        max_requests: 100,
+        remaining_requests: 100,
+      };
+
       try {
-        validation = await apiUsageService.validateApiUsage(this.currentProvider);
+        validation = await apiUsageService.validateApiUsage(
+          this.currentProvider
+        );
       } catch (error) {
-        console.warn("API usage validation failed, proceeding with client-side limits:", error.message);
+        console.warn(
+          "API usage validation failed, proceeding with client-side limits:",
+          error.message
+        );
         // Fallback to client-side validation
         const provider = this.providers[this.currentProvider];
         if (!provider.service.isProviderAvailable()) {
-          throw new Error(`${provider.name} is not available. Please check your API key or try switching providers.`);
+          throw new Error(
+            `${provider.name} is not available. Please check your API key or try switching providers.`
+          );
         }
       }
 
@@ -273,11 +308,17 @@ class AIService {
       try {
         await apiUsageService.incrementApiUsage(this.currentProvider);
       } catch (error) {
-        console.warn("Failed to record API usage, continuing with analysis:", error.message);
+        console.warn(
+          "Failed to record API usage, continuing with analysis:",
+          error.message
+        );
       }
 
       // Perform the extraction
-      const result = await this.providers[this.currentProvider].service.extractFromText(text);
+      const result =
+        await this.providers[this.currentProvider].service.extractFromText(
+          text
+        );
 
       // Add server-side usage info to result
       if (result) {
@@ -305,16 +346,28 @@ class AIService {
   async convertToTransactions(analysis) {
     try {
       // Try to validate usage before processing
-      let validation = { can_proceed: true, current_usage: 0, max_requests: 100, remaining_requests: 100 };
-      
+      let validation = {
+        can_proceed: true,
+        current_usage: 0,
+        max_requests: 100,
+        remaining_requests: 100,
+      };
+
       try {
-        validation = await apiUsageService.validateApiUsage(this.currentProvider);
+        validation = await apiUsageService.validateApiUsage(
+          this.currentProvider
+        );
       } catch (error) {
-        console.warn("API usage validation failed, proceeding with client-side limits:", error.message);
+        console.warn(
+          "API usage validation failed, proceeding with client-side limits:",
+          error.message
+        );
         // Fallback to client-side validation
         const provider = this.providers[this.currentProvider];
         if (!provider.service.isProviderAvailable()) {
-          throw new Error(`${provider.name} is not available. Please check your API key or try switching providers.`);
+          throw new Error(
+            `${provider.name} is not available. Please check your API key or try switching providers.`
+          );
         }
       }
 
@@ -328,11 +381,17 @@ class AIService {
       try {
         await apiUsageService.incrementApiUsage(this.currentProvider);
       } catch (error) {
-        console.warn("Failed to record API usage, continuing with analysis:", error.message);
+        console.warn(
+          "Failed to record API usage, continuing with analysis:",
+          error.message
+        );
       }
 
       // Perform the conversion
-      const result = await this.providers[this.currentProvider].service.convertToTransactions(analysis);
+      const result =
+        await this.providers[
+          this.currentProvider
+        ].service.convertToTransactions(analysis);
 
       return result;
     } catch (error) {
@@ -368,7 +427,10 @@ class AIService {
         serverValidated: true,
       };
     } catch (error) {
-      console.warn("Failed to get server-side processing summary, using client-side:", error.message);
+      console.warn(
+        "Failed to get server-side processing summary, using client-side:",
+        error.message
+      );
       // Fallback to client-side summary
       return await this.providers[
         this.currentProvider
@@ -385,16 +447,28 @@ class AIService {
   async analyzeTransactions(transactions, prompt) {
     try {
       // Try to validate usage before processing
-      let validation = { can_proceed: true, current_usage: 0, max_requests: 100, remaining_requests: 100 };
-      
+      let validation = {
+        can_proceed: true,
+        current_usage: 0,
+        max_requests: 100,
+        remaining_requests: 100,
+      };
+
       try {
-        validation = await apiUsageService.validateApiUsage(this.currentProvider);
+        validation = await apiUsageService.validateApiUsage(
+          this.currentProvider
+        );
       } catch (error) {
-        console.warn("API usage validation failed, proceeding with client-side limits:", error.message);
+        console.warn(
+          "API usage validation failed, proceeding with client-side limits:",
+          error.message
+        );
         // Fallback to client-side validation
         const provider = this.providers[this.currentProvider];
         if (!provider.service.isProviderAvailable()) {
-          throw new Error(`${provider.name} is not available. Please check your API key or try switching providers.`);
+          throw new Error(
+            `${provider.name} is not available. Please check your API key or try switching providers.`
+          );
         }
       }
 
@@ -408,11 +482,16 @@ class AIService {
       try {
         await apiUsageService.incrementApiUsage(this.currentProvider);
       } catch (error) {
-        console.warn("Failed to record API usage, continuing with analysis:", error.message);
+        console.warn(
+          "Failed to record API usage, continuing with analysis:",
+          error.message
+        );
       }
 
       // Perform the analysis
-      const result = await this.providers[this.currentProvider].service.analyzeTransactions(transactions, prompt);
+      const result = await this.providers[
+        this.currentProvider
+      ].service.analyzeTransactions(transactions, prompt);
 
       return result;
     } catch (error) {

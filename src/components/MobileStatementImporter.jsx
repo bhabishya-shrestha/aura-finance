@@ -218,22 +218,100 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           file.type.startsWith("image/")
         ) {
           updateProgress(15, "Uploading document...");
-          updateProgress(30, "Analyzing document with AI...");
 
-          const result = await aiService.analyzeImage(file);
-          updateProgress(55, "Processing AI results...");
+          // Check which AI provider is being used
+          const currentProvider = aiService.getCurrentProvider();
+          updateProgress(
+            30,
+            `Analyzing document with ${currentProvider.name}...`
+          );
 
-          if (result.transactions && result.transactions.length > 0) {
-            transactions = await aiService.convertToTransactions(result);
-            updateProgress(70, "Validating transaction data...");
-
-            transactions = applyImportOptionsToTransactions(transactions);
-
-            summary = aiService.getProcessingSummary(result);
-          } else {
-            throw new Error(
-              "No transactions found in the document. Please try a clearer document or different file."
+          try {
+            // Add timeout for AI processing
+            const aiProcessingPromise = aiService.analyzeImage(file);
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(
+                () =>
+                  reject(
+                    new Error("AI processing timed out. Please try again.")
+                  ),
+                60000
+              )
             );
+
+            // Add intermediate progress updates
+            const progressInterval = setInterval(() => {
+              const currentProgress = displayProgress;
+              if (currentProgress >= 30 && currentProgress < 50) {
+                updateProgress(
+                  currentProgress + 2,
+                  `${currentProvider.name} is analyzing your document...`
+                );
+              }
+            }, 2000);
+
+            const result = await Promise.race([
+              aiProcessingPromise,
+              timeoutPromise,
+            ]);
+
+            clearInterval(progressInterval);
+            console.log("✅ AI analysis completed:", result);
+
+            // Check if fallback was used
+            if (
+              result.serverUsageValidation &&
+              result.serverUsageValidation.fallbackUsed
+            ) {
+              console.log(
+                "🔄 Fallback provider was used:",
+                result.serverUsageValidation
+              );
+            }
+
+            updateProgress(55, "Processing AI results...");
+
+            if (
+              result &&
+              result.transactions &&
+              result.transactions.length > 0
+            ) {
+              transactions = await aiService.convertToTransactions(result);
+              console.log("✅ Transactions converted:", transactions.length);
+              updateProgress(70, "Validating transaction data...");
+
+              transactions = applyImportOptionsToTransactions(transactions);
+
+              summary = aiService.getProcessingSummary(result);
+            } else {
+              throw new Error(
+                "No transactions found in the document. Please try a clearer document or different file."
+              );
+            }
+          } catch (aiError) {
+            console.error("❌ AI processing failed:", aiError);
+
+            // Check if it's a timeout or API error
+            if (
+              aiError.message.includes("timed out") ||
+              aiError.message.includes("API")
+            ) {
+              throw new Error(
+                `AI processing failed: ${aiError.message}. Please try switching to a different AI provider in settings or try again later.`
+              );
+            } else if (aiError.message.includes("Daily limit exceeded")) {
+              throw new Error(
+                `Daily limit exceeded for ${currentProvider.name}. Please switch to a different AI provider in settings or try again tomorrow.`
+              );
+            } else if (aiError.message.includes("not available")) {
+              throw new Error(
+                `${currentProvider.name} is not available. Please check your API key or switch to a different provider in settings.`
+              );
+            } else {
+              throw new Error(
+                `AI analysis failed: ${aiError.message}. Please try a different document or switch AI providers.`
+              );
+            }
           }
         } else {
           throw new Error("Unsupported file type.");
