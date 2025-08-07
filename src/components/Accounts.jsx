@@ -3,7 +3,7 @@ import { CreditCard, Wallet, PiggyBank, BarChart3 } from "lucide-react";
 import useStore from "../store";
 
 const Accounts = () => {
-  const { accounts, getAccountBalance, getTransactionsByAccount } = useStore();
+  const { accounts, getAccountBalance, calculateAccountStats } = useStore();
 
   const getAccountIcon = type => {
     switch (type) {
@@ -51,28 +51,6 @@ const Accounts = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
-  };
-
-  const calculateAccountStats = accountId => {
-    const transactions = getTransactionsByAccount(accountId);
-    const recentTransactions = transactions.slice(0, 30); // Last 30 days
-
-    const income = recentTransactions
-      .filter(t => t.amount > 0)
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const expenses = recentTransactions
-      .filter(t => t.amount < 0)
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-    const netFlow = income - expenses;
-
-    return {
-      income,
-      expenses,
-      netFlow,
-      transactionCount: recentTransactions.length,
-    };
   };
 
   return (

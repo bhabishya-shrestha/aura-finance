@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Search,
-  Download,
   TrendingUp,
   TrendingDown,
   FileText,
@@ -10,13 +9,21 @@ import {
   SortAsc,
   SortDesc,
   X,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import useStore from "../store";
-import AddTransaction from "../components/AddTransaction";
+import { CATEGORIES } from "../utils/statementParser";
 
 const TransactionsPage = () => {
-  const { transactions, loadTransactions, accounts, updateTransaction } =
-    useStore();
+  const {
+    transactions,
+    loadTransactions,
+    accounts,
+    updateTransaction,
+    deleteTransaction,
+    deleteTransactions,
+  } = useStore();
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -25,7 +32,13 @@ const TransactionsPage = () => {
   const [selectedTransactions, setSelectedTransactions] = useState(new Set());
   const [showBulkAssignment, setShowBulkAssignment] = useState(false);
   const [showBulkYearAssignment, setShowBulkYearAssignment] = useState(false);
+  const [showBulkCategoryAssignment, setShowBulkCategoryAssignment] =
+    useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState(null);
 
   useEffect(() => {
     loadTransactions();
@@ -130,13 +143,21 @@ const TransactionsPage = () => {
 
   const handleBulkAccountAssignment = async selectedAccountId => {
     try {
+      // Get the account name for the selected account
+      const selectedAccount = accounts.find(
+        acc => acc.id === selectedAccountId
+      );
+      const accountName = selectedAccount
+        ? selectedAccount.name
+        : "Uncategorized Account";
+
       const updatePromises = Array.from(selectedTransactions).map(
         transactionId => {
           const transaction = transactions.find(t => t.id === transactionId);
           if (transaction) {
             return updateTransaction(transactionId, {
-              ...transaction,
               accountId: selectedAccountId,
+              accountName: accountName,
             });
           }
           return Promise.resolve();
@@ -148,12 +169,20 @@ const TransactionsPage = () => {
       setSelectedTransactions(new Set());
       await loadTransactions();
     } catch (error) {
-      // Error updating transactions
+      if (import.meta.env.DEV) {
+        console.error("Error in bulk account assignment:", error);
+      }
     }
   };
 
   const handleBulkYearAssignment = async year => {
     try {
+      if (import.meta.env.DEV) {
+        console.log(
+          `Starting bulk year assignment for ${selectedTransactions.size} transactions to year ${year}`
+        );
+      }
+
       const updatePromises = Array.from(selectedTransactions).map(
         transactionId => {
           const transaction = transactions.find(t => t.id === transactionId);
@@ -167,8 +196,7 @@ const TransactionsPage = () => {
             );
 
             return updateTransaction(transactionId, {
-              ...transaction,
-              date: newDate,
+              date: newDate.toISOString(),
             });
           }
           return Promise.resolve();
@@ -179,9 +207,126 @@ const TransactionsPage = () => {
       setShowBulkYearAssignment(false);
       setSelectedTransactions(new Set());
       await loadTransactions();
+
+      if (import.meta.env.DEV) {
+        console.log("Bulk year assignment completed successfully");
+      }
     } catch (error) {
-      // Error updating transactions
+      if (import.meta.env.DEV) {
+        console.error("Error in bulk year assignment:", error);
+      }
     }
+  };
+
+  const handleBulkCategoryAssignment = async selectedCategory => {
+    try {
+      if (import.meta.env.DEV) {
+        console.log(
+          `Starting bulk category assignment for ${selectedTransactions.size} transactions to category ${selectedCategory}`
+        );
+      }
+
+      const updatePromises = Array.from(selectedTransactions).map(
+        transactionId => {
+          const transaction = transactions.find(t => t.id === transactionId);
+          if (transaction) {
+            return updateTransaction(transactionId, {
+              category: selectedCategory,
+            });
+          }
+          return Promise.resolve();
+        }
+      );
+
+      await Promise.all(updatePromises);
+      setShowBulkCategoryAssignment(false);
+      setSelectedTransactions(new Set());
+      await loadTransactions();
+
+      if (import.meta.env.DEV) {
+        console.log("Bulk category assignment completed successfully");
+      }
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("Error in bulk category assignment:", error);
+      }
+    }
+  };
+
+  const handleEditTransaction = transaction => {
+    setEditingTransaction(transaction);
+    setShowCategoryModal(true);
+  };
+
+  const handleUpdateTransactionCategory = async (
+    transactionId,
+    newCategory
+  ) => {
+    try {
+      if (import.meta.env.DEV) {
+        console.log(
+          `Updating transaction ${transactionId} category to ${newCategory}`
+        );
+      }
+
+      const transaction = transactions.find(t => t.id === transactionId);
+      if (transaction) {
+        await updateTransaction(transactionId, {
+          category: newCategory,
+        });
+        setShowCategoryModal(false);
+        setEditingTransaction(null);
+        await loadTransactions();
+
+        if (import.meta.env.DEV) {
+          console.log("Transaction category updated successfully");
+        }
+      }
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("Error updating transaction category:", error);
+      }
+    }
+  };
+
+  const handleDeleteTransaction = async transactionId => {
+    try {
+      await deleteTransaction(transactionId);
+      setShowDeleteConfirm(false);
+      setTransactionToDelete(null);
+      await loadTransactions();
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("Error deleting transaction:", error);
+      }
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    try {
+      if (import.meta.env.DEV) {
+        console.log(
+          `Starting batch delete for ${selectedTransactions.size} transactions`
+        );
+      }
+
+      await deleteTransactions(Array.from(selectedTransactions));
+      setSelectedTransactions(new Set());
+      await loadTransactions();
+
+      if (import.meta.env.DEV) {
+        console.log("Batch delete completed successfully");
+      }
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("Error in batch delete:", error);
+      }
+    }
+  };
+
+  const confirmDelete = transaction => {
+    setTransactionToDelete(transaction);
+    setShowDeleteConfirm(true);
   };
 
   const getTransactionIcon = type => {
@@ -199,44 +344,6 @@ const TransactionsPage = () => {
       setSortBy(field);
       setSortOrder("desc");
     }
-  };
-
-  const handleExport = () => {
-    // Create CSV content
-    const headers = [
-      "Date",
-      "Description",
-      "Category",
-      "Account",
-      "Amount",
-      "Type",
-    ];
-    const csvContent = [
-      headers.join(","),
-      ...(Array.isArray(filteredTransactions)
-        ? filteredTransactions.map(transaction =>
-            [
-              formatDate(transaction.date),
-              `"${transaction.description || ""}"`,
-              transaction.category?.name || "Unknown",
-              transaction.account?.name || "Uncategorized Account",
-              transaction.amount,
-              transaction.type || "expense",
-            ].join(",")
-          )
-        : []),
-    ].join("\n");
-
-    // Create and download file
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `transactions-${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
   };
 
   // Mobile-specific components
@@ -351,9 +458,25 @@ const TransactionsPage = () => {
           {transaction.description || "No description"}
         </h3>
         <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-          <span className="capitalize">
-            {transaction.category?.name || "Uncategorized"}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="capitalize">
+              {transaction.category || "Uncategorized"}
+            </span>
+            <button
+              onClick={() => handleEditTransaction(transaction)}
+              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              title="Edit category"
+            >
+              <Edit className="w-3 h-3" />
+            </button>
+            <button
+              onClick={() => confirmDelete(transaction)}
+              className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+              title="Delete transaction"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
           <span>{transaction.account?.name || "Uncategorized Account"}</span>
         </div>
       </div>
@@ -362,41 +485,6 @@ const TransactionsPage = () => {
 
   return (
     <div className="p-4 lg:p-6 max-w-7xl mx-auto">
-      {/* Header - Desktop only */}
-      <div className="hidden lg:block mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-              Transactions
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Manage and track all your financial transactions
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={handleExport}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 shadow-sm"
-            >
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
-            <AddTransaction />
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Header - Simple */}
-      <div className="lg:hidden mb-4">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-          Transactions
-        </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Manage and track all your financial transactions
-        </p>
-      </div>
-
       {/* Mobile Search and Filters */}
       <div className="lg:hidden space-y-4 mb-6">
         {/* Search Bar */}
@@ -518,10 +606,22 @@ const TransactionsPage = () => {
                 Assign to Account
               </button>
               <button
+                onClick={() => setShowBulkCategoryAssignment(true)}
+                className="px-3 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+              >
+                Assign Category
+              </button>
+              <button
                 onClick={() => setShowBulkYearAssignment(true)}
                 className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
               >
                 Assign to Year
+              </button>
+              <button
+                onClick={handleBatchDelete}
+                className="px-3 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+              >
+                Delete Selected
               </button>
             </div>
           </div>
@@ -548,6 +648,52 @@ const TransactionsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Mobile Batch Actions */}
+      {selectedTransactions.size > 0 && (
+        <div className="lg:hidden fixed bottom-4 left-4 right-4 z-40">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                {selectedTransactions.size} transaction
+                {selectedTransactions.size !== 1 ? "s" : ""} selected
+              </span>
+              <button
+                onClick={() => setSelectedTransactions(new Set())}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setShowBulkAssignment(true)}
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                Assign Account
+              </button>
+              <button
+                onClick={() => setShowBulkCategoryAssignment(true)}
+                className="px-3 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+              >
+                Assign Category
+              </button>
+              <button
+                onClick={() => setShowBulkYearAssignment(true)}
+                className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+              >
+                Assign Year
+              </button>
+              <button
+                onClick={handleBatchDelete}
+                className="px-3 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Desktop Transaction Table */}
       <div className="hidden lg:block">
@@ -601,6 +747,9 @@ const TransactionsPage = () => {
                       <ArrowUpDown className="w-3 h-3" />
                     </button>
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -634,7 +783,18 @@ const TransactionsPage = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {transaction.category?.name || "Uncategorized"}
+                          <div className="flex items-center justify-between">
+                            <span>
+                              {transaction.category || "Uncategorized"}
+                            </span>
+                            <button
+                              onClick={() => handleEditTransaction(transaction)}
+                              className="ml-2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                              title="Edit category"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </button>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {transaction.account?.name || "Uncategorized Account"}
@@ -649,6 +809,24 @@ const TransactionsPage = () => {
                           >
                             {formatCurrency(transaction.amount)}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleEditTransaction(transaction)}
+                              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                              title="Edit category"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => confirmDelete(transaction)}
+                              className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                              title="Delete transaction"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -695,6 +873,83 @@ const TransactionsPage = () => {
         </div>
       )}
 
+      {/* Category Assignment Modal */}
+      {showBulkCategoryAssignment && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Assign Category
+            </h3>
+            <div className="space-y-2 mb-6">
+              {CATEGORIES.map(category => (
+                <button
+                  key={category}
+                  onClick={() => handleBulkCategoryAssignment(category)}
+                  className="w-full p-3 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {category}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowBulkCategoryAssignment(false)}
+              className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Individual Category Edit Modal */}
+      {showCategoryModal && editingTransaction && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Edit Transaction Category
+            </h3>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Transaction: {editingTransaction.description}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Current Category:{" "}
+                {editingTransaction.category || "Uncategorized"}
+              </p>
+            </div>
+            <div className="space-y-2 mb-6">
+              {CATEGORIES.map(category => (
+                <button
+                  key={category}
+                  onClick={() =>
+                    handleUpdateTransactionCategory(
+                      editingTransaction.id,
+                      category
+                    )
+                  }
+                  className="w-full p-3 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {category}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                setShowCategoryModal(false);
+                setEditingTransaction(null);
+              }}
+              className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Year Assignment Modal */}
       {showBulkYearAssignment && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -721,6 +976,48 @@ const TransactionsPage = () => {
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && transactionToDelete && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Delete Transaction
+            </h3>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Are you sure you want to delete this transaction?
+              </p>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {transactionToDelete.description || "No description"}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {formatCurrency(transactionToDelete.amount)} •{" "}
+                  {formatDate(transactionToDelete.date)}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setTransactionToDelete(null);
+                }}
+                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteTransaction(transactionToDelete.id)}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

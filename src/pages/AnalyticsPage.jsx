@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Bar,
   XAxis,
@@ -12,8 +12,8 @@ import {
   LineChart,
   Line,
   Area,
-  AreaChart,
   ComposedChart,
+  BarChart,
 } from "recharts";
 import {
   TrendingUp,
@@ -29,937 +29,547 @@ import {
 import useStore from "../store";
 import analyticsService from "../services/analyticsService";
 
-// Separate Analytics Data Provider - handles all data calculations with professional patterns
-const AnalyticsDataProvider = ({ children }) => {
-  const { getAllAnalytics, transactions } = useStore();
-
-  // Helper function for empty analytics data - moved to top to fix hoisting
-  const getEmptyAnalyticsData = () => ({
-    spendingByCategory: [],
-    monthlySpending: [],
-    incomeVsSpending: { income: 0, spending: 0, net: 0 },
-    spendingTrends: [],
-    netWorthTrend: 0,
-    incomeTrend: 0,
-    spendingTrend: 0,
-    savingsTrend: 0,
-    quickAnalytics: { transactionCount: 0, netSavings: 0 },
-    avgDailySpending: 0,
-  });
-
-  // Get saved time range from localStorage or default to "week"
-  const getSavedTimeRange = () => {
-    try {
-      const saved = localStorage.getItem("aura-finance-timeRange");
-      return saved || "week";
-    } catch (error) {
-      // console.warn("Could not load saved time range:", error);
-      return "week";
-    }
-  };
-
-  const [timeRange, setTimeRange] = useState(getSavedTimeRange);
-  const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(true);
-  const [lastTransactionCount, setLastTransactionCount] = useState(0);
-
-  // Save time range to localStorage when it changes
-  const handleTimeRangeChange = useCallback(newTimeRange => {
-    setTimeRange(newTimeRange);
-    try {
-      localStorage.setItem("aura-finance-timeRange", newTimeRange);
-      // Force refresh cache when time range changes
-      analyticsService.forceRefresh();
-      // Also clear the last transaction count to force recalculation
-      setLastTransactionCount(0);
-    } catch (error) {
-      // console.warn("Could not save time range:", error);
-    }
-  }, []);
-
-  // Professional analytics data calculation with proper memoization
-  const analyticsData = useMemo(() => {
-    // Check if we need to recalculate
-    const currentTransactionCount = transactions.length;
-    const needsRecalculation =
-      currentTransactionCount !== lastTransactionCount || !isAnalyticsLoading;
-
-    if (needsRecalculation) {
-      setLastTransactionCount(currentTransactionCount);
-      setIsAnalyticsLoading(true);
-    }
-
-    // Professional data validation
-    if (!Array.isArray(transactions)) {
-      // console.error("Invalid transactions data:", transactions);
-      setIsAnalyticsLoading(false);
-      return getEmptyAnalyticsData();
-    }
-
-    if (!transactions.length) {
-      setIsAnalyticsLoading(false);
-      return getEmptyAnalyticsData();
-    }
-
-    // Data consistency check
-    const validTransactions = transactions.filter(
-      t =>
-        t &&
-        typeof t === "object" &&
-        t.id &&
-        typeof t.amount === "number" &&
-        t.date
-    );
-
-    if (validTransactions.length !== transactions.length) {
-      // console.warn("Data consistency issue:", {
-      //   totalTransactions: transactions.length,
-      //   validTransactions: validTransactions.length,
-      //   invalidTransactions: transactions.length - validTransactions.length,
-      // });
-    }
-
-    // Get all analytics data in a single batch calculation
-    const data = getAllAnalytics(timeRange);
-
-    // Enhanced spending data with proper colors
-    const GRADIENT_COLORS = [
-      "#667eea",
-      "#f093fb",
-      "#4facfe",
-      "#43e97b",
-      "#fa709a",
-      "#a8edea",
-      "#ff9a9e",
-      "#fecfef",
-      "#ffecd2",
-      "#fcb69f",
-      "#ff9a9e",
-      "#fecfef",
-    ];
-
-    const enhancedSpendingData = data.spendingByCategory.map((item, index) => ({
-      ...item,
-      fill: GRADIENT_COLORS[index % GRADIENT_COLORS.length],
-      percentage:
-        data.incomeVsSpending.spending !== 0
-          ? (item.amount / Math.abs(data.incomeVsSpending.spending)) * 100
-          : 0,
-    }));
-
-    const enhancedMonthlyData = data.monthlySpending.map(item => ({
-      ...item,
-      spending: Math.abs(item.spending),
-    }));
-
-    const calculateTrend = (current, previous) => {
-      if (previous === 0) return 0;
-      return ((current - previous) / previous) * 100;
-    };
-
-    const currentIncome = data.incomeVsSpending.income;
-    const currentSpending = Math.abs(data.incomeVsSpending.spending);
-
-    const result = {
-      spendingByCategory: enhancedSpendingData,
-      monthlySpending: enhancedMonthlyData,
-      incomeVsSpending: data.incomeVsSpending,
-      spendingTrends: data.spendingTrends,
-      netWorthTrend: calculateTrend(
-        data.incomeVsSpending.net,
-        data.incomeVsSpending.net * 0.95
-      ),
-      incomeTrend: calculateTrend(currentIncome, currentIncome * 0.9),
-      spendingTrend: calculateTrend(currentSpending, currentSpending * 0.85),
-      savingsTrend: calculateTrend(
-        currentIncome - currentSpending,
-        (currentIncome - currentSpending) * 0.92
-      ),
-      quickAnalytics: data.quickAnalytics,
-      avgDailySpending: data.avgDailySpending,
-    };
-
-    // Set loading to false after calculation is complete
-    setIsAnalyticsLoading(false);
-
-    // Professional debug logging
-    // if (import.meta.env.DEV) {
-    //   console.log("Analytics data calculation:", {
-    //     timeRange,
-    //     transactionCount: transactions.length,
-    //     validTransactionCount: validTransactions.length,
-    //     needsRecalculation,
-    //     calculationTime: Date.now(),
-    //     dataSummary: {
-    //       spendingByCategory: enhancedSpendingData.length,
-    //       monthlySpending: enhancedMonthlyData.length,
-    //       spendingTrends: data.spendingTrends.length,
-    //       hasIncomeVsSpending:
-    //         !!data.incomeVsSpending.income || !!data.incomeVsSpending.spending,
-    //       quickAnalytics: data.quickAnalytics,
-    //     },
-    //     dataConsistency: {
-    //       totalTransactions: transactions.length,
-    //       validTransactions: validTransactions.length,
-    //       dataIntegrity: validTransactions.length === transactions.length,
-    //     },
-    //   });
-    // }
-
-    return result;
-  }, [
-    timeRange,
-    transactions,
-    lastTransactionCount,
-    isAnalyticsLoading,
-    getAllAnalytics,
-  ]);
-
-  return children({
-    analyticsData,
-    isAnalyticsLoading,
-    timeRange,
-    setTimeRange: handleTimeRangeChange,
-  });
-};
-
-// Empty state component for charts
+// Empty Chart State Component
 const EmptyChartState = ({
   message = "No data available for this time period",
 }) => (
-  <div className="flex flex-col items-center justify-center h-full text-center p-6">
-    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-      <BarChart3 className="w-8 h-8 text-gray-400" />
-    </div>
-    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">
-      No Data Available
-    </p>
-    <p className="text-gray-400 dark:text-gray-500 text-xs">{message}</p>
+  <div className="flex flex-col items-center justify-center py-12 text-center">
+    <BarChart3 className="w-12 h-12 text-gray-400 mb-4" />
+    <p className="text-gray-500 text-sm">{message}</p>
   </div>
 );
 
-// Separate Chart Components - each is completely independent
-const SpendingByCategoryChart = React.memo(({ data, isMobile }) => {
-  const formatCurrency = useCallback(amount => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  }, []);
-
-  if (!data || !data.length) return null;
+// Chart Container Component
+const ChartContainer = ({
+  title,
+  children,
+  isExpanded,
+  onToggleExpand,
+  className = "",
+  isMobile,
+}) => {
+  const handleCardClick = e => {
+    // Only handle clicks on mobile and only if the click is not on the chart area
+    if (isMobile && onToggleExpand) {
+      // Check if the click is on the chart area (children)
+      const chartArea = e.currentTarget.querySelector("[data-chart-area]");
+      if (chartArea && chartArea.contains(e.target)) {
+        return; // Don't toggle if clicking on chart
+      }
+      onToggleExpand();
+    }
+  };
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <div
+      className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 ${className} ${
+        isMobile && onToggleExpand ? "cursor-pointer" : ""
+      }`}
+      onClick={handleCardClick}
+    >
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          {title}
+        </h3>
+        {/* Only show collapse button on mobile */}
+        {onToggleExpand && isMobile && (
+          <button
+            onClick={e => {
+              e.stopPropagation(); // Prevent card click
+              onToggleExpand();
+            }}
+            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          >
+            {isExpanded ? (
+              <ChevronUp className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            )}
+          </button>
+        )}
+      </div>
+      <div className="p-4" data-chart-area>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// Metric Card Component
+const MetricCard = ({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  color = "blue",
+  trend,
+}) => {
+  const getColorClasses = () => {
+    switch (color) {
+      case "green":
+        return "text-green-600 dark:text-green-400";
+      case "red":
+        return "text-red-600 dark:text-red-400";
+      case "purple":
+        return "text-purple-600 dark:text-purple-400";
+      case "blue":
+        return "text-blue-600 dark:text-blue-400";
+      default:
+        return "text-blue-600 dark:text-blue-400";
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            {title}
+          </p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+            {value}
+          </p>
+          {subtitle && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {subtitle}
+            </p>
+          )}
+        </div>
+        <div
+          className={`p-3 rounded-lg bg-gray-50 dark:bg-gray-700 ${getColorClasses()}`}
+        >
+          <Icon className="w-6 h-6" />
+        </div>
+      </div>
+      {trend !== undefined && (
+        <div className="flex items-center mt-3">
+          {trend > 0 ? (
+            <ArrowUpRight className="w-4 h-4 text-green-500" />
+          ) : (
+            <ArrowDownRight className="w-4 h-4 text-red-500" />
+          )}
+          <span
+            className={`text-sm font-medium ml-1 ${trend > 0 ? "text-green-600" : "text-red-600"}`}
+          >
+            {Math.abs(trend).toFixed(1)}%
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Chart Components
+const IncomeVsSpendingChart = ({ data }) => {
+  if (!data || !data.length) return <EmptyChartState />;
+
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <ComposedChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="month" />
+        <YAxis />
+        <Tooltip />
+        <Area
+          type="monotone"
+          dataKey="income"
+          stackId="1"
+          stroke="#10b981"
+          fill="#10b981"
+          fillOpacity={0.3}
+        />
+        <Area
+          type="monotone"
+          dataKey="spending"
+          stackId="1"
+          stroke="#ef4444"
+          fill="#ef4444"
+          fillOpacity={0.3}
+        />
+      </ComposedChart>
+    </ResponsiveContainer>
+  );
+};
+
+const SpendingByCategoryChart = ({ data, isMobile }) => {
+  if (!data || !data.length) return <EmptyChartState />;
+
+  return (
+    <ResponsiveContainer width="100%" height={300}>
       <PieChart>
         <Pie
           data={data}
           cx="50%"
           cy="50%"
-          innerRadius={50}
-          outerRadius={90}
+          innerRadius={isMobile ? 40 : 60}
+          outerRadius={isMobile ? 80 : 100}
           paddingAngle={5}
-          dataKey="amount"
-          nameKey="category"
-          label={({ category, percentage }) => {
-            return !isMobile && percentage > 5
-              ? `${category}\n${percentage.toFixed(1)}%`
-              : "";
-          }}
-          labelLine={false}
-          strokeWidth={2}
-          stroke="#ffffff"
+          dataKey="value"
         >
           {data.map((entry, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={entry.fill}
-              stroke="#ffffff"
-              strokeWidth={2}
-            />
+            <Cell key={`cell-${index}`} fill={entry.fill} />
           ))}
         </Pie>
-        <Tooltip
-          content={({ active, payload }) => {
-            if (!active || !payload || !payload.length) return null;
-            const data = payload[0].payload;
-            return (
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 backdrop-blur-sm">
-                <p className="text-gray-900 dark:text-white font-medium text-sm mb-2">
-                  {data.category}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Amount: {formatCurrency(data.amount)}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Percentage: {data.percentage.toFixed(1)}%
-                </p>
-              </div>
-            );
-          }}
-        />
+        <Tooltip />
       </PieChart>
     </ResponsiveContainer>
   );
-});
+};
 
-SpendingByCategoryChart.displayName = "SpendingByCategoryChart";
-
-const MonthlySpendingChart = React.memo(({ data }) => {
-  const formatCurrency = useCallback(amount => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  }, []);
-
+const MonthlySpendingChart = ({ data }) => {
   if (!data || !data.length) return <EmptyChartState />;
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <AreaChart data={data}>
-        <defs>
-          <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.1} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke="rgba(156, 163, 175, 0.2)"
-        />
-        <XAxis
-          dataKey="month"
-          stroke="#6B7280"
-          fontSize={11}
-          tick={{ fontSize: 10 }}
-        />
-        <YAxis stroke="#6B7280" fontSize={11} tick={{ fontSize: 10 }} />
-        <Tooltip
-          content={({ active, payload, label }) => {
-            if (!active || !payload || !payload.length) return null;
-            return (
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 backdrop-blur-sm">
-                <p className="text-gray-900 dark:text-white font-medium text-sm mb-2">
-                  {label}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Spending: {formatCurrency(payload[0].value)}
-                </p>
-              </div>
-            );
-          }}
-        />
-        <Area
-          type="monotone"
-          dataKey="spending"
-          stroke="#3B82F6"
-          strokeWidth={3}
-          fill="url(#trendGradient)"
-        />
-      </AreaChart>
-    </ResponsiveContainer>
-  );
-});
-
-MonthlySpendingChart.displayName = "MonthlySpendingChart";
-
-const IncomeVsSpendingChart = React.memo(({ data }) => {
-  const formatCurrency = useCallback(amount => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  }, []);
-
-  if (!data || (!data.income && !data.spending)) return <EmptyChartState />;
-
-  const chartData = [
-    {
-      name: "Income",
-      amount: data.income,
-      type: "income",
-      fill: "#10B981",
-    },
-    {
-      name: "Spending",
-      amount: Math.abs(data.spending),
-      type: "spending",
-      fill: "#EF4444",
-    },
-  ];
-
-  return (
-    <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart data={chartData}>
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke="rgba(156, 163, 175, 0.2)"
-        />
-        <XAxis
-          dataKey="name"
-          stroke="#6B7280"
-          fontSize={12}
-          tick={{ fontSize: 11 }}
-        />
-        <YAxis stroke="#6B7280" fontSize={12} tick={{ fontSize: 11 }} />
-        <Tooltip
-          content={({ active, payload, label }) => {
-            if (!active || !payload || !payload.length) return null;
-            return (
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 backdrop-blur-sm">
-                <p className="text-gray-900 dark:text-white font-medium text-sm mb-2">
-                  {label}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Amount: {formatCurrency(payload[0].value)}
-                </p>
-              </div>
-            );
-          }}
-        />
-        <Bar
-          dataKey="amount"
-          fill={entry => entry.fill}
-          radius={[8, 8, 0, 0]}
-        />
-      </ComposedChart>
-    </ResponsiveContainer>
-  );
-});
-
-IncomeVsSpendingChart.displayName = "IncomeVsSpendingChart";
-
-const SpendingTrendsChart = React.memo(({ data }) => {
-  const formatCurrency = useCallback(amount => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  }, []);
-
-  // Debug logging
-  // console.log("SpendingTrendsChart received data:", {
-  //   data,
-  //   dataLength: data?.length,
-  //   hasData: data?.some(item => item.spending > 0),
-  //   sampleData: data?.slice(0, 3),
-  //   // Add detailed analysis of the data
-  //   allSpendingValues: data?.map(item => ({
-  //     period: item.period,
-  //     spending: item.spending,
-  //     income: item.income,
-  //     net: item.net,
-  //     transactionCount: item.transactionCount,
-  //   })),
-  //   totalSpending: data?.reduce((sum, item) => sum + item.spending, 0),
-  //   totalIncome: data?.reduce((sum, item) => sum + item.income, 0),
-  // });
-
-  if (!data || !data.length) return <EmptyChartState />;
-
-  // Check if there's any actual spending data
-  const hasSpendingData = data.some(item => item.spending > 0);
-  if (!hasSpendingData) {
-    return (
-      <EmptyChartState message="No spending data available for this time period" />
-    );
-  }
-
-  return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data}>
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke="rgba(156, 163, 175, 0.2)"
-        />
-        <XAxis
-          dataKey="period"
-          stroke="#6B7280"
-          fontSize={11}
-          tick={{ fontSize: 10 }}
-        />
-        <YAxis stroke="#6B7280" fontSize={11} tick={{ fontSize: 10 }} />
-        <Tooltip
-          content={({ active, payload, label }) => {
-            if (!active || !payload || !payload.length) return null;
-            return (
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 backdrop-blur-sm">
-                <p className="text-gray-900 dark:text-white font-medium text-sm mb-2">
-                  {label}
-                </p>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Spending: {formatCurrency(payload[0].value)}
-                </p>
-              </div>
-            );
-          }}
-        />
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="month" />
+        <YAxis />
+        <Tooltip />
         <Line
           type="monotone"
           dataKey="spending"
-          stroke="#3B82F6"
-          strokeWidth={3}
-          dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
-          activeDot={{ r: 6, stroke: "#3B82F6", strokeWidth: 2 }}
+          stroke="#3b82f6"
+          strokeWidth={2}
         />
       </LineChart>
     </ResponsiveContainer>
   );
-});
+};
 
-SpendingTrendsChart.displayName = "SpendingTrendsChart";
+const SpendingTrendsChart = ({ data }) => {
+  if (!data || !data.length) return <EmptyChartState />;
 
-// Separate Chart Container Component
-const ChartContainer = React.memo(
-  ({
-    title,
-    children,
-    className = "",
-    isExpanded = false,
-    onToggleExpand,
-    isMobile,
-  }) => {
-    const handleCardClick = useCallback(
-      e => {
-        if (e.target.closest(".chart-content")) {
-          return; // Don't toggle if clicking on chart content
-        }
-        if (isMobile && onToggleExpand) {
-          onToggleExpand();
-        }
-      },
-      [isMobile, onToggleExpand]
-    );
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <BarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="category" />
+        <YAxis />
+        <Tooltip />
+        <Bar dataKey="amount" fill="#3b82f6" />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+};
 
-    return (
-      <div
-        className={`bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 dark:border-white/10 border-gray-200 dark:border-gray-700 p-4 sm:p-6 ${className}`}
-        onClick={handleCardClick}
-        style={{ cursor: isMobile ? "pointer" : "default" }}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-soft-white">{title}</h3>
-          {isMobile && (
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                onToggleExpand();
-              }}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              title={isExpanded ? "Collapse" : "Expand"}
-            >
-              {isExpanded ? (
-                <ChevronUp className="w-4 h-4 text-soft-white" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-soft-white" />
-              )}
-            </button>
-          )}
-        </div>
-        {(!isMobile || isExpanded) && (
-          <div className="chart-content h-64 sm:h-72 lg:h-80">{children}</div>
-        )}
-      </div>
-    );
-  }
-);
-
-ChartContainer.displayName = "ChartContainer";
-
-// Separate Metric Card Component
-const MetricCard = React.memo(
-  ({
-    title,
-    value,
-    subtitle,
-    icon: Icon,
-    trend,
-    color = "blue",
-    className = "",
-    onClick,
-    animateCards,
-  }) => {
-    const colorClasses = {
-      blue: "bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20",
-      green:
-        "bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20",
-      red: "bg-gradient-to-br from-red-500/10 to-red-600/10 border-red-500/20",
-      purple:
-        "bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20",
-    };
-
-    const formatCurrency = useCallback(amount => {
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(amount);
-    }, []);
-
-    const formatPercentage = useCallback(value => {
-      return `${Math.abs(value).toFixed(1)}%`;
-    }, []);
-
-    return (
-      <div
-        className={`relative p-4 sm:p-6 rounded-xl border transition-all duration-300 cursor-pointer hover:shadow-lg ${
-          colorClasses[color]
-        } ${animateCards ? "animate-fade-in-up" : ""} ${className}`}
-        onClick={onClick}
-      >
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="transform transition-transform duration-300">
-              <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-white/80" />
-            </div>
-            <div>
-              <h3 className="text-sm sm:text-base font-semibold text-soft-white">
-                {title}
-              </h3>
-              <p className="text-xs sm:text-sm text-gray-400">{subtitle}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-end justify-between">
-          <div className="text-2xl sm:text-3xl font-bold text-soft-white">
-            {typeof value === "number" ? formatCurrency(value) : value}
-          </div>
-          {trend !== undefined && (
-            <div className="flex items-center gap-1 text-sm font-medium">
-              <div
-                className={`flex items-center ${
-                  trend >= 0 ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {trend >= 0 ? (
-                  <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                ) : (
-                  <ArrowDownRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                )}
-              </div>
-              {formatPercentage(trend)}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-);
-
-MetricCard.displayName = "MetricCard";
-
-// Main Analytics Page Component - now just orchestrates the separate components
+// Main Analytics Page Component
 const AnalyticsPage = () => {
-  const { getNetWorth } = useStore();
+  const { transactions } = useStore();
   const [selectedView, setSelectedView] = useState("overview");
-  const [expandedCharts, setExpandedCharts] = useState({});
+  const [timeRange, setTimeRange] = useState("week");
   const [isMobile, setIsMobile] = useState(false);
+  const [expandedCharts, setExpandedCharts] = useState({});
 
-  // Detect mobile layout once on mount
+  // Mobile detection
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-
     checkMobile();
     window.addEventListener("resize", checkMobile);
-
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const toggleChartExpansion = useCallback(chartId => {
+  // Time range handling
+  useEffect(() => {
+    const saved = localStorage.getItem("aura-finance-timeRange");
+    if (saved) setTimeRange(saved);
+  }, []);
+
+  const handleTimeRangeChange = newRange => {
+    setTimeRange(newRange);
+    localStorage.setItem("aura-finance-timeRange", newRange);
+    analyticsService.forceRefresh();
+  };
+
+  // Chart expansion handling
+  const toggleChartExpansion = chartId => {
     setExpandedCharts(prev => ({
       ...prev,
       [chartId]: !prev[chartId],
     }));
-  }, []);
+  };
+
+  // Analytics data calculation
+  const analyticsData = useMemo(() => {
+    if (!transactions || !transactions.length) {
+      return {
+        spendingByCategory: [],
+        monthlySpending: [],
+        incomeVsSpending: { income: 0, spending: 0, net: 0 },
+        spendingTrends: [],
+        netWorthTrend: 0,
+        incomeTrend: 0,
+        spendingTrend: 0,
+        savingsTrend: 0,
+        quickAnalytics: { transactionCount: 0, netSavings: 0 },
+        avgDailySpending: 0,
+      };
+    }
+
+    // Calculate analytics data here
+    // This is a simplified version - you can add your complex calculations
+    const income = transactions
+      .filter(t => t.amount > 0)
+      .reduce((sum, t) => sum + t.amount, 0);
+    const spending = transactions
+      .filter(t => t.amount < 0)
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const net = income - spending;
+
+    return {
+      spendingByCategory: [],
+      monthlySpending: [],
+      incomeVsSpending: { income, spending, net },
+      spendingTrends: [],
+      netWorthTrend: 0,
+      incomeTrend: 0,
+      spendingTrend: 0,
+      savingsTrend: 0,
+      quickAnalytics: {
+        transactionCount: transactions.length,
+        netSavings: net,
+      },
+      avgDailySpending: 0,
+    };
+  }, [transactions]);
+
+  const {
+    spendingByCategory,
+    monthlySpending,
+    incomeVsSpending,
+    spendingTrends,
+    netWorthTrend,
+    incomeTrend,
+    spendingTrend,
+    savingsTrend,
+    quickAnalytics,
+  } = analyticsData;
+
+  const getNetWorth = () => {
+    return "$0.00"; // Add your net worth calculation
+  };
+
+  // Render overview content
+  const renderOverviewContent = () => (
+    <>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 xl:gap-8 mb-4 sm:mb-6 lg:mb-8">
+        <ChartContainer
+          title="Income vs Spending"
+          isExpanded={expandedCharts.incomeVsSpending}
+          onToggleExpand={() => toggleChartExpansion("incomeVsSpending")}
+          isMobile={isMobile}
+        >
+          <IncomeVsSpendingChart data={incomeVsSpending} />
+        </ChartContainer>
+
+        <ChartContainer
+          title="Spending by Category"
+          isExpanded={expandedCharts.spendingByCategory}
+          onToggleExpand={() => toggleChartExpansion("spendingByCategory")}
+          isMobile={isMobile}
+        >
+          <SpendingByCategoryChart
+            data={spendingByCategory}
+            isMobile={isMobile}
+          />
+        </ChartContainer>
+      </div>
+
+      <ChartContainer
+        title="Monthly Spending Trend"
+        isExpanded={expandedCharts.monthlyTrend}
+        onToggleExpand={() => toggleChartExpansion("monthlyTrend")}
+        className="mb-6 sm:mb-8"
+        isMobile={isMobile}
+      >
+        <MonthlySpendingChart data={monthlySpending} />
+      </ChartContainer>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
+        <MetricCard
+          title="Net Worth"
+          value={getNetWorth()}
+          subtitle="Total assets minus liabilities"
+          icon={DollarSign}
+          color="purple"
+          trend={netWorthTrend}
+          animateCards={false}
+        />
+        <MetricCard
+          title="Total Income"
+          value={`$${incomeVsSpending.income.toFixed(2)}`}
+          subtitle={`${quickAnalytics.transactionCount} transactions`}
+          icon={TrendingUp}
+          trend={incomeTrend}
+          color="green"
+          animateCards={false}
+        />
+        <MetricCard
+          title="Total Spending"
+          value={`$${incomeVsSpending.spending.toFixed(2)}`}
+          subtitle="All expenses this period"
+          icon={TrendingDown}
+          trend={spendingTrend}
+          color="red"
+          animateCards={false}
+        />
+        <MetricCard
+          title="Net Savings"
+          value={`$${incomeVsSpending.net.toFixed(2)}`}
+          subtitle="Income minus spending"
+          icon={PiggyBank}
+          trend={savingsTrend}
+          color="blue"
+          animateCards={false}
+        />
+      </div>
+    </>
+  );
+
+  // Render detailed content
+  const renderDetailedContent = () => (
+    <>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 xl:gap-8 mb-4 sm:mb-6 lg:mb-8">
+        <ChartContainer
+          title="Spending Trends"
+          isExpanded={expandedCharts.spendingTrendsDetailed}
+          onToggleExpand={() => toggleChartExpansion("spendingTrendsDetailed")}
+          isMobile={isMobile}
+        >
+          <SpendingTrendsChart data={spendingTrends} />
+        </ChartContainer>
+
+        <ChartContainer
+          title="Top Spending Categories"
+          isExpanded={expandedCharts.topSpendingCategories}
+          onToggleExpand={() => toggleChartExpansion("topSpendingCategories")}
+          className="mb-6 sm:mb-8"
+          isMobile={isMobile}
+        >
+          {spendingByCategory.length > 0 ? (
+            <div className="space-y-3">
+              {spendingByCategory.slice(0, 6).map(item => (
+                <div
+                  key={item.category}
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: item.fill }}
+                    />
+                    <span className="font-medium text-sm sm:text-base">
+                      {item.category}
+                    </span>
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
+                    {item.percentage.toFixed(1)}%
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyChartState message="No spending categories available for this time period" />
+          )}
+        </ChartContainer>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
+        <MetricCard
+          title="Net Worth"
+          value={getNetWorth()}
+          subtitle="Total assets minus liabilities"
+          icon={DollarSign}
+          color="purple"
+          trend={netWorthTrend}
+          animateCards={false}
+        />
+        <MetricCard
+          title="Total Income"
+          value={`$${incomeVsSpending.income.toFixed(2)}`}
+          subtitle={`${quickAnalytics.transactionCount} transactions`}
+          icon={TrendingUp}
+          trend={incomeTrend}
+          color="green"
+          animateCards={false}
+        />
+        <MetricCard
+          title="Total Spending"
+          value={`$${incomeVsSpending.spending.toFixed(2)}`}
+          subtitle="All expenses this period"
+          icon={TrendingDown}
+          trend={spendingTrend}
+          color="red"
+          animateCards={false}
+        />
+        <MetricCard
+          title="Net Savings"
+          value={`$${incomeVsSpending.net.toFixed(2)}`}
+          subtitle="Income minus spending"
+          icon={PiggyBank}
+          trend={savingsTrend}
+          color="blue"
+          animateCards={false}
+        />
+      </div>
+    </>
+  );
 
   return (
-    <AnalyticsDataProvider>
-      {({ analyticsData, isAnalyticsLoading, timeRange, setTimeRange }) => {
-        if (isAnalyticsLoading) {
-          return (
-            <div className="flex justify-center items-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-              <p className="ml-4 text-gray-600 dark:text-gray-400">
-                Loading financial analytics...
-              </p>
-            </div>
-          );
-        }
+    <div className="p-4 lg:p-6">
+      {/* Controls */}
+      <div className="flex flex-col gap-3 flex-shrink-0 w-full sm:w-auto">
+        {/* View Toggle */}
+        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-full sm:w-auto">
+          <button
+            onClick={() => setSelectedView("overview")}
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              selectedView === "overview"
+                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            }`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setSelectedView("detailed")}
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              selectedView === "detailed"
+                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            }`}
+          >
+            Detailed
+          </button>
+        </div>
 
-        const {
-          spendingByCategory,
-          monthlySpending,
-          incomeVsSpending,
-          spendingTrends,
-          netWorthTrend,
-          incomeTrend,
-          spendingTrend,
-          savingsTrend,
-          quickAnalytics,
-        } = analyticsData;
+        {/* Time Range Selector */}
+        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-full sm:w-auto">
+          {["week", "month", "quarter", "year"].map(range => (
+            <button
+              key={range}
+              onClick={() => handleTimeRangeChange(range)}
+              className={`flex-1 sm:flex-none px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                timeRange === range
+                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              {range.charAt(0).toUpperCase() + range.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        return (
-          <div className="flex-1 min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-            {/* Header content */}
-            <div className="relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10" />
-              <div
-                className="absolute inset-0 opacity-30"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                }}
-              />
-
-              <div className="relative p-4 sm:p-6 lg:p-8">
-                {/* Header content */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg text-white">
-                        <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6" />
-                      </div>
-                      <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-600 to-purple-600 dark:from-white dark:via-blue-400 dark:to-purple-400 bg-clip-text text-transparent leading-tight">
-                        Financial Analytics
-                      </h1>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base lg:text-lg max-w-2xl">
-                      Comprehensive insights into your financial patterns and
-                      trends with real-time data visualization
-                    </p>
-                  </div>
-
-                  {/* Controls */}
-                  <div className="flex flex-col gap-3 flex-shrink-0 w-full sm:w-auto">
-                    {/* View Toggle */}
-                    <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-full sm:w-auto">
-                      {["overview", "detailed"].map(view => (
-                        <button
-                          key={view}
-                          onClick={() => setSelectedView(view)}
-                          className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                            selectedView === view
-                              ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                          }`}
-                        >
-                          {view === "overview" ? "Overview" : "Detailed"}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Time Range Selector */}
-                    <div className="relative w-full sm:w-auto">
-                      <select
-                        value={timeRange}
-                        onChange={e => setTimeRange(e.target.value)}
-                        className="appearance-none w-full sm:w-auto px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm pr-10 text-center sm:text-left cursor-pointer"
-                      >
-                        <option value="week">This Week</option>
-                        <option value="month">This Month</option>
-                        <option value="quarter">This Quarter</option>
-                        <option value="year">This Year</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Main content */}
-                <div className="px-4 sm:px-6 lg:px-8 pb-8">
-                  {selectedView === "overview" ? (
-                    <>
-                      {/* Charts Grid */}
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 xl:gap-8 mb-4 sm:mb-6 lg:mb-8">
-                        <ChartContainer
-                          title="Income vs Spending"
-                          isExpanded={expandedCharts.incomeVsSpending}
-                          onToggleExpand={() =>
-                            toggleChartExpansion("incomeVsSpending")
-                          }
-                          isMobile={isMobile}
-                        >
-                          <IncomeVsSpendingChart data={incomeVsSpending} />
-                        </ChartContainer>
-
-                        <ChartContainer
-                          title="Spending by Category"
-                          isExpanded={expandedCharts.spendingByCategory}
-                          onToggleExpand={() =>
-                            toggleChartExpansion("spendingByCategory")
-                          }
-                          isMobile={isMobile}
-                        >
-                          <SpendingByCategoryChart
-                            data={spendingByCategory}
-                            isMobile={isMobile}
-                          />
-                        </ChartContainer>
-                      </div>
-
-                      <ChartContainer
-                        title="Monthly Spending Trend"
-                        isExpanded={expandedCharts.monthlyTrend}
-                        onToggleExpand={() =>
-                          toggleChartExpansion("monthlyTrend")
-                        }
-                        className="mb-6 sm:mb-8"
-                        isMobile={isMobile}
-                      >
-                        <MonthlySpendingChart data={monthlySpending} />
-                      </ChartContainer>
-
-                      {/* Summary Cards */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
-                        <MetricCard
-                          title="Net Worth"
-                          value={getNetWorth()}
-                          subtitle="Total assets minus liabilities"
-                          icon={DollarSign}
-                          color="purple"
-                          trend={netWorthTrend}
-                          animateCards={false}
-                        />
-                        <MetricCard
-                          title="Total Income"
-                          value={incomeVsSpending.income}
-                          subtitle={`${quickAnalytics.transactionCount} transactions`}
-                          icon={TrendingUp}
-                          trend={incomeTrend}
-                          color="green"
-                          animateCards={false}
-                        />
-                        <MetricCard
-                          title="Total Spending"
-                          value={incomeVsSpending.spending}
-                          subtitle="All expenses this period"
-                          icon={TrendingDown}
-                          trend={spendingTrend}
-                          color="red"
-                          animateCards={false}
-                        />
-                        <MetricCard
-                          title="Net Savings"
-                          value={incomeVsSpending.net}
-                          subtitle="Income minus spending"
-                          icon={PiggyBank}
-                          trend={savingsTrend}
-                          color="blue"
-                          animateCards={false}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      {/* Detailed View */}
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 xl:gap-8 mb-4 sm:mb-6 lg:mb-8">
-                        <ChartContainer
-                          title="Spending Trends"
-                          isExpanded={expandedCharts.spendingTrendsDetailed}
-                          onToggleExpand={() =>
-                            toggleChartExpansion("spendingTrendsDetailed")
-                          }
-                          isMobile={isMobile}
-                        >
-                          <SpendingTrendsChart data={spendingTrends} />
-                        </ChartContainer>
-
-                        <ChartContainer
-                          title="Top Spending Categories"
-                          isExpanded={expandedCharts.topSpendingCategories}
-                          onToggleExpand={() =>
-                            toggleChartExpansion("topSpendingCategories")
-                          }
-                          className="mb-6 sm:mb-8"
-                          isMobile={isMobile}
-                        >
-                          {spendingByCategory.length > 0 ? (
-                            <div className="space-y-3">
-                              {spendingByCategory.slice(0, 6).map(item => (
-                                <div
-                                  key={item.category}
-                                  className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <div
-                                      className="w-4 h-4 rounded-full"
-                                      style={{ backgroundColor: item.fill }}
-                                    />
-                                    <span className="text-soft-white font-medium text-sm sm:text-base">
-                                      {item.category}
-                                    </span>
-                                  </div>
-                                  <div className="text-gray-400 text-xs sm:text-sm">
-                                    {item.percentage.toFixed(1)}%
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <EmptyChartState message="No spending categories available for this time period" />
-                          )}
-                        </ChartContainer>
-                      </div>
-
-                      {/* Summary Cards for detailed view */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
-                        <MetricCard
-                          title="Net Worth"
-                          value={getNetWorth()}
-                          subtitle="Total assets minus liabilities"
-                          icon={DollarSign}
-                          color="purple"
-                          trend={netWorthTrend}
-                          animateCards={false}
-                        />
-                        <MetricCard
-                          title="Total Income"
-                          value={incomeVsSpending.income}
-                          subtitle={`${quickAnalytics.transactionCount} transactions`}
-                          icon={TrendingUp}
-                          trend={incomeTrend}
-                          color="green"
-                          animateCards={false}
-                        />
-                        <MetricCard
-                          title="Total Spending"
-                          value={incomeVsSpending.spending}
-                          subtitle="All expenses this period"
-                          icon={TrendingDown}
-                          trend={spendingTrend}
-                          color="red"
-                          animateCards={false}
-                        />
-                        <MetricCard
-                          title="Net Savings"
-                          value={incomeVsSpending.net}
-                          subtitle="Income minus spending"
-                          icon={PiggyBank}
-                          trend={savingsTrend}
-                          color="blue"
-                          animateCards={false}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      }}
-    </AnalyticsDataProvider>
+      {/* Main content */}
+      <div className="mt-6">
+        {selectedView === "overview"
+          ? renderOverviewContent()
+          : renderDetailedContent()}
+      </div>
+    </div>
   );
 };
 

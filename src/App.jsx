@@ -4,6 +4,8 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
+  useNavigate,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -23,9 +25,13 @@ import MobileSidebar from "./components/MobileSidebar";
 import MobileNav from "./components/MobileNav";
 import ErrorBoundary from "./components/ErrorBoundary";
 import LoadingSpinner from "./components/LoadingSpinner";
+import FirebaseTest from "./components/FirebaseTest";
+
 import { initializeDatabase } from "./database";
 import useStore from "./store";
 import { useMobileViewport } from "./hooks/useMobileViewport";
+import firebaseSync from "./services/firebaseSync";
+import authBridge from "./services/authBridge";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -52,9 +58,13 @@ const ProtectedRoute = ({ children }) => {
 
 // Main App Layout Component
 const AppLayout = () => {
-  const [currentPage, setCurrentPage] = useState("dashboard");
+  const location = useLocation();
+  const navigate = useNavigate();
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [triggerImport, setTriggerImport] = useState(false);
+
+  // Derive currentPage from URL
+  const currentPage = location.pathname.substring(1) || "dashboard";
   const {
     loadTransactions,
     loadAccounts,
@@ -172,7 +182,7 @@ const AppLayout = () => {
 
   const handleImportClick = () => {
     // Navigate to dashboard and trigger import modal
-    setCurrentPage("dashboard");
+    navigate("/dashboard");
     setTriggerImport(true);
     // Reset trigger after a short delay
     setTimeout(() => setTriggerImport(false), 100);
@@ -185,7 +195,9 @@ const AppLayout = () => {
       {/* Sidebar - Hidden on mobile */}
       <div className="hidden lg:block">
         <Sidebar
-          onPageChange={setCurrentPage}
+          onPageChange={page => {
+            navigate(`/${page}`);
+          }}
           currentPage={currentPage}
           isMobileOpen={showMobileSidebar}
           onMobileToggle={toggleMobileSidebar}
@@ -197,7 +209,9 @@ const AppLayout = () => {
         isOpen={showMobileSidebar}
         onClose={closeMobileSidebar}
         currentPage={currentPage}
-        onPageChange={setCurrentPage}
+        onPageChange={page => {
+          navigate(`/${page}`);
+        }}
       />
 
       {/* Main Content */}
@@ -217,7 +231,9 @@ const AppLayout = () => {
         <div className="lg:hidden">
           <MobileHeader
             onMenuClick={toggleMobileSidebar}
-            onPageChange={setCurrentPage}
+            onPageChange={page => {
+              navigate(`/${page}`);
+            }}
           />
         </div>
 
@@ -228,7 +244,9 @@ const AppLayout = () => {
           <div className="w-full h-full">
             {currentPage === "dashboard" && (
               <DashboardPage
-                onPageChange={setCurrentPage}
+                onPageChange={page => {
+                  navigate(`/${page}`);
+                }}
                 triggerImport={triggerImport}
                 onImportClick={handleImportClick}
               />
@@ -238,7 +256,11 @@ const AppLayout = () => {
             {currentPage === "transactions" && <TransactionsPage />}
             {currentPage === "reports" && <ReportsPage />}
             {currentPage === "settings" && (
-              <SettingsPage onPageChange={setCurrentPage} />
+              <SettingsPage
+                onPageChange={page => {
+                  navigate(`/${page}`);
+                }}
+              />
             )}
           </div>
         </main>
@@ -246,17 +268,23 @@ const AppLayout = () => {
         {/* Mobile Quick Actions (Floating Action Button) - Hidden on Settings */}
         {currentPage !== "settings" && (
           <MobileNav
-            onPageChange={setCurrentPage}
+            onPageChange={page => {
+              navigate(`/${page}`);
+            }}
             currentPage={currentPage}
             onImportClick={handleImportClick}
           />
         )}
       </div>
 
+      {/* Sync Status Indicator */}
+
       {/* Global Modals - Rendered outside main content for proper full-screen coverage */}
       {currentPage === "dashboard" && (
         <DashboardPage
-          onPageChange={setCurrentPage}
+          onPageChange={page => {
+            navigate(`/${page}`);
+          }}
           triggerImport={triggerImport}
           onImportClick={handleImportClick}
           isModalOnly={true}
@@ -363,6 +391,16 @@ const AppContent = () => {
         }
       />
 
+      {/* Firebase Test Route */}
+      <Route
+        path="/firebase-test"
+        element={
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+            <FirebaseTest />
+          </div>
+        }
+      />
+
       {/* Default redirect */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
@@ -372,6 +410,30 @@ const AppContent = () => {
 
 // Main App Component with Providers
 const App = () => {
+  // Initialize Firebase sync when app starts
+  useEffect(() => {
+    let isInitializing = false;
+
+    const initializeSync = async () => {
+      if (isInitializing) return;
+      isInitializing = true;
+
+      try {
+        // Initialize auth bridge (links Supabase OAuth to Firebase)
+        await authBridge.initialize();
+
+        // Initialize Firebase sync (will be called by auth bridge if user is linked)
+        await firebaseSync.initialize();
+      } catch (error) {
+        console.log("App initialization error:", error);
+      } finally {
+        isInitializing = false;
+      }
+    };
+
+    initializeSync();
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider>
