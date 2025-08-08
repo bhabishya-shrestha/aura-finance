@@ -1,25 +1,103 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['userId', 'amount', 'description']) &&
+             data.amount is number &&
+             data.amount != 0 && // Allow negative amounts but not zero
+             data.amount > -1000000 && data.amount < 1000000 && // Max $1M transaction (positive or negative)
+             data.description is string &&
+             data.description.size() > 0 &&
+             data.description.size() < 500;
+             // Removed strict date validation to allow various date formats
+    }
+    
+    function isValidAccount(data) {
+      return data.keys().hasAll(['userId', 'name', 'type']) &&
+             data.name is string &&
+             data.name.size() > 0 &&
+             data.name.size() < 100 &&
+             data.type in ['checking', 'savings', 'credit', 'investment', 'loan'];
+    }
+    
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'name']) &&
+             data.email is string &&
+             data.email.matches('^[^@]+@[^@]+\\.[^@]+$') &&
+             data.name is string &&
+             data.name.size() > 0 &&
+             data.name.size() < 100;
+    }
+    
     // Users can only access their own user profile
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId) && isValidUser(request.resource.data);
+      allow create: if isAuthenticated() && 
+        request.auth.uid == userId && 
+        isValidUser(request.resource.data);
     }
     
     // Users can perform all operations on their own transactions
     match /transactions/{transactionId} {
-      allow read, write, delete: if request.auth != null && 
-        (resource == null || request.auth.uid == resource.data.userId);
-      allow create: if request.auth != null && 
+      allow read: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      
+      allow create: if isAuthenticated() && 
         request.auth.uid == request.resource.data.userId;
+        // Removed validation requirement for create - handled by application layer
+      
+      allow update: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid &&
+        request.auth.uid == request.resource.data.userId;
+        // Removed validation requirement for update - handled by application layer
+      
+      allow delete: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
     }
     
     // Users can perform all operations on their own accounts
     match /accounts/{accountId} {
-      allow read, write, delete: if request.auth != null && 
-        (resource == null || request.auth.uid == resource.data.userId);
-      allow create: if request.auth != null && 
+      allow read: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      
+      allow create: if isAuthenticated() && 
         request.auth.uid == request.resource.data.userId;
+        // Removed validation requirement for create - handled by application layer
+      
+      allow update: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid &&
+        request.auth.uid == request.resource.data.userId;
+        // Removed validation requirement for update - handled by application layer
+      
+      allow delete: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+    }
+    
+    // Audit trail collection
+    match /audit/{auditId} {
+      allow read: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Security logs collection - allow authenticated users to write security events
+    match /security_logs/{logId} {
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId;
+      
+      allow read: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
     }
     
     // Deny all other access

@@ -2,13 +2,13 @@ import db from "../src/database.js";
 
 // Sample transactions for testing analytics
 const sampleTransactions = [
-  // This week (August 1-3, 2025)
+  // This week (recent past dates)
   {
     id: Date.now() + 1,
     description: "Grocery Shopping",
     amount: -150.0,
-    category: "Food & Dining",
-    date: new Date("2025-08-01T10:00:00.000Z"),
+    category: "groceries",
+    date: new Date("2024-12-01T10:00:00.000Z"),
     accountId: 1754085000405,
     userId: null,
   },
@@ -16,8 +16,8 @@ const sampleTransactions = [
     id: Date.now() + 2,
     description: "Salary Payment",
     amount: 5000.0,
-    category: "Income",
-    date: new Date("2025-08-02T09:00:00.000Z"),
+    category: "salary",
+    date: new Date("2024-12-02T09:00:00.000Z"),
     accountId: 1754085000405,
     userId: null,
   },
@@ -25,19 +25,19 @@ const sampleTransactions = [
     id: Date.now() + 3,
     description: "Gas Station",
     amount: -45.0,
-    category: "Transportation",
-    date: new Date("2025-08-03T14:00:00.000Z"),
+    category: "gas",
+    date: new Date("2024-12-03T14:00:00.000Z"),
     accountId: 1754085000405,
     userId: null,
   },
 
-  // This month (August 2025)
+  // This month (December 2024)
   {
     id: Date.now() + 4,
     description: "Restaurant Dinner",
     amount: -85.0,
-    category: "Food & Dining",
-    date: new Date("2025-08-05T19:00:00.000Z"),
+    category: "restaurant",
+    date: new Date("2024-12-05T19:00:00.000Z"),
     accountId: 1754085000405,
     userId: null,
   },
@@ -45,50 +45,50 @@ const sampleTransactions = [
     id: Date.now() + 5,
     description: "Movie Tickets",
     amount: -25.0,
-    category: "Entertainment",
-    date: new Date("2025-08-10T20:00:00.000Z"),
+    category: "entertainment",
+    date: new Date("2024-12-10T20:00:00.000Z"),
     accountId: 1754085000405,
     userId: null,
   },
 
-  // This year (2025) - July
+  // This year (2024) - November
   {
     id: Date.now() + 6,
-    description: "July Shopping",
+    description: "November Shopping",
     amount: -120.0,
-    category: "Shopping",
-    date: new Date("2025-07-15T12:00:00.000Z"),
+    category: "shopping",
+    date: new Date("2024-11-15T12:00:00.000Z"),
     accountId: 1754085000405,
     userId: null,
   },
   {
     id: Date.now() + 7,
-    description: "July Income",
+    description: "November Income",
     amount: 3000.0,
-    category: "Income",
-    date: new Date("2025-07-20T09:00:00.000Z"),
+    category: "income",
+    date: new Date("2024-11-20T09:00:00.000Z"),
     accountId: 1754085000405,
     userId: null,
   },
 
-  // This year (2025) - March
+  // This year (2024) - March
   {
     id: Date.now() + 8,
     description: "March Utilities",
     amount: -75.0,
-    category: "Utilities",
-    date: new Date("2025-03-15T10:00:00.000Z"),
+    category: "utilities",
+    date: new Date("2024-03-15T10:00:00.000Z"),
     accountId: 1754085000405,
     userId: null,
   },
 
-  // Last year (2024) - should not appear in "This Year"
+  // Last year (2023) - should not appear in "This Year"
   {
     id: Date.now() + 9,
     description: "Old Transaction",
     amount: -100.0,
-    category: "Shopping",
-    date: new Date("2024-12-15T12:00:00.000Z"),
+    category: "shopping",
+    date: new Date("2023-12-15T12:00:00.000Z"),
     accountId: 1754085000405,
     userId: null,
   },

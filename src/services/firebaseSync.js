@@ -4,6 +4,7 @@
  */
 
 import firebaseService from "./firebaseService.js";
+import SecurityMiddleware from "./securityMiddleware.js";
 import db from "../database.js";
 
 class FirebaseSyncService {
@@ -60,6 +61,26 @@ class FirebaseSyncService {
       if (!user) {
         console.log("No authenticated user, skipping sync");
         return;
+      }
+
+      // Check if data was recently reset for this user
+      const dataResetFlag = localStorage.getItem("aura_data_reset_flag");
+      const resetUserId = localStorage.getItem("aura_reset_user_id");
+
+      if (dataResetFlag && resetUserId === user.uid) {
+        const resetTime = parseInt(dataResetFlag);
+        const timeSinceReset = Date.now() - resetTime;
+
+        // If reset was within the last 5 minutes, skip sync to prevent restoration
+        if (timeSinceReset < 5 * 60 * 1000) {
+          console.log("🚫 Skipping sync - data was recently reset");
+          return;
+        } else {
+          // Clear the flag if enough time has passed
+          localStorage.removeItem("aura_data_reset_flag");
+          localStorage.removeItem("aura_reset_user_id");
+          console.log("🔄 Reset flag expired, resuming normal sync");
+        }
       }
 
       // Get local data
@@ -270,15 +291,32 @@ class FirebaseSyncService {
    */
   async deleteFromFirebase(itemId, dataType) {
     try {
+      // Validate itemId - allow numbers and strings, convert to string
+      if (!itemId) {
+        if (import.meta.env.DEV) {
+          console.warn(`Missing ${dataType} ID for Firebase deletion`);
+        }
+        return; // Skip deletion for missing IDs
+      }
+
+      // Convert to string for Firebase
+      const stringId = String(itemId);
+      if (stringId.trim() === "") {
+        if (import.meta.env.DEV) {
+          console.warn(`Empty ${dataType} ID for Firebase deletion`);
+        }
+        return; // Skip deletion for empty IDs
+      }
+
       if (dataType === "transactions") {
-        const result = await firebaseService.deleteTransaction(itemId);
+        const result = await firebaseService.deleteTransaction(stringId);
         if (!result.success) {
           throw new Error(
             result.error || "Failed to delete transaction from Firebase"
           );
         }
       } else if (dataType === "accounts") {
-        const result = await firebaseService.deleteAccount(itemId);
+        const result = await firebaseService.deleteAccount(stringId);
         if (!result.success) {
           throw new Error(
             result.error || "Failed to delete account from Firebase"
@@ -286,7 +324,9 @@ class FirebaseSyncService {
         }
       }
     } catch (error) {
-      console.error(`Error deleting ${dataType} from Firebase:`, error);
+      if (import.meta.env.DEV) {
+        console.error(`Error deleting ${dataType} from Firebase:`, error);
+      }
       // Don't re-throw - we want local operations to succeed even if Firebase fails
     }
   }
@@ -344,7 +384,21 @@ class FirebaseSyncService {
   clearDeletedItems() {
     this.deletedItems.clear();
     localStorage.removeItem("deletedItems");
-    console.log("🧹 Deleted items cleared for testing");
+    if (import.meta.env.DEV) {
+      console.log("🧹 Deleted items cleared for testing");
+    }
+  }
+
+  /**
+   * Clear all sync state (for data reset)
+   */
+  clearAllSyncState() {
+    this.deletedItems.clear();
+    this.lastSyncTime = null;
+    localStorage.removeItem("deletedItems");
+    if (import.meta.env.DEV) {
+      console.log("🧹 All sync state cleared");
+    }
   }
 
   /**
