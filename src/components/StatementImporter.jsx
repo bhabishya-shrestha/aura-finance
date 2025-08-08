@@ -69,6 +69,9 @@ const StatementImporter = ({
       aiService.setProvider(settings.aiProvider);
     }
   }, [settings.aiProvider]);
+
+  // Show cost warning for Hugging Face users
+  const showCostWarning = settings.aiProvider === "Hugging Face Inference API";
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
   const [processingStep, setProcessingStep] = useState("");
@@ -285,26 +288,120 @@ const StatementImporter = ({
           file.name.endsWith(".pdf") ||
           file.type.startsWith("image/")
         ) {
+          console.log(
+            "🖥️ [Desktop] Starting AI processing for file:",
+            file.name,
+            file.type
+          );
           updateProgress(15, "Uploading document...");
 
-          updateProgress(30, "Analyzing document with AI...");
+          // Check which AI provider is being used
+          const currentProvider = aiService.getCurrentProvider();
+          console.log("🖥️ [Desktop] Using AI provider:", currentProvider.name);
+          updateProgress(
+            30,
+            `Analyzing document with ${currentProvider.name}...`
+          );
 
-          // Use unified AI service for PDF and image analysis
-          const result = await aiService.analyzeImage(file);
-          updateProgress(55, "Processing AI results...");
-
-          if (result.transactions && result.transactions.length > 0) {
-            transactions = await aiService.convertToTransactions(result);
-            updateProgress(70, "Validating transaction data...");
-
-            // Apply import options to AI-generated transactions
-            transactions = applyImportOptionsToTransactions(transactions);
-
-            summary = aiService.getProcessingSummary(result);
-          } else {
-            throw new Error(
-              "No transactions found in the document. Please try a clearer document or different file."
+          try {
+            // Add timeout for AI processing
+            console.log("🖥️ [Desktop] Starting AI analysis with timeout...");
+            const aiProcessingPromise = aiService.analyzeImage(file);
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(
+                () =>
+                  reject(
+                    new Error("AI processing timed out. Please try again.")
+                  ),
+                60000
+              )
             );
+
+            // Add intermediate progress updates
+            const progressInterval = setInterval(() => {
+              const currentProgress = displayProgress;
+              if (currentProgress >= 30 && currentProgress < 50) {
+                console.log(
+                  "🖥️ [Desktop] Progress update:",
+                  currentProgress + 2,
+                  "%"
+                );
+                updateProgress(
+                  currentProgress + 2,
+                  `${currentProvider.name} is analyzing your document...`
+                );
+              }
+            }, 2000);
+
+            const result = await Promise.race([
+              aiProcessingPromise,
+              timeoutPromise,
+            ]);
+
+            clearInterval(progressInterval);
+            console.log("🖥️ [Desktop] ✅ AI analysis completed:", result);
+
+            // Check if fallback was used
+            if (
+              result.serverUsageValidation &&
+              result.serverUsageValidation.fallbackUsed
+            ) {
+              console.log(
+                "🖥️ [Desktop] 🔄 Fallback provider was used:",
+                result.serverUsageValidation
+              );
+            }
+
+            updateProgress(55, "Processing AI results...");
+
+            if (
+              result &&
+              result.transactions &&
+              result.transactions.length > 0
+            ) {
+              console.log(
+                "🖥️ [Desktop] Converting AI results to transactions..."
+              );
+              transactions = await aiService.convertToTransactions(result);
+              console.log(
+                "🖥️ [Desktop] ✅ Transactions converted:",
+                transactions.length
+              );
+              updateProgress(70, "Validating transaction data...");
+
+              // Apply import options to AI-generated transactions
+              transactions = applyImportOptionsToTransactions(transactions);
+
+              summary = aiService.getProcessingSummary(result);
+            } else {
+              throw new Error(
+                "No transactions found in the document. Please try a clearer document or different file."
+              );
+            }
+          } catch (aiError) {
+            console.error("🖥️ [Desktop] ❌ AI processing failed:", aiError);
+
+            // Check if it's a timeout or API error
+            if (
+              aiError.message.includes("timed out") ||
+              aiError.message.includes("API")
+            ) {
+              throw new Error(
+                `AI processing failed: ${aiError.message}. Please try switching to a different AI provider in settings or try again later.`
+              );
+            } else if (aiError.message.includes("Daily limit exceeded")) {
+              throw new Error(
+                `Daily limit exceeded for ${currentProvider.name}. Please switch to a different AI provider in settings or try again tomorrow.`
+              );
+            } else if (aiError.message.includes("not available")) {
+              throw new Error(
+                `${currentProvider.name} is not available. Please check your API key or switch to a different provider in settings.`
+              );
+            } else {
+              throw new Error(
+                `AI analysis failed: ${aiError.message}. Please try a different document or switch AI providers.`
+              );
+            }
           }
         } else {
           throw new Error("Unsupported file type.");
@@ -731,6 +828,32 @@ const StatementImporter = ({
                   </div>
                 )}
               </div>
+
+              {/* Cost Warning for Hugging Face Users */}
+              {showCostWarning && (
+                <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-amber-800 dark:text-amber-200">
+                    <p className="font-medium mb-1">
+                      Cost-Effective AI Model in Use
+                    </p>
+                    <p className="mb-2">
+                      You're using the hybrid OCR + AI approach with Hugging
+                      Face API.
+                      <strong>
+                        {" "}
+                        Less accurate (85-90%) but more uses (1000/day)
+                      </strong>{" "}
+                      - great for bulk processing.
+                    </p>
+                    <p className="text-xs">
+                      This approach uses OCR + regex to catch 96% of
+                      transactions (free) and AI enhances the results. You can
+                      deselect any duplicates.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* File Upload Area */}
               <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors">

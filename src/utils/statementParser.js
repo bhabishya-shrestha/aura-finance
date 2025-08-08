@@ -95,12 +95,12 @@ export const parseCSV = (file, options = {}) => {
               }
 
               return {
-                id: Date.now() + index,
+                id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
                 date: parsedDate,
                 description: description.trim(),
                 amount: parsedAmount,
                 category: categorizeTransaction(description.trim()),
-                accountId: 1,
+                accountId: null, // Will be assigned during account assignment
                 selected: true,
                 type: parsedAmount > 0 ? "income" : "expense",
                 source: "csv-import",

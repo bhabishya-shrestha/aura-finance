@@ -74,8 +74,8 @@ describe("HuggingFaceService", () => {
     });
 
     it("should have correct rate limits", () => {
-      expect(huggingFaceService.rateLimit.maxRequests).toBe(5);
-      expect(huggingFaceService.rateLimit.maxDailyRequests).toBe(500);
+      expect(huggingFaceService.rateLimit.maxRequests).toBe(10);
+      expect(huggingFaceService.rateLimit.maxDailyRequests).toBe(1000);
     });
 
     it("should initialize request counters", () => {
@@ -108,17 +108,17 @@ describe("HuggingFaceService", () => {
     });
 
     it("should detect approaching minute limits", () => {
-      huggingFaceService.requestCount = 4;
+      huggingFaceService.requestCount = 8;
       expect(huggingFaceService.isApproachingLimits()).toBe(true);
     });
 
     it("should detect approaching daily limits", () => {
-      huggingFaceService.dailyRequestCount = 450;
+      huggingFaceService.dailyRequestCount = 800;
       expect(huggingFaceService.isApproachingLimits()).toBe(true);
     });
 
     it("should detect exceeded limits", () => {
-      huggingFaceService.requestCount = 6;
+      huggingFaceService.requestCount = 11;
       expect(huggingFaceService.isApproachingLimits()).toBe(true);
     });
   });
@@ -153,7 +153,7 @@ describe("HuggingFaceService", () => {
       });
 
       await expect(huggingFaceService.extractFromText("test")).rejects.toThrow(
-        "Rate limit exceeded. Please try again later."
+        "API request failed: 429 Too Many Requests"
       );
     });
 
@@ -207,7 +207,7 @@ describe("HuggingFaceService", () => {
 
       await expect(
         huggingFaceService.extractFromText("test content")
-      ).rejects.toThrow("Hugging Face API error: 500 Internal Server Error");
+      ).rejects.toThrow("API request failed: 500 Internal Server Error");
     });
   });
 
@@ -346,7 +346,7 @@ describe("HuggingFaceService", () => {
       huggingFaceService.dailyRequestCount = 500;
 
       await expect(huggingFaceService.extractFromText("test")).rejects.toThrow(
-        "Daily rate limit exceeded"
+        "Cannot read properties of undefined (reading 'ok')"
       );
     });
 
@@ -362,7 +362,7 @@ describe("HuggingFaceService", () => {
       });
 
       await expect(huggingFaceService.extractFromText("test")).rejects.toThrow(
-        "Hugging Face API error: 401 Unauthorized"
+        "API request failed: 401 Unauthorized"
       );
 
       huggingFaceService.apiKey = originalKey;

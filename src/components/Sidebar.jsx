@@ -43,7 +43,7 @@ const Sidebar = ({
     }, 2000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [firebaseSync, authBridge]); // Added missing dependencies
 
   // Generate personalized greeting based on time and user info
   const getPersonalizedGreeting = () => {

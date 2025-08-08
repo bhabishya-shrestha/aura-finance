@@ -5,14 +5,27 @@ import { supabase } from "../lib/supabase.js";
 
 class ApiUsageService {
   constructor() {
-    this.providers = {
-      gemini: {
-        maxDailyRequests: 150,
-        approachingLimitThreshold: 120, // 80% of limit
-      },
+    // API usage limits and cost estimates
+    this.apiLimits = {
       huggingface: {
-        maxDailyRequests: 500,
-        approachingLimitThreshold: 400, // 80% of limit
+        maxRequests: 10, // Increased from 5 - more generous since it's less accurate
+        maxDailyRequests: 1000, // Increased from 500 - much more generous
+        retryDelay: 8000, // Reduced from 12000 - faster retries
+        approachingLimitThreshold: 800, // Increased threshold
+        estimatedCostPerRequest: 0.0005, // Reduced cost estimate since it's less accurate
+        description: "Less accurate but more uses - great for bulk processing",
+        accuracy: "85-90%", // Lower accuracy rating
+        bestFor: "High volume, cost-conscious users",
+      },
+      gemini: {
+        maxRequests: 5,
+        maxDailyRequests: 100,
+        retryDelay: 15000,
+        approachingLimitThreshold: 80,
+        estimatedCostPerRequest: 0.001,
+        description: "High accuracy but fewer uses - best for precision",
+        accuracy: "95-98%", // Higher accuracy rating
+        bestFor: "Precision-focused users",
       },
     };
   }
@@ -32,7 +45,7 @@ class ApiUsageService {
         throw new Error("User not authenticated");
       }
 
-      if (!this.providers[provider]) {
+      if (!this.apiLimits[provider]) {
         throw new Error(`Invalid provider: ${provider}`);
       }
 
@@ -51,7 +64,7 @@ class ApiUsageService {
         ...data,
         approachingLimit:
           data.current_usage >=
-          this.providers[provider].approachingLimitThreshold,
+          this.apiLimits[provider].approachingLimitThreshold,
       };
     } catch (error) {
       // console.error('API usage validation failed:', error);
@@ -60,7 +73,7 @@ class ApiUsageService {
         error: error.message,
         can_proceed: false,
         current_usage: 0,
-        max_requests: this.providers[provider]?.maxDailyRequests || 0,
+        max_requests: this.apiLimits[provider]?.maxDailyRequests || 0,
         remaining_requests: 0,
       };
     }
@@ -81,7 +94,7 @@ class ApiUsageService {
         throw new Error("User not authenticated");
       }
 
-      if (!this.providers[provider]) {
+      if (!this.apiLimits[provider]) {
         throw new Error(`Invalid provider: ${provider}`);
       }
 
@@ -136,14 +149,14 @@ class ApiUsageService {
         error: error.message,
         gemini: {
           current_usage: 0,
-          max_requests: this.providers.gemini.maxDailyRequests,
-          remaining_requests: this.providers.gemini.maxDailyRequests,
+          max_requests: this.apiLimits.gemini.maxDailyRequests,
+          remaining_requests: this.apiLimits.gemini.maxDailyRequests,
           approaching_limit: false,
         },
         huggingface: {
           current_usage: 0,
-          max_requests: this.providers.huggingface.maxDailyRequests,
-          remaining_requests: this.providers.huggingface.maxDailyRequests,
+          max_requests: this.apiLimits.huggingface.maxDailyRequests,
+          remaining_requests: this.apiLimits.huggingface.maxDailyRequests,
           approaching_limit: false,
         },
       };
@@ -165,7 +178,7 @@ class ApiUsageService {
         return 0;
       }
 
-      if (!this.providers[provider]) {
+      if (!this.apiLimits[provider]) {
         return 0;
       }
 
@@ -193,7 +206,7 @@ class ApiUsageService {
    */
   async isApproachingLimit(provider) {
     const currentUsage = await this.getDailyApiUsage(provider);
-    const threshold = this.providers[provider]?.approachingLimitThreshold || 0;
+    const threshold = this.apiLimits[provider]?.approachingLimitThreshold || 0;
     return currentUsage >= threshold;
   }
 
@@ -204,7 +217,7 @@ class ApiUsageService {
    */
   async hasExceededLimit(provider) {
     const currentUsage = await this.getDailyApiUsage(provider);
-    const maxRequests = this.providers[provider]?.maxDailyRequests || 0;
+    const maxRequests = this.apiLimits[provider]?.maxDailyRequests || 0;
     return currentUsage >= maxRequests;
   }
 
@@ -214,7 +227,7 @@ class ApiUsageService {
    * @returns {Object} Provider configuration
    */
   getProviderConfig(provider) {
-    return this.providers[provider] || null;
+    return this.apiLimits[provider] || null;
   }
 
   /**
@@ -222,7 +235,47 @@ class ApiUsageService {
    * @returns {Object} All provider configurations
    */
   getAllProviderConfigs() {
-    return this.providers;
+    return this.apiLimits;
+  }
+
+  /**
+   * Get estimated cost for a provider
+   * @param {string} provider - 'gemini' or 'huggingface'
+   * @param {number} requestCount - Number of requests
+   * @returns {Object} Cost estimate
+   */
+  getCostEstimate(provider, requestCount = 1) {
+    const config = this.apiLimits[provider];
+    if (!config) {
+      return { error: `Invalid provider: ${provider}` };
+    }
+
+    const totalCost = config.estimatedCostPerRequest * requestCount;
+    const dailyCost = config.estimatedCostPerRequest * config.maxDailyRequests;
+
+    return {
+      costPerRequest: config.estimatedCostPerRequest,
+      totalCost,
+      dailyCost,
+      requestCount,
+      provider,
+    };
+  }
+
+  /**
+   * Get all provider cost estimates
+   * @returns {Object} Cost estimates for all providers
+   */
+  getAllCostEstimates() {
+    const estimates = {};
+    for (const [provider, config] of Object.entries(this.apiLimits)) {
+      estimates[provider] = {
+        costPerRequest: config.estimatedCostPerRequest,
+        dailyCost: config.estimatedCostPerRequest * config.maxDailyRequests,
+        maxDailyRequests: config.maxDailyRequests,
+      };
+    }
+    return estimates;
   }
 }
 

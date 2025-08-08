@@ -310,12 +310,46 @@ class FirebaseService {
 
     try {
       const docRef = doc(db, "transactions", transactionId);
-      await updateDoc(docRef, {
-        ...updates,
-        updatedAt: serverTimestamp(),
-      });
 
-      return { success: true };
+      // Check if the document exists first
+      const docSnapshot = await getDoc(docRef);
+
+      if (!docSnapshot.exists()) {
+        // Document doesn't exist in Firebase, create it instead
+        console.log(
+          `Transaction ${transactionId} doesn't exist in Firebase, creating it...`
+        );
+
+        // Get the full transaction data from local store
+        const { default: db } = await import("../database.js");
+        const localTransaction = await db.transactions.get(transactionId);
+
+        if (localTransaction) {
+          // Create the document with full data plus updates
+          const transactionData = {
+            ...localTransaction,
+            ...updates,
+            userId: this.currentUser.uid,
+            updatedAt: serverTimestamp(),
+          };
+
+          await setDoc(docRef, transactionData);
+          console.log(`✅ Created transaction ${transactionId} in Firebase`);
+          return { success: true, created: true };
+        } else {
+          console.warn(`Transaction ${transactionId} not found locally either`);
+          return { success: false, error: "Transaction not found locally" };
+        }
+      } else {
+        // Document exists, update it
+        await updateDoc(docRef, {
+          ...updates,
+          updatedAt: serverTimestamp(),
+        });
+
+        console.log(`✅ Updated transaction ${transactionId} in Firebase`);
+        return { success: true, updated: true };
+      }
     } catch (error) {
       console.error("Update transaction error:", error);
       return { success: false, error: error.message };
@@ -488,7 +522,11 @@ class FirebaseService {
       const accountSnapshot = await getDoc(accountDoc);
 
       if (!accountSnapshot.exists()) {
-        return { success: true }; // Account doesn't exist, consider it deleted
+        // Account doesn't exist in Firebase, but that's okay for deletion
+        console.log(
+          "Account not found in Firebase, proceeding with local deletion only"
+        );
+        return { success: true, localOnly: true };
       }
 
       const accountData = accountSnapshot.data();
@@ -521,7 +559,8 @@ class FirebaseService {
       // Check if it's a permissions error
       if (
         error.code === "permission-denied" ||
-        error.message.includes("permission")
+        error.message.includes("permission") ||
+        error.message.includes("Missing or insufficient permissions")
       ) {
         return {
           success: false,

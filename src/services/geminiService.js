@@ -55,6 +55,11 @@ class GeminiService {
     this.dailyRequestCount++;
   }
 
+  // Check if provider is available
+  isProviderAvailable() {
+    return !!this.apiKey;
+  }
+
   // Enhanced file validation with better error messages
   validateFile(file) {
     const maxSize = 20 * 1024 * 1024; // Increased to 20MB for better support

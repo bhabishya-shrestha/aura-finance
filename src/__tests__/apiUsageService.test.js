@@ -25,13 +25,25 @@ describe("ApiUsageService", () => {
 
   describe("Initialization", () => {
     it("should initialize with correct provider configurations", () => {
-      expect(apiUsageService.providers.gemini).toEqual({
-        maxDailyRequests: 150,
-        approachingLimitThreshold: 120,
+      expect(apiUsageService.apiLimits.gemini).toEqual({
+        maxRequests: 5,
+        maxDailyRequests: 100,
+        retryDelay: 15000,
+        approachingLimitThreshold: 80,
+        estimatedCostPerRequest: 0.001,
+        description: "High accuracy but fewer uses - best for precision",
+        accuracy: "95-98%",
+        bestFor: "Precision-focused users",
       });
-      expect(apiUsageService.providers.huggingface).toEqual({
-        maxDailyRequests: 500,
-        approachingLimitThreshold: 400,
+      expect(apiUsageService.apiLimits.huggingface).toEqual({
+        maxRequests: 10,
+        maxDailyRequests: 1000,
+        retryDelay: 8000,
+        approachingLimitThreshold: 800,
+        estimatedCostPerRequest: 0.0005,
+        description: "Less accurate but more uses - great for bulk processing",
+        accuracy: "85-90%",
+        bestFor: "High volume, cost-conscious users",
       });
     });
   });
@@ -359,7 +371,7 @@ describe("ApiUsageService", () => {
 
       // Mock usage below limit
       mockSupabase.supabase.rpc.mockResolvedValue({
-        data: 100, // Below limit
+        data: 50, // Below limit
         error: null,
       });
 
@@ -373,8 +385,14 @@ describe("ApiUsageService", () => {
     it("should get provider configuration", () => {
       const config = apiUsageService.getProviderConfig("gemini");
       expect(config).toEqual({
-        maxDailyRequests: 150,
-        approachingLimitThreshold: 120,
+        maxRequests: 5,
+        maxDailyRequests: 100,
+        retryDelay: 15000,
+        approachingLimitThreshold: 80,
+        estimatedCostPerRequest: 0.001,
+        description: "High accuracy but fewer uses - best for precision",
+        accuracy: "95-98%",
+        bestFor: "Precision-focused users",
       });
     });
 
@@ -387,8 +405,8 @@ describe("ApiUsageService", () => {
       const configs = apiUsageService.getAllProviderConfigs();
       expect(configs).toHaveProperty("gemini");
       expect(configs).toHaveProperty("huggingface");
-      expect(configs.gemini.maxDailyRequests).toBe(150);
-      expect(configs.huggingface.maxDailyRequests).toBe(500);
+      expect(configs.gemini.maxDailyRequests).toBe(100);
+      expect(configs.huggingface.maxDailyRequests).toBe(1000);
     });
   });
 });

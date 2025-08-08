@@ -119,7 +119,7 @@ describe("AI Provider Toggle", () => {
       expect(aiServicesButtons.length).toBeGreaterThan(0);
     });
 
-    it("should show current provider information", async () => {
+    it("should show AI provider toggle", async () => {
       renderWithProviders(<SettingsPage />);
 
       const aiServicesButtons = screen.getAllByRole("button", {
@@ -129,11 +129,8 @@ describe("AI Provider Toggle", () => {
       fireEvent.click(aiServicesButton);
 
       await waitFor(() => {
-        const currentProviderElements =
-          screen.getAllByText(/Current Provider:/);
-        expect(currentProviderElements.length).toBeGreaterThan(0);
-        const dailyLimitElements = screen.getAllByText(/Daily Limit:/);
-        expect(dailyLimitElements.length).toBeGreaterThan(0);
+        const toggleElements = screen.getAllByRole("checkbox");
+        expect(toggleElements.length).toBeGreaterThan(0);
       });
     });
 
@@ -148,7 +145,7 @@ describe("AI Provider Toggle", () => {
 
       await waitFor(() => {
         const huggingFaceElements = screen.getAllByText(
-          "Use Hugging Face (500 Daily Requests)"
+          "Use Hugging Face (1000 Daily Requests)"
         );
         expect(huggingFaceElements.length).toBeGreaterThan(0);
         const switchElements = screen.getAllByText(
@@ -205,7 +202,7 @@ describe("AI Provider Toggle", () => {
       aiService.setProvider.mockResolvedValue(true);
       aiService.getCurrentProvider.mockReturnValue({
         name: "Hugging Face",
-        quotas: { maxDailyRequests: 500, maxRequests: 5 },
+        quotas: { maxDailyRequests: 1000, maxRequests: 10 },
         features: ["Document Analysis", "Transaction Extraction"],
         pricing: "Free Tier",
       });
@@ -219,12 +216,9 @@ describe("AI Provider Toggle", () => {
       fireEvent.click(aiServicesButton);
 
       await waitFor(() => {
-        // Check for the text that actually appears in the UI
-        const currentProviderElements =
-          screen.getAllByText(/Current Provider:/);
-        expect(currentProviderElements.length).toBeGreaterThan(0);
-        const dailyLimitElements = screen.getAllByText(/Daily Limit:/);
-        expect(dailyLimitElements.length).toBeGreaterThan(0);
+        // Check for the toggle that appears in the UI
+        const toggleElements = screen.getAllByRole("checkbox");
+        expect(toggleElements.length).toBeGreaterThan(0);
       });
     });
   });
@@ -341,7 +335,7 @@ describe("AI Provider Toggle", () => {
 
       await waitFor(() => {
         const huggingFaceElements = screen.getAllByText(
-          "Use Hugging Face (500 Daily Requests)"
+          "Use Hugging Face (1000 Daily Requests)"
         );
         expect(huggingFaceElements.length).toBeGreaterThan(0);
       });

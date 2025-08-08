@@ -1083,7 +1083,7 @@ const SettingsPage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">
-                      Use Hugging Face (500 Daily Requests)
+                      Use Hugging Face (1000 Daily Requests)
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
                       Switch between Gemini API and Hugging Face
@@ -1123,73 +1123,103 @@ const SettingsPage = () => {
                   </label>
                 </div>
 
-                {/* Current Provider Info */}
-                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                  <div className="text-sm">
-                    <div className="font-medium text-gray-900 dark:text-white mb-1">
-                      Current Provider:{" "}
-                      {settings.aiProvider === "huggingface"
-                        ? "Hugging Face"
-                        : "Gemini API"}
+                {/* Provider Comparison */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Hugging Face */}
+                  <div
+                    className={`p-4 rounded-lg border-2 ${settings.aiProvider === "huggingface" ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50"}`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">
+                        Hugging Face
+                      </h4>
+                      {settings.aiProvider === "huggingface" && (
+                        <Check className="w-4 h-4 text-emerald-600" />
+                      )}
                     </div>
-                    <div className="text-gray-600 dark:text-gray-400">
-                      Daily Limit:{" "}
-                      {settings.aiProvider === "huggingface"
-                        ? "500 requests"
-                        : "150 requests"}
+                    <div className="space-y-1 text-sm">
+                      <div className="text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Accuracy:</span> 85-90%
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Daily Limit:</span> 1000
+                        requests
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Cost:</span>{" "}
+                        ~$0.0005/request
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        Less accurate but more uses - great for bulk processing
+                      </div>
                     </div>
+                  </div>
 
-                    {/* Server-side usage stats */}
-                    {isLoadingUsage ? (
-                      <div className="mt-2 text-gray-500 dark:text-gray-400">
-                        Loading usage data...
+                  {/* Gemini */}
+                  <div
+                    className={`p-4 rounded-lg border-2 ${settings.aiProvider === "gemini" ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50"}`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">
+                        Gemini API
+                      </h4>
+                      {settings.aiProvider === "gemini" && (
+                        <Check className="w-4 h-4 text-emerald-600" />
+                      )}
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Accuracy:</span> 95-98%
                       </div>
-                    ) : serverUsageStats?.success ? (
-                      <div className="mt-3 space-y-2">
-                        <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                          Server-Validated Usage (Today)
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-xs">
-                          <div>
-                            <div className="text-gray-600 dark:text-gray-400">
-                              Gemini
-                            </div>
-                            <div className="font-medium">
-                              {serverUsageStats.gemini?.current_usage || 0} /{" "}
-                              {serverUsageStats.gemini?.max_requests || 150}
-                            </div>
-                            {serverUsageStats.gemini?.approaching_limit && (
-                              <div className="text-amber-600 dark:text-amber-400 text-xs">
-                                Approaching limit
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <div className="text-gray-600 dark:text-gray-400">
-                              Hugging Face
-                            </div>
-                            <div className="font-medium">
-                              {serverUsageStats.huggingface?.current_usage || 0}{" "}
-                              /{" "}
-                              {serverUsageStats.huggingface?.max_requests ||
-                                500}
-                            </div>
-                            {serverUsageStats.huggingface
-                              ?.approaching_limit && (
-                              <div className="text-amber-600 dark:text-amber-400 text-xs">
-                                Approaching limit
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                      <div className="text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Daily Limit:</span> 100
+                        requests
                       </div>
-                    ) : (
-                      <div className="mt-2 text-gray-500 dark:text-gray-400 text-xs">
-                        Usage data unavailable
+                      <div className="text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Cost:</span>{" "}
+                        ~$0.001/request
                       </div>
-                    )}
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        High accuracy but fewer uses - best for precision
+                      </div>
+                    </div>
                   </div>
                 </div>
+
+                {/* Server-side usage stats */}
+                {isLoadingUsage ? (
+                  <div className="mt-2 text-gray-500 dark:text-gray-400">
+                    Loading usage data...
+                  </div>
+                ) : serverUsageStats?.success ? (
+                  <div className="mt-3 space-y-2">
+                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                      Server-Validated Usage (Today)
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <div className="text-gray-600 dark:text-gray-400">
+                          Gemini
+                        </div>
+                        <div className="font-medium">
+                          {serverUsageStats.gemini?.current_usage || 0} /{" "}
+                          {serverUsageStats.gemini?.max_requests || 100}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600 dark:text-gray-400">
+                          Hugging Face
+                        </div>
+                        <div className="font-medium">
+                          {serverUsageStats.huggingface?.current_usage || 0} /{" "}
+                          {serverUsageStats.huggingface?.max_requests || 1000}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

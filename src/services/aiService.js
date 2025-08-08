@@ -170,42 +170,101 @@ class AIService {
    * @returns {Promise<Object>} Analysis result
    */
   async analyzeImage(file) {
-    // Validate usage before processing
-    const validation = await apiUsageService.validateApiUsage(
-      this.currentProvider
+    console.log(
+      "🤖 [AI Service] Starting analyzeImage for file:",
+      file.name,
+      file.type
     );
 
-    if (!validation.can_proceed) {
-      throw new Error(
-        `Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`
+    try {
+      // Validate API usage first
+      console.log("🤖 [AI Service] Validating API usage...");
+      try {
+        await apiUsageService.validateApiUsage();
+        console.log("🤖 [AI Service] ✅ API usage validated");
+      } catch (error) {
+        console.log(
+          "🤖 [AI Service] ⚠️ API usage validation failed, proceeding with client-side limits:",
+          error.message
+        );
+      }
+
+      // Get current provider
+      const provider = this.getCurrentProvider();
+      console.log("🤖 [AI Service] Using provider:", provider.name);
+
+      // Check provider availability
+      console.log("🤖 [AI Service] Checking provider availability...");
+      const huggingFaceAvailable =
+        this.providers.huggingface.service.isProviderAvailable();
+      console.log(
+        "🤖 [AI Service] Hugging Face available:",
+        huggingFaceAvailable
       );
+
+      let result = null;
+
+      // Use the selected provider only (no fallback)
+      if (
+        provider.name === "Hugging Face Inference API" &&
+        huggingFaceAvailable
+      ) {
+        console.log("🤖 [AI Service] Attempting Hugging Face analysis...");
+        try {
+          result = await huggingFaceService.analyzeImage(file);
+          console.log("🤖 [AI Service] ✅ Hugging Face analysis successful");
+
+          // Increment API usage
+          try {
+            await apiUsageService.incrementApiUsage("huggingface");
+            console.log("🤖 [AI Service] ✅ API usage incremented");
+          } catch (error) {
+            console.log(
+              "🤖 [AI Service] ⚠️ API usage increment failed:",
+              error.message
+            );
+          }
+
+          return result;
+        } catch (error) {
+          console.log("🤖 [AI Service] ❌ Hugging Face failed:", error.message);
+          throw error; // No fallback, just throw the error
+        }
+      }
+
+      // Try Gemini if it's the primary provider
+      if (provider.name === "Gemini API") {
+        console.log("🤖 [AI Service] Attempting Gemini analysis...");
+        try {
+          result = await geminiService.analyzeImage(file);
+          console.log("🤖 [AI Service] ✅ Gemini analysis successful");
+
+          // Increment API usage
+          try {
+            await apiUsageService.incrementApiUsage("gemini");
+            console.log("🤖 [AI Service] ✅ API usage incremented");
+          } catch (error) {
+            console.log(
+              "🤖 [AI Service] ⚠️ API usage increment failed:",
+              error.message
+            );
+          }
+
+          return result;
+        } catch (error) {
+          console.log("🤖 [AI Service] ❌ Gemini failed:", error.message);
+          throw error; // No fallback, just throw the error
+        }
+      }
+
+      console.log("🤖 [AI Service] ❌ No available providers");
+      throw new Error(
+        "No AI providers are available. Please check your API keys and try again."
+      );
+    } catch (error) {
+      console.error("🤖 [AI Service] ❌ analyzeImage failed:", error);
+      throw error;
     }
-
-    // Increment usage counter
-    const incrementSuccess = await apiUsageService.incrementApiUsage(
-      this.currentProvider
-    );
-
-    if (!incrementSuccess) {
-      throw new Error("Failed to record API usage. Please try again.");
-    }
-
-    // Perform the analysis
-    const result =
-      await this.providers[this.currentProvider].service.analyzeImage(file);
-
-    // Add server-side usage info to result
-    if (result) {
-      result.serverUsageValidation = {
-        provider: this.currentProvider,
-        currentUsage: validation.current_usage + 1, // +1 for this request
-        maxRequests: validation.max_requests,
-        remainingRequests: validation.remaining_requests - 1,
-        approachingLimit: validation.approachingLimit,
-      };
-    }
-
-    return result;
   }
 
   /**
@@ -214,42 +273,71 @@ class AIService {
    * @returns {Promise<Object>} Transaction extraction result
    */
   async extractFromText(text) {
-    // Validate usage before processing
-    const validation = await apiUsageService.validateApiUsage(
-      this.currentProvider
-    );
-
-    if (!validation.can_proceed) {
-      throw new Error(
-        `Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`
-      );
-    }
-
-    // Increment usage counter
-    const incrementSuccess = await apiUsageService.incrementApiUsage(
-      this.currentProvider
-    );
-
-    if (!incrementSuccess) {
-      throw new Error("Failed to record API usage. Please try again.");
-    }
-
-    // Perform the extraction
-    const result =
-      await this.providers[this.currentProvider].service.extractFromText(text);
-
-    // Add server-side usage info to result
-    if (result) {
-      result.serverUsageValidation = {
-        provider: this.currentProvider,
-        currentUsage: validation.current_usage + 1,
-        maxRequests: validation.max_requests,
-        remainingRequests: validation.remaining_requests - 1,
-        approachingLimit: validation.approachingLimit,
+    try {
+      // Try to validate usage before processing
+      let validation = {
+        can_proceed: true,
+        current_usage: 0,
+        max_requests: 100,
+        remaining_requests: 100,
       };
-    }
 
-    return result;
+      try {
+        validation = await apiUsageService.validateApiUsage(
+          this.currentProvider
+        );
+      } catch (error) {
+        console.warn(
+          "API usage validation failed, proceeding with client-side limits:",
+          error.message
+        );
+        // Fallback to client-side validation
+        const provider = this.providers[this.currentProvider];
+        if (!provider.service.isProviderAvailable()) {
+          throw new Error(
+            `${provider.name} is not available. Please check your API key or try switching providers.`
+          );
+        }
+      }
+
+      if (!validation.can_proceed) {
+        throw new Error(
+          `Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`
+        );
+      }
+
+      // Try to increment usage counter (optional)
+      try {
+        await apiUsageService.incrementApiUsage(this.currentProvider);
+      } catch (error) {
+        console.warn(
+          "Failed to record API usage, continuing with analysis:",
+          error.message
+        );
+      }
+
+      // Perform the extraction
+      const result =
+        await this.providers[this.currentProvider].service.extractFromText(
+          text
+        );
+
+      // Add server-side usage info to result
+      if (result) {
+        result.serverUsageValidation = {
+          provider: this.currentProvider,
+          currentUsage: validation.current_usage + 1,
+          maxRequests: validation.max_requests,
+          remainingRequests: validation.remaining_requests - 1,
+          approachingLimit: validation.approachingLimit,
+        };
+      }
+
+      return result;
+    } catch (error) {
+      console.error("AI text extraction failed:", error);
+      throw error;
+    }
   }
 
   /**
@@ -258,33 +346,60 @@ class AIService {
    * @returns {Promise<Array>} Transaction array
    */
   async convertToTransactions(analysis) {
-    // Validate usage before processing
-    const validation = await apiUsageService.validateApiUsage(
-      this.currentProvider
-    );
+    try {
+      // Try to validate usage before processing
+      let validation = {
+        can_proceed: true,
+        current_usage: 0,
+        max_requests: 100,
+        remaining_requests: 100,
+      };
 
-    if (!validation.can_proceed) {
-      throw new Error(
-        `Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`
-      );
+      try {
+        validation = await apiUsageService.validateApiUsage(
+          this.currentProvider
+        );
+      } catch (error) {
+        console.warn(
+          "API usage validation failed, proceeding with client-side limits:",
+          error.message
+        );
+        // Fallback to client-side validation
+        const provider = this.providers[this.currentProvider];
+        if (!provider.service.isProviderAvailable()) {
+          throw new Error(
+            `${provider.name} is not available. Please check your API key or try switching providers.`
+          );
+        }
+      }
+
+      if (!validation.can_proceed) {
+        throw new Error(
+          `Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`
+        );
+      }
+
+      // Try to increment usage counter (optional)
+      try {
+        await apiUsageService.incrementApiUsage(this.currentProvider);
+      } catch (error) {
+        console.warn(
+          "Failed to record API usage, continuing with analysis:",
+          error.message
+        );
+      }
+
+      // Perform the conversion
+      const result =
+        await this.providers[
+          this.currentProvider
+        ].service.convertToTransactions(analysis);
+
+      return result;
+    } catch (error) {
+      console.error("AI transaction conversion failed:", error);
+      throw error;
     }
-
-    // Increment usage counter
-    const incrementSuccess = await apiUsageService.incrementApiUsage(
-      this.currentProvider
-    );
-
-    if (!incrementSuccess) {
-      throw new Error("Failed to record API usage. Please try again.");
-    }
-
-    // Perform the conversion
-    const result =
-      await this.providers[this.currentProvider].service.convertToTransactions(
-        analysis
-      );
-
-    return result;
   }
 
   /**
@@ -314,7 +429,10 @@ class AIService {
         serverValidated: true,
       };
     } catch (error) {
-      // console.error("Failed to get processing summary:", error);
+      console.warn(
+        "Failed to get server-side processing summary, using client-side:",
+        error.message
+      );
       // Fallback to client-side summary
       return await this.providers[
         this.currentProvider
@@ -329,43 +447,59 @@ class AIService {
    * @returns {Promise<Object>} Analysis result
    */
   async analyzeTransactions(transactions, prompt) {
-    // Validate usage before processing
-    const validation = await apiUsageService.validateApiUsage(
-      this.currentProvider
-    );
-
-    if (!validation.can_proceed) {
-      throw new Error(
-        `Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`
-      );
-    }
-
-    // Increment usage counter
-    const incrementSuccess = await apiUsageService.incrementApiUsage(
-      this.currentProvider
-    );
-
-    if (!incrementSuccess) {
-      throw new Error("Failed to record API usage. Please try again.");
-    }
-
-    // Perform the analysis
-    const result = await this.providers[
-      this.currentProvider
-    ].service.analyzeTransactions(transactions, prompt);
-
-    // Add server-side usage info to result
-    if (result) {
-      result.serverUsageValidation = {
-        provider: this.currentProvider,
-        currentUsage: validation.current_usage + 1,
-        maxRequests: validation.max_requests,
-        remainingRequests: validation.remaining_requests - 1,
-        approachingLimit: validation.approachingLimit,
+    try {
+      // Try to validate usage before processing
+      let validation = {
+        can_proceed: true,
+        current_usage: 0,
+        max_requests: 100,
+        remaining_requests: 100,
       };
-    }
 
-    return result;
+      try {
+        validation = await apiUsageService.validateApiUsage(
+          this.currentProvider
+        );
+      } catch (error) {
+        console.warn(
+          "API usage validation failed, proceeding with client-side limits:",
+          error.message
+        );
+        // Fallback to client-side validation
+        const provider = this.providers[this.currentProvider];
+        if (!provider.service.isProviderAvailable()) {
+          throw new Error(
+            `${provider.name} is not available. Please check your API key or try switching providers.`
+          );
+        }
+      }
+
+      if (!validation.can_proceed) {
+        throw new Error(
+          `Daily limit exceeded for ${this.providers[this.currentProvider].name}. Please try again tomorrow or switch providers.`
+        );
+      }
+
+      // Try to increment usage counter (optional)
+      try {
+        await apiUsageService.incrementApiUsage(this.currentProvider);
+      } catch (error) {
+        console.warn(
+          "Failed to record API usage, continuing with analysis:",
+          error.message
+        );
+      }
+
+      // Perform the analysis
+      const result = await this.providers[
+        this.currentProvider
+      ].service.analyzeTransactions(transactions, prompt);
+
+      return result;
+    } catch (error) {
+      console.error("AI transaction analysis failed:", error);
+      throw error;
+    }
   }
 
   /**
