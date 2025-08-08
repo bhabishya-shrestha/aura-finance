@@ -262,10 +262,12 @@ const MobileAccountAssignmentModal = ({
   const handleComplete = useCallback(async () => {
     setIsSubmitting(true);
     try {
-      console.log("🔄 Starting account assignment completion...");
-      console.log("📊 Staged accounts:", stagedAccounts);
-      console.log("💳 Selected accounts:", selectedAccounts);
-      console.log("📝 Local transactions:", localTransactions);
+      if (import.meta.env.DEV) {
+        console.log("🔄 Starting account assignment completion...");
+        console.log("📊 Staged accounts:", stagedAccounts);
+        console.log("💳 Selected accounts:", selectedAccounts);
+        console.log("📝 Local transactions:", localTransactions);
+      }
 
       // First, save all staged accounts to get real IDs
       const accountIdMap = new Map(); // Maps staged IDs to real IDs
@@ -273,7 +275,9 @@ const MobileAccountAssignmentModal = ({
       for (const stagedAccount of stagedAccounts) {
         if (stagedAccount.isStaged) {
           try {
-            console.log("🏦 Saving staged account:", stagedAccount);
+            if (import.meta.env.DEV) {
+              console.log("🏦 Saving staged account:", stagedAccount);
+            }
             const savedAccount = await addAccount({
               name: stagedAccount.name,
               type: stagedAccount.type,
@@ -282,15 +286,19 @@ const MobileAccountAssignmentModal = ({
 
             if (savedAccount && savedAccount.id) {
               accountIdMap.set(stagedAccount.id, savedAccount.id);
-              console.log(
-                "✅ Staged account saved:",
-                stagedAccount.id,
-                "->",
-                savedAccount.id
-              );
+              if (import.meta.env.DEV) {
+                console.log(
+                  "✅ Staged account saved:",
+                  stagedAccount.id,
+                  "->",
+                  savedAccount.id
+                );
+              }
             }
           } catch (error) {
-            console.error("❌ Error saving staged account:", error);
+            if (import.meta.env.DEV) {
+              console.error("❌ Error saving staged account:", error);
+            }
           }
         }
       }
@@ -303,32 +311,40 @@ const MobileAccountAssignmentModal = ({
               // If it's a staged account ID, map it to the real ID
               const realAccountId =
                 accountIdMap.get(assignedAccountId) || assignedAccountId;
-              console.log(
-                "🔗 Assigning transaction",
-                transaction.id,
-                "to account",
-                realAccountId
-              );
+              if (import.meta.env.DEV) {
+                console.log(
+                  "🔗 Assigning transaction",
+                  transaction.id,
+                  "to account",
+                  realAccountId
+                );
+              }
               return {
                 ...transaction,
                 accountId: realAccountId,
               };
             }
-            console.log(
-              "⚠️ No account assigned for transaction",
-              transaction.id
-            );
+            if (import.meta.env.DEV) {
+              console.log(
+                "⚠️ No account assigned for transaction",
+                transaction.id
+              );
+            }
             return transaction;
           })
         : [];
 
-      console.log("✅ Processed transactions:", processedTransactions);
-      console.log("📊 Final transaction count:", processedTransactions.length);
+      if (import.meta.env.DEV) {
+        console.log("✅ Processed transactions:", processedTransactions);
+        console.log("📊 Final transaction count:", processedTransactions.length);
+      }
 
       // Call the completion handler
       onComplete(processedTransactions);
     } catch (error) {
-      console.error("❌ Error completing account assignment:", error);
+      if (import.meta.env.DEV) {
+        console.error("❌ Error completing account assignment:", error);
+      }
     } finally {
       setIsSubmitting(false);
     }

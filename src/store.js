@@ -20,7 +20,9 @@ const useStore = create(
             );
             firebaseSync = firebaseSyncModule;
           } catch (error) {
-            console.log("Firebase sync not available:", error.message);
+            if (import.meta.env.DEV) {
+              console.log("Firebase sync not available:", error.message);
+            }
             return;
           }
         }
@@ -28,7 +30,9 @@ const useStore = create(
         try {
           await firebaseSync.syncData();
         } catch (error) {
-          console.log("Firebase sync failed:", error.message);
+          if (import.meta.env.DEV) {
+            console.log("Firebase sync failed:", error.message);
+          }
         }
       };
 
@@ -42,6 +46,7 @@ const useStore = create(
         notifications: [],
         unreadCount: 0,
         lastUpdateNotification: null,
+        dataResetFlag: false, // Flag to prevent data loading after reset
 
         // Actions
         setLoading: loading => set({ isLoading: loading }),
@@ -52,6 +57,17 @@ const useStore = create(
         // Load transactions from database
         loadTransactions: async () => {
           try {
+            // Check if data was recently reset
+            const { dataResetFlag } = get();
+            if (dataResetFlag) {
+              if (import.meta.env.DEV) {
+                console.log(
+                  "Skipping transaction load - data was recently reset"
+                );
+              }
+              return;
+            }
+
             set({ isLoading: true });
             const token = tokenManager.getToken();
             let transactions = [];
@@ -199,6 +215,15 @@ const useStore = create(
         // Load accounts from database
         loadAccounts: async () => {
           try {
+            // Check if data was recently reset
+            const { dataResetFlag } = get();
+            if (dataResetFlag) {
+              if (import.meta.env.DEV) {
+                console.log("Skipping account load - data was recently reset");
+              }
+              return [];
+            }
+
             const token = tokenManager.getToken();
             let accounts = [];
 
@@ -269,8 +294,10 @@ const useStore = create(
         addTransactions: async transactionsData => {
           try {
             set({ isLoading: true });
-            console.log("🔄 Starting bulk transaction import...");
-            console.log("📊 Input transactions:", transactionsData);
+            if (import.meta.env.DEV) {
+              console.log("🔄 Starting bulk transaction import...");
+              console.log("📊 Input transactions:", transactionsData);
+            }
 
             const token = tokenManager.getToken();
             let userId = null;
@@ -295,25 +322,33 @@ const useStore = create(
               createdAt: new Date().toISOString(),
             }));
 
-            console.log(
-              "✅ Processed transactions with IDs:",
-              transactionsWithIds
-            );
+            if (import.meta.env.DEV) {
+              console.log(
+                "✅ Processed transactions with IDs:",
+                transactionsWithIds
+              );
+            }
 
             await db.transactions.bulkAdd(transactionsWithIds);
-            console.log("✅ Transactions added to local database");
+            if (import.meta.env.DEV) {
+              console.log("✅ Transactions added to local database");
+            }
 
             await get().loadTransactions();
-            console.log("✅ Transactions loaded from database");
+            if (import.meta.env.DEV) {
+              console.log("✅ Transactions loaded from database");
+            }
 
             set({ parsedTransactions: [] });
 
             // Sync to Firebase
             await syncToFirebase();
-            console.log("✅ Transactions synced to Firebase");
-          } catch (error) {
-            console.error("❌ Error adding transactions:", error);
             if (import.meta.env.DEV) {
+              console.log("✅ Transactions synced to Firebase");
+            }
+          } catch (error) {
+            if (import.meta.env.DEV) {
+              console.error("❌ Error adding transactions:", error);
               console.error("Error adding transactions:", error);
             }
           } finally {
@@ -1103,6 +1138,14 @@ const useStore = create(
           }
         },
 
+        // Re-enable data loading after reset
+        reEnableDataLoading: () => {
+          set({ dataResetFlag: false });
+          if (import.meta.env.DEV) {
+            console.log("Data loading re-enabled");
+          }
+        },
+
         // Check Firebase permissions
         checkFirebasePermissions: async () => {
           try {
@@ -1141,62 +1184,324 @@ const useStore = create(
               console.log("Starting data reset...");
             }
 
-            // Use the force clear function to ensure all data is removed
+            // Clear Firebase data FIRST to prevent sync restoration
+            try {
+              const { default: firebaseSync } = await import(
+                "./services/firebaseSync.js"
+              );
+
+              // Completely disable Firebase sync during reset
+              const originalSyncInProgress = firebaseSync.syncInProgress;
+              firebaseSync.syncInProgress = true;
+
+              // Also disable the periodic sync
+              if (firebaseSync.periodicSyncInterval) {
+                clearInterval(firebaseSync.periodicSyncInterval);
+                firebaseSync.periodicSyncInterval = null;
+              }
+
+              // Get all data before clearing local database
+              const allTransactions = await db.transactions.toArray();
+              const allAccounts = await db.accounts.toArray();
+
+              if (import.meta.env.DEV) {
+                console.log(
+                  `Clearing ${allTransactions.length} transactions and ${allAccounts.length} accounts from Firebase...`
+                );
+              }
+
+              // Mark all items as deleted to prevent sync restoration
+              for (const transaction of allTransactions) {
+                if (transaction.id) {
+                  firebaseSync.markAsDeleted(
+                    String(transaction.id),
+                    "transactions"
+                  );
+                }
+              }
+
+              for (const account of allAccounts) {
+                if (account.id) {
+                  firebaseSync.markAsDeleted(String(account.id), "accounts");
+                }
+              }
+
+              if (import.meta.env.DEV) {
+                console.log(
+                  "All items marked as deleted to prevent sync restoration"
+                );
+              }
+
+              // Delete all data from Firebase using CLI approach
+              if (import.meta.env.DEV) {
+                console.log(
+                  "Attempting to clear Firebase data using CLI approach..."
+                );
+              }
+
+              // For now, we'll use the direct service approach
+              // In production, you might want to call a backend endpoint that uses Firebase CLI
+              const { default: firebaseService } = await import(
+                "./services/firebaseService.js"
+              );
+
+              // Delete all transactions from Firebase
+              let firebaseTransactionsDeleted = 0;
+              let firebaseTransactionsFailed = 0;
+
+              for (const transaction of allTransactions) {
+                if (transaction.id) {
+                  const transactionId = String(transaction.id);
+                  try {
+                    const result =
+                      await firebaseService.deleteTransaction(transactionId);
+                    if (result.success) {
+                      firebaseTransactionsDeleted++;
+                      if (import.meta.env.DEV) {
+                        console.log(
+                          `✓ Deleted transaction ${transactionId} from Firebase`
+                        );
+                      }
+                    } else {
+                      firebaseTransactionsFailed++;
+                      if (import.meta.env.DEV) {
+                        console.log(
+                          `⚠️ Failed to delete transaction ${transactionId}: ${result.error}`
+                        );
+                      }
+                    }
+                  } catch (error) {
+                    firebaseTransactionsFailed++;
+                    if (import.meta.env.DEV) {
+                      console.log(
+                        `⚠️ Failed to delete transaction ${transactionId}: ${error.message}`
+                      );
+                    }
+                  }
+                }
+              }
+
+              if (import.meta.env.DEV) {
+                console.log(
+                  `📊 Firebase transaction deletion: ${firebaseTransactionsDeleted} successful, ${firebaseTransactionsFailed} failed`
+                );
+              }
+
+              // Delete all accounts from Firebase
+              let firebaseAccountsDeleted = 0;
+              let firebaseAccountsFailed = 0;
+
+              for (const account of allAccounts) {
+                if (account.id) {
+                  const accountId = String(account.id);
+                  try {
+                    const result =
+                      await firebaseService.deleteAccount(accountId);
+                    if (result.success) {
+                      firebaseAccountsDeleted++;
+                      if (import.meta.env.DEV) {
+                        console.log(
+                          `✓ Deleted account ${accountId} from Firebase`
+                        );
+                      }
+                    } else {
+                      firebaseAccountsFailed++;
+                      if (import.meta.env.DEV) {
+                        console.log(
+                          `⚠️ Failed to delete account ${accountId}: ${result.error}`
+                        );
+                      }
+                    }
+                  } catch (error) {
+                    firebaseAccountsFailed++;
+                    if (import.meta.env.DEV) {
+                      console.log(
+                        `⚠️ Failed to delete account ${accountId}: ${error.message}`
+                      );
+                    }
+                  }
+                }
+              }
+
+              if (import.meta.env.DEV) {
+                console.log(
+                  `📊 Firebase account deletion: ${firebaseAccountsDeleted} successful, ${firebaseAccountsFailed} failed`
+                );
+              }
+
+              // If we had deletion failures, try a different approach
+              if (
+                firebaseAccountsFailed > 0 ||
+                firebaseTransactionsFailed > 0
+              ) {
+                if (import.meta.env.DEV) {
+                  console.log(
+                    `⚠️ Some deletions failed. Attempting comprehensive Firebase cleanup...`
+                  );
+                }
+
+                try {
+                  // Get ALL accounts and transactions from Firebase for current user
+                  const allFirebaseAccounts =
+                    await firebaseService.getAllAccounts();
+                  const allFirebaseTransactions =
+                    await firebaseService.getAllTransactions();
+
+                  if (allFirebaseAccounts.success) {
+                    const remainingAccounts = allFirebaseAccounts.data || [];
+                    if (remainingAccounts.length > 0) {
+                      if (import.meta.env.DEV) {
+                        console.log(
+                          `🔄 Found ${remainingAccounts.length} remaining accounts in Firebase, attempting cleanup...`
+                        );
+                      }
+
+                      for (const account of remainingAccounts) {
+                        try {
+                          await firebaseService.deleteAccount(account.id);
+                          if (import.meta.env.DEV) {
+                            console.log(`✓ Cleaned up account ${account.id}`);
+                          }
+                        } catch (cleanupError) {
+                          if (import.meta.env.DEV) {
+                            console.log(
+                              `⚠️ Could not clean up account ${account.id}: ${cleanupError.message}`
+                            );
+                          }
+                        }
+                      }
+                    }
+                  }
+
+                  if (allFirebaseTransactions.success) {
+                    const remainingTransactions =
+                      allFirebaseTransactions.data || [];
+                    if (remainingTransactions.length > 0) {
+                      if (import.meta.env.DEV) {
+                        console.log(
+                          `🔄 Found ${remainingTransactions.length} remaining transactions in Firebase, attempting cleanup...`
+                        );
+                      }
+
+                      for (const transaction of remainingTransactions) {
+                        try {
+                          await firebaseService.deleteTransaction(
+                            transaction.id
+                          );
+                          if (import.meta.env.DEV) {
+                            console.log(
+                              `✓ Cleaned up transaction ${transaction.id}`
+                            );
+                          }
+                        } catch (cleanupError) {
+                          if (import.meta.env.DEV) {
+                            console.log(
+                              `⚠️ Could not clean up transaction ${transaction.id}: ${cleanupError.message}`
+                            );
+                          }
+                        }
+                      }
+                    }
+                  }
+                } catch (cleanupError) {
+                  if (import.meta.env.DEV) {
+                    console.log(
+                      `⚠️ Comprehensive cleanup failed: ${cleanupError.message}`
+                    );
+                  }
+                }
+              }
+
+              if (import.meta.env.DEV) {
+                console.log("All data cleared from Firebase");
+              }
+
+              // Clear all sync state to ensure clean slate
+              firebaseSync.clearAllSyncState();
+
+              if (import.meta.env.DEV) {
+                console.log("All sync state cleared");
+              }
+
+              // IMPORTANT: Keep Firebase sync DISABLED after reset
+              // Don't re-enable it - this prevents data restoration
+              // firebaseSync.syncInProgress = originalSyncInProgress;
+              // firebaseSync.startPeriodicSync();
+
+              // Set a flag to indicate data was recently reset
+              localStorage.setItem(
+                "aura_data_reset_flag",
+                Date.now().toString()
+              );
+              localStorage.setItem(
+                "aura_reset_user_id",
+                firebaseService.currentUser?.uid || "unknown"
+              );
+
+              if (import.meta.env.DEV) {
+                console.log("Firebase sync permanently disabled after reset");
+                console.log(
+                  "Data reset flag set to prevent unwanted sync restoration"
+                );
+              }
+            } catch (firebaseError) {
+              if (import.meta.env.DEV) {
+                console.warn("Failed to clear Firebase data:", firebaseError);
+              }
+              // Keep sync disabled even if there was an error
+            }
+
+            // Now clear local database
             await forceClearAllData();
 
             if (import.meta.env.DEV) {
               console.log("Database cleared successfully");
             }
 
-            // Clear store state
+            // Clear store state and set reset flag
             set({
               transactions: [],
               accounts: [],
               parsedTransactions: [],
+              dataResetFlag: true, // Prevent future data loading
             });
 
             if (import.meta.env.DEV) {
               console.log("Store state cleared");
             }
 
-            // Force reload to ensure state is clean
-            await get().loadTransactions();
-            await get().loadAccounts();
-
-            if (import.meta.env.DEV) {
-              console.log("Data reloaded, clearing Firebase...");
-            }
-
-            // Clear Firebase data
+            // Clear localStorage to remove any cached data
             try {
-              const { default: firebaseSync } = await import(
-                "./services/firebaseSync.js"
-              );
-              // Get all data and delete from Firebase
-              const allTransactions = await db.transactions.toArray();
-              const allAccounts = await db.accounts.toArray();
-
-              // Delete all transactions from Firebase
-              for (const transaction of allTransactions) {
-                await firebaseSync.deleteFromFirebase(
-                  transaction.id,
-                  "transactions"
-                );
+              localStorage.removeItem("deletedItems");
+              // Also clear any sync-related localStorage
+              const keysToRemove = [];
+              for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (
+                  key &&
+                  (key.includes("sync") ||
+                    key.includes("firebase") ||
+                    key.includes("rate_limit"))
+                ) {
+                  keysToRemove.push(key);
+                }
               }
-
-              // Delete all accounts from Firebase
-              for (const account of allAccounts) {
-                await firebaseSync.deleteFromFirebase(account.id, "accounts");
-              }
+              keysToRemove.forEach(key => localStorage.removeItem(key));
 
               if (import.meta.env.DEV) {
-                console.log("All data cleared from Firebase");
+                console.log("localStorage cleared");
               }
-            } catch (firebaseError) {
+            } catch (error) {
               if (import.meta.env.DEV) {
-                console.warn("Failed to clear Firebase data:", firebaseError);
+                console.warn("Failed to clear localStorage:", error);
               }
             }
+
+            // Don't reload data after reset - this prevents Firebase sync from restoring data
+            // The store state is already cleared, so the UI will show empty state
+
+            // Add a delay to prevent immediate sync
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
             if (import.meta.env.DEV) {
               console.log("Data reset completed successfully");
