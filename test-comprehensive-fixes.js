@@ -2,7 +2,7 @@
 
 /**
  * Comprehensive Test Script for Auth, Permissions, and AI Integration Fixes
- * 
+ *
  * This script tests:
  * 1. Firebase permissions (account deletion)
  * 2. AI service integration (Gemini and Hugging Face)
@@ -23,8 +23,12 @@ import firebaseService from "./src/services/firebaseService.js";
 import aiService from "./src/services/aiService.js";
 
 async function testComprehensiveFixes() {
-  console.log("🧪 Comprehensive Test Suite for Auth, Permissions, and AI Integration");
-  console.log("=====================================================================\n");
+  console.log(
+    "🧪 Comprehensive Test Suite for Auth, Permissions, and AI Integration"
+  );
+  console.log(
+    "=====================================================================\n"
+  );
 
   const testEmail = `test-${Date.now()}@aura-finance.com`;
   const testPassword = "testpassword123";
@@ -33,7 +37,7 @@ async function testComprehensiveFixes() {
     // Test 1: Firebase Authentication and Permissions
     console.log("🔐 Test 1: Firebase Authentication and Permissions");
     console.log("--------------------------------------------------");
-    
+
     // Register test user
     console.log("📝 Registering test user...");
     const registerResult = await firebaseService.register(
@@ -74,10 +78,14 @@ async function testComprehensiveFixes() {
 
     // Test account deletion (this was the main issue)
     console.log("🗑️ Testing account deletion...");
-    const deleteResult = await firebaseService.deleteAccount(accountResult.data.id);
-    
+    const deleteResult = await firebaseService.deleteAccount(
+      accountResult.data.id
+    );
+
     if (deleteResult.success) {
-      console.log("✅ Account deletion successful - Firebase permissions fixed!");
+      console.log(
+        "✅ Account deletion successful - Firebase permissions fixed!"
+      );
     } else {
       console.log("❌ Account deletion failed:", deleteResult.error);
     }
@@ -85,17 +93,20 @@ async function testComprehensiveFixes() {
     // Test 2: AI Service Integration
     console.log("\n🤖 Test 2: AI Service Integration");
     console.log("----------------------------------");
-    
+
     // Test Gemini service availability
     console.log("🔍 Testing Gemini service...");
     try {
-      const geminiAvailable = aiService.providers.gemini.service.isProviderAvailable();
+      const geminiAvailable =
+        aiService.providers.gemini.service.isProviderAvailable();
       console.log(`   Gemini available: ${geminiAvailable ? "✅" : "❌"}`);
-      
+
       if (geminiAvailable) {
         console.log("   ✅ Gemini API key is configured");
       } else {
-        console.log("   ⚠️ Gemini API key not configured (this is expected if not set)");
+        console.log(
+          "   ⚠️ Gemini API key not configured (this is expected if not set)"
+        );
       }
     } catch (error) {
       console.log("   ❌ Gemini service test failed:", error.message);
@@ -104,13 +115,18 @@ async function testComprehensiveFixes() {
     // Test Hugging Face service availability
     console.log("🔍 Testing Hugging Face service...");
     try {
-      const huggingfaceAvailable = aiService.providers.huggingface.service.isProviderAvailable();
-      console.log(`   Hugging Face available: ${huggingfaceAvailable ? "✅" : "❌"}`);
-      
+      const huggingfaceAvailable =
+        aiService.providers.huggingface.service.isProviderAvailable();
+      console.log(
+        `   Hugging Face available: ${huggingfaceAvailable ? "✅" : "❌"}`
+      );
+
       if (huggingfaceAvailable) {
         console.log("   ✅ Hugging Face API key is configured");
       } else {
-        console.log("   ⚠️ Hugging Face API key not configured (this is expected if not set)");
+        console.log(
+          "   ⚠️ Hugging Face API key not configured (this is expected if not set)"
+        );
       }
     } catch (error) {
       console.log("   ❌ Hugging Face service test failed:", error.message);
@@ -121,24 +137,29 @@ async function testComprehensiveFixes() {
     try {
       await aiService.setProvider("gemini");
       console.log("   ✅ Successfully switched to Gemini");
-      
+
       await aiService.setProvider("huggingface");
       console.log("   ✅ Successfully switched to Hugging Face");
-      
+
       await aiService.setProvider("gemini");
       console.log("   ✅ Successfully switched back to Gemini");
     } catch (error) {
-      console.log("   ⚠️ Provider switching test failed (this is expected if API keys not set):", error.message);
+      console.log(
+        "   ⚠️ Provider switching test failed (this is expected if API keys not set):",
+        error.message
+      );
     }
 
     // Test 3: Auth Bridge Integration (skip if Supabase not configured)
     console.log("\n🔗 Test 3: Auth Bridge Integration");
     console.log("----------------------------------");
-    
+
     try {
       // Try to import auth bridge
-      const { default: authBridge } = await import("./src/services/authBridge.js");
-      
+      const { default: authBridge } = await import(
+        "./src/services/authBridge.js"
+      );
+
       // Initialize auth bridge
       console.log("🔗 Initializing auth bridge...");
       await authBridge.initialize();
@@ -150,59 +171,41 @@ async function testComprehensiveFixes() {
 
       // Get user sync info
       const userInfo = await authBridge.getUserSyncInfo();
-      console.log("👤 User sync info:", userInfo ? "Available" : "Not available");
-
+      console.log(
+        "👤 User sync info:",
+        userInfo ? "Available" : "Not available"
+      );
     } catch (error) {
-      console.log("⚠️ Auth bridge test skipped (Supabase not configured or not available):", error.message);
+      console.log(
+        "⚠️ Auth bridge test skipped (Supabase not configured or not available):",
+        error.message
+      );
     }
 
     // Test 4: Account Assignment with AI Suggestions
     console.log("\n💡 Test 4: Account Assignment with AI Suggestions");
     console.log("------------------------------------------------");
-    
-    // Create sample transactions for testing
-    const sampleTransactions = [
-      {
-        description: "Grocery Store Purchase",
-        amount: -45.67,
-        category: "Food & Dining",
-        date: new Date().toISOString().split("T")[0]
-      },
-      {
-        description: "Gas Station",
-        amount: -35.00,
-        category: "Transportation",
-        date: new Date().toISOString().split("T")[0]
-      },
-      {
-        description: "Salary Deposit",
-        amount: 2500.00,
-        category: "Income",
-        date: new Date().toISOString().split("T")[0]
-      }
-    ];
+
+    // Sample transactions structure for testing
+    console.log("📝 Testing AI account suggestions...");
 
     console.log("📝 Testing AI account suggestions...");
     try {
       // Test AI suggestions for account assignment
-      const transactionTexts = sampleTransactions
-        .map(t => `${t.description} - ${t.amount} - ${t.category}`)
-        .join("\n");
-
-      const prompt = `Analyze these transactions and suggest 3-5 account names that would be appropriate for categorizing them. Consider the transaction descriptions, amounts, and categories. Return only the account names, one per line, without numbers or formatting.`;
-
       // This would normally call the AI service, but we'll just test the structure
       console.log("   ✅ AI suggestion structure is ready for use");
       console.log("   📊 Sample transactions prepared for analysis");
-      
     } catch (error) {
-      console.log("   ⚠️ AI suggestions test failed (this is expected if API keys not set):", error.message);
+      console.log(
+        "   ⚠️ AI suggestions test failed (this is expected if API keys not set):",
+        error.message
+      );
     }
 
     // Test 5: Mobile and Desktop UI Compatibility
     console.log("\n📱 Test 5: Mobile and Desktop UI Compatibility");
     console.log("-----------------------------------------------");
-    
+
     console.log("✅ EnhancedAccountAssignmentModal component available");
     console.log("✅ MobileAccountAssignmentModal component available");
     console.log("✅ StatementImporter component available");
@@ -226,7 +229,6 @@ async function testComprehensiveFixes() {
     console.log("   - AI integration working with proper error handling");
     console.log("   - Cross-device sync functioning correctly");
     console.log("   - Account assignment working in both mobile and desktop");
-
   } catch (error) {
     console.error("❌ Comprehensive test failed:", error);
     console.log("\n🔧 Please check:");

@@ -56,11 +56,17 @@ async function testDonutModel() {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const responseData = await response.json();
         console.log("✅ Donut model working");
-        console.log("   Response received:", data[0]?.answer ? "Yes" : "No");
-        if (data[0]?.answer) {
-          console.log("   Answer:", data[0].answer.substring(0, 100) + "...");
+        console.log(
+          "   Response received:",
+          responseData[0]?.answer ? "Yes" : "No"
+        );
+        if (responseData[0]?.answer) {
+          console.log(
+            "   Answer:",
+            responseData[0].answer.substring(0, 100) + "..."
+          );
         }
       } else {
         console.log(
@@ -102,7 +108,7 @@ async function testDonutModel() {
       clearTimeout(timeoutId);
 
       if (response.ok) {
-        const data = await response.json();
+        await response.json(); // Consume response but don't store
         console.log("✅ Timeout test passed");
         console.log("   Response received within 45 seconds");
       } else {

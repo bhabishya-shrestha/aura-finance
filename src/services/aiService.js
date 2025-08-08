@@ -188,7 +188,7 @@ class AIService {
 
       // Check provider availability
       console.log("🤖 [AI Service] Checking provider availability...");
-      const huggingFaceAvailable = huggingFaceService.isProviderAvailable();
+      const huggingFaceAvailable = this.providers.huggingface.service.isProviderAvailable();
       console.log("🤖 [AI Service] Hugging Face available:", huggingFaceAvailable);
 
       let result = null;

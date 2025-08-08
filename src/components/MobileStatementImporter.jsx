@@ -362,7 +362,12 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
         setIsProcessing(false);
       }
     },
-    [importOptions, applyImportOptionsToTransactions, updateProgress]
+    [
+      importOptions,
+      applyImportOptionsToTransactions,
+      updateProgress,
+      displayProgress,
+    ]
   );
 
   const handleFileSelect = useCallback(
@@ -636,13 +641,17 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           <div className="text-sm text-amber-800 dark:text-amber-200">
             <p className="font-medium mb-1">Cost-Effective AI Model in Use</p>
             <p className="mb-2">
-                      You're using the hybrid OCR + AI approach with Hugging Face API.
-                      <strong> Less accurate (85-90%) but more uses (1000/day)</strong> - great for bulk processing.
-                    </p>
-                    <p className="text-xs">
-                      This approach uses OCR + regex to catch 96% of transactions (free) 
-                      and AI enhances the results. You can deselect any duplicates.
-                    </p>
+              You're using the hybrid OCR + AI approach with Hugging Face API.
+              <strong>
+                {" "}
+                Less accurate (85-90%) but more uses (1000/day)
+              </strong>{" "}
+              - great for bulk processing.
+            </p>
+            <p className="text-xs">
+              This approach uses OCR + regex to catch 96% of transactions (free)
+              and AI enhances the results. You can deselect any duplicates.
+            </p>
           </div>
         </div>
       )}

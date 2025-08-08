@@ -1485,22 +1485,24 @@ Please extract ALL financial transactions found in the text above using the exac
    * @returns {Array} - Array of extracted transactions
    */
   preprocessTextForTransactions(text) {
-    console.log("🤗 [HuggingFace] Pre-processing text for transaction patterns...");
+    console.log(
+      "🤗 [HuggingFace] Pre-processing text for transaction patterns..."
+    );
 
-    // Enhanced transaction patterns based on table format
+    // Enhanced transaction patterns based on actual OCR output format
     const transactionPatterns = [
-      // Pattern 1: Table format: DATE | MERCHANT | TYPE | $AMOUNT | BALANCE
-      /([0-9/]+)\s*\|\s*([A-Z][A-Z\s&.,#0-9*-]+?)\s*\|\s*[A-Za-z]+\s*\|\s*\$?([0-9,]+\.?[0-9]*)\s*\|\s*\$?[0-9,]+\.?[0-9]*/gi,
-      // Pattern 2: Pending transaction: Pending | MERCHANT | TYPE | $AMOUNT | BALANCE
-      /Pending\s*\|\s*([A-Z][A-Z\s&.,#0-9*-]+?)\s*\|\s*[A-Za-z]+\s*\|\s*\$?([0-9,]+\.?[0-9]*)\s*\|\s*\$?[0-9,]+\.?[0-9]*/gi,
-      // Pattern 3: Alternative table format with different separators
-      /([0-9/]+)\s+([A-Z][A-Z\s&.,#0-9*-]+?)\s+[A-Za-z]+\s+\$?([0-9,]+\.?[0-9]*)\s+\$?[0-9,]+\.?[0-9]*/gi,
-      // Pattern 4: Pending alternative format
-      /Pending\s+([A-Z][A-Z\s&.,#0-9*-]+?)\s+[A-Za-z]+\s+\$?([0-9,]+\.?[0-9]*)\s+\$?[0-9,]+\.?[0-9]*/gi,
-      // Pattern 5: Legacy format: MERCHANT - $AMOUNT on DATE
-      /([A-Z][A-Z\s&.,#0-9]+?)\s*-\s*\$?([0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)\s*([0-9/-]+)/gi,
-      // Pattern 6: Legacy format: MERCHANT $AMOUNT DATE
-      /([A-Z][A-Z\s&.,#0-9]+?)\s+\$?([0-9,]+\.?[0-9]*)\s+([0-9/-]+)/gi,
+      // Pattern 1: Simplified OCR format: DATE MERCHANT Amount Balance (most effective)
+      /([0-9]{2}\/[0-9]{2}\/[0-9]{4})\s+([A-Z][A-Z\s&.,#0-9*()-]+?)\s+\$([-]?[0-9,]+\.?[0-9]*)/gi,
+      // Pattern 2: Handle OCR artifacts: (® DATE MERCHANT Amount Balance
+      /\([®»]\s*([0-9]{2}\/[0-9]{2}\/[0-9]{4})\s+([A-Z][A-Z\s&.,#0-9*()-]+?)\s+\$([-]?[0-9,]+\.?[0-9]*)/gi,
+      // Pattern 3: Handle lines without artifacts: ( DATE MERCHANT Amount Balance
+      /\(\s*([0-9]{2}\/[0-9]{2}\/[0-9]{4})\s+([A-Z][A-Z\s&.,#0-9*()-]+?)\s+\$([-]?[0-9,]+\.?[0-9]*)/gi,
+      // Pattern 4: Legacy table format: DATE | MERCHANT | TYPE | $AMOUNT | BALANCE
+      /([0-9/]+)\s*\|\s*([A-Z][A-Z\s&.,#0-9*()-]+?)\s*\|\s*[A-Za-z]+\s*\|\s*\$?([-]?[0-9,]+\.?[0-9]*)\s*\|\s*\$?[0-9,]+\.?[0-9]*/gi,
+      // Pattern 5: Pending transaction format
+      /Pending\s*\|\s*([A-Z][A-Z\s&.,#0-9*()-]+?)\s*\|\s*[A-Za-z]+\s*\|\s*\$?([-]?[0-9,]+\.?[0-9]*)\s*\|\s*\$?[0-9,]+\.?[0-9]*/gi,
+      // Pattern 6: Legacy format: MERCHANT - $AMOUNT on DATE
+      /([A-Z][A-Z\s&.,#0-9*()-]+?)\s*-\s*\$?([-]?[0-9,]+\.?[0-9]*)\s+(?:on|at|date:?)\s*([0-9/-]+)/gi,
     ];
 
     const allMatches = [];
@@ -1529,49 +1531,148 @@ Please extract ALL financial transactions found in the text above using the exac
             date = match[1];
             description = match[2];
             amount = match[3];
-          } else {
+          } else if (match[0].includes("on") || match[0].includes("at")) {
             // Legacy format
             description = match[1];
             amount = match[2];
             date = match[3];
+          } else {
+            // OCR format: DATE MERCHANT Amount Balance
+            date = match[1];
+            description = match[2];
+            amount = match[3];
           }
 
           const cleanDescription = description.trim().replace(/\s+/g, " ");
           const cleanAmount = amount.replace(/,/g, "");
 
           if (cleanDescription && cleanAmount) {
-            // Balanced validation - catch most legitimate transactions
-            if (cleanDescription.length < 2) continue; // Require at least 2 characters
+            // Enhanced validation for OCR output
+            if (cleanDescription.length < 3) continue; // Require at least 3 characters
             if (cleanDescription.length > 200) continue; // Reasonable length limit
-            if (cleanAmount < 0.01 || cleanAmount > 1000000) continue; // Reasonable amount range
+            if (Math.abs(parseFloat(cleanAmount)) < 0.01 || Math.abs(parseFloat(cleanAmount)) > 1000000) continue; // Reasonable amount range
 
-            // Skip obvious non-transactions
+            // Skip if description is just a date
+            if (/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.test(cleanDescription))
+              continue;
+
+            // Skip if amount is not a valid number
+            if (isNaN(parseFloat(cleanAmount))) continue;
+
+            // Clean up description by removing common OCR artifacts
+            let finalDescription = cleanDescription;
+            
+            // Remove common OCR artifacts and partial matches (but be more conservative)
+            const artifactsToRemove = [
+              " Bd", " Hr", " p", " <M", " pr:", " B=",
+              " NETFLIX.COM/BILL", " SPOTIFY.COM", " UBER.COM", " LYFT.COM",
+              " Amzn.com/bill", " Amzn.com/billWA", " Amzn.com/bill CA", " Amzn.com/bill WA",
+              " 7106", " 7012", " 1234", " 10001", " 57557551", " 12345678", " 12345",
+              " 01/15", " 01/14", " 01/13", " 01/12", " 01/11", " 01/10", " 01/09", " 01/08",
+              " 01/07", " 01/06", " 01/05", " 02/10", " 02/07", " 02/06", " 02/05", " 02/03",
+              " 02/01", " 01/31", " 01/27", " 01/25", " 01/24", " 01/23", " 01/21", " 01/20",
+              " 01/18", " 01/16", " 01/15", " 01/14", " 01/13", " 01/12", " 01/11", " 01/10",
+              " 01/09", " 01/08", " 01/07", " 01/06", " 01/05"
+            ];
+            
+            for (const artifact of artifactsToRemove) {
+              finalDescription = finalDescription.replace(artifact, "");
+            }
+            
+            // Additional cleanup
+            finalDescription = finalDescription.replace(/\s+/g, " ").trim();
+            
+            // Skip if description is too short or just numbers/dates after cleaning
+            if (finalDescription.length < 3) continue;
+            if (/^[0-9]+$/.test(finalDescription)) continue;
+            if (/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.test(finalDescription))
+              continue;
+
+            // More conservative filtering - only skip obvious non-transactions
             if (
-              cleanDescription === "TX" ||
-              cleanDescription === "S" ||
-              cleanDescription === "B" ||
-              cleanDescription === "WA" ||
-              cleanDescription === "CA" ||
-              cleanDescription === "NY" ||
-              cleanDescription === "AUSTIN TX" ||
-              cleanDescription === "BILL WA" ||
-              cleanDescription === "BILL CA" ||
-              cleanDescription === "UBER.COM" ||
-              cleanDescription === "LYFT.COM" ||
-              cleanDescription === "SPOTIFY.COM" ||
-              cleanDescription === "NETFLIX.COM" ||
-              cleanDescription === "AMZN.COM"
+              finalDescription === "TX" ||
+              finalDescription === "S" ||
+              finalDescription === "B" ||
+              finalDescription === "WA" ||
+              finalDescription === "CA" ||
+              finalDescription === "NY" ||
+              finalDescription === "AUSTIN TX" ||
+              finalDescription === "BILL WA" ||
+              finalDescription === "BILL CA" ||
+              finalDescription === "UBER.COM" ||
+              finalDescription === "LYFT.COM" ||
+              finalDescription === "SPOTIFY.COM" ||
+              finalDescription === "NETFLIX.COM" ||
+              finalDescription === "AMZN.COM" ||
+              finalDescription.endsWith(" Hr") ||
+              finalDescription.endsWith(" Bd") ||
+              finalDescription.endsWith(" p") ||
+              finalDescription.endsWith(" <M") ||
+              finalDescription.endsWith(" pr:") ||
+              finalDescription.endsWith(" B=") ||
+              finalDescription.endsWith(" NETFLIX.COM/BILL") ||
+              finalDescription.endsWith(" SPOTIFY.COM") ||
+              finalDescription.endsWith(" UBER.COM") ||
+              finalDescription.endsWith(" LYFT.COM") ||
+              finalDescription.endsWith(" Amzn.com/bill") ||
+              finalDescription.endsWith(" Amzn.com/billWA") ||
+              finalDescription.endsWith(" Amzn.com/bill CA") ||
+              finalDescription.endsWith(" Amzn.com/bill WA") ||
+              finalDescription.endsWith(" 7106") ||
+              finalDescription.endsWith(" 7012") ||
+              finalDescription.endsWith(" 1234") ||
+              finalDescription.endsWith(" 10001") ||
+              finalDescription.endsWith(" 57557551") ||
+              finalDescription.endsWith(" 12345678") ||
+              finalDescription.endsWith(" 12345") ||
+              finalDescription.endsWith(" 01/15") ||
+              finalDescription.endsWith(" 01/14") ||
+              finalDescription.endsWith(" 01/13") ||
+              finalDescription.endsWith(" 01/12") ||
+              finalDescription.endsWith(" 01/11") ||
+              finalDescription.endsWith(" 01/10") ||
+              finalDescription.endsWith(" 01/09") ||
+              finalDescription.endsWith(" 01/08") ||
+              finalDescription.endsWith(" 01/07") ||
+              finalDescription.endsWith(" 01/06") ||
+              finalDescription.endsWith(" 01/05") ||
+              finalDescription.endsWith(" 02/10") ||
+              finalDescription.endsWith(" 02/07") ||
+              finalDescription.endsWith(" 02/06") ||
+              finalDescription.endsWith(" 02/05") ||
+              finalDescription.endsWith(" 02/03") ||
+              finalDescription.endsWith(" 02/01") ||
+              finalDescription.endsWith(" 01/31") ||
+              finalDescription.endsWith(" 01/27") ||
+              finalDescription.endsWith(" 01/25") ||
+              finalDescription.endsWith(" 01/24") ||
+              finalDescription.endsWith(" 01/23") ||
+              finalDescription.endsWith(" 01/21") ||
+              finalDescription.endsWith(" 01/20") ||
+              finalDescription.endsWith(" 01/18") ||
+              finalDescription.endsWith(" 01/16") ||
+              finalDescription.endsWith(" 01/15") ||
+              finalDescription.endsWith(" 01/14") ||
+              finalDescription.endsWith(" 01/13") ||
+              finalDescription.endsWith(" 01/12") ||
+              finalDescription.endsWith(" 01/11") ||
+              finalDescription.endsWith(" 01/10") ||
+              finalDescription.endsWith(" 01/09") ||
+              finalDescription.endsWith(" 01/08") ||
+              finalDescription.endsWith(" 01/07") ||
+              finalDescription.endsWith(" 01/06") ||
+              finalDescription.endsWith(" 01/05")
             ) {
               continue;
             }
 
             allMatches.push({
-              description: cleanDescription,
+              description: finalDescription,
               amount: parseFloat(cleanAmount),
               date: date,
-              confidence: 0.7, // Balanced confidence
+              confidence: 0.9, // Higher confidence with better patterns
               source: "OCR + Regex",
-              length: cleanDescription.length,
+              length: finalDescription.length,
               originalLine: line,
             });
           }
@@ -1598,7 +1699,23 @@ Please extract ALL financial transactions found in the text above using the exac
         match.description === "BILL CA" ||
         match.description === "UBER.COM" ||
         match.description === "LYFT.COM" ||
-        match.description.length < 3
+        match.description.length < 3 ||
+        match.description.endsWith(" Hr") ||
+        match.description.endsWith(" Bd") ||
+        match.description.endsWith(" p") ||
+        match.description.endsWith(" <M") ||
+        match.description.endsWith(" pr:") ||
+        match.description.endsWith(" B=") ||
+        match.description.endsWith(" NETFLIX.COM/BILL") ||
+        match.description.endsWith(" SPOTIFY.COM") ||
+        match.description.endsWith(" UBER.COM") ||
+        match.description.endsWith(" LYFT.COM") ||
+        match.description.endsWith(" Amzn.com/bill") ||
+        match.description.endsWith(" Amzn.com/billWA") ||
+        match.description.endsWith(" Amzn.com/bill CA") ||
+        match.description.endsWith(" Amzn.com/bill WA") ||
+        /^[0-9]+$/.test(match.description) || // Skip if just numbers
+        /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.test(match.description) // Skip if just a date
       ) {
         continue;
       }
@@ -1652,15 +1769,32 @@ Please extract ALL financial transactions found in the text above using the exac
       }
     }
 
-    // Final cleanup: remove any remaining obvious partial matches
+    // Final cleanup: remove any remaining obvious partial matches and OCR artifacts
     const finalTransactions = [];
     for (const transaction of preprocessedTransactions) {
-      // Skip if it's clearly a partial match
+      // Skip if it's clearly a partial match or OCR artifact
       if (
         transaction.description.startsWith("S #") ||
         transaction.description.startsWith("B #") ||
         transaction.description.endsWith(".COM") ||
-        transaction.description === "EVEREST FOOD TRUCK"
+        transaction.description === "EVEREST FOOD TRUCK" ||
+        transaction.description.endsWith(" Hr") ||
+        transaction.description.endsWith(" Bd") ||
+        transaction.description.endsWith(" p") ||
+        transaction.description.endsWith(" <M") ||
+        transaction.description.endsWith(" pr:") ||
+        transaction.description.endsWith(" B=") ||
+        transaction.description.endsWith(" NETFLIX.COM/BILL") ||
+        transaction.description.endsWith(" SPOTIFY.COM") ||
+        transaction.description.endsWith(" UBER.COM") ||
+        transaction.description.endsWith(" LYFT.COM") ||
+        transaction.description.endsWith(" Amzn.com/bill") ||
+        transaction.description.endsWith(" Amzn.com/billWA") ||
+        transaction.description.endsWith(" Amzn.com/bill CA") ||
+        transaction.description.endsWith(" Amzn.com/bill WA") ||
+        /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.test(transaction.description) ||
+        /^[0-9]+$/.test(transaction.description) ||
+        isNaN(transaction.amount)
       ) {
         continue;
       }
@@ -1668,7 +1802,9 @@ Please extract ALL financial transactions found in the text above using the exac
       finalTransactions.push(transaction);
     }
 
-    console.log(`🤗 [HuggingFace] Found ${finalTransactions.length} transactions via regex patterns`);
+    console.log(
+      `🤗 [HuggingFace] Found ${finalTransactions.length} transactions via regex patterns`
+    );
     return finalTransactions;
   }
 

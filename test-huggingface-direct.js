@@ -8,7 +8,6 @@
 import { config } from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
-import fs from "fs";
 
 // Load environment variables from .env file
 const __filename = fileURLToPath(import.meta.url);

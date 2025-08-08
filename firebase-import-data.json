@@ -1,0 +1,32 @@
+{
+  "transactions": {
+    "1754581509914v13fxvh8f": {
+      "description": "Sample Transaction 1",
+      "amount": 50,
+      "category": "Groceries",
+      "date": "2025-08-07T16:22:42.963Z",
+      "userId": "demo",
+      "createdAt": "2025-08-07T16:22:42.964Z",
+      "updatedAt": "2025-08-07T16:22:42.964Z"
+    },
+    "175458150991457qh0s0gq": {
+      "description": "Sample Transaction 2",
+      "amount": -25,
+      "category": "Restaurants",
+      "date": "2025-08-07T16:22:42.964Z",
+      "userId": "demo",
+      "createdAt": "2025-08-07T16:22:42.964Z",
+      "updatedAt": "2025-08-07T16:22:42.964Z"
+    }
+  },
+  "accounts": {
+    "sample-account-1": {
+      "name": "Checking Account",
+      "type": "checking",
+      "balance": 1000,
+      "userId": "demo",
+      "createdAt": "2025-08-07T16:22:42.964Z",
+      "updatedAt": "2025-08-07T16:22:42.964Z"
+    }
+  }
+}

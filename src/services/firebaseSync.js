@@ -11,6 +11,7 @@ class FirebaseSyncService {
     this.isOnline = navigator.onLine;
     this.syncInProgress = false;
     this.lastSyncTime = null;
+    this.deletedItems = new Set(); // Track deleted items to prevent restoration
 
     // Listen for online/offline changes
     window.addEventListener("online", () => {
@@ -105,13 +106,31 @@ class FirebaseSyncService {
     for (const id of allIds) {
       const localItem = localMap.get(id);
       const remoteItem = remoteMap.get(id);
+      const deletedKey = `${dataType}:${id}`;
 
       if (!localItem && remoteItem) {
-        // Remote item doesn't exist locally - add it
-        mergedData.push(remoteItem);
-        await this.addToLocal(remoteItem, dataType);
+        // Remote item doesn't exist locally - check if it was intentionally deleted
+        if (this.deletedItems.has(deletedKey)) {
+          console.log(`🔄 Skipping restoration of deleted ${dataType}: ${id}`);
+          // Delete from Firebase to sync the deletion
+          try {
+            await this.deleteFromFirebase(id, dataType);
+            console.log(`✅ Deleted ${dataType} from Firebase: ${id}`);
+          } catch (error) {
+            console.warn(
+              `⚠️  Failed to delete ${dataType} from Firebase: ${id}`,
+              error
+            );
+          }
+        } else {
+          // Remote item doesn't exist locally and wasn't deleted - add it
+          console.log(`📥 Adding remote ${dataType} to local: ${id}`);
+          mergedData.push(remoteItem);
+          await this.addToLocal(remoteItem, dataType);
+        }
       } else if (localItem && !remoteItem) {
         // Local item doesn't exist remotely - upload it
+        console.log(`📤 Uploading local ${dataType} to Firebase: ${id}`);
         mergedData.push(localItem);
         await this.uploadToFirebase(localItem, dataType);
       } else if (localItem && remoteItem) {
@@ -124,9 +143,15 @@ class FirebaseSyncService {
         );
 
         if (localUpdated > remoteUpdated) {
+          console.log(
+            `🔄 Resolving conflict for ${dataType}: ${id} (local wins)`
+          );
           mergedData.push(localItem);
           await this.uploadToFirebase(localItem, dataType);
         } else {
+          console.log(
+            `🔄 Resolving conflict for ${dataType}: ${id} (remote wins)`
+          );
           mergedData.push(remoteItem);
           await this.updateLocal(remoteItem, dataType);
         }
@@ -135,6 +160,64 @@ class FirebaseSyncService {
     }
 
     return mergedData;
+  }
+
+  /**
+   * Mark an item as deleted to prevent restoration during sync
+   */
+  markAsDeleted(itemId, dataType) {
+    const deletedKey = `${dataType}:${itemId}`;
+    this.deletedItems.add(deletedKey);
+
+    // Store in localStorage for persistence across page reloads
+    try {
+      const stored = JSON.parse(localStorage.getItem("deletedItems") || "[]");
+      if (!stored.includes(deletedKey)) {
+        stored.push(deletedKey);
+        localStorage.setItem("deletedItems", JSON.stringify(stored));
+      }
+    } catch (error) {
+      console.error("Error storing deleted items:", error);
+    }
+  }
+
+  /**
+   * Load deleted items from localStorage
+   */
+  loadDeletedItems() {
+    try {
+      const stored = JSON.parse(localStorage.getItem("deletedItems") || "[]");
+      this.deletedItems = new Set(stored);
+
+      // Clean up old deleted items (older than 30 days)
+      this.cleanupOldDeletedItems();
+    } catch (error) {
+      console.error("Error loading deleted items:", error);
+      this.deletedItems = new Set();
+    }
+  }
+
+  /**
+   * Clean up old deleted items from localStorage
+   */
+  cleanupOldDeletedItems() {
+    try {
+      const stored = JSON.parse(localStorage.getItem("deletedItems") || "[]");
+
+      // Keep only recent deletions (within 30 days)
+      const recentDeletions = stored.filter(() => {
+        // For now, we'll keep all items since we don't store timestamps
+        // In a future version, we could add timestamps to track deletion dates
+        return true;
+      });
+
+      if (recentDeletions.length !== stored.length) {
+        localStorage.setItem("deletedItems", JSON.stringify(recentDeletions));
+        this.deletedItems = new Set(recentDeletions);
+      }
+    } catch (error) {
+      console.error("Error cleaning up deleted items:", error);
+    }
   }
 
   /**
@@ -229,7 +312,7 @@ class FirebaseSyncService {
   startPeriodicSync() {
     setInterval(
       () => {
-        if (this.isOnline) {
+        if (this.isOnline && !this.syncInProgress) {
           this.syncData();
         }
       },
@@ -238,7 +321,7 @@ class FirebaseSyncService {
   }
 
   /**
-   * Force immediate sync
+   * Force a sync operation
    */
   async forceSync() {
     await this.syncData();
@@ -254,9 +337,28 @@ class FirebaseSyncService {
       lastSyncTime: this.lastSyncTime,
     };
   }
+
+  /**
+   * Clear deleted items (for testing purposes)
+   */
+  clearDeletedItems() {
+    this.deletedItems.clear();
+    localStorage.removeItem("deletedItems");
+    console.log("🧹 Deleted items cleared for testing");
+  }
+
+  /**
+   * Get deleted items (for debugging)
+   */
+  getDeletedItems() {
+    return Array.from(this.deletedItems);
+  }
 }
 
 // Create singleton instance
 const firebaseSync = new FirebaseSyncService();
+
+// Load deleted items on initialization
+firebaseSync.loadDeletedItems();
 
 export default firebaseSync;
