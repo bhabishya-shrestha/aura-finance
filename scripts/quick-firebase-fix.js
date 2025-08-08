@@ -18,7 +18,8 @@ console.log(`📊 Found ${transactions.length} local transactions`);
 // Step 3: Import Firebase service
 let firebaseService;
 try {
-  firebaseService = (await import("../src/services/firebaseService.js")).default;
+  firebaseService = (await import("../src/services/firebaseService.js"))
+    .default;
 } catch (error) {
   console.log("❌ Couldn't import Firebase service:", error.message);
   return;
@@ -35,7 +36,9 @@ console.log(`✅ Authenticated as: ${currentUser.email}`);
 // Step 5: Get Firebase transactions for comparison
 console.log("🔄 Getting Firebase transactions...");
 const firebaseResult = await firebaseService.getTransactions();
-const firebaseTransactions = firebaseResult.success ? firebaseResult.data || [] : [];
+const firebaseTransactions = firebaseResult.success
+  ? firebaseResult.data || []
+  : [];
 console.log(`📊 Found ${firebaseTransactions.length} Firebase transactions`);
 
 // Step 6: Find missing transactions
@@ -52,7 +55,9 @@ if (missingInFirebase.length === 0) {
 }
 
 // Step 7: Upload missing transactions
-console.log(`\n📤 Uploading ${missingInFirebase.length} missing transactions...`);
+console.log(
+  `\n📤 Uploading ${missingInFirebase.length} missing transactions...`
+);
 let successCount = 0;
 let failCount = 0;
 

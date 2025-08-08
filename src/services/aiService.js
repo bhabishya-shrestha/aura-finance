@@ -170,8 +170,12 @@ class AIService {
    * @returns {Promise<Object>} Analysis result
    */
   async analyzeImage(file) {
-    console.log("🤖 [AI Service] Starting analyzeImage for file:", file.name, file.type);
-    
+    console.log(
+      "🤖 [AI Service] Starting analyzeImage for file:",
+      file.name,
+      file.type
+    );
+
     try {
       // Validate API usage first
       console.log("🤖 [AI Service] Validating API usage...");
@@ -179,7 +183,10 @@ class AIService {
         await apiUsageService.validateApiUsage();
         console.log("🤖 [AI Service] ✅ API usage validated");
       } catch (error) {
-        console.log("🤖 [AI Service] ⚠️ API usage validation failed, proceeding with client-side limits:", error.message);
+        console.log(
+          "🤖 [AI Service] ⚠️ API usage validation failed, proceeding with client-side limits:",
+          error.message
+        );
       }
 
       // Get current provider
@@ -188,26 +195,36 @@ class AIService {
 
       // Check provider availability
       console.log("🤖 [AI Service] Checking provider availability...");
-      const huggingFaceAvailable = this.providers.huggingface.service.isProviderAvailable();
-      console.log("🤖 [AI Service] Hugging Face available:", huggingFaceAvailable);
+      const huggingFaceAvailable =
+        this.providers.huggingface.service.isProviderAvailable();
+      console.log(
+        "🤖 [AI Service] Hugging Face available:",
+        huggingFaceAvailable
+      );
 
       let result = null;
 
       // Use the selected provider only (no fallback)
-      if (provider.name === "Hugging Face Inference API" && huggingFaceAvailable) {
+      if (
+        provider.name === "Hugging Face Inference API" &&
+        huggingFaceAvailable
+      ) {
         console.log("🤖 [AI Service] Attempting Hugging Face analysis...");
         try {
           result = await huggingFaceService.analyzeImage(file);
           console.log("🤖 [AI Service] ✅ Hugging Face analysis successful");
-          
+
           // Increment API usage
           try {
             await apiUsageService.incrementApiUsage("huggingface");
             console.log("🤖 [AI Service] ✅ API usage incremented");
           } catch (error) {
-            console.log("🤖 [AI Service] ⚠️ API usage increment failed:", error.message);
+            console.log(
+              "🤖 [AI Service] ⚠️ API usage increment failed:",
+              error.message
+            );
           }
-          
+
           return result;
         } catch (error) {
           console.log("🤖 [AI Service] ❌ Hugging Face failed:", error.message);
@@ -221,15 +238,18 @@ class AIService {
         try {
           result = await geminiService.analyzeImage(file);
           console.log("🤖 [AI Service] ✅ Gemini analysis successful");
-          
+
           // Increment API usage
           try {
             await apiUsageService.incrementApiUsage("gemini");
             console.log("🤖 [AI Service] ✅ API usage incremented");
           } catch (error) {
-            console.log("🤖 [AI Service] ⚠️ API usage increment failed:", error.message);
+            console.log(
+              "🤖 [AI Service] ⚠️ API usage increment failed:",
+              error.message
+            );
           }
-          
+
           return result;
         } catch (error) {
           console.log("🤖 [AI Service] ❌ Gemini failed:", error.message);
@@ -238,7 +258,9 @@ class AIService {
       }
 
       console.log("🤖 [AI Service] ❌ No available providers");
-      throw new Error("No AI providers are available. Please check your API keys and try again.");
+      throw new Error(
+        "No AI providers are available. Please check your API keys and try again."
+      );
     } catch (error) {
       console.error("🤖 [AI Service] ❌ analyzeImage failed:", error);
       throw error;

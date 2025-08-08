@@ -171,7 +171,13 @@ const MobileAccountAssignmentModal = ({
         hasGeneratedSuggestions.current = true;
       }
     }
-  }, [isOpen, transactions, propAccounts, storeAccounts, generateAccountSuggestions]);
+  }, [
+    isOpen,
+    transactions,
+    propAccounts,
+    storeAccounts,
+    generateAccountSuggestions,
+  ]);
 
   // Reset state when modal closes
   useEffect(() => {

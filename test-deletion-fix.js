@@ -6,12 +6,12 @@ import firebaseSync from "./src/services/firebaseSync.js";
 
 async function testDeletionFix() {
   console.log("🧪 Testing deletion fix...");
-  
+
   try {
     // Step 1: Clear any existing deleted items
     firebaseSync.clearDeletedItems();
     console.log("✅ Cleared existing deleted items");
-    
+
     // Step 2: Create a test account
     const testAccount = {
       id: Date.now().toString(),
@@ -19,16 +19,16 @@ async function testDeletionFix() {
       type: "checking",
       balance: 1000,
       userId: "test-user",
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
-    
+
     await db.accounts.add(testAccount);
     console.log("✅ Created test account:", testAccount.id);
-    
+
     // Step 3: Mark it as deleted
     firebaseSync.markAsDeleted(testAccount.id, "accounts");
     console.log("✅ Marked account as deleted");
-    
+
     // Step 4: Verify it's in the deleted items set
     const deletedKey = `accounts:${testAccount.id}`;
     if (firebaseSync.deletedItems.has(deletedKey)) {
@@ -37,20 +37,20 @@ async function testDeletionFix() {
       console.log("❌ Account not tracked as deleted");
       return;
     }
-    
+
     // Step 5: Simulate sync scenario (remote has account, local doesn't)
     const localAccounts = []; // Empty local accounts
     const remoteAccounts = [testAccount]; // Remote still has the account
-    
+
     console.log("🔄 Simulating sync scenario...");
-    
+
     // Step 6: Test the merge logic
     const mergedData = await firebaseSync.mergeAndSyncData(
-      localAccounts, 
-      remoteAccounts, 
+      localAccounts,
+      remoteAccounts,
       "accounts"
     );
-    
+
     // Step 7: Verify the account was NOT restored
     if (mergedData.length === 0) {
       console.log("✅ Account was NOT restored during sync (correct behavior)");
@@ -59,7 +59,7 @@ async function testDeletionFix() {
       console.log("Merged data:", mergedData);
       return;
     }
-    
+
     // Step 8: Verify local database is still empty
     const localAccountsAfterSync = await db.accounts.toArray();
     if (localAccountsAfterSync.length === 0) {
@@ -69,19 +69,20 @@ async function testDeletionFix() {
       console.log("Local accounts:", localAccountsAfterSync);
       return;
     }
-    
+
     // Step 9: Test persistence across page reloads
-    const storedItems = JSON.parse(localStorage.getItem('deletedItems') || '[]');
+    const storedItems = JSON.parse(
+      localStorage.getItem("deletedItems") || "[]"
+    );
     if (storedItems.includes(deletedKey)) {
       console.log("✅ Deleted items persisted to localStorage");
     } else {
       console.log("❌ Deleted items not persisted to localStorage");
       return;
     }
-    
+
     console.log("🎉 All tests passed! Deletion fix is working correctly");
     console.log("📝 Deleted accounts will no longer reappear after sync");
-    
   } catch (error) {
     console.error("❌ Test failed:", error);
   } finally {

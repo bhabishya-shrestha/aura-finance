@@ -177,9 +177,9 @@ const categorizeTransaction = description => {
 // Function to determine if a transaction should be income based on description and amount
 const shouldBeIncome = (description, amount) => {
   if (!description) return amount > 0;
-  
+
   const desc = description.toLowerCase();
-  
+
   // Keywords that indicate income regardless of amount
   const incomeKeywords = [
     "deposit",
@@ -195,11 +195,11 @@ const shouldBeIncome = (description, amount) => {
     "credit",
     "payment received",
   ];
-  
+
   if (incomeKeywords.some(keyword => desc.includes(keyword))) {
     return true;
   }
-  
+
   // Keywords that indicate expense regardless of amount
   const expenseKeywords = [
     "withdrawal",
@@ -211,94 +211,105 @@ const shouldBeIncome = (description, amount) => {
     "atm",
     "cash withdrawal",
   ];
-  
+
   if (expenseKeywords.some(keyword => desc.includes(keyword))) {
     return false;
   }
-  
+
   // Default: positive amounts are income, negative are expenses
   return amount > 0;
 };
 
 async function fixTransactionCategorization() {
   console.log("🔧 Starting transaction categorization fix...");
-  
+
   try {
     // Get all transactions
     const allTransactions = await db.transactions.toArray();
     console.log(`📊 Found ${allTransactions.length} transactions to analyze`);
-    
+
     let fixedCount = 0;
     let recategorizedCount = 0;
     let amountFixedCount = 0;
-    
+
     for (const transaction of allTransactions) {
       let needsUpdate = false;
       const updates = {};
-      
+
       // Fix categorization
       const currentCategory = transaction.category || "Other";
       const suggestedCategory = categorizeTransaction(transaction.description);
-      
+
       if (currentCategory !== suggestedCategory) {
         updates.category = suggestedCategory;
         needsUpdate = true;
         recategorizedCount++;
-        console.log(`🔄 Recategorizing: "${transaction.description}" from "${currentCategory}" to "${suggestedCategory}"`);
+        console.log(
+          `🔄 Recategorizing: "${transaction.description}" from "${currentCategory}" to "${suggestedCategory}"`
+        );
       }
-      
+
       // Fix amount signs based on description and category
-      const shouldBeIncomeTransaction = shouldBeIncome(transaction.description, transaction.amount);
+      const shouldBeIncomeTransaction = shouldBeIncome(
+        transaction.description,
+        transaction.amount
+      );
       const currentIsPositive = transaction.amount > 0;
-      
+
       if (shouldBeIncomeTransaction !== currentIsPositive) {
         // Fix the amount sign
-        updates.amount = Math.abs(transaction.amount) * (shouldBeIncomeTransaction ? 1 : -1);
+        updates.amount =
+          Math.abs(transaction.amount) * (shouldBeIncomeTransaction ? 1 : -1);
         needsUpdate = true;
         amountFixedCount++;
-        console.log(`💰 Fixing amount: "${transaction.description}" from ${transaction.amount} to ${updates.amount} (${shouldBeIncomeTransaction ? 'income' : 'expense'})`);
+        console.log(
+          `💰 Fixing amount: "${transaction.description}" from ${transaction.amount} to ${updates.amount} (${shouldBeIncomeTransaction ? "income" : "expense"})`
+        );
       }
-      
+
       // Update transaction if needed
       if (needsUpdate) {
         await db.transactions.update(transaction.id, updates);
         fixedCount++;
       }
     }
-    
+
     console.log("\n📈 Fix Summary:");
     console.log(`✅ Total transactions processed: ${allTransactions.length}`);
     console.log(`🔄 Transactions recategorized: ${recategorizedCount}`);
     console.log(`💰 Amount signs fixed: ${amountFixedCount}`);
     console.log(`🔧 Total transactions updated: ${fixedCount}`);
-    
+
     // Verify the fixes
     console.log("\n🔍 Verifying fixes...");
     const updatedTransactions = await db.transactions.toArray();
-    
+
     // Calculate totals
     const totalIncome = updatedTransactions
       .filter(t => t.amount > 0)
       .reduce((sum, t) => sum + t.amount, 0);
-      
+
     const totalExpenses = updatedTransactions
       .filter(t => t.amount < 0)
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-      
+
     const netFlow = totalIncome - totalExpenses;
-    
+
     console.log(`📊 After fixes:`);
     console.log(`   Total Income: $${totalIncome.toFixed(2)}`);
     console.log(`   Total Expenses: $${totalExpenses.toFixed(2)}`);
     console.log(`   Net Flow: $${netFlow.toFixed(2)}`);
-    
+
     // Check for any remaining issues
-    const uncategorizedTransactions = updatedTransactions.filter(t => 
-      !t.category || t.category === "Other" || t.category === "Uncategorized"
+    const uncategorizedTransactions = updatedTransactions.filter(
+      t =>
+        !t.category || t.category === "Other" || t.category === "Uncategorized"
     );
-    
+
     if (uncategorizedTransactions.length > 0) {
-      console.log(`\n⚠️  ${uncategorizedTransactions.length} transactions still need manual categorization:`);
+      console.log(
+        `\n⚠️  ${uncategorizedTransactions.length} transactions still need manual categorization:`
+      );
       uncategorizedTransactions.slice(0, 10).forEach(t => {
         console.log(`   - "${t.description}" (${t.amount})`);
       });
@@ -306,24 +317,23 @@ async function fixTransactionCategorization() {
         console.log(`   ... and ${uncategorizedTransactions.length - 10} more`);
       }
     }
-    
+
     // Category breakdown
     const categoryBreakdown = {};
     updatedTransactions.forEach(t => {
       const category = t.category || "Other";
       categoryBreakdown[category] = (categoryBreakdown[category] || 0) + 1;
     });
-    
+
     console.log("\n📋 Category breakdown:");
     Object.entries(categoryBreakdown)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .forEach(([category, count]) => {
         console.log(`   ${category}: ${count} transactions`);
       });
-    
+
     console.log("\n🎉 Transaction categorization fix completed!");
     console.log("💡 The net flow should now display correctly in the app.");
-    
   } catch (error) {
     console.error("❌ Error fixing transaction categorization:", error);
   } finally {

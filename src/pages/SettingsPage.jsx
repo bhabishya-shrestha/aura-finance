@@ -1126,10 +1126,14 @@ const SettingsPage = () => {
                 {/* Provider Comparison */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Hugging Face */}
-                  <div className={`p-4 rounded-lg border-2 ${settings.aiProvider === "huggingface" ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50"}`}>
+                  <div
+                    className={`p-4 rounded-lg border-2 ${settings.aiProvider === "huggingface" ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50"}`}
+                  >
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white">Hugging Face</h4>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">
+                        Hugging Face
+                      </h4>
                       {settings.aiProvider === "huggingface" && (
                         <Check className="w-4 h-4 text-emerald-600" />
                       )}
@@ -1139,10 +1143,12 @@ const SettingsPage = () => {
                         <span className="font-medium">Accuracy:</span> 85-90%
                       </div>
                       <div className="text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">Daily Limit:</span> 1000 requests
+                        <span className="font-medium">Daily Limit:</span> 1000
+                        requests
                       </div>
                       <div className="text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">Cost:</span> ~$0.0005/request
+                        <span className="font-medium">Cost:</span>{" "}
+                        ~$0.0005/request
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                         Less accurate but more uses - great for bulk processing
@@ -1151,10 +1157,14 @@ const SettingsPage = () => {
                   </div>
 
                   {/* Gemini */}
-                  <div className={`p-4 rounded-lg border-2 ${settings.aiProvider === "gemini" ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50"}`}>
+                  <div
+                    className={`p-4 rounded-lg border-2 ${settings.aiProvider === "gemini" ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50"}`}
+                  >
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white">Gemini API</h4>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">
+                        Gemini API
+                      </h4>
                       {settings.aiProvider === "gemini" && (
                         <Check className="w-4 h-4 text-emerald-600" />
                       )}
@@ -1164,10 +1174,12 @@ const SettingsPage = () => {
                         <span className="font-medium">Accuracy:</span> 95-98%
                       </div>
                       <div className="text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">Daily Limit:</span> 100 requests
+                        <span className="font-medium">Daily Limit:</span> 100
+                        requests
                       </div>
                       <div className="text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">Cost:</span> ~$0.001/request
+                        <span className="font-medium">Cost:</span>{" "}
+                        ~$0.001/request
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                         High accuracy but fewer uses - best for precision

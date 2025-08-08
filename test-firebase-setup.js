@@ -123,8 +123,10 @@ async function testFirebaseSetup() {
     console.log("\n🗑️ Testing account deletion...");
     if (getAccountsResult.data.length > 0) {
       const accountToDelete = getAccountsResult.data[0];
-      const deleteResult = await firebaseService.deleteAccount(accountToDelete.id);
-      
+      const deleteResult = await firebaseService.deleteAccount(
+        accountToDelete.id
+      );
+
       if (deleteResult.success) {
         console.log("✅ Account deletion successful");
       } else {
@@ -154,12 +156,11 @@ async function testFirebaseSetup() {
     console.log("\n🎉 All Firebase tests passed!");
     console.log("\n🚀 Your Firebase setup is working perfectly!");
     console.log("   You now have cross-device sync for $0/month!");
-    
+
     // Cleanup: Sign out the test user
     console.log("\n🧹 Cleaning up test user...");
     await firebaseService.logout();
     console.log("✅ Test user signed out");
-    
   } catch (error) {
     console.error("❌ Test failed with error:", error);
     console.log("\n🔧 Please check:");

@@ -14,11 +14,14 @@ const transactions = store.getState().transactions || [];
 console.log(`📊 Found ${transactions.length} local transactions`);
 
 // Import Firebase service
-const firebaseService = (await import("../src/services/firebaseService.js")).default;
+const firebaseService = (await import("../src/services/firebaseService.js"))
+  .default;
 
 // Get Firebase transactions for comparison
 const firebaseResult = await firebaseService.getTransactions();
-const firebaseTransactions = firebaseResult.success ? firebaseResult.data || [] : [];
+const firebaseTransactions = firebaseResult.success
+  ? firebaseResult.data || []
+  : [];
 console.log(`📊 Found ${firebaseTransactions.length} Firebase transactions`);
 
 // Find missing ones
@@ -50,6 +53,7 @@ console.log("🎉 Done! Try updating categories again.");
 ### **Step 1: Install Google Cloud CLI**
 
 **Windows:**
+
 ```bash
 # Download from: https://cloud.google.com/sdk/docs/install
 # Or use winget:
@@ -57,6 +61,7 @@ winget install Google.CloudSDK
 ```
 
 **macOS:**
+
 ```bash
 # Using Homebrew
 brew install google-cloud-sdk
@@ -65,6 +70,7 @@ brew install google-cloud-sdk
 ```
 
 **Linux:**
+
 ```bash
 # Download from: https://cloud.google.com/sdk/docs/install
 # Or use package manager

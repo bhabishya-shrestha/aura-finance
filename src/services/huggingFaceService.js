@@ -1550,7 +1550,11 @@ Please extract ALL financial transactions found in the text above using the exac
             // Enhanced validation for OCR output
             if (cleanDescription.length < 3) continue; // Require at least 3 characters
             if (cleanDescription.length > 200) continue; // Reasonable length limit
-            if (Math.abs(parseFloat(cleanAmount)) < 0.01 || Math.abs(parseFloat(cleanAmount)) > 1000000) continue; // Reasonable amount range
+            if (
+              Math.abs(parseFloat(cleanAmount)) < 0.01 ||
+              Math.abs(parseFloat(cleanAmount)) > 1000000
+            )
+              continue; // Reasonable amount range
 
             // Skip if description is just a date
             if (/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.test(cleanDescription))
@@ -1561,27 +1565,76 @@ Please extract ALL financial transactions found in the text above using the exac
 
             // Clean up description by removing common OCR artifacts
             let finalDescription = cleanDescription;
-            
+
             // Remove common OCR artifacts and partial matches (but be more conservative)
             const artifactsToRemove = [
-              " Bd", " Hr", " p", " <M", " pr:", " B=",
-              " NETFLIX.COM/BILL", " SPOTIFY.COM", " UBER.COM", " LYFT.COM",
-              " Amzn.com/bill", " Amzn.com/billWA", " Amzn.com/bill CA", " Amzn.com/bill WA",
-              " 7106", " 7012", " 1234", " 10001", " 57557551", " 12345678", " 12345",
-              " 01/15", " 01/14", " 01/13", " 01/12", " 01/11", " 01/10", " 01/09", " 01/08",
-              " 01/07", " 01/06", " 01/05", " 02/10", " 02/07", " 02/06", " 02/05", " 02/03",
-              " 02/01", " 01/31", " 01/27", " 01/25", " 01/24", " 01/23", " 01/21", " 01/20",
-              " 01/18", " 01/16", " 01/15", " 01/14", " 01/13", " 01/12", " 01/11", " 01/10",
-              " 01/09", " 01/08", " 01/07", " 01/06", " 01/05"
+              " Bd",
+              " Hr",
+              " p",
+              " <M",
+              " pr:",
+              " B=",
+              " NETFLIX.COM/BILL",
+              " SPOTIFY.COM",
+              " UBER.COM",
+              " LYFT.COM",
+              " Amzn.com/bill",
+              " Amzn.com/billWA",
+              " Amzn.com/bill CA",
+              " Amzn.com/bill WA",
+              " 7106",
+              " 7012",
+              " 1234",
+              " 10001",
+              " 57557551",
+              " 12345678",
+              " 12345",
+              " 01/15",
+              " 01/14",
+              " 01/13",
+              " 01/12",
+              " 01/11",
+              " 01/10",
+              " 01/09",
+              " 01/08",
+              " 01/07",
+              " 01/06",
+              " 01/05",
+              " 02/10",
+              " 02/07",
+              " 02/06",
+              " 02/05",
+              " 02/03",
+              " 02/01",
+              " 01/31",
+              " 01/27",
+              " 01/25",
+              " 01/24",
+              " 01/23",
+              " 01/21",
+              " 01/20",
+              " 01/18",
+              " 01/16",
+              " 01/15",
+              " 01/14",
+              " 01/13",
+              " 01/12",
+              " 01/11",
+              " 01/10",
+              " 01/09",
+              " 01/08",
+              " 01/07",
+              " 01/06",
+              " 01/05",
             ];
-            
+
             for (const artifact of artifactsToRemove) {
               finalDescription = finalDescription.replace(artifact, "");
             }
-            
+
             // Additional cleanup
             finalDescription = finalDescription.replace(/\s+/g, " ").trim();
-            
+
             // Skip if description is too short or just numbers/dates after cleaning
             if (finalDescription.length < 3) continue;
             if (/^[0-9]+$/.test(finalDescription)) continue;

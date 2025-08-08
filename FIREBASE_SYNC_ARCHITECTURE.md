@@ -11,12 +11,14 @@ User Input → IndexedDB (immediate) → Firebase (sync) → Other Devices
 ```
 
 ### **IndexedDB Role:**
+
 - **🚀 Performance**: Instant reads/writes without network latency
 - **📱 Offline Support**: Works even when internet is down
 - **💾 Local Storage**: Organizes user input before syncing
 - **🔄 Data Organization**: Manages data locally for immediate feedback
 
 ### **Firebase Role:**
+
 - **🌐 Cross-Platform Sync**: Ensures data consistency across devices
 - **☁️ Cloud Backup**: Permanent storage in the cloud
 - **⚡ Real-time Updates**: Live synchronization between devices
@@ -25,6 +27,7 @@ User Input → IndexedDB (immediate) → Firebase (sync) → Other Devices
 ## 🔧 **Recent Fixes Applied**
 
 ### **1. Fixed Transaction Update Issues**
+
 **Problem**: `No document to update` errors when updating transaction categories
 **Root Cause**: Transactions existed locally but not in Firebase
 **Solution**: Enhanced `updateTransaction` to create documents if they don't exist
@@ -45,6 +48,7 @@ if (!docSnapshot.exists()) {
 ```
 
 ### **2. Fixed Account Deletion Sync**
+
 **Problem**: Deleted accounts reappeared after page refresh
 **Root Cause**: Firebase sync was restoring locally deleted accounts
 **Solution**: Implemented deletion tracking system
@@ -62,6 +66,7 @@ if (this.deletedItems.has(deletedKey)) {
 ```
 
 ### **3. Improved Sync Order**
+
 **Problem**: Local deletion happened before Firebase deletion
 **Solution**: Firebase deletion now happens first
 
@@ -78,21 +83,25 @@ await db.accounts.delete(accountId);
 ## 🛠️ **Available Fix Scripts**
 
 ### **1. Quick Diagnostic** (`scripts/quick-diagnostic.js`)
+
 - Run in browser console
 - Shows transaction analysis (positive vs negative amounts)
 - Identifies categorization issues
 
 ### **2. Firebase Sync Fix** (`scripts/fix-firebase-sync.js`)
+
 - Comprehensive sync repair
 - Uploads missing transactions/accounts to Firebase
 - Forces sync to ensure consistency
 
 ### **3. Deletion Tracking Test** (`scripts/test-deletion-tracking.js`)
+
 - Tests the deletion tracking system
 - Verifies localStorage persistence
 - Checks specific account tracking
 
 ### **4. Comprehensive Deletion Fix** (`scripts/fix-deletion-sync.js`)
+
 - Fixes current deletion sync issues
 - Marks problematic accounts as deleted
 - Provides step-by-step guidance
@@ -100,7 +109,9 @@ await db.accounts.delete(accountId);
 ## 🚀 **How to Use the Fixes**
 
 ### **For Transaction Category Updates:**
+
 1. **Run the Firebase sync fix**:
+
    ```javascript
    // Copy and paste scripts/fix-firebase-sync.js into browser console
    ```
@@ -108,7 +119,9 @@ await db.accounts.delete(accountId);
 2. **Try updating categories again** - should work without errors
 
 ### **For Account Deletion Issues:**
+
 1. **Run the deletion fix**:
+
    ```javascript
    // Copy and paste scripts/fix-deletion-sync.js into browser console
    ```
@@ -116,7 +129,9 @@ await db.accounts.delete(accountId);
 2. **Refresh the page** to verify accounts stay deleted
 
 ### **For General Sync Issues:**
+
 1. **Run the comprehensive sync fix**:
+
    ```javascript
    // Copy and paste scripts/fix-firebase-sync.js into browser console
    ```
@@ -126,16 +141,19 @@ await db.accounts.delete(accountId);
 ## 📊 **Benefits of This Architecture**
 
 ### **✅ User Experience:**
+
 - **Instant Feedback**: No waiting for network requests
 - **Offline Capability**: Works without internet
 - **Responsive UI**: Immediate updates to the interface
 
 ### **✅ Data Safety:**
+
 - **Local Backup**: Data stored locally first
 - **Cloud Sync**: Automatic backup to Firebase
 - **Conflict Resolution**: Smart merging of local and remote changes
 
 ### **✅ Performance:**
+
 - **Fast Operations**: No network latency for local actions
 - **Efficient Sync**: Only syncs changes, not entire datasets
 - **Background Processing**: Sync happens in background
@@ -159,9 +177,10 @@ await db.accounts.delete(accountId);
 ### **Manual Steps (if scripts don't work):**
 
 1. **Clear browser data**:
+
    ```javascript
    localStorage.clear();
-   indexedDB.deleteDatabase('aura-finance-db');
+   indexedDB.deleteDatabase("aura-finance-db");
    ```
 
 2. **Re-authenticate** with Firebase
@@ -171,16 +190,19 @@ await db.accounts.delete(accountId);
 ## 🎯 **Expected Results After Fixes**
 
 ### **✅ Transaction Updates:**
+
 - Category changes work without errors
 - Changes sync to other devices
 - No "No document to update" errors
 
 ### **✅ Account Deletion:**
+
 - Deleted accounts stay deleted after refresh
 - No reappearing accounts
 - Proper sync across devices
 
 ### **✅ General Sync:**
+
 - Local and Firebase data stay in sync
 - Changes propagate to other devices
 - No data loss or duplication

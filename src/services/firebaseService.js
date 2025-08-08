@@ -310,18 +310,20 @@ class FirebaseService {
 
     try {
       const docRef = doc(db, "transactions", transactionId);
-      
+
       // Check if the document exists first
       const docSnapshot = await getDoc(docRef);
-      
+
       if (!docSnapshot.exists()) {
         // Document doesn't exist in Firebase, create it instead
-        console.log(`Transaction ${transactionId} doesn't exist in Firebase, creating it...`);
-        
+        console.log(
+          `Transaction ${transactionId} doesn't exist in Firebase, creating it...`
+        );
+
         // Get the full transaction data from local store
         const { default: db } = await import("../database.js");
         const localTransaction = await db.transactions.get(transactionId);
-        
+
         if (localTransaction) {
           // Create the document with full data plus updates
           const transactionData = {
@@ -330,7 +332,7 @@ class FirebaseService {
             userId: this.currentUser.uid,
             updatedAt: serverTimestamp(),
           };
-          
+
           await setDoc(docRef, transactionData);
           console.log(`✅ Created transaction ${transactionId} in Firebase`);
           return { success: true, created: true };
@@ -344,7 +346,7 @@ class FirebaseService {
           ...updates,
           updatedAt: serverTimestamp(),
         });
-        
+
         console.log(`✅ Updated transaction ${transactionId} in Firebase`);
         return { success: true, updated: true };
       }

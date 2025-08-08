@@ -15,7 +15,9 @@ if (!store) {
 const state = store.getState();
 const { transactions, accounts } = state;
 
-console.log(`📊 Found ${transactions.length} transactions and ${accounts.length} accounts`);
+console.log(
+  `📊 Found ${transactions.length} transactions and ${accounts.length} accounts`
+);
 
 if (transactions.length === 0) {
   console.log("ℹ️  No transactions found");
@@ -26,11 +28,11 @@ if (transactions.length === 0) {
 const totalIncome = transactions
   .filter(t => t.amount > 0)
   .reduce((sum, t) => sum + t.amount, 0);
-  
+
 const totalExpenses = transactions
   .filter(t => t.amount < 0)
   .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-  
+
 const netFlow = totalIncome - totalExpenses;
 
 console.log("\n📈 Current Totals:");
@@ -39,12 +41,14 @@ console.log(`   Total Expenses: $${totalExpenses.toFixed(2)}`);
 console.log(`   Net Flow: $${netFlow.toFixed(2)}`);
 
 // Check for categorization issues
-const uncategorizedTransactions = transactions.filter(t => 
-  !t.category || t.category === "Other" || t.category === "Uncategorized"
+const uncategorizedTransactions = transactions.filter(
+  t => !t.category || t.category === "Other" || t.category === "Uncategorized"
 );
 
 console.log(`\n📋 Categorization Issues:`);
-console.log(`   Uncategorized transactions: ${uncategorizedTransactions.length}`);
+console.log(
+  `   Uncategorized transactions: ${uncategorizedTransactions.length}`
+);
 
 if (uncategorizedTransactions.length > 0) {
   console.log("   Sample uncategorized transactions:");
@@ -57,20 +61,28 @@ if (uncategorizedTransactions.length > 0) {
 const potentialIssues = transactions.filter(t => {
   const desc = t.description.toLowerCase();
   const isPositive = t.amount > 0;
-  
+
   // Check for income keywords with negative amounts
   const incomeKeywords = ["deposit", "salary", "payroll", "income", "refund"];
-  const hasIncomeKeywords = incomeKeywords.some(keyword => desc.includes(keyword));
-  
+  const hasIncomeKeywords = incomeKeywords.some(keyword =>
+    desc.includes(keyword)
+  );
+
   // Check for expense keywords with positive amounts
   const expenseKeywords = ["withdrawal", "debit", "purchase", "payment", "fee"];
-  const hasExpenseKeywords = expenseKeywords.some(keyword => desc.includes(keyword));
-  
-  return (hasIncomeKeywords && !isPositive) || (hasExpenseKeywords && isPositive);
+  const hasExpenseKeywords = expenseKeywords.some(keyword =>
+    desc.includes(keyword)
+  );
+
+  return (
+    (hasIncomeKeywords && !isPositive) || (hasExpenseKeywords && isPositive)
+  );
 });
 
 console.log(`\n💰 Potential Amount Sign Issues:`);
-console.log(`   Transactions with potential sign issues: ${potentialIssues.length}`);
+console.log(
+  `   Transactions with potential sign issues: ${potentialIssues.length}`
+);
 
 if (potentialIssues.length > 0) {
   console.log("   Sample transactions with potential issues:");
@@ -88,7 +100,7 @@ transactions.forEach(t => {
 
 console.log("\n📋 Category Breakdown:");
 Object.entries(categoryBreakdown)
-  .sort(([,a], [,b]) => b - a)
+  .sort(([, a], [, b]) => b - a)
   .forEach(([category, count]) => {
     console.log(`   ${category}: ${count} transactions`);
   });
@@ -96,7 +108,9 @@ Object.entries(categoryBreakdown)
 // Sample transactions
 console.log("\n📝 Sample Transactions:");
 transactions.slice(0, 10).forEach(t => {
-  console.log(`   - "${t.description}" | ${t.amount} | ${t.category || 'Uncategorized'}`);
+  console.log(
+    `   - "${t.description}" | ${t.amount} | ${t.category || "Uncategorized"}`
+  );
 });
 
 // Test account stats calculation
@@ -111,4 +125,6 @@ accounts.forEach(account => {
 });
 
 console.log("\n✅ Diagnostic complete!");
-console.log("💡 If you see issues, check the transaction categories and amount signs.");
+console.log(
+  "💡 If you see issues, check the transaction categories and amount signs."
+);

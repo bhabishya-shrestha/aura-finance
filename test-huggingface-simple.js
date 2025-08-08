@@ -26,19 +26,19 @@ async function testHuggingFaceSimple() {
       console.log("   Please set VITE_HUGGINGFACE_API_KEY in your .env file");
       return;
     }
-    
+
     console.log(`✅ API key found: ${apiKey.substring(0, 10)}...`);
 
     // Test BART-CNN model (the only working model)
     console.log("\n📰 BART-CNN Model Test");
     console.log("----------------------");
-    
+
     const model = "facebook/bart-large-cnn";
     const apiUrl = `https://api-inference.huggingface.co/models/${model}`;
-    
+
     try {
       console.log(`🔄 Testing BART-CNN model: ${apiUrl}`);
-      
+
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -46,7 +46,8 @@ async function testHuggingFaceSimple() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          inputs: "EVEREST FOOD TRUCK 2 - $27.96 on 08/02/2025. WM SUPERCENTER #475 ROUND ROCK TX - $2.50 on 08/02/2025.",
+          inputs:
+            "EVEREST FOOD TRUCK 2 - $27.96 on 08/02/2025. WM SUPERCENTER #475 ROUND ROCK TX - $2.50 on 08/02/2025.",
           parameters: {
             max_length: 800,
             min_length: 100,
@@ -63,12 +64,17 @@ async function testHuggingFaceSimple() {
       if (response.ok) {
         const data = await response.json();
         console.log("✅ BART-CNN model working");
-        console.log("   Response received:", data[0]?.summary_text ? "Yes" : "No");
+        console.log(
+          "   Response received:",
+          data[0]?.summary_text ? "Yes" : "No"
+        );
         if (data[0]?.summary_text) {
           console.log("   Summary text:", data[0].summary_text);
         }
       } else {
-        console.log(`❌ BART-CNN model failed: ${response.status} ${response.statusText}`);
+        console.log(
+          `❌ BART-CNN model failed: ${response.status} ${response.statusText}`
+        );
         const errorText = await response.text();
         console.log("   Error details:", errorText.substring(0, 200));
       }
@@ -79,13 +85,13 @@ async function testHuggingFaceSimple() {
     // Test timeout handling
     console.log("\n⏱️ Timeout Test");
     console.log("---------------");
-    
+
     try {
       console.log("🔄 Testing with 45-second timeout...");
-      
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 45000);
-      
+
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -93,7 +99,8 @@ async function testHuggingFaceSimple() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          inputs: "Extract financial transactions: EVEREST FOOD TRUCK 2 - $27.96 on 08/02/2025.",
+          inputs:
+            "Extract financial transactions: EVEREST FOOD TRUCK 2 - $27.96 on 08/02/2025.",
           parameters: {
             max_length: 800,
             min_length: 100,
@@ -116,10 +123,12 @@ async function testHuggingFaceSimple() {
         console.log("   Response received within 45 seconds");
         console.log("   Summary:", data[0]?.summary_text || "No summary");
       } else {
-        console.log(`❌ Timeout test failed: ${response.status} ${response.statusText}`);
+        console.log(
+          `❌ Timeout test failed: ${response.status} ${response.statusText}`
+        );
       }
     } catch (error) {
-      if (error.name === 'AbortError') {
+      if (error.name === "AbortError") {
         console.log("❌ Request timed out after 45 seconds");
       } else {
         console.log("❌ Timeout test failed:", error.message);
@@ -133,7 +142,6 @@ async function testHuggingFaceSimple() {
     console.log("   - BART-CNN model: Working");
     console.log("   - Timeout handling: 45 seconds");
     console.log("   - Ready for transaction extraction");
-
   } catch (error) {
     console.error("❌ Test failed with error:", error);
   }

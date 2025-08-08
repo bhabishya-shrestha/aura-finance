@@ -14,8 +14,9 @@ try {
   }
 
   // Try to get the sync service
-  firebaseSync = window.firebaseSync || 
-                 (await import("../src/services/firebaseSync.js")).default;
+  firebaseSync =
+    window.firebaseSync ||
+    (await import("../src/services/firebaseSync.js")).default;
   if (!firebaseSync) {
     console.log("❌ Firebase sync service not found.");
     return;
@@ -33,11 +34,13 @@ const state = store.getState();
 const accounts = state.accounts || [];
 const transactions = state.transactions || [];
 
-console.log(`   Found ${accounts.length} accounts and ${transactions.length} transactions`);
+console.log(
+  `   Found ${accounts.length} accounts and ${transactions.length} transactions`
+);
 
 // Step 3: Check for the problematic accounts
 const problematicAccountIds = ["1754516095348", "1754532132318"];
-const problematicAccounts = accounts.filter(acc => 
+const problematicAccounts = accounts.filter(acc =>
   problematicAccountIds.includes(acc.id)
 );
 
@@ -56,7 +59,9 @@ problematicAccounts.forEach(acc => {
 // Step 5: Check deletion tracking
 console.log("\n🔍 Verifying deletion tracking...");
 const deletedItems = firebaseSync.getDeletedItems();
-const trackedAccounts = deletedItems.filter(item => item.startsWith("accounts:"));
+const trackedAccounts = deletedItems.filter(item =>
+  item.startsWith("accounts:")
+);
 console.log(`   Currently tracking ${trackedAccounts.length} deleted accounts`);
 
 // Step 6: Force a sync to clean up Firebase
@@ -82,14 +87,16 @@ try {
 console.log("\n📊 Checking final state...");
 const finalState = store.getState();
 const finalAccounts = finalState.accounts || [];
-const remainingProblematic = finalAccounts.filter(acc => 
+const remainingProblematic = finalAccounts.filter(acc =>
   problematicAccountIds.includes(acc.id)
 );
 
 if (remainingProblematic.length === 0) {
   console.log("✅ All problematic accounts have been removed!");
 } else {
-  console.log(`⚠️  ${remainingProblematic.length} problematic accounts still remain:`);
+  console.log(
+    `⚠️  ${remainingProblematic.length} problematic accounts still remain:`
+  );
   remainingProblematic.forEach(acc => {
     console.log(`   - ${acc.name} (ID: ${acc.id})`);
   });
@@ -114,4 +121,6 @@ if (finalDeletedItems.length === 0) {
 }
 
 console.log("\n🎉 Deletion sync fix completed!");
-console.log("💡 If accounts still reappear, try the manual deletion steps above.");
+console.log(
+  "💡 If accounts still reappear, try the manual deletion steps above."
+);
