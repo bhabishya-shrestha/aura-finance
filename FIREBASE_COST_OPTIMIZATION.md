@@ -3,11 +3,13 @@
 ## Current Setup Analysis
 
 ### Data Structure
+
 - **Users**: ~1KB per user profile
 - **Transactions**: ~500 bytes per transaction (average)
 - **Accounts**: ~200 bytes per account
 
 ### Current Issues
+
 1. **No data compression** - Raw data storage
 2. **Real-time listeners** on all collections
 3. **No pagination** - Loading all data at once
@@ -19,6 +21,7 @@
 ### 1. Data Compression & Structure
 
 #### Optimized Transaction Structure
+
 ```javascript
 // Before: ~500 bytes
 {
@@ -47,6 +50,7 @@
 ```
 
 #### Optimized Account Structure
+
 ```javascript
 // Before: ~200 bytes
 {
@@ -71,6 +75,7 @@
 ### 2. Query Optimization
 
 #### Efficient Indexes
+
 ```json
 {
   "indexes": [
@@ -106,11 +111,13 @@
 ### 3. Sync Optimization
 
 #### Batch Operations
+
 - Group multiple writes into batches (max 500 operations)
 - Use offline persistence for local changes
 - Sync only when online and changes are significant
 
 #### Smart Sync Strategy
+
 ```javascript
 // Sync only when:
 // 1. User is online
@@ -122,9 +129,10 @@
 ### 4. Real-time Listener Optimization
 
 #### Selective Listening
+
 ```javascript
 // Instead of listening to all transactions
-onSnapshot(collection(db, "transactions"), callback)
+onSnapshot(collection(db, "transactions"), callback);
 
 // Listen only to recent transactions
 const recentQuery = query(
@@ -139,12 +147,14 @@ const recentQuery = query(
 ## 📊 Cost Projections
 
 ### Current Usage (Estimated)
+
 - **Storage**: ~1MB per user (1000 transactions)
 - **Reads**: ~500/day per user (real-time + queries)
 - **Writes**: ~100/day per user (new transactions + updates)
 - **Deletes**: ~10/day per user (cleanup)
 
 ### Optimized Usage (Projected)
+
 - **Storage**: ~400KB per user (60% reduction)
 - **Reads**: ~200/day per user (selective listening + pagination)
 - **Writes**: ~50/day per user (batch operations)
@@ -153,21 +163,25 @@ const recentQuery = query(
 ## 🚀 Implementation Plan
 
 ### Phase 1: Data Compression
+
 1. Create data transformers
 2. Migrate existing data
 3. Update all service methods
 
 ### Phase 2: Query Optimization
+
 1. Update Firestore indexes
 2. Implement pagination
 3. Add query limits
 
 ### Phase 3: Sync Optimization
+
 1. Implement batch operations
 2. Add smart sync logic
 3. Optimize real-time listeners
 
 ### Phase 4: Monitoring
+
 1. Add usage tracking
 2. Set up alerts
 3. Monitor costs
@@ -175,12 +189,14 @@ const recentQuery = query(
 ## 💰 Cost Savings
 
 ### Free Tier Limits
+
 - **Storage**: 1GB (supports ~2,500 users)
 - **Reads**: 50K/day (supports ~250 users)
 - **Writes**: 20K/day (supports ~400 users)
 - **Deletes**: 20K/day (supports ~4,000 users)
 
 ### With Optimizations
+
 - **Storage**: 1GB (supports ~6,250 users) - 150% increase
 - **Reads**: 50K/day (supports ~625 users) - 150% increase
 - **Writes**: 20K/day (supports ~1,000 users) - 150% increase
@@ -197,12 +213,14 @@ const recentQuery = query(
 ## 📈 Monitoring
 
 ### Key Metrics
+
 - Daily read/write operations
 - Storage usage per user
 - Sync frequency and success rate
 - Query performance
 
 ### Alerts
+
 - Approaching free tier limits
 - Unusual usage spikes
 - Failed sync operations

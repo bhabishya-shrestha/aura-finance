@@ -336,7 +336,10 @@ const MobileAccountAssignmentModal = ({
 
       if (import.meta.env.DEV) {
         console.log("✅ Processed transactions:", processedTransactions);
-        console.log("📊 Final transaction count:", processedTransactions.length);
+        console.log(
+          "📊 Final transaction count:",
+          processedTransactions.length
+        );
       }
 
       // Call the completion handler
