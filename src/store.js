@@ -1191,7 +1191,6 @@ const useStore = create(
               );
 
               // Completely disable Firebase sync during reset
-              const originalSyncInProgress = firebaseSync.syncInProgress;
               firebaseSync.syncInProgress = true;
 
               // Also disable the periodic sync

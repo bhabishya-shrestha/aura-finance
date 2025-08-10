@@ -45,6 +45,7 @@
     "deploy:rollback": "vercel rollback"
   },
   "dependencies": {
+    "@google-cloud/aiplatform": "^5.4.0",
     "@huggingface/inference": "^4.6.1",
     "@supabase/supabase-js": "^2.38.4",
     "dexie": "^3.2.4",

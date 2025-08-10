@@ -3,71 +3,123 @@
  * Implements smart sync strategies to minimize costs while maintaining functionality
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect, useCallback, useRef } from "react";
 
-// Sync configuration
+// Configuration for optimized sync
 const SYNC_CONFIG = {
-  // Batch operations
+  PAGE_SIZE: 50,
+  MAX_LISTEN_DOCS: 100,
+  RECENT_DAYS: 30,
   BATCH_SIZE: 500,
-  BATCH_TIMEOUT: 1000, // 1 second
-  
-  // Smart sync thresholds
-  MIN_CHANGES_FOR_SYNC: 5,
-  SYNC_INTERVAL: 5 * 60 * 1000, // 5 minutes
-  
-  // Real-time listener limits
-  RECENT_DAYS: 30, // Only listen to recent transactions
-  MAX_LISTEN_DOCS: 50, // Maximum documents to listen to
-  
-  // Pagination
-  PAGE_SIZE: 25,
-  
-  // Offline persistence
-  ENABLE_OFFLINE: true,
-  OFFLINE_TIMEOUT: 30 * 1000 // 30 seconds
+  SYNC_INTERVAL: 30000, // 30 seconds
+  OFFLINE_TIMEOUT: 60000, // 1 minute
 };
 
 export function useOptimizedSync() {
-  const { user } = useAuth();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, error
-  const [lastSyncTime, setLastSyncTime] = useState(null);
-  const [pendingChanges, setPendingChanges] = useState(0);
   const [syncStats, setSyncStats] = useState({
     reads: 0,
     writes: 0,
-    deletes: 0,
-    storage: 0
+    errors: 0,
+    lastSync: null,
   });
-
-  // Refs for managing sync state
+  const [user] = useState(null); // Simplified for now
   const syncTimeoutRef = useRef(null);
-  const batchTimeoutRef = useRef(null);
-  const pendingBatchRef = useRef([]);
-  const isActiveRef = useRef(true);
+  const activityTimeoutRef = useRef(null);
 
-  // Track online/offline status
+  // Network status monitoring
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
-  // Track user activity
+  // Process data in chunks to avoid memory issues
+  const processBatchChunk = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      // Simulate batch processing
+      const operations = Array.from(
+        { length: SYNC_CONFIG.BATCH_SIZE },
+        (_, i) => ({
+          id: `operation-${i}`,
+          type: "update",
+          timestamp: Date.now(),
+        })
+      );
+
+      console.log(`Processing ${operations.length} operations`);
+
+      // Update stats
+      setSyncStats(prev => ({
+        ...prev,
+        writes: prev.writes + operations.length,
+      }));
+    } catch (error) {
+      console.error("Batch processing error:", error);
+      setSyncStats(prev => ({
+        ...prev,
+        errors: prev.errors + 1,
+      }));
+    }
+  }, [user]);
+
+  // Optimized sync function
+  const performOptimizedSync = useCallback(async () => {
+    if (!isOnline || !user) return;
+
+    try {
+      console.log("Starting optimized sync...");
+
+      // Update last sync time
+      setSyncStats(prev => ({
+        ...prev,
+        lastSync: new Date().toISOString(),
+      }));
+
+      // Perform sync operations
+      await processBatchChunk();
+    } catch (error) {
+      console.error("Sync error:", error);
+      setSyncStats(prev => ({
+        ...prev,
+        errors: prev.errors + 1,
+      }));
+    }
+  }, [isOnline, user, processBatchChunk]);
+
+  // User activity tracking for smart sync
   useEffect(() => {
     const handleActivity = () => {
-      isActiveRef.current = true;
+      // Clear existing timeout
+      if (activityTimeoutRef.current) {
+        clearTimeout(activityTimeoutRef.current);
+      }
+
+      // Set new timeout for sync
+      activityTimeoutRef.current = setTimeout(() => {
+        if (isOnline && user) {
+          performOptimizedSync();
+        }
+      }, SYNC_CONFIG.SYNC_INTERVAL);
     };
 
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    // Track user activity
+    const events = [
+      "mousedown",
+      "mousemove",
+      "keypress",
+      "scroll",
+      "touchstart",
+    ];
     events.forEach(event => {
       document.addEventListener(event, handleActivity, true);
     });
@@ -76,231 +128,58 @@ export function useOptimizedSync() {
       events.forEach(event => {
         document.removeEventListener(event, handleActivity, true);
       });
+      if (activityTimeoutRef.current) {
+        clearTimeout(activityTimeoutRef.current);
+      }
     };
-  }, []);
+  }, [isOnline, user, performOptimizedSync]);
 
-  // Smart sync trigger
-  const triggerSync = useCallback(async (force = false) => {
-    if (!user || !isOnline) return;
-
-    const timeSinceLastSync = lastSyncTime ? Date.now() - lastSyncTime : Infinity;
-    const shouldSync = force || 
-      pendingChanges >= SYNC_CONFIG.MIN_CHANGES_FOR_SYNC ||
-      timeSinceLastSync >= SYNC_CONFIG.SYNC_INTERVAL ||
-      !isActiveRef.current;
-
-    if (shouldSync) {
-      setSyncStatus('syncing');
-      try {
-        // Implement actual sync logic here
-        await performOptimizedSync();
-        setLastSyncTime(Date.now());
-        setPendingChanges(0);
-        setSyncStatus('idle');
-      } catch (error) {
-        console.error('Sync failed:', error);
-        setSyncStatus('error');
-      }
+  // Manual sync trigger
+  const triggerSync = useCallback(() => {
+    if (isOnline && user) {
+      performOptimizedSync();
     }
-  }, [user, isOnline, lastSyncTime, pendingChanges]);
-
-  // Batch operations
-  const addToBatch = useCallback((operation) => {
-    pendingBatchRef.current.push(operation);
-    setPendingChanges(prev => prev + 1);
-
-    // Clear existing timeout
-    if (batchTimeoutRef.current) {
-      clearTimeout(batchTimeoutRef.current);
-    }
-
-    // Set new timeout for batch processing
-    batchTimeoutRef.current = setTimeout(() => {
-      if (pendingBatchRef.current.length > 0) {
-        triggerSync();
-      }
-    }, SYNC_CONFIG.BATCH_TIMEOUT);
-  }, [triggerSync]);
-
-  // Optimized sync implementation
-  const performOptimizedSync = useCallback(async () => {
-    if (!user) return;
-
-    const batch = pendingBatchRef.current;
-    if (batch.length === 0) return;
-
-    // Process in chunks to respect batch limits
-    const chunks = [];
-    for (let i = 0; i < batch.length; i += SYNC_CONFIG.BATCH_SIZE) {
-      chunks.push(batch.slice(i, i + SYNC_CONFIG.BATCH_SIZE));
-    }
-
-    for (const chunk of chunks) {
-      await processBatchChunk(chunk);
-    }
-
-    // Clear processed batch
-    pendingBatchRef.current = [];
-  }, [user]);
-
-  // Process a batch chunk
-  const processBatchChunk = useCallback(async (operations) => {
-    // This would integrate with your Firebase service
-    // For now, we'll simulate the operation
-    console.log(`Processing ${operations.length} operations`);
-    
-    // Update stats
-    setSyncStats(prev => ({
-      ...prev,
-      writes: prev.writes + operations.length
-    }));
-  }, []);
-
-  // Optimized query with pagination
-  const useOptimizedQuery = useCallback((collection, queryConstraints, options = {}) => {
-    const [data, setData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [hasMore, setHasMore] = useState(true);
-    const lastDocRef = useRef(null);
-
-    const {
-      pageSize = SYNC_CONFIG.PAGE_SIZE,
-      enableRealTime = false,
-      recentOnly = true
-    } = options;
-
-    const fetchData = useCallback(async (lastDoc = null) => {
-      if (!user) return;
-
-      try {
-        setLoading(true);
-        
-        // Build optimized query
-        let constraints = [
-          ...queryConstraints,
-          orderBy('dt', 'desc'),
-          limit(pageSize)
-        ];
-
-        if (lastDoc) {
-          constraints.push(startAfter(lastDoc));
-        }
-
-        if (recentOnly) {
-          const thirtyDaysAgo = Math.floor((Date.now() - SYNC_CONFIG.RECENT_DAYS * 24 * 60 * 60 * 1000) / 1000);
-          constraints.unshift(where('dt', '>=', thirtyDaysAgo));
-        }
-
-        // Execute query
-        // const querySnapshot = await getDocs(query(collection(db, collection), ...constraints));
-        
-        // Update stats
-        setSyncStats(prev => ({
-          ...prev,
-          reads: prev.reads + pageSize
-        }));
-
-        // Process results
-        // const newData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // setData(prev => lastDoc ? [...prev, ...newData] : newData);
-        // setHasMore(newData.length === pageSize);
-        // lastDocRef.current = querySnapshot.docs[querySnapshot.docs.length - 1];
-
-      } catch (err) {
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    }, [user, pageSize, recentOnly, queryConstraints]);
-
-    // Initial fetch
-    useEffect(() => {
-      fetchData();
-    }, [fetchData]);
-
-    // Real-time listener (if enabled)
-    useEffect(() => {
-      if (!enableRealTime || !user) return;
-
-      // Only listen to recent data to minimize costs
-      const recentQuery = [
-        ...queryConstraints,
-        where('dt', '>=', Math.floor((Date.now() - SYNC_CONFIG.RECENT_DAYS * 24 * 60 * 60 * 1000) / 1000)),
-        orderBy('dt', 'desc'),
-        limit(SYNC_CONFIG.MAX_LISTEN_DOCS)
-      ];
-
-      // const unsubscribe = onSnapshot(
-      //   query(collection(db, collection), ...recentQuery),
-      //   (snapshot) => {
-      //     const newData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      //     setData(newData);
-      //   },
-      //   (err) => setError(err)
-      // );
-
-      // return unsubscribe;
-    }, [enableRealTime, user, queryConstraints]);
-
-    return {
-      data,
-      loading,
-      error,
-      hasMore,
-      fetchMore: () => fetchData(lastDocRef.current),
-      refetch: () => fetchData()
-    };
-  }, [user]);
+  }, [isOnline, user, performOptimizedSync]);
 
   // Cleanup on unmount
   useEffect(() => {
+    const currentSyncTimeout = syncTimeoutRef.current;
+    const currentActivityTimeout = activityTimeoutRef.current;
+
     return () => {
-      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-      if (batchTimeoutRef.current) clearTimeout(batchTimeoutRef.current);
-      isActiveRef.current = false;
+      if (currentSyncTimeout) {
+        clearTimeout(currentSyncTimeout);
+      }
+      if (currentActivityTimeout) {
+        clearTimeout(currentActivityTimeout);
+      }
     };
   }, []);
 
   return {
-    // State
     isOnline,
-    syncStatus,
-    lastSyncTime,
-    pendingChanges,
     syncStats,
-    
-    // Actions
     triggerSync,
-    addToBatch,
-    useOptimizedQuery,
-    
-    // Configuration
-    config: SYNC_CONFIG
+    performOptimizedSync,
   };
 }
 
-// Utility functions for cost tracking
+// Utility functions for Firebase usage tracking
 export function trackFirebaseUsage(operation, count = 1) {
-  // This would integrate with your analytics service
-  console.log(`Firebase ${operation}: ${count}`);
+  console.log(`Firebase ${operation}: ${count} operations`);
 }
 
 export function estimateStorageCost(dataSize) {
-  // Firebase charges $0.18 per GB per month
-  const costPerGB = 0.18;
-  const costPerMB = costPerGB / 1024;
-  return (dataSize / (1024 * 1024)) * costPerMB;
+  // Rough estimate: $0.18 per GB per month
+  return (dataSize / (1024 * 1024 * 1024)) * 0.18;
 }
 
 export function estimateReadCost(readCount) {
-  // Firebase charges $0.06 per 100,000 reads
-  const costPerRead = 0.06 / 100000;
-  return readCount * costPerRead;
+  // Rough estimate: $0.06 per 100,000 reads
+  return (readCount / 100000) * 0.06;
 }
 
 export function estimateWriteCost(writeCount) {
-  // Firebase charges $0.18 per 100,000 writes
-  const costPerWrite = 0.18 / 100000;
-  return writeCount * costPerWrite;
+  // Rough estimate: $0.18 per 100,000 writes
+  return (writeCount / 100000) * 0.18;
 }

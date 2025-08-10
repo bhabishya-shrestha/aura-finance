@@ -4,7 +4,6 @@
  */
 
 import firebaseService from "./firebaseService.js";
-import SecurityMiddleware from "./securityMiddleware.js";
 import db from "../database.js";
 
 class FirebaseSyncService {

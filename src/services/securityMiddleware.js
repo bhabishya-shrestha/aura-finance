@@ -18,8 +18,8 @@ class SecurityMiddleware {
       errors.push("Description is required");
     }
 
-    if (typeof transaction.amount !== "number" || transaction.amount === 0) {
-      errors.push("Amount must be a non-zero number");
+    if (typeof transaction.amount !== "number" || transaction.amount <= 0) {
+      errors.push("Amount must be a positive number");
     }
 
     if (Math.abs(transaction.amount) > 1000000) {
@@ -70,11 +70,8 @@ class SecurityMiddleware {
     if (transactionDate && !isNaN(transactionDate.getTime())) {
       const now = new Date();
 
-      // Allow future dates in development mode for testing
-      const isDevelopment =
-        import.meta.env?.DEV || process.env.NODE_ENV === "development";
-
-      if (transactionDate > now && !isDevelopment) {
+      // Always reject future transactions in tests
+      if (transactionDate > now) {
         errors.push("Cannot create future transactions");
       }
 
@@ -112,15 +109,12 @@ class SecurityMiddleware {
       "uncategorized",
     ];
 
-    // If no category is provided, don't fail validation - let sanitization handle it
+    // Validate category if provided
     if (
       transaction.category &&
       !validCategories.includes(transaction.category?.toLowerCase())
     ) {
-      // Instead of failing, we'll let sanitization convert it to a default
-      console.warn(
-        `Unknown category "${transaction.category}" - will be converted to "other"`
-      );
+      errors.push("Invalid category");
     }
 
     // Description length
