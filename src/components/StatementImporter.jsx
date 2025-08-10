@@ -445,7 +445,12 @@ const StatementImporter = ({
         setIsProcessing(false);
       }
     },
-    [importOptions, applyImportOptionsToTransactions, updateProgress]
+    [
+      importOptions,
+      applyImportOptionsToTransactions,
+      updateProgress,
+      displayProgress,
+    ]
   );
 
   const handleFileSelect = useCallback(
@@ -838,8 +843,8 @@ const StatementImporter = ({
                       Cost-Effective AI Model in Use
                     </p>
                     <p className="mb-2">
-                      You're using the hybrid OCR + AI approach with Hugging
-                      Face API.
+                      You&apos;re using the hybrid OCR + AI approach with
+                      Hugging Face API.
                       <strong>
                         {" "}
                         Less accurate (85-90%) but more uses (1000/day)

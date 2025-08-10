@@ -641,7 +641,8 @@ const MobileStatementImporter = ({ isOpen, onClose, onImportComplete }) => {
           <div className="text-sm text-amber-800 dark:text-amber-200">
             <p className="font-medium mb-1">Cost-Effective AI Model in Use</p>
             <p className="mb-2">
-              You're using the hybrid OCR + AI approach with Hugging Face API.
+              You&apos;re using the hybrid OCR + AI approach with Hugging Face
+              API.
               <strong>
                 {" "}
                 Less accurate (85-90%) but more uses (1000/day)

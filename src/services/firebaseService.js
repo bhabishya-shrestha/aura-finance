@@ -29,6 +29,7 @@ import {
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
+import SecurityMiddleware from "./securityMiddleware.js";
 
 // Firebase configuration (you'll get this from Firebase Console)
 const firebaseConfig = {
@@ -55,6 +56,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+// Initialize security middleware with the Firestore instance
+SecurityMiddleware.initializeFirebase(db).catch(error => {
+  console.warn("Security middleware initialization failed:", error.message);
+});
 
 class FirebaseService {
   constructor() {
@@ -153,26 +159,12 @@ class FirebaseService {
 
   // Transaction management
   async addTransaction(transactionData) {
-    // Check if user is authenticated either directly or through auth bridge
     if (!this.currentUser) {
-      // Try to get user from auth bridge
-      try {
-        const { default: authBridge } = await import("./authBridge.js");
-        const userInfo = await authBridge.getUserSyncInfo();
-        if (!userInfo?.firebaseUser) {
-          return {
-            success: false,
-            error: "User not authenticated with Firebase",
-          };
-        }
-        // Set the current user from auth bridge
-        this.currentUser = userInfo.firebaseUser;
-      } catch (error) {
-        return { success: false, error: "User not authenticated" };
-      }
+      return { success: false, error: "User not authenticated" };
     }
 
     try {
+      // Security validation and sanitization
       const transactionWithUser = {
         ...transactionData,
         userId: this.currentUser.uid,
@@ -180,14 +172,62 @@ class FirebaseService {
         updatedAt: serverTimestamp(),
       };
 
+      // Validate and sanitize data
+      const sanitizedData = await SecurityMiddleware.validateAndSanitize(
+        transactionWithUser,
+        "transaction",
+        this.currentUser.uid
+      );
+
+      // Check rate limiting
+      if (
+        !SecurityMiddleware.checkRateLimit(this.currentUser.uid, "transactions")
+      ) {
+        await SecurityMiddleware.logSecurityEvent(
+          this.currentUser.uid,
+          "rate_limit_exceeded",
+          {
+            operation: "addTransaction",
+          }
+        );
+        return {
+          success: false,
+          error: "Rate limit exceeded. Please wait before trying again.",
+        };
+      }
+
+      // Check for suspicious activity
+      const isSuspicious = await SecurityMiddleware.checkSuspiciousActivity(
+        this.currentUser.uid,
+        "addTransaction",
+        sanitizedData
+      );
+
+      if (isSuspicious) {
+        console.warn(
+          "Suspicious activity detected during transaction creation"
+        );
+      }
+
       const docRef = await addDoc(
         collection(db, "transactions"),
-        transactionWithUser
+        sanitizedData
+      );
+
+      // Log successful operation
+      await SecurityMiddleware.logSecurityEvent(
+        this.currentUser.uid,
+        "transaction_created",
+        {
+          transactionId: docRef.id,
+          amount: sanitizedData.amount,
+          category: sanitizedData.category,
+        }
       );
 
       return {
         success: true,
-        data: { ...transactionWithUser, id: docRef.id },
+        data: { ...sanitizedData, id: docRef.id },
       };
     } catch (error) {
       console.error("Add transaction error:", error);
