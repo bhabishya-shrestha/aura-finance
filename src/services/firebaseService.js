@@ -65,6 +65,8 @@ SecurityMiddleware.initializeFirebase(db).catch(error => {
 class FirebaseService {
   constructor() {
     this.currentUser = null;
+    this.transactionUnsubscribe = null;
+    this.accountUnsubscribe = null;
     this.setupAuthListener();
   }
 
@@ -471,7 +473,9 @@ class FirebaseService {
 
       // Remove any undefined values that might have slipped through
       const cleanData = Object.fromEntries(
-        Object.entries(accountWithUser).filter(([_, value]) => value !== undefined)
+        Object.entries(accountWithUser).filter(
+          ([_, value]) => value !== undefined
+        )
       );
 
       const docRef = await addDoc(collection(db, "accounts"), cleanData);
@@ -626,24 +630,36 @@ class FirebaseService {
       return null;
     }
 
+    // Unsubscribe from previous listener if exists
+    if (this.transactionUnsubscribe) {
+      this.transactionUnsubscribe();
+    }
+
     const q = query(
       collection(db, "transactions"),
       where("userId", "==", this.currentUser.uid),
       orderBy("date", "desc")
     );
 
-    return onSnapshot(q, snapshot => {
+    this.transactionUnsubscribe = onSnapshot(q, snapshot => {
       const transactions = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       }));
       callback(transactions);
     });
+
+    return this.transactionUnsubscribe;
   }
 
   subscribeToAccounts(callback) {
     if (!this.currentUser) {
       return null;
+    }
+
+    // Unsubscribe from previous listener if exists
+    if (this.accountUnsubscribe) {
+      this.accountUnsubscribe();
     }
 
     const q = query(
@@ -652,13 +668,30 @@ class FirebaseService {
       orderBy("createdAt", "desc")
     );
 
-    return onSnapshot(q, snapshot => {
+    this.accountUnsubscribe = onSnapshot(q, snapshot => {
       const accounts = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       }));
       callback(accounts);
     });
+
+    return this.accountUnsubscribe;
+  }
+
+  // Unsubscribe methods
+  unsubscribeFromTransactions() {
+    if (this.transactionUnsubscribe) {
+      this.transactionUnsubscribe();
+      this.transactionUnsubscribe = null;
+    }
+  }
+
+  unsubscribeFromAccounts() {
+    if (this.accountUnsubscribe) {
+      this.accountUnsubscribe();
+      this.accountUnsubscribe = null;
+    }
   }
 
   // Data export/import

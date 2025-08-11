@@ -1,0 +1,361 @@
+import React, { useState } from "react";
+import {
+  X,
+  DollarSign,
+  Calendar,
+  FileText,
+  Tag,
+  Wallet,
+  Plus,
+} from "lucide-react";
+import useFirestoreStore from "../store/firestoreStore";
+import { CATEGORIES } from "../utils/statementParser";
+
+const AddTransactionNew = ({ isOpen, onClose, isMobile = false }) => {
+  const { addTransaction, accounts, isLoading, error } = useFirestoreStore();
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({
+    description: "",
+    amount: "",
+    category: "Other",
+    date: new Date().toISOString().split("T")[0],
+    accountId: "1", // Default account
+  });
+  const [errors, setErrors] = useState({});
+
+  // Initialize form with first available account
+  React.useEffect(() => {
+    if (accounts && accounts.length > 0 && !formData.accountId) {
+      setFormData(prev => ({
+        ...prev,
+        accountId: accounts[0].id.toString(),
+      }));
+    }
+  }, [accounts, formData.accountId]);
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required";
+    }
+
+    if (!formData.amount || isNaN(parseFloat(formData.amount))) {
+      newErrors.amount = "Valid amount is required";
+    }
+
+    if (!formData.date) {
+      newErrors.date = "Date is required";
+    }
+
+    if (!formData.accountId) {
+      newErrors.accountId = "Account is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      // Simple, direct Firestore operation - no complex sync needed!
+      await addTransaction({
+        description: formData.description.trim(),
+        amount: parseFloat(formData.amount),
+        category: formData.category,
+        accountId: formData.accountId, // Keep as string
+        date: new Date(formData.date).toISOString(),
+      });
+
+      // Reset form
+      setFormData({
+        description: "",
+        amount: "",
+        category: "Other",
+        date: new Date().toISOString().split("T")[0],
+        accountId:
+          accounts && accounts.length > 0 ? accounts[0].id.toString() : "",
+      });
+      setErrors({});
+      
+      if (onClose) {
+        onClose();
+      } else {
+        setShowModal(false);
+      }
+    } catch (error) {
+      setErrors({ submit: "Failed to add transaction. Please try again." });
+    }
+  };
+
+  const handleInputChange = e => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      description: "",
+      amount: "",
+      category: "Other",
+      date: new Date().toISOString().split("T")[0],
+      accountId:
+        accounts && accounts.length > 0 ? accounts[0].id.toString() : "",
+    });
+    setErrors({});
+    if (onClose) {
+      onClose();
+    } else {
+      setShowModal(false);
+    }
+  };
+
+  // Determine if modal should be shown
+  const shouldShowModal = isOpen !== undefined ? isOpen : showModal;
+
+  return (
+    <>
+      {/* Standalone Button (when not controlled externally) */}
+      {isOpen === undefined && (
+        <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+        >
+          <Plus className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div className="text-left">
+            <p className="font-medium text-blue-900 dark:text-blue-100">
+              Add Transaction
+            </p>
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              Create a new transaction
+            </p>
+          </div>
+        </button>
+      )}
+
+      {/* Modal */}
+      {shouldShowModal && (
+        <div
+          className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center ${
+            isMobile ? "" : "p-4"
+          }`}
+        >
+          <div
+            className={`bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md ${
+              isMobile ? "m-4" : ""
+            }`}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Add Transaction
+              </h2>
+              <button
+                onClick={handleCancel}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Description
+                </label>
+                <div className="relative">
+                  <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.description
+                        ? "border-red-300 dark:border-red-600"
+                        : "border-gray-300 dark:border-gray-600"
+                    } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                    placeholder="Enter transaction description"
+                  />
+                </div>
+                {errors.description && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Amount */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Amount
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="number"
+                    name="amount"
+                    value={formData.amount}
+                    onChange={handleInputChange}
+                    step="0.01"
+                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.amount
+                        ? "border-red-300 dark:border-red-600"
+                        : "border-gray-300 dark:border-gray-600"
+                    } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                    placeholder="0.00"
+                  />
+                </div>
+                {errors.amount && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.amount}
+                  </p>
+                )}
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Category
+                </label>
+                <div className="relative">
+                  <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    {CATEGORIES.map(category => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Date
+                </label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleInputChange}
+                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.date
+                        ? "border-red-300 dark:border-red-600"
+                        : "border-gray-300 dark:border-gray-600"
+                    } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                  />
+                </div>
+                {errors.date && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.date}
+                  </p>
+                )}
+              </div>
+
+              {/* Account */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Account
+                </label>
+                <div className="relative">
+                  <Wallet className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <select
+                    name="accountId"
+                    value={formData.accountId}
+                    onChange={handleInputChange}
+                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.accountId
+                        ? "border-red-300 dark:border-red-600"
+                        : "border-gray-300 dark:border-gray-600"
+                    } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                  >
+                    {accounts && accounts.length > 0 ? (
+                      accounts.map(account => (
+                        <option key={account.id} value={account.id}>
+                          {account.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">No accounts available</option>
+                    )}
+                  </select>
+                </div>
+                {errors.accountId && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.accountId}
+                  </p>
+                )}
+              </div>
+
+              {/* Error message */}
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {error}
+                  </p>
+                </div>
+              )}
+
+              {/* Submit error */}
+              {errors.submit && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errors.submit}
+                  </p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors"
+                >
+                  {isLoading ? "Adding..." : "Add Transaction"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default AddTransactionNew;
