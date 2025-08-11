@@ -68,7 +68,7 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
         ...formData,
         description: formData.description.trim(),
         amount: parseFloat(formData.amount),
-        accountId: parseInt(formData.accountId),
+        accountId: formData.accountId, // Keep as string to match account IDs
         date: new Date(formData.date),
         id: Date.now(), // Generate unique ID
       });
