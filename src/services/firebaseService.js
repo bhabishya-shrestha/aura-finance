@@ -179,6 +179,13 @@ class FirebaseService {
         this.currentUser.uid
       );
 
+      // Remove any undefined values that might have slipped through
+      const cleanData = Object.fromEntries(
+        Object.entries(sanitizedData).filter(
+          ([_, value]) => value !== undefined
+        )
+      );
+
       // Check rate limiting
       if (
         !SecurityMiddleware.checkRateLimit(this.currentUser.uid, "transactions")
@@ -209,10 +216,7 @@ class FirebaseService {
         );
       }
 
-      const docRef = await addDoc(
-        collection(db, "transactions"),
-        sanitizedData
-      );
+      const docRef = await addDoc(collection(db, "transactions"), cleanData);
 
       // Log successful operation
       await SecurityMiddleware.logSecurityEvent(
@@ -227,7 +231,7 @@ class FirebaseService {
 
       return {
         success: true,
-        data: { ...sanitizedData, id: docRef.id },
+        data: { ...cleanData, id: docRef.id },
       };
     } catch (error) {
       console.error("Add transaction error:", error);
@@ -465,11 +469,16 @@ class FirebaseService {
         updatedAt: serverTimestamp(),
       };
 
-      const docRef = await addDoc(collection(db, "accounts"), accountWithUser);
+      // Remove any undefined values that might have slipped through
+      const cleanData = Object.fromEntries(
+        Object.entries(accountWithUser).filter(([_, value]) => value !== undefined)
+      );
+
+      const docRef = await addDoc(collection(db, "accounts"), cleanData);
 
       return {
         success: true,
-        data: { ...accountWithUser, id: docRef.id },
+        data: { ...cleanData, id: docRef.id },
       };
     } catch (error) {
       console.error("Add account error:", error);

@@ -410,20 +410,17 @@ const AppContent = () => {
 
 // Main App Component with Providers
 const App = () => {
-  // Initialize Firebase sync when app starts
+  // Initialize auth bridge when app starts
   useEffect(() => {
     let isInitializing = false;
 
-    const initializeSync = async () => {
+    const initializeAuth = async () => {
       if (isInitializing) return;
       isInitializing = true;
 
       try {
-        // Initialize auth bridge (links Supabase OAuth to Firebase)
+        // Initialize auth bridge (links Supabase OAuth to Firebase and handles sync)
         await authBridge.initialize();
-
-        // Initialize Firebase sync (will be called by auth bridge if user is linked)
-        await firebaseSync.initialize();
       } catch (error) {
         console.log("App initialization error:", error);
       } finally {
@@ -431,7 +428,7 @@ const App = () => {
       }
     };
 
-    initializeSync();
+    initializeAuth();
   }, []);
 
   return (
