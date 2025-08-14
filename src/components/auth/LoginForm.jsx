@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, Loader2, Github } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
+import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
+import { useFirebaseAuth } from "../../contexts/FirebaseAuthContext";
 import auraLogo from "../../assets/aura-finance.png";
 
 const LoginForm = ({ onSwitchToRegister }) => {
@@ -10,7 +10,8 @@ const LoginForm = ({ onSwitchToRegister }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const { login, loginWithOAuth, isLoading, error, clearError } = useAuth();
+  const { login, signInWithGoogle, isLoading, error, clearError } =
+    useFirebaseAuth();
 
   const validateForm = () => {
     const newErrors = {};
@@ -214,17 +215,7 @@ const LoginForm = ({ onSwitchToRegister }) => {
         <div className="space-y-3">
           <button
             type="button"
-            onClick={() => loginWithOAuth("github")}
-            disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-2 bg-gray-900 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-white hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-          >
-            <Github className="w-5 h-5" />
-            Continue with GitHub
-          </button>
-
-          <button
-            type="button"
-            onClick={() => loginWithOAuth("google")}
+            onClick={signInWithGoogle}
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >

@@ -1,25 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { Cloud, CloudOff, RefreshCw, Link, Unlink } from "lucide-react";
+import { Cloud, CloudOff, RefreshCw } from "lucide-react";
 import firebaseSync from "../services/firebaseSync";
-import authBridge from "../services/authBridge";
+import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 
 const SyncStatus = () => {
+  const { user } = useFirebaseAuth();
   const [syncStatus, setSyncStatus] = useState({
     isOnline: true,
     syncInProgress: false,
     lastSyncTime: null,
   });
-  const [userSyncInfo, setUserSyncInfo] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     // Update status every 2 seconds
-    const interval = setInterval(async () => {
+    const interval = setInterval(() => {
       setSyncStatus(firebaseSync.getSyncStatus());
-
-      // Get user sync info
-      const info = await authBridge.getUserSyncInfo();
-      setUserSyncInfo(info);
     }, 2000);
 
     return () => clearInterval(interval);
@@ -46,25 +42,12 @@ const SyncStatus = () => {
     await firebaseSync.forceSync();
   };
 
-  const handleEnableSync = async () => {
-    try {
-      await authBridge.initialize();
-      // Refresh user info
-      const info = await authBridge.getUserSyncInfo();
-      setUserSyncInfo(info);
-    } catch (error) {
-      console.error("Error enabling sync:", error);
-    }
-  };
-
   // Don't show anything if no user is authenticated
-  if (!userSyncInfo?.supabaseUser && !userSyncInfo?.firebaseUser) {
+  if (!user) {
     return null;
   }
 
-  const hasCrossDeviceSync = userSyncInfo?.hasCrossDeviceSync;
-  const isSupabaseUser =
-    userSyncInfo?.supabaseUser && !userSyncInfo?.firebaseUser;
+  const hasCrossDeviceSync = true; // Firebase Auth provides cross-device sync
 
   return (
     <div className="fixed bottom-4 right-4 z-50 hidden lg:block">
@@ -100,9 +83,7 @@ const SyncStatus = () => {
                     : syncStatus.isOnline
                       ? `Last sync: ${formatLastSync(syncStatus.lastSyncTime)}`
                       : "No internet connection"
-                  : isSupabaseUser
-                    ? "Enable cross-device sync"
-                    : "Data stored locally"}
+                  : "Data stored locally"}
               </div>
             </div>
           </div>
@@ -146,47 +127,17 @@ const SyncStatus = () => {
         {showDetails && (
           <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
             <div className="text-xs space-y-2">
-              {userSyncInfo?.supabaseUser && (
-                <div>
-                  <div className="font-medium text-gray-700 dark:text-gray-300">
-                    Supabase Account
-                  </div>
-                  <div className="text-gray-500 dark:text-gray-400">
-                    {userSyncInfo.supabaseUser.email}
-                  </div>
-                  <div className="text-gray-400 dark:text-gray-500">
-                    Provider: {userSyncInfo.supabaseUser.provider}
-                  </div>
+              <div>
+                <div className="font-medium text-gray-700 dark:text-gray-300">
+                  Firebase Sync
                 </div>
-              )}
-
-              {userSyncInfo?.firebaseUser && (
-                <div>
-                  <div className="font-medium text-gray-700 dark:text-gray-300">
-                    Firebase Sync
-                  </div>
-                  <div className="text-gray-500 dark:text-gray-400">
-                    {userSyncInfo.firebaseUser.email}
-                  </div>
-                  <div className="text-green-600 dark:text-green-400">
-                    ✓ Cross-device sync enabled
-                  </div>
+                <div className="text-gray-500 dark:text-gray-400">
+                  {user.email}
                 </div>
-              )}
-
-              {!hasCrossDeviceSync && isSupabaseUser && (
-                <div>
-                  <div className="text-orange-600 dark:text-orange-400 mb-2">
-                    Enable cross-device sync to access your data on all devices
-                  </div>
-                  <button
-                    onClick={handleEnableSync}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded transition-colors"
-                  >
-                    Enable Sync
-                  </button>
+                <div className="text-green-600 dark:text-green-400">
+                  ✓ Cross-device sync enabled
                 </div>
-              )}
+              </div>
             </div>
           </div>
         )}

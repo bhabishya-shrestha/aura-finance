@@ -12,10 +12,8 @@ import {
   Unlink,
   LogOut,
 } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 import firebaseSync from "../services/firebaseSync";
-import useStore from "../store";
-import authBridge from "../services/authBridge";
 
 const Sidebar = ({
   onPageChange,
@@ -29,17 +27,13 @@ const Sidebar = ({
     syncInProgress: false,
     lastSyncTime: null,
   });
-  const [userSyncInfo, setUserSyncInfo] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
-  const { user, logout } = useAuth();
-  const { syncToFirebase } = useStore();
+  const { user, logout } = useFirebaseAuth();
 
   // Update sync status every 2 seconds
   useEffect(() => {
-    const interval = setInterval(async () => {
+    const interval = setInterval(() => {
       setSyncStatus(firebaseSync.getSyncStatus());
-      const info = await authBridge.getUserSyncInfo();
-      setUserSyncInfo(info);
     }, 2000);
 
     return () => clearInterval(interval);
@@ -49,10 +43,7 @@ const Sidebar = ({
   const getPersonalizedGreeting = () => {
     const hour = new Date().getHours();
     const userName =
-      user?.user_metadata?.full_name?.split(" ")[0] ||
-      user?.user_metadata?.name?.split(" ")[0] ||
-      user?.email?.split("@")[0] ||
-      "there";
+      user?.name?.split(" ")[0] || user?.email?.split("@")[0] || "there";
 
     let timeGreeting = "";
     if (hour < 12) {
@@ -170,7 +161,7 @@ const Sidebar = ({
   const handleForceSync = async () => {
     try {
       setIsSyncing(true);
-      await syncToFirebase();
+      await firebaseSync.forceSync();
     } catch (error) {
       console.error("Force sync failed:", error);
     } finally {
@@ -297,59 +288,49 @@ const Sidebar = ({
           </nav>
 
           {/* Sync Status */}
-          {userSyncInfo &&
-            (userSyncInfo.supabaseUser || userSyncInfo.firebaseUser) && (
-              <div className="mt-auto pt-3 border-t border-gray-200 dark:border-gray-700">
-                <div
-                  className={`flex items-center gap-3 p-3 rounded-lg ${isCollapsed ? "justify-center" : ""}`}
-                >
-                  {userSyncInfo.hasCrossDeviceSync ? (
-                    syncStatus.syncInProgress || isSyncing ? (
-                      <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />
-                    ) : syncStatus.isOnline ? (
-                      <Cloud className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <CloudOff className="w-4 h-4 text-red-500" />
-                    )
-                  ) : (
-                    <Unlink className="w-4 h-4 text-orange-500" />
-                  )}
-                  {!isCollapsed && (
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                        {userSyncInfo.hasCrossDeviceSync
-                          ? syncStatus.syncInProgress || isSyncing
-                            ? "Syncing..."
-                            : syncStatus.isOnline
-                              ? "Synced"
-                              : "Offline"
-                          : "Local Only"}
-                      </div>
-                      {userSyncInfo.hasCrossDeviceSync &&
-                        syncStatus.isOnline &&
-                        !syncStatus.syncInProgress && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatLastSync(syncStatus.lastSyncTime)}
-                          </div>
-                        )}
+          {user && (
+            <div className="mt-auto pt-3 border-t border-gray-200 dark:border-gray-700">
+              <div
+                className={`flex items-center gap-3 p-3 rounded-lg ${isCollapsed ? "justify-center" : ""}`}
+              >
+                {syncStatus.syncInProgress || isSyncing ? (
+                  <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />
+                ) : syncStatus.isOnline ? (
+                  <Cloud className="w-4 h-4 text-green-500" />
+                ) : (
+                  <CloudOff className="w-4 h-4 text-red-500" />
+                )}
+                {!isCollapsed && (
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                      {syncStatus.syncInProgress || isSyncing
+                        ? "Syncing..."
+                        : syncStatus.isOnline
+                          ? "Synced"
+                          : "Offline"}
                     </div>
-                  )}
-                  {userSyncInfo.hasCrossDeviceSync &&
-                    syncStatus.isOnline &&
-                    !syncStatus.syncInProgress &&
-                    !isSyncing &&
-                    !isCollapsed && (
-                      <button
-                        onClick={handleForceSync}
-                        className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                        title="Force sync now"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                      </button>
+                    {syncStatus.isOnline && !syncStatus.syncInProgress && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatLastSync(syncStatus.lastSyncTime)}
+                      </div>
                     )}
-                </div>
+                  </div>
+                )}
+                {syncStatus.isOnline &&
+                  !syncStatus.syncInProgress &&
+                  !isSyncing &&
+                  !isCollapsed && (
+                    <button
+                      onClick={handleForceSync}
+                      className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                      title="Force sync now"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                    </button>
+                  )}
               </div>
-            )}
+            </div>
+          )}
 
           {/* Sign Out */}
           <div className="pt-2">

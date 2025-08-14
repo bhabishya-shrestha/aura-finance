@@ -57,6 +57,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// Export app for use in other modules
+export { app };
+
 // Initialize security middleware with the Firestore instance
 SecurityMiddleware.initializeFirebase(db).catch(error => {
   console.warn("Security middleware initialization failed:", error.message);
