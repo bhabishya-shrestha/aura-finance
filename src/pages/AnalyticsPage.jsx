@@ -26,7 +26,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import useStore from "../store";
+import useProductionStore from "../store/productionStore";
 import analyticsService from "../services/analyticsService";
 
 // Empty Chart State Component
@@ -255,7 +255,7 @@ const SpendingTrendsChart = ({ data }) => {
 
 // Main Analytics Page Component
 const AnalyticsPage = () => {
-  const { transactions } = useStore();
+  const { transactions, initialize, isInitialized } = useProductionStore();
   const [selectedView, setSelectedView] = useState("overview");
   const [timeRange, setTimeRange] = useState("week");
   const [isMobile, setIsMobile] = useState(false);

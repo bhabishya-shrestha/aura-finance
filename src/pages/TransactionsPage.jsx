@@ -12,18 +12,18 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
-import useStore from "../store";
+import useProductionStore from "../store/productionStore";
 import { CATEGORIES } from "../utils/statementParser";
 
 const TransactionsPage = () => {
   const {
     transactions,
-    loadTransactions,
     accounts,
     updateTransaction,
     deleteTransaction,
-    deleteTransactions,
-  } = useStore();
+    initialize,
+    isInitialized,
+  } = useProductionStore();
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -41,8 +41,10 @@ const TransactionsPage = () => {
   const [transactionToDelete, setTransactionToDelete] = useState(null);
 
   useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
+    if (!isInitialized) {
+      initialize();
+    }
+  }, [initialize, isInitialized]);
 
   useEffect(() => {
     let filtered = [...transactions];

@@ -7,7 +7,7 @@ import {
   Upload,
   FileText,
 } from "lucide-react";
-import useStore from "../store";
+import useProductionStore from "../store/productionStore";
 import StatementImporter from "../components/StatementImporter";
 import MobileStatementImporter from "../components/MobileStatementImporter";
 import AddTransaction from "../components/AddTransaction";
@@ -19,13 +19,8 @@ const DashboardPage = ({
   onImportClick,
   isModalOnly = false,
 }) => {
-  const {
-    transactions,
-    accounts,
-    addTransactions,
-    loadTransactions,
-    loadAccounts,
-  } = useStore();
+  const { transactions, accounts, addTransactions, initialize, isInitialized } =
+    useProductionStore();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [error, setError] = useState("");
@@ -34,9 +29,10 @@ const DashboardPage = ({
   const { isMobile } = useMobileViewport();
 
   useEffect(() => {
-    loadTransactions();
-    loadAccounts();
-  }, [loadTransactions, loadAccounts]);
+    if (!isInitialized) {
+      initialize();
+    }
+  }, [initialize, isInitialized]);
 
   // Handle import trigger from floating action button
   useEffect(() => {

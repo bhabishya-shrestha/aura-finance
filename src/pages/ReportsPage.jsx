@@ -17,18 +17,16 @@ import {
   Gamepad2,
   Gift,
 } from "lucide-react";
-import useStore from "../store";
+import useProductionStore from "../store/productionStore";
 
 const ReportsPage = () => {
   const {
     getSpendingByCategory,
     getMonthlySpending,
-    getSpendingTrends,
-    getTopSpendingCategories,
-    getAverageDailySpending,
-    getIncomeVsSpending,
-    refreshAnalytics,
-  } = useStore();
+    getAccountAnalytics,
+    initialize,
+    isInitialized,
+  } = useProductionStore();
 
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [selectedReport, setSelectedReport] = useState("overview");
@@ -41,37 +39,36 @@ const ReportsPage = () => {
     incomeVsSpending: {},
   });
 
+  // Initialize store if needed
+  useEffect(() => {
+    if (!isInitialized) {
+      initialize();
+    }
+  }, [initialize, isInitialized]);
+
   // Update report data when period changes
   useEffect(() => {
-    // Force refresh analytics data to ensure latest data
-    refreshAnalytics();
+    if (!isInitialized) return;
 
     const categoryBreakdown = getSpendingByCategory(selectedPeriod);
-    const monthlyTrends = getMonthlySpending(
-      selectedPeriod === "month" ? "year" : selectedPeriod
-    );
-    const spendingTrends = getSpendingTrends(12);
-    const topCategories = getTopSpendingCategories(selectedPeriod, 10);
-    const avgDailySpending = getAverageDailySpending(selectedPeriod);
-    const incomeVsSpending = getIncomeVsSpending(selectedPeriod);
+    const monthlyTrends = getMonthlySpending();
+    const accountAnalytics = getAccountAnalytics(selectedPeriod);
 
     setReportData({
       categoryBreakdown,
       monthlyTrends,
-      spendingTrends,
-      topCategories,
-      avgDailySpending,
-      incomeVsSpending,
+      accountAnalytics,
+      spendingTrends: [],
+      topCategories: [],
+      avgDailySpending: 0,
+      incomeVsSpending: {},
     });
   }, [
     selectedPeriod,
     getSpendingByCategory,
     getMonthlySpending,
-    getSpendingTrends,
-    getTopSpendingCategories,
-    getAverageDailySpending,
-    getIncomeVsSpending,
-    refreshAnalytics,
+    getAccountAnalytics,
+    isInitialized,
   ]);
 
   const formatCurrency = amount => {

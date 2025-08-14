@@ -8,11 +8,18 @@ import {
   Wallet,
   Plus,
 } from "lucide-react";
-import useStore from "../store";
+import useProductionStore from "../store/productionStore";
 import { CATEGORIES } from "../utils/statementParser";
 
 const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
-  const { addTransaction, accounts } = useStore();
+  const {
+    addTransaction,
+    accounts,
+    isLoading,
+    error,
+    initialize,
+    isInitialized,
+  } = useProductionStore();
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     description: "",
@@ -23,13 +30,23 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
   });
   const [errors, setErrors] = useState({});
 
+  // Initialize store if needed
+  React.useEffect(() => {
+    if (!isInitialized) {
+      initialize();
+    }
+  }, [initialize, isInitialized]);
+
   // Initialize form with first available account
   React.useEffect(() => {
     if (import.meta.env.DEV) {
       console.log("🔄 AddTransaction useEffect triggered:", {
         accountsCount: accounts?.length,
         currentAccountId: formData.accountId,
-        availableAccounts: accounts?.map(acc => ({ id: acc.id, name: acc.name })),
+        availableAccounts: accounts?.map(acc => ({
+          id: acc.id,
+          name: acc.name,
+        })),
       });
     }
 
@@ -39,7 +56,7 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
       const currentAccountExists = accounts.some(
         acc => acc.id.toString() === formData.accountId
       );
-      
+
       if (import.meta.env.DEV) {
         console.log("🔍 Account assignment check:", {
           currentAccountExists,
@@ -104,14 +121,16 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
     }
 
     try {
-      await addTransaction({
-        ...formData,
+      // Ensure proper data types for production store
+      const transactionData = {
         description: formData.description.trim(),
         amount: parseFloat(formData.amount),
-        accountId: formData.accountId, // Keep as string to match account IDs
-        date: new Date(formData.date),
-        id: Date.now(), // Generate unique ID
-      });
+        category: formData.category,
+        accountId: formData.accountId.toString(), // Ensure string type
+        date: new Date(formData.date).toISOString(),
+      };
+
+      await addTransaction(transactionData);
 
       // Reset form
       setFormData({
@@ -339,6 +358,15 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
                 )}
               </div>
 
+              {/* Error message */}
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {error}
+                  </p>
+                </div>
+              )}
+
               {/* Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -376,9 +404,14 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm shadow-sm"
+                  disabled={isLoading || !isInitialized}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors duration-200 font-medium text-sm shadow-sm"
                 >
-                  Add Transaction
+                  {isLoading
+                    ? "Adding..."
+                    : !isInitialized
+                      ? "Initializing..."
+                      : "Add Transaction"}
                 </button>
               </div>
             </form>

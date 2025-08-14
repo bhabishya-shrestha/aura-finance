@@ -31,7 +31,7 @@ import {
   Edit3,
   Users,
 } from "lucide-react";
-import useStore from "../store";
+import useProductionStore from "../store/productionStore";
 
 const EnhancedAccountAssignmentModal = ({
   isOpen,
@@ -42,7 +42,7 @@ const EnhancedAccountAssignmentModal = ({
   accountSuggestions = [],
   onComplete,
 }) => {
-  const { addAccount, updateAccount } = useStore();
+  const { addAccount, updateAccount } = useProductionStore();
   const [selectedAccounts, setSelectedAccounts] = useState({});
   const [showCreateAccount, setShowCreateAccount] = useState(false);
   const [newAccountData, setNewAccountData] = useState({
