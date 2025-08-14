@@ -30,12 +30,10 @@ service cloud.firestore {
     }
     
     function isValidUser(data) {
-      return data.keys().hasAll(['email', 'name']) &&
+      return data.keys().hasAll(['email']) &&
              data.email is string &&
              data.email.matches('^[^@]+@[^@]+\\.[^@]+$') &&
-             data.name is string &&
-             data.name.size() > 0 &&
-             data.name.size() < 100;
+             (data.name == null || (data.name is string && data.name.size() > 0 && data.name.size() < 100));
     }
     
     // Users can only access their own user profile

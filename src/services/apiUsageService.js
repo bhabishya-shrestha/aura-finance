@@ -1,10 +1,21 @@
 // API Usage Service for server-side validation
 // Prevents users from bypassing client-side rate limits
 
-import { supabase } from "../lib/supabase.js";
+import { getAuth } from "firebase/auth";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  increment,
+} from "firebase/firestore";
+import { app } from "./firebaseService.js";
 
 class ApiUsageService {
   constructor() {
+    this.auth = getAuth(app);
+    this.db = getFirestore(app);
+
     // API usage limits and cost estimates
     this.apiLimits = {
       huggingface: {
@@ -37,9 +48,7 @@ class ApiUsageService {
    */
   async validateApiUsage(provider) {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = this.auth.currentUser;
 
       if (!user) {
         throw new Error("User not authenticated");
@@ -49,25 +58,29 @@ class ApiUsageService {
         throw new Error(`Invalid provider: ${provider}`);
       }
 
-      const { data, error } = await supabase.rpc("validate_api_usage", {
-        p_user_id: user.id,
-        p_provider: provider,
-      });
+      // Get user's API usage from Firestore
+      const usageDoc = doc(this.db, "api_usage", user.uid);
+      const usageSnapshot = await getDoc(usageDoc);
 
-      if (error) {
-        // console.error('API usage validation error:', error);
-        throw new Error("Failed to validate API usage");
-      }
+      const today = new Date().toISOString().split("T")[0];
+      const currentUsage = usageSnapshot.exists()
+        ? usageSnapshot.data()[provider]?.[today] || 0
+        : 0;
+
+      const maxRequests = this.apiLimits[provider].maxDailyRequests;
+      const remainingRequests = Math.max(0, maxRequests - currentUsage);
+      const canProceed = currentUsage < maxRequests;
 
       return {
         success: true,
-        ...data,
+        can_proceed: canProceed,
+        current_usage: currentUsage,
+        max_requests: maxRequests,
+        remaining_requests: remainingRequests,
         approachingLimit:
-          data.current_usage >=
-          this.apiLimits[provider].approachingLimitThreshold,
+          currentUsage >= this.apiLimits[provider].approachingLimitThreshold,
       };
     } catch (error) {
-      // console.error('API usage validation failed:', error);
       return {
         success: false,
         error: error.message,
@@ -86,9 +99,7 @@ class ApiUsageService {
    */
   async incrementApiUsage(provider) {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = this.auth.currentUser;
 
       if (!user) {
         throw new Error("User not authenticated");
@@ -98,19 +109,29 @@ class ApiUsageService {
         throw new Error(`Invalid provider: ${provider}`);
       }
 
-      const { data, error } = await supabase.rpc("increment_api_usage", {
-        p_user_id: user.id,
-        p_provider: provider,
-      });
-
-      if (error) {
-        // console.error('API usage increment error:', error);
-        throw new Error("Failed to increment API usage");
+      // First validate if user can make the request
+      const validation = await this.validateApiUsage(provider);
+      if (!validation.can_proceed) {
+        return false;
       }
 
-      return data;
+      // Increment usage in Firestore
+      const usageDoc = doc(this.db, "api_usage", user.uid);
+      const today = new Date().toISOString().split("T")[0];
+
+      await setDoc(
+        usageDoc,
+        {
+          [provider]: {
+            [today]: increment(1),
+          },
+        },
+        { merge: true }
+      );
+
+      return true;
     } catch (error) {
-      // console.error('API usage increment failed:', error);
+      console.error("API usage increment failed:", error);
       return false;
     }
   }
@@ -121,29 +142,47 @@ class ApiUsageService {
    */
   async getUserApiUsageStats() {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = this.auth.currentUser;
 
       if (!user) {
         throw new Error("User not authenticated");
       }
 
-      const { data, error } = await supabase.rpc("get_user_api_usage_stats", {
-        p_user_id: user.id,
-      });
+      // Get user's API usage from Firestore
+      const usageDoc = doc(this.db, "api_usage", user.uid);
+      const usageSnapshot = await getDoc(usageDoc);
 
-      if (error) {
-        // console.error('Get usage stats error:', error);
-        throw new Error("Failed to get usage statistics");
-      }
+      const today = new Date().toISOString().split("T")[0];
+      const usageData = usageSnapshot.exists() ? usageSnapshot.data() : {};
+
+      const geminiUsage = usageData.gemini?.[today] || 0;
+      const huggingfaceUsage = usageData.huggingface?.[today] || 0;
 
       return {
         success: true,
-        ...data,
+        gemini: {
+          current_usage: geminiUsage,
+          max_requests: this.apiLimits.gemini.maxDailyRequests,
+          remaining_requests: Math.max(
+            0,
+            this.apiLimits.gemini.maxDailyRequests - geminiUsage
+          ),
+          approaching_limit:
+            geminiUsage >= this.apiLimits.gemini.approachingLimitThreshold,
+        },
+        huggingface: {
+          current_usage: huggingfaceUsage,
+          max_requests: this.apiLimits.huggingface.maxDailyRequests,
+          remaining_requests: Math.max(
+            0,
+            this.apiLimits.huggingface.maxDailyRequests - huggingfaceUsage
+          ),
+          approaching_limit:
+            huggingfaceUsage >=
+            this.apiLimits.huggingface.approachingLimitThreshold,
+        },
       };
     } catch (error) {
-      // console.error('Get usage stats failed:', error);
       return {
         success: false,
         error: error.message,
@@ -170,9 +209,7 @@ class ApiUsageService {
    */
   async getDailyApiUsage(provider) {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = this.auth.currentUser;
 
       if (!user) {
         return 0;
@@ -182,19 +219,15 @@ class ApiUsageService {
         return 0;
       }
 
-      const { data, error } = await supabase.rpc("get_daily_api_usage", {
-        p_user_id: user.id,
-        p_provider: provider,
-      });
+      // Get user's API usage from Firestore
+      const usageDoc = doc(this.db, "api_usage", user.uid);
+      const usageSnapshot = await getDoc(usageDoc);
 
-      if (error) {
-        // console.error('Get daily usage error:', error);
-        return 0;
-      }
+      const today = new Date().toISOString().split("T")[0];
+      const usageData = usageSnapshot.exists() ? usageSnapshot.data() : {};
 
-      return data || 0;
+      return usageData[provider]?.[today] || 0;
     } catch (error) {
-      // console.error('Get daily usage failed:', error);
       return 0;
     }
   }

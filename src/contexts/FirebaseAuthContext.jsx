@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useEffect, useReducer } from "react";
-import { 
-  getAuth, 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import { app } from "../services/firebaseService";
@@ -130,22 +130,36 @@ export const FirebaseAuthProvider = ({ children }) => {
 
   // Listen for auth state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
       if (firebaseUser) {
         // User is signed in
         try {
           // Get user profile from Firestore
           const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
           let userProfile = null;
-          
+
           if (userDoc.exists()) {
             userProfile = userDoc.data();
+          } else {
+            // Create user profile if it doesn't exist
+            const userProfile = {
+              email: firebaseUser.email,
+              name: firebaseUser.displayName || firebaseUser.email,
+              photoURL: firebaseUser.photoURL,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+
+            await setDoc(doc(db, "users", firebaseUser.uid), userProfile);
           }
 
           const user = {
             id: firebaseUser.uid,
             email: firebaseUser.email,
-            name: userProfile?.name || firebaseUser.displayName || firebaseUser.email,
+            name:
+              userProfile?.name ||
+              firebaseUser.displayName ||
+              firebaseUser.email,
             photoURL: firebaseUser.photoURL,
             ...userProfile,
           };
@@ -186,7 +200,11 @@ export const FirebaseAuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = {
         id: userCredential.user.uid,
         email: userCredential.user.email,
@@ -215,8 +233,12 @@ export const FirebaseAuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.REGISTER_START });
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
       // Create user profile in Firestore
       const userProfile = {
         email,
@@ -257,10 +279,10 @@ export const FirebaseAuthProvider = ({ children }) => {
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
-      
+
       // Check if user profile exists, create if not
       const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-      
+
       if (!userDoc.exists()) {
         const userProfile = {
           email: userCredential.user.email,
@@ -271,6 +293,18 @@ export const FirebaseAuthProvider = ({ children }) => {
         };
 
         await setDoc(doc(db, "users", userCredential.user.uid), userProfile);
+      } else {
+        // Update existing profile with latest info
+        const userProfile = {
+          email: userCredential.user.email,
+          name: userCredential.user.displayName || userCredential.user.email,
+          photoURL: userCredential.user.photoURL,
+          updatedAt: new Date().toISOString(),
+        };
+
+        await setDoc(doc(db, "users", userCredential.user.uid), userProfile, {
+          merge: true,
+        });
       }
 
       const user = {
@@ -309,7 +343,7 @@ export const FirebaseAuthProvider = ({ children }) => {
   };
 
   // Reset password
-  const resetPassword = async (email) => {
+  const resetPassword = async email => {
     try {
       await sendPasswordResetEmail(auth, email);
       return { success: true };
@@ -325,7 +359,7 @@ export const FirebaseAuthProvider = ({ children }) => {
   };
 
   // Set loading
-  const setLoading = (loading) => {
+  const setLoading = loading => {
     dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: loading });
   };
 
@@ -351,13 +385,15 @@ export const FirebaseAuthProvider = ({ children }) => {
 export const useFirebaseAuth = () => {
   const context = useContext(FirebaseAuthContext);
   if (!context) {
-    throw new Error("useFirebaseAuth must be used within a FirebaseAuthProvider");
+    throw new Error(
+      "useFirebaseAuth must be used within a FirebaseAuthProvider"
+    );
   }
   return context;
 };
 
 // Helper function to get user-friendly error messages
-const getFirebaseErrorMessage = (errorCode) => {
+const getFirebaseErrorMessage = errorCode => {
   switch (errorCode) {
     case "auth/user-not-found":
       return "No account found with this email address.";
