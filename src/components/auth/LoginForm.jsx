@@ -215,7 +215,20 @@ const LoginForm = ({ onSwitchToRegister }) => {
         <div className="space-y-3">
           <button
             type="button"
-            onClick={signInWithGoogle}
+            onClick={async () => {
+              console.log("Google OAuth button clicked");
+              console.log("Environment check:");
+              console.log("- VITE_ENABLE_OAUTH:", import.meta.env?.VITE_ENABLE_OAUTH);
+              console.log("- VITE_FIREBASE_AUTH_DOMAIN:", import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN);
+              console.log("- Current URL:", window.location.href);
+              
+              try {
+                const result = await signInWithGoogle();
+                console.log("signInWithGoogle result:", result);
+              } catch (error) {
+                console.error("Google OAuth error:", error);
+              }
+            }}
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >

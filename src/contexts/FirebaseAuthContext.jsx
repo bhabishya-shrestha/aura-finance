@@ -6,8 +6,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   sendPasswordResetEmail,
 } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
@@ -23,9 +22,6 @@ const AUTH_ACTIONS = {
   REGISTER_START: "REGISTER_START",
   REGISTER_SUCCESS: "REGISTER_SUCCESS",
   REGISTER_FAILURE: "REGISTER_FAILURE",
-  LOAD_USER_START: "LOAD_USER_START",
-  LOAD_USER_SUCCESS: "LOAD_USER_SUCCESS",
-  LOAD_USER_FAILURE: "LOAD_USER_FAILURE",
   CLEAR_ERROR: "CLEAR_ERROR",
   SET_LOADING: "SET_LOADING",
 };
@@ -71,19 +67,8 @@ const authReducer = (state, action) => {
         isInitialized: true,
       };
 
-    case AUTH_ACTIONS.LOAD_USER_SUCCESS:
-      return {
-        ...state,
-        user: action.payload.user,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-        isInitialized: true,
-      };
-
     case AUTH_ACTIONS.LOGIN_FAILURE:
     case AUTH_ACTIONS.REGISTER_FAILURE:
-    case AUTH_ACTIONS.LOAD_USER_FAILURE:
       return {
         ...state,
         user: null,
@@ -120,6 +105,30 @@ const authReducer = (state, action) => {
   }
 };
 
+// Firebase error message helper
+const getFirebaseErrorMessage = errorCode => {
+  const errorMessages = {
+    "auth/user-not-found": "No account found with this email address.",
+    "auth/wrong-password": "Incorrect password.",
+    "auth/email-already-in-use": "An account with this email already exists.",
+    "auth/weak-password": "Password should be at least 6 characters.",
+    "auth/invalid-email": "Please enter a valid email address.",
+    "auth/popup-closed-by-user": "Sign-in was cancelled.",
+    "auth/popup-blocked":
+      "Sign-in popup was blocked. Please allow popups for this site.",
+    "auth/cancelled-popup-request": "Sign-in was cancelled.",
+    "auth/account-exists-with-different-credential":
+      "An account already exists with the same email address but different sign-in credentials.",
+    "auth/operation-not-allowed": "This sign-in method is not enabled.",
+    "auth/user-disabled": "This account has been disabled.",
+    "auth/too-many-requests":
+      "Too many failed attempts. Please try again later.",
+    "auth/network-request-failed":
+      "Network error. Please check your connection.",
+  };
+  return errorMessages[errorCode] || "An error occurred. Please try again.";
+};
+
 // Create context
 const FirebaseAuthContext = createContext();
 
@@ -131,116 +140,78 @@ export const FirebaseAuthProvider = ({ children }) => {
 
   // Listen for auth state changes
   useEffect(() => {
-    let unsubscribe;
+    console.log("🔐 Setting up Firebase Auth listener...");
 
-    const initializeAuth = async () => {
-      // Handle redirect result first
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          // User successfully signed in via redirect
-          console.log("Redirect sign-in successful:", result.user.email);
-          
-          // Check if user profile exists, create if not
-          const userDoc = await getDoc(doc(db, "users", result.user.uid));
-          
+    const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
+      console.log(
+        "🔄 Auth state changed:",
+        firebaseUser ? firebaseUser.email : "signed out"
+      );
+
+      if (firebaseUser) {
+        try {
+          // Get or create user profile
+          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+
           if (!userDoc.exists()) {
+            console.log("📝 Creating new user profile...");
             const userProfile = {
-              email: result.user.email,
-              name: result.user.displayName || result.user.email,
-              photoURL: result.user.photoURL,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-
-            await setDoc(doc(db, "users", result.user.uid), userProfile);
-          } else {
-            // Update existing profile with latest info
-            const userProfile = {
-              email: result.user.email,
-              name: result.user.displayName || result.user.email,
-              photoURL: result.user.photoURL,
-              updatedAt: new Date().toISOString(),
-            };
-
-            await setDoc(doc(db, "users", result.user.uid), userProfile, { merge: true });
-          }
-        }
-      } catch (error) {
-        console.error("Error handling redirect result:", error);
-      }
-
-      // Set up auth state listener
-      unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
-        if (firebaseUser) {
-          // User is signed in
-          try {
-            // Get user profile from Firestore
-            const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-            let userProfile = null;
-
-            if (userDoc.exists()) {
-              userProfile = userDoc.data();
-            } else {
-              // Create user profile if it doesn't exist
-              const userProfile = {
-                email: firebaseUser.email,
-                name: firebaseUser.displayName || firebaseUser.email,
-                photoURL: firebaseUser.photoURL,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              };
-
-              await setDoc(doc(db, "users", firebaseUser.uid), userProfile);
-            }
-
-            const user = {
-              id: firebaseUser.uid,
-              email: firebaseUser.email,
-              name:
-                userProfile?.name ||
-                firebaseUser.displayName ||
-                firebaseUser.email,
-              photoURL: firebaseUser.photoURL,
-              ...userProfile,
-            };
-
-            dispatch({
-              type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
-              payload: { user },
-            });
-          } catch (error) {
-            console.error("Error loading user profile:", error);
-            // Still dispatch auth state change with basic user info
-            const user = {
-              id: firebaseUser.uid,
               email: firebaseUser.email,
               name: firebaseUser.displayName || firebaseUser.email,
               photoURL: firebaseUser.photoURL,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
             };
-
-            dispatch({
-              type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
-              payload: { user },
+            await setDoc(doc(db, "users", firebaseUser.uid), userProfile);
+          } else {
+            console.log("📝 Updating existing user profile...");
+            const userProfile = {
+              email: firebaseUser.email,
+              name: firebaseUser.displayName || firebaseUser.email,
+              photoURL: firebaseUser.photoURL,
+              updatedAt: new Date().toISOString(),
+            };
+            await setDoc(doc(db, "users", firebaseUser.uid), userProfile, {
+              merge: true,
             });
           }
-        } else {
-          // User is signed out
+
+          const user = {
+            id: firebaseUser.uid,
+            email: firebaseUser.email,
+            name: firebaseUser.displayName || firebaseUser.email,
+            photoURL: firebaseUser.photoURL,
+          };
+
+          console.log("✅ User authenticated:", user.email);
           dispatch({
             type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
-            payload: { user: null },
+            payload: { user },
+          });
+        } catch (error) {
+          console.error("❌ Error handling user profile:", error);
+          // Still dispatch auth state change with basic user info
+          const user = {
+            id: firebaseUser.uid,
+            email: firebaseUser.email,
+            name: firebaseUser.displayName || firebaseUser.email,
+            photoURL: firebaseUser.photoURL,
+          };
+          dispatch({
+            type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+            payload: { user },
           });
         }
-      });
-    };
-
-    initializeAuth();
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
+      } else {
+        console.log("👋 User signed out");
+        dispatch({
+          type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+          payload: { user: null },
+        });
       }
-    };
+    });
+
+    return () => unsubscribe();
   }, [auth, db]);
 
   // Login with email and password
@@ -320,17 +291,28 @@ export const FirebaseAuthProvider = ({ children }) => {
     }
   };
 
-  // Sign in with Google
+  // Sign in with Google (using popup instead of redirect)
   const signInWithGoogle = async () => {
+    console.log("🚀 Starting Google OAuth sign-in...");
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
-      // Note: The page will redirect to Google, then back to our app
+      provider.addScope("email");
+      provider.addScope("profile");
+      provider.setCustomParameters({
+        prompt: "select_account",
+      });
+
+      console.log("📱 Calling signInWithPopup...");
+      const result = await signInWithPopup(auth, provider);
+
+      console.log("✅ Google sign-in successful:", result.user.email);
+
       // The auth state change listener will handle the rest
       return { success: true };
     } catch (error) {
+      console.error("❌ Google OAuth error:", error);
       const errorMessage = getFirebaseErrorMessage(error.code);
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
@@ -400,32 +382,4 @@ export const useFirebaseAuth = () => {
     );
   }
   return context;
-};
-
-// Helper function to get user-friendly error messages
-const getFirebaseErrorMessage = errorCode => {
-  switch (errorCode) {
-    case "auth/user-not-found":
-      return "No account found with this email address.";
-    case "auth/wrong-password":
-      return "Incorrect password. Please try again.";
-    case "auth/email-already-in-use":
-      return "An account with this email already exists.";
-    case "auth/weak-password":
-      return "Password should be at least 6 characters long.";
-    case "auth/invalid-email":
-      return "Please enter a valid email address.";
-    case "auth/too-many-requests":
-      return "Too many failed attempts. Please try again later.";
-    case "auth/popup-closed-by-user":
-      return "Sign-in was cancelled.";
-    case "auth/popup-blocked":
-      return "Sign-in popup was blocked. Please allow popups for this site.";
-    case "auth/cancelled-popup-request":
-      return "Sign-in was cancelled.";
-    case "auth/network-request-failed":
-      return "Network error. Please check your connection.";
-    default:
-      return "An error occurred. Please try again.";
-  }
 };

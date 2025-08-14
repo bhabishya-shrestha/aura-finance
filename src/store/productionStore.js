@@ -27,8 +27,9 @@ const useProductionStore = create(
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
         // Check if user is authenticated
-        const user = await firebaseService.getCurrentUser();
+        const user = firebaseService.getCurrentUser();
         if (!user) {
+          console.log("❌ User not authenticated, skipping store initialization");
           set({ 
             isLoading: false, 
             error: "User not authenticated", 
@@ -36,6 +37,8 @@ const useProductionStore = create(
           });
           return;
         }
+
+        console.log("✅ User authenticated:", user.email);
 
         // Set up real-time listeners for transactions and accounts
         await get().setupRealtimeListeners();
@@ -47,6 +50,7 @@ const useProductionStore = create(
           lastSyncTime: new Date()
         });
       } catch (error) {
+        console.error("❌ Store initialization error:", error);
         set({ 
           isLoading: false, 
           error: error.message, 

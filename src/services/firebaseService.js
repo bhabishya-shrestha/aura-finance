@@ -50,6 +50,8 @@ const firebaseConfig = {
     process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId:
     import.meta.env?.VITE_FIREBASE_APP_ID || process.env.VITE_FIREBASE_APP_ID,
+  // Disable hosted configuration loading
+  measurementId: undefined,
 };
 
 // Initialize Firebase
@@ -674,7 +676,8 @@ class FirebaseService {
 
   // Get current user
   getCurrentUser() {
-    return this.currentUser;
+    // Get the current user from Firebase Auth directly
+    return auth.currentUser;
   }
 
   // Check if user is authenticated

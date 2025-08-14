@@ -8,6 +8,7 @@ import {
   FileText,
 } from "lucide-react";
 import useProductionStore from "../store/productionStore";
+import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 import StatementImporter from "../components/StatementImporter";
 import MobileStatementImporter from "../components/MobileStatementImporter";
 import AddTransaction from "../components/AddTransaction";
@@ -21,6 +22,7 @@ const DashboardPage = ({
 }) => {
   const { transactions, accounts, addTransactions, initialize, isInitialized } =
     useProductionStore();
+  const { isAuthenticated, isInitialized: authInitialized } = useFirebaseAuth();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [error, setError] = useState("");
@@ -29,10 +31,12 @@ const DashboardPage = ({
   const { isMobile } = useMobileViewport();
 
   useEffect(() => {
-    if (!isInitialized) {
+    // Only initialize the store when user is authenticated and auth is initialized
+    if (authInitialized && isAuthenticated && !isInitialized) {
+      console.log("🔐 User authenticated, initializing production store...");
       initialize();
     }
-  }, [initialize, isInitialized]);
+  }, [authInitialized, isAuthenticated, isInitialized, initialize]);
 
   // Handle import trigger from floating action button
   useEffect(() => {
