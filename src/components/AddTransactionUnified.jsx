@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   DollarSign,
@@ -8,11 +8,19 @@ import {
   Wallet,
   Plus,
 } from "lucide-react";
-import useStore from "../store";
+import useUnifiedStore from "../store/unifiedStore";
 import { CATEGORIES } from "../utils/statementParser";
 
-const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
-  const { addTransaction, accounts } = useStore();
+const AddTransactionUnified = ({ isOpen, onClose, isMobile = false }) => {
+  const {
+    addTransaction,
+    accounts,
+    isLoading,
+    error,
+    initialize,
+    isInitialized,
+  } = useUnifiedStore();
+
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     description: "",
@@ -23,27 +31,31 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
   });
   const [errors, setErrors] = useState({});
 
-  // Initialize form with first available account
-  React.useEffect(() => {
-    if (import.meta.env.DEV) {
-      console.log("🔄 AddTransaction useEffect triggered:", {
-        accountsCount: accounts?.length,
-        currentAccountId: formData.accountId,
-        availableAccounts: accounts?.map(acc => ({ id: acc.id, name: acc.name })),
-      });
+  // Initialize the store when component mounts
+  useEffect(() => {
+    if (!isInitialized) {
+      initialize();
     }
+  }, [initialize, isInitialized]);
 
+  // Initialize form with first available account
+  useEffect(() => {
     if (accounts && accounts.length > 0) {
       // Always set to the first account if we have accounts and no accountId is set
       // or if the current accountId doesn't match any existing account
       const currentAccountExists = accounts.some(
         acc => acc.id.toString() === formData.accountId
       );
-      
+
       if (import.meta.env.DEV) {
-        console.log("🔍 Account assignment check:", {
+        console.log("🔄 AddTransactionUnified useEffect triggered:", {
+          accountsCount: accounts?.length,
+          currentAccountId: formData.accountId,
+          availableAccounts: accounts?.map(acc => ({
+            id: acc.id,
+            name: acc.name,
+          })),
           currentAccountExists,
-          shouldUpdate: !formData.accountId || !currentAccountExists,
         });
       }
 
@@ -92,7 +104,7 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
 
     // Debug logging
     if (import.meta.env.DEV) {
-      console.log("🔍 Adding transaction with data:", {
+      console.log("🔍 Adding transaction with unified store:", {
         formData,
         selectedAccountId: formData.accountId,
         availableAccounts: accounts?.map(acc => ({
@@ -104,13 +116,13 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
     }
 
     try {
+      // Simple, direct Firestore operation - no complex sync needed!
       await addTransaction({
-        ...formData,
         description: formData.description.trim(),
         amount: parseFloat(formData.amount),
-        accountId: formData.accountId, // Keep as string to match account IDs
-        date: new Date(formData.date),
-        id: Date.now(), // Generate unique ID
+        category: formData.category,
+        accountId: formData.accountId, // Keep as string
+        date: new Date(formData.date).toISOString(),
       });
 
       // Reset form
@@ -123,6 +135,7 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
           accounts && accounts.length > 0 ? accounts[0].id.toString() : "",
       });
       setErrors({});
+
       if (onClose) {
         onClose();
       } else {
@@ -180,10 +193,10 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
           <Plus className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           <div className="text-left">
             <p className="font-medium text-blue-900 dark:text-blue-100">
-              Add Transaction
+              Add Transaction (Unified)
             </p>
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              Create a new transaction
+              Using new Firestore-first architecture
             </p>
           </div>
         </button>
@@ -197,56 +210,47 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
           }`}
         >
           <div
-            className={`bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 ${
-              isMobile
-                ? "w-full h-full rounded-none mx-0 p-4"
-                : "rounded-lg max-w-md w-full mx-4 p-6"
+            className={`bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md ${
+              isMobile ? "m-4" : ""
             }`}
           >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
-                Add New Transaction
-              </h3>
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Add Transaction (Unified)
+              </h2>
               <button
                 onClick={handleCancel}
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-200 p-1"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
-            {/* Error Display */}
-            {errors.submit && (
-              <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                <p className="text-sm text-red-800 dark:text-red-200">
-                  {errors.submit}
-                </p>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Description
                 </label>
                 <div className="relative">
-                  <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    placeholder="Enter transaction description"
-                    className={`w-full pl-10 px-3 py-2 bg-white dark:bg-gray-700 border rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.description
-                        ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                        ? "border-red-300 dark:border-red-600"
                         : "border-gray-300 dark:border-gray-600"
-                    }`}
+                    } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                    placeholder="Enter transaction description"
                   />
                 </div>
                 {errors.description && (
-                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                     {errors.description}
                   </p>
                 )}
@@ -258,24 +262,23 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
                   Amount
                 </label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="number"
                     name="amount"
                     value={formData.amount}
                     onChange={handleInputChange}
-                    placeholder="0.00"
                     step="0.01"
-                    min="0"
-                    className={`w-full pl-10 px-3 py-2 bg-white dark:bg-gray-700 border rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.amount
-                        ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                        ? "border-red-300 dark:border-red-600"
                         : "border-gray-300 dark:border-gray-600"
-                    }`}
+                    } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                    placeholder="0.00"
                   />
                 </div>
                 {errors.amount && (
-                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                     {errors.amount}
                   </p>
                 )}
@@ -287,12 +290,12 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
                   Category
                 </label>
                 <div className="relative">
-                  <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <select
                     name="category"
                     value={formData.category}
                     onChange={handleInputChange}
-                    className="w-full pl-10 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none"
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     {CATEGORIES.map(category => (
                       <option key={category} value={category}>
@@ -309,21 +312,21 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
                   Account
                 </label>
                 <div className="relative">
-                  <Wallet className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <Wallet className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <select
                     name="accountId"
                     value={formData.accountId}
                     onChange={handleInputChange}
-                    className={`w-full pl-10 px-3 py-2 bg-white dark:bg-gray-700 border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none ${
+                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.accountId
-                        ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                        ? "border-red-300 dark:border-red-600"
                         : "border-gray-300 dark:border-gray-600"
-                    }`}
+                    } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
                   >
                     <option value="">Select an account...</option>
                     {accounts && accounts.length > 0 ? (
                       accounts.map(account => (
-                        <option key={account.id} value={account.id.toString()}>
+                        <option key={account.id} value={account.id}>
                           {account.name} ({account.type})
                         </option>
                       ))
@@ -333,7 +336,7 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
                   </select>
                 </div>
                 {errors.accountId && (
-                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                     {errors.accountId}
                   </p>
                 )}
@@ -345,40 +348,63 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
                   Date
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="date"
                     name="date"
                     value={formData.date}
                     onChange={handleInputChange}
-                    className={`w-full pl-10 px-3 py-2 bg-white dark:bg-gray-700 border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.date
-                        ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                        ? "border-red-300 dark:border-red-600"
                         : "border-gray-300 dark:border-gray-600"
-                    }`}
+                    } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
                   />
                 </div>
                 {errors.date && (
-                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                     {errors.date}
                   </p>
                 )}
               </div>
 
-              {/* Action Buttons */}
+              {/* Error message */}
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {error}
+                  </p>
+                </div>
+              )}
+
+              {/* Submit error */}
+              {errors.submit && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {errors.submit}
+                  </p>
+                </div>
+              )}
+
+              {/* Actions */}
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 font-medium text-sm"
+                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm shadow-sm"
+                  disabled={isLoading || !isInitialized}
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors"
                 >
-                  Add Transaction
+                  {isLoading
+                    ? "Adding..."
+                    : !isInitialized
+                      ? "Initializing..."
+                      : "Add Transaction"}
                 </button>
               </div>
             </form>
@@ -389,4 +415,4 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
   );
 };
 
-export default AddTransaction;
+export default AddTransactionUnified;
