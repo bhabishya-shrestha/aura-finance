@@ -234,12 +234,6 @@ export const FirebaseAuthProvider = ({ children }) => {
               window.location.pathname
             );
           }
-
-          // If we're on the callback route, redirect to dashboard
-          if (window.location.pathname === "/auth/callback") {
-            console.log("🔄 On callback route, redirecting to dashboard...");
-            window.location.href = "/dashboard";
-          }
         } else {
           console.log("ℹ️ No OAuth redirect result found");
         }
@@ -479,14 +473,12 @@ export const FirebaseAuthProvider = ({ children }) => {
       provider.addScope("profile");
       provider.setCustomParameters({
         prompt: "select_account",
-        // Set the redirect URL to ensure proper handling
-        redirect_uri: window.location.origin + "/auth/callback",
+        // Use Firebase's default auth handler
+        redirect_uri: "https://aura-finance-9777a.firebaseapp.com/__/auth/handler"
       });
 
-      console.log(
-        "🔐 OAuth Provider configured with redirect_uri:",
-        window.location.origin + "/auth/callback"
-      );
+      console.log("🔐 OAuth Provider configured with Firebase default auth handler");
+      console.log("📋 Using redirect URI: https://aura-finance-9777a.firebaseapp.com/__/auth/handler");
 
       // Use redirect instead of popup to avoid CORS issues
       console.log("📱 Calling signInWithRedirect...");

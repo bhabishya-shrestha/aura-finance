@@ -59,46 +59,6 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// OAuth Callback Component
-const OAuthCallback = () => {
-  const { isAuthenticated, isLoading, isInitialized } = useFirebaseAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    console.log("🔄 OAuth Callback - Auth State:", {
-      isAuthenticated,
-      isLoading,
-      isInitialized,
-    });
-
-    // Give the auth context time to process the redirect result
-    const timer = setTimeout(() => {
-      if (isInitialized && !isLoading) {
-        if (isAuthenticated) {
-          console.log(
-            "✅ OAuth Callback - User authenticated, redirecting to dashboard"
-          );
-          navigate("/dashboard", { replace: true });
-        } else {
-          console.log(
-            "❌ OAuth Callback - User not authenticated, redirecting to auth"
-          );
-          // If not authenticated, redirect to auth page
-          navigate("/auth", { replace: true });
-        }
-      }
-    }, 1000); // Wait 1 second for auth processing
-
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, isLoading, isInitialized, navigate]);
-
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-      <LoadingSpinner size="xl" text="Completing sign in..." showText={true} />
-    </div>
-  );
-};
-
 // Main App Layout Component
 const AppLayout = () => {
   const location = useLocation();
@@ -442,9 +402,6 @@ const AppContent = () => {
           </div>
         }
       />
-
-      {/* OAuth Callback Route - Handle Google OAuth redirects */}
-      <Route path="/auth/callback" element={<OAuthCallback />} />
 
       {/* Default redirect */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
