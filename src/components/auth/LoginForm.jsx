@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle } from "lucide-react";
 import { useFirebaseAuth } from "../../contexts/FirebaseAuthContext";
-import {
-  debugLocalhostAuth,
-  checkCommonLocalhostIssues,
-  validateOAuthRedirectConfig,
-} from "../../utils/localhostConfig";
 import auraLogo from "../../assets/aura-finance.png";
 
 const LoginForm = ({ onSwitchToRegister }) => {
@@ -15,29 +10,26 @@ const LoginForm = ({ onSwitchToRegister }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const [localhostIssues, setLocalhostIssues] = useState([]);
-  const { login, signInWithGoogle, isLoading, error, clearError } =
-    useFirebaseAuth();
+  const [oauthConfig, setOauthConfig] = useState(null);
+  const { 
+    login, 
+    signInWithGoogle, 
+    isLoading, 
+    error, 
+    clearError, 
+    getOAuthConfig,
+    isOAuthAvailable 
+  } = useFirebaseAuth();
 
-  // Check for localhost issues on component mount
+  // Check OAuth configuration on component mount
   useEffect(() => {
-    const issues = checkCommonLocalhostIssues();
-    setLocalhostIssues(issues);
-
-    if (issues.length > 0) {
-      console.log("🏠 Localhost issues detected:", issues);
-      debugLocalhostAuth();
+    const config = getOAuthConfig();
+    setOauthConfig(config);
+    
+    if (!config.isValid) {
+      console.warn("⚠️ OAuth configuration issues:", config.issues);
     }
-
-    // Also check OAuth redirect configuration
-    const oauthValidation = validateOAuthRedirectConfig();
-    if (oauthValidation.recommendations.length > 0) {
-      console.log(
-        "🔐 OAuth configuration recommendations:",
-        oauthValidation.recommendations
-      );
-    }
-  }, []);
+  }, [getOAuthConfig]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -88,11 +80,21 @@ const LoginForm = ({ onSwitchToRegister }) => {
       return;
     }
 
-    const result = await login(formData);
+    const result = await login(formData.email, formData.password);
 
     if (!result.success) {
       // Error is already handled by the auth context
       return;
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      console.log("🚀 Google OAuth button clicked");
+      const result = await signInWithGoogle();
+      console.log("Google OAuth result:", result);
+    } catch (error) {
+      console.error("❌ Google OAuth error:", error);
     }
   };
 
@@ -118,17 +120,17 @@ const LoginForm = ({ onSwitchToRegister }) => {
           </p>
         </div>
 
-        {/* Localhost Issues Display */}
-        {localhostIssues.length > 0 && (
+        {/* OAuth Configuration Issues Display */}
+        {oauthConfig && !oauthConfig.isValid && (
           <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
             <div className="flex items-start gap-2">
               <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
-                  Localhost Configuration Issues Detected
+                  OAuth Configuration Issues
                 </p>
                 <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
-                  {localhostIssues.map((issue, index) => (
+                  {oauthConfig.issues.map((issue, index) => (
                     <li key={index} className="flex items-start gap-1">
                       <span className="text-yellow-600 dark:text-yellow-400">
                         •
@@ -138,7 +140,7 @@ const LoginForm = ({ onSwitchToRegister }) => {
                   ))}
                 </ul>
                 <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
-                  Check the browser console for detailed debugging information.
+                  Environment: {oauthConfig.environment}
                 </p>
               </div>
             </div>
@@ -268,28 +270,8 @@ const LoginForm = ({ onSwitchToRegister }) => {
         <div className="space-y-3">
           <button
             type="button"
-            onClick={async () => {
-              console.log("Google OAuth button clicked");
-
-              // Run localhost debugging if on localhost
-              if (
-                window.location.hostname === "localhost" ||
-                window.location.hostname === "127.0.0.1"
-              ) {
-                console.log(
-                  "🏠 Running on localhost - debugging OAuth configuration..."
-                );
-                debugLocalhostAuth();
-              }
-
-              try {
-                const result = await signInWithGoogle();
-                console.log("signInWithGoogle result:", result);
-              } catch (error) {
-                console.error("Google OAuth error:", error);
-              }
-            }}
-            disabled={isLoading}
+            onClick={handleGoogleSignIn}
+            disabled={isLoading || !isOAuthAvailable()}
             className="w-full flex items-center justify-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
