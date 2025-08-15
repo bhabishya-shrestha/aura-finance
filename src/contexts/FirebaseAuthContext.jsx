@@ -449,6 +449,12 @@ export const FirebaseAuthProvider = ({ children }) => {
     try {
       // Check if OAuth is enabled
       const oauthEnabled = import.meta.env?.VITE_ENABLE_OAUTH === "true";
+      console.log("🔍 OAuth Environment Check:", {
+        VITE_ENABLE_OAUTH: import.meta.env?.VITE_ENABLE_OAUTH,
+        oauthEnabled: oauthEnabled,
+        envType: typeof import.meta.env?.VITE_ENABLE_OAUTH,
+      });
+
       if (!oauthEnabled) {
         throw new Error(
           "OAuth is not enabled. Please check your configuration."
