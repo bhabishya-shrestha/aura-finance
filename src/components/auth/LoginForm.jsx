@@ -218,10 +218,16 @@ const LoginForm = ({ onSwitchToRegister }) => {
             onClick={async () => {
               console.log("Google OAuth button clicked");
               console.log("Environment check:");
-              console.log("- VITE_ENABLE_OAUTH:", import.meta.env?.VITE_ENABLE_OAUTH);
-              console.log("- VITE_FIREBASE_AUTH_DOMAIN:", import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN);
+              console.log(
+                "- VITE_ENABLE_OAUTH:",
+                import.meta.env?.VITE_ENABLE_OAUTH
+              );
+              console.log(
+                "- VITE_FIREBASE_AUTH_DOMAIN:",
+                import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN
+              );
               console.log("- Current URL:", window.location.href);
-              
+
               try {
                 const result = await signInWithGoogle();
                 console.log("signInWithGoogle result:", result);

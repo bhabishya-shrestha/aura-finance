@@ -7,6 +7,7 @@ This guide helps you migrate from the current IndexedDB + Firestore sync approac
 ## Why This Migration?
 
 ### Problems with Current Approach:
+
 - ❌ **Dual data sources** - IndexedDB + Firestore creates complexity
 - ❌ **Sync issues** - Data can get out of sync between local and remote
 - ❌ **Browser dependency** - IndexedDB can be cleared or corrupted
@@ -14,6 +15,7 @@ This guide helps you migrate from the current IndexedDB + Firestore sync approac
 - ❌ **Reliability problems** - Multiple failure points
 
 ### Benefits of New Approach:
+
 - ✅ **Single source of truth** - Firestore is the authoritative data store
 - ✅ **Real-time updates** - Changes sync instantly across devices
 - ✅ **Built-in offline support** - Firestore handles offline/online automatically
@@ -32,29 +34,29 @@ npm install zustand
 ### Step 2: Replace the Store
 
 **Before (old store):**
+
 ```javascript
 // src/store.js - Complex IndexedDB + Firestore sync
 import db from "./database";
 import firebaseSync from "./services/firebaseSync";
 
 const useStore = create(
-  persist(
-    (set, get) => ({
-      // Complex sync logic
-      loadTransactions: async () => {
-        // Load from IndexedDB
-        const transactions = await db.transactions.toArray();
-        // Sync to Firebase
-        await firebaseSync.syncData();
-        set({ transactions });
-      },
-      // ... more complex sync logic
-    })
-  )
+  persist((set, get) => ({
+    // Complex sync logic
+    loadTransactions: async () => {
+      // Load from IndexedDB
+      const transactions = await db.transactions.toArray();
+      // Sync to Firebase
+      await firebaseSync.syncData();
+      set({ transactions });
+    },
+    // ... more complex sync logic
+  }))
 );
 ```
 
 **After (new store):**
+
 ```javascript
 // src/store/firestoreStore.js - Simple Firestore-first
 import firebaseService from "../services/firebaseService";
@@ -65,8 +67,8 @@ const useFirestoreStore = create(
     initialize: async () => {
       await get().setupRealtimeListeners();
     },
-    
-    addTransaction: async (transactionData) => {
+
+    addTransaction: async transactionData => {
       const result = await firebaseService.addTransaction(transactionData);
       // Real-time listener automatically updates the store
     },
@@ -78,6 +80,7 @@ const useFirestoreStore = create(
 ### Step 3: Update Components
 
 **Before:**
+
 ```javascript
 // Components had to manually load data
 const { transactions, loadTransactions } = useStore();
@@ -88,6 +91,7 @@ useEffect(() => {
 ```
 
 **After:**
+
 ```javascript
 // Components automatically get real-time updates
 const { transactions, initialize } = useFirestoreStore();
@@ -114,6 +118,7 @@ useEffect(() => {
 ### Step 5: Update App Initialization
 
 **Before:**
+
 ```javascript
 // src/App.jsx
 useEffect(() => {
@@ -124,6 +129,7 @@ useEffect(() => {
 ```
 
 **After:**
+
 ```javascript
 // src/App.jsx
 useEffect(() => {
@@ -138,24 +144,26 @@ useEffect(() => {
 ### Transaction Management
 
 **Before (Complex):**
+
 ```javascript
 // Add transaction with sync
 addTransaction: async (transactionData) => {
   // 1. Add to IndexedDB
   await db.transactions.add(newTransaction);
-  
+
   // 2. Load from IndexedDB
   await get().loadTransactions();
-  
+
   // 3. Sync to Firebase
   await syncToFirebase();
-  
+
   // 4. Handle sync conflicts
   await firebaseSync.syncData();
 },
 ```
 
 **After (Simple):**
+
 ```javascript
 // Add transaction directly to Firestore
 addTransaction: async (transactionData) => {
@@ -168,6 +176,7 @@ addTransaction: async (transactionData) => {
 ### Data Loading
 
 **Before (Manual):**
+
 ```javascript
 // Manual loading with sync
 loadTransactions: async () => {
@@ -178,6 +187,7 @@ loadTransactions: async () => {
 ```
 
 **After (Automatic):**
+
 ```javascript
 // Real-time automatic updates
 setupRealtimeListeners: async () => {
@@ -190,12 +200,14 @@ setupRealtimeListeners: async () => {
 ## Performance Benefits
 
 ### Before:
+
 - ❌ **Multiple database operations** per action
 - ❌ **Complex sync logic** on every change
 - ❌ **Manual data loading** in components
 - ❌ **Potential sync conflicts** and data loss
 
 ### After:
+
 - ✅ **Single Firestore operation** per action
 - ✅ **Automatic real-time updates** across devices
 - ✅ **No manual loading** needed
@@ -204,6 +216,7 @@ setupRealtimeListeners: async () => {
 ## Testing the Migration
 
 ### 1. Test Real-time Updates
+
 ```javascript
 // Add a transaction on one device
 await firestoreStore.addTransaction({
@@ -217,12 +230,14 @@ await firestoreStore.addTransaction({
 ```
 
 ### 2. Test Offline Support
+
 ```javascript
 // Go offline and add transactions
 // They should queue and sync when back online
 ```
 
 ### 3. Test Cross-device Sync
+
 ```javascript
 // Add transactions on different devices
 // Should appear on all devices in real-time

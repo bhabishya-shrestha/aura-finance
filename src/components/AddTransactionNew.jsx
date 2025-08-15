@@ -83,7 +83,7 @@ const AddTransactionNew = ({ isOpen, onClose, isMobile = false }) => {
           accounts && accounts.length > 0 ? accounts[0].id.toString() : "",
       });
       setErrors({});
-      
+
       if (onClose) {
         onClose();
       } else {

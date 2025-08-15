@@ -15,8 +15,8 @@ const useUnifiedStore = create(
     lastSyncTime: null,
 
     // Actions
-    setLoading: (loading) => set({ isLoading: loading }),
-    setError: (error) => set({ error }),
+    setLoading: loading => set({ isLoading: loading }),
+    setError: error => set({ error }),
     clearError: () => set({ error: null }),
 
     // Initialize store and set up real-time listeners
@@ -44,17 +44,25 @@ const useUnifiedStore = create(
     setupRealtimeListeners: async () => {
       try {
         // Listen for transaction changes
-        firebaseService.subscribeToTransactions((transactions) => {
+        firebaseService.subscribeToTransactions(transactions => {
           if (import.meta.env.DEV) {
-            console.log("🔄 Real-time transaction update:", transactions.length, "transactions");
+            console.log(
+              "🔄 Real-time transaction update:",
+              transactions.length,
+              "transactions"
+            );
           }
           set({ transactions: transactions || [], lastSyncTime: new Date() });
         });
 
         // Listen for account changes
-        firebaseService.subscribeToAccounts((accounts) => {
+        firebaseService.subscribeToAccounts(accounts => {
           if (import.meta.env.DEV) {
-            console.log("🔄 Real-time account update:", accounts.length, "accounts");
+            console.log(
+              "🔄 Real-time account update:",
+              accounts.length,
+              "accounts"
+            );
           }
           set({ accounts: accounts || [], lastSyncTime: new Date() });
         });
@@ -62,19 +70,18 @@ const useUnifiedStore = create(
         // Listen for online/offline changes
         window.addEventListener("online", () => set({ isOnline: true }));
         window.addEventListener("offline", () => set({ isOnline: false }));
-
       } catch (error) {
         set({ error: `Failed to setup listeners: ${error.message}` });
       }
     },
 
     // Transaction actions
-    addTransaction: async (transactionData) => {
+    addTransaction: async transactionData => {
       try {
         set({ isLoading: true, error: null });
 
         const result = await firebaseService.addTransaction(transactionData);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -92,8 +99,11 @@ const useUnifiedStore = create(
       try {
         set({ isLoading: true, error: null });
 
-        const result = await firebaseService.updateTransaction(transactionId, updates);
-        
+        const result = await firebaseService.updateTransaction(
+          transactionId,
+          updates
+        );
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -107,12 +117,12 @@ const useUnifiedStore = create(
       }
     },
 
-    deleteTransaction: async (transactionId) => {
+    deleteTransaction: async transactionId => {
       try {
         set({ isLoading: true, error: null });
 
         const result = await firebaseService.deleteTransaction(transactionId);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -125,7 +135,7 @@ const useUnifiedStore = create(
       }
     },
 
-    addTransactions: async (transactionsData) => {
+    addTransactions: async transactionsData => {
       try {
         set({ isLoading: true, error: null });
 
@@ -148,12 +158,12 @@ const useUnifiedStore = create(
     },
 
     // Account actions
-    addAccount: async (accountData) => {
+    addAccount: async accountData => {
       try {
         set({ isLoading: true, error: null });
 
         const result = await firebaseService.addAccount(accountData);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -172,7 +182,7 @@ const useUnifiedStore = create(
         set({ isLoading: true, error: null });
 
         const result = await firebaseService.updateAccount(accountId, updates);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -186,12 +196,12 @@ const useUnifiedStore = create(
       }
     },
 
-    deleteAccount: async (accountId) => {
+    deleteAccount: async accountId => {
       try {
         set({ isLoading: true, error: null });
 
         const result = await firebaseService.deleteAccount(accountId);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -210,21 +220,26 @@ const useUnifiedStore = create(
       return transactions.slice(0, limit);
     },
 
-    getTransactionsByAccount: (accountId) => {
+    getTransactionsByAccount: accountId => {
       const { transactions } = get();
       if (import.meta.env.DEV) {
         console.log("🔍 Filtering transactions for account:", accountId);
         console.log("📊 Available transactions:", transactions.length);
-        console.log("💳 Account IDs in transactions:", transactions.map(t => ({ 
-          id: t.id, 
-          accountId: t.accountId, 
-          type: typeof t.accountId 
-        })));
+        console.log(
+          "💳 Account IDs in transactions:",
+          transactions.map(t => ({
+            id: t.id,
+            accountId: t.accountId,
+            type: typeof t.accountId,
+          }))
+        );
       }
-      return transactions.filter(transaction => transaction.accountId === accountId);
+      return transactions.filter(
+        transaction => transaction.accountId === accountId
+      );
     },
 
-    getAccountBalance: (accountId) => {
+    getAccountBalance: accountId => {
       const { accounts } = get();
       const account = accounts.find(acc => acc.id === accountId);
       return account ? account.balance || 0 : 0;
@@ -232,10 +247,13 @@ const useUnifiedStore = create(
 
     getNetWorth: () => {
       const { accounts } = get();
-      return accounts.reduce((total, account) => total + (account.balance || 0), 0);
+      return accounts.reduce(
+        (total, account) => total + (account.balance || 0),
+        0
+      );
     },
 
-    calculateAccountStats: (accountId) => {
+    calculateAccountStats: accountId => {
       const { transactions } = get();
       const accountTransactions = transactions.filter(
         transaction => transaction.accountId === accountId
@@ -288,7 +306,8 @@ const useUnifiedStore = create(
       const categorySpending = {};
       filteredTransactions.forEach(t => {
         const category = t.category || "Uncategorized";
-        categorySpending[category] = (categorySpending[category] || 0) + Math.abs(t.amount);
+        categorySpending[category] =
+          (categorySpending[category] || 0) + Math.abs(t.amount);
       });
 
       return Object.entries(categorySpending).map(([category, amount]) => ({
@@ -340,7 +359,11 @@ const useUnifiedStore = create(
         isOnline,
         lastSyncTime,
         isInitialized,
-        status: isInitialized ? (isOnline ? "synced" : "offline") : "initializing",
+        status: isInitialized
+          ? isOnline
+            ? "synced"
+            : "offline"
+          : "initializing",
       };
     },
 

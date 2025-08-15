@@ -286,8 +286,14 @@ class SecurityMiddleware {
     }
 
     // Only include tags if they exist and are not empty
-    if (transaction.tags && Array.isArray(transaction.tags) && transaction.tags.length > 0) {
-      sanitizedTransaction.tags = transaction.tags.map(tag => this.sanitizeInput(tag));
+    if (
+      transaction.tags &&
+      Array.isArray(transaction.tags) &&
+      transaction.tags.length > 0
+    ) {
+      sanitizedTransaction.tags = transaction.tags.map(tag =>
+        this.sanitizeInput(tag)
+      );
     }
 
     return sanitizedTransaction;

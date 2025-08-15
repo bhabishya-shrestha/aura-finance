@@ -14,8 +14,8 @@ const useFirestoreStore = create(
     lastSyncTime: null,
 
     // Actions
-    setLoading: (loading) => set({ isLoading: loading }),
-    setError: (error) => set({ error }),
+    setLoading: loading => set({ isLoading: loading }),
+    setError: error => set({ error }),
     clearError: () => set({ error: null }),
 
     // Initialize store and set up real-time listeners
@@ -43,31 +43,30 @@ const useFirestoreStore = create(
     setupRealtimeListeners: async () => {
       try {
         // Listen for transaction changes
-        firebaseService.subscribeToTransactions((transactions) => {
+        firebaseService.subscribeToTransactions(transactions => {
           set({ transactions: transactions || [] });
         });
 
         // Listen for account changes
-        firebaseService.subscribeToAccounts((accounts) => {
+        firebaseService.subscribeToAccounts(accounts => {
           set({ accounts: accounts || [] });
         });
 
         // Listen for online/offline changes
         window.addEventListener("online", () => set({ isOnline: true }));
         window.addEventListener("offline", () => set({ isOnline: false }));
-
       } catch (error) {
         set({ error: `Failed to setup listeners: ${error.message}` });
       }
     },
 
     // Transaction actions
-    addTransaction: async (transactionData) => {
+    addTransaction: async transactionData => {
       try {
         set({ isLoading: true, error: null });
 
         const result = await firebaseService.addTransaction(transactionData);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -85,8 +84,11 @@ const useFirestoreStore = create(
       try {
         set({ isLoading: true, error: null });
 
-        const result = await firebaseService.updateTransaction(transactionId, updates);
-        
+        const result = await firebaseService.updateTransaction(
+          transactionId,
+          updates
+        );
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -100,12 +102,12 @@ const useFirestoreStore = create(
       }
     },
 
-    deleteTransaction: async (transactionId) => {
+    deleteTransaction: async transactionId => {
       try {
         set({ isLoading: true, error: null });
 
         const result = await firebaseService.deleteTransaction(transactionId);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -118,7 +120,7 @@ const useFirestoreStore = create(
       }
     },
 
-    addTransactions: async (transactionsData) => {
+    addTransactions: async transactionsData => {
       try {
         set({ isLoading: true, error: null });
 
@@ -141,12 +143,12 @@ const useFirestoreStore = create(
     },
 
     // Account actions
-    addAccount: async (accountData) => {
+    addAccount: async accountData => {
       try {
         set({ isLoading: true, error: null });
 
         const result = await firebaseService.addAccount(accountData);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -165,7 +167,7 @@ const useFirestoreStore = create(
         set({ isLoading: true, error: null });
 
         const result = await firebaseService.updateAccount(accountId, updates);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -179,12 +181,12 @@ const useFirestoreStore = create(
       }
     },
 
-    deleteAccount: async (accountId) => {
+    deleteAccount: async accountId => {
       try {
         set({ isLoading: true, error: null });
 
         const result = await firebaseService.deleteAccount(accountId);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -203,12 +205,14 @@ const useFirestoreStore = create(
       return transactions.slice(0, limit);
     },
 
-    getTransactionsByAccount: (accountId) => {
+    getTransactionsByAccount: accountId => {
       const { transactions } = get();
-      return transactions.filter(transaction => transaction.accountId === accountId);
+      return transactions.filter(
+        transaction => transaction.accountId === accountId
+      );
     },
 
-    getAccountBalance: (accountId) => {
+    getAccountBalance: accountId => {
       const { accounts } = get();
       const account = accounts.find(acc => acc.id === accountId);
       return account ? account.balance || 0 : 0;
@@ -216,10 +220,13 @@ const useFirestoreStore = create(
 
     getNetWorth: () => {
       const { accounts } = get();
-      return accounts.reduce((total, account) => total + (account.balance || 0), 0);
+      return accounts.reduce(
+        (total, account) => total + (account.balance || 0),
+        0
+      );
     },
 
-    calculateAccountStats: (accountId) => {
+    calculateAccountStats: accountId => {
       const { transactions } = get();
       const accountTransactions = transactions.filter(
         transaction => transaction.accountId === accountId
@@ -272,7 +279,8 @@ const useFirestoreStore = create(
       const categorySpending = {};
       filteredTransactions.forEach(t => {
         const category = t.category || "Uncategorized";
-        categorySpending[category] = (categorySpending[category] || 0) + Math.abs(t.amount);
+        categorySpending[category] =
+          (categorySpending[category] || 0) + Math.abs(t.amount);
       });
 
       return Object.entries(categorySpending).map(([category, amount]) => ({

@@ -67,7 +67,9 @@ class AIService {
       const validation = await apiUsageService.validateApiUsage(provider);
 
       if (!validation.can_proceed) {
-        console.warn(`Daily limit exceeded for ${this.providers[provider].name}. Provider will be disabled.`);
+        console.warn(
+          `Daily limit exceeded for ${this.providers[provider].name}. Provider will be disabled.`
+        );
         // Don't throw error, just disable the provider
         this.currentProvider = null;
         return;
@@ -86,7 +88,10 @@ class AIService {
         // console.warn("Failed to save AI provider setting:", error);
       }
     } catch (error) {
-      console.warn("Failed to validate API usage, disabling AI provider:", error.message);
+      console.warn(
+        "Failed to validate API usage, disabling AI provider:",
+        error.message
+      );
       this.currentProvider = null;
     }
   }
