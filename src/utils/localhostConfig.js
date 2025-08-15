@@ -81,12 +81,60 @@ export const getLocalhostOAuthUrls = () => {
 
   return {
     redirectUrl: `${protocol}//${hostname}:${port}`,
+    callbackUrl: `${protocol}//${hostname}:${port}/auth/callback`,
     authorizedDomains: [
       hostname,
       `${hostname}:${port}`,
       "localhost",
       "127.0.0.1",
     ],
+  };
+};
+
+// Validate OAuth redirect configuration
+export const validateOAuthRedirectConfig = () => {
+  const issues = [];
+  const recommendations = [];
+
+  if (isLocalhost()) {
+    const oauthUrls = getLocalhostOAuthUrls();
+
+    recommendations.push(
+      "For localhost development, ensure the following are configured in Firebase Console:"
+    );
+    recommendations.push(
+      "1. Go to Firebase Console > Authentication > Settings > Authorized domains"
+    );
+    recommendations.push("   - Add: localhost");
+    recommendations.push("   - Add: 127.0.0.1");
+    recommendations.push(
+      "2. Go to Firebase Console > Authentication > Sign-in method > Google"
+    );
+    recommendations.push("   - Add to Authorized redirect URIs:");
+    recommendations.push(`     * ${oauthUrls.redirectUrl}`);
+    recommendations.push(`     * ${oauthUrls.callbackUrl}`);
+    recommendations.push("3. Ensure VITE_ENABLE_OAUTH=true in your .env file");
+  } else {
+    const domain = window.location.hostname;
+    recommendations.push(
+      "For production, ensure the following are configured in Firebase Console:"
+    );
+    recommendations.push(
+      "1. Go to Firebase Console > Authentication > Settings > Authorized domains"
+    );
+    recommendations.push(`   - Add: ${domain}`);
+    recommendations.push(
+      "2. Go to Firebase Console > Authentication > Sign-in method > Google"
+    );
+    recommendations.push("   - Add to Authorized redirect URIs:");
+    recommendations.push(`     * https://${domain}`);
+    recommendations.push(`     * https://${domain}/auth/callback`);
+  }
+
+  return {
+    issues,
+    recommendations,
+    isValid: issues.length === 0,
   };
 };
 
@@ -101,11 +149,19 @@ export const debugLocalhostAuth = () => {
   const firebaseValidation = validateFirebaseConfig();
   console.log("🔥 Firebase Config:", firebaseValidation.config);
 
+  const oauthValidation = validateOAuthRedirectConfig();
+  console.log("🔐 OAuth Redirect Config:", oauthValidation);
+
   if (firebaseValidation.issues.length > 0) {
-    console.log("❌ Issues found:");
+    console.log("❌ Firebase issues found:");
     firebaseValidation.issues.forEach(issue => console.log(`  - ${issue}`));
   } else {
     console.log("✅ Firebase configuration is valid");
+  }
+
+  if (oauthValidation.recommendations.length > 0) {
+    console.log("💡 OAuth Configuration Recommendations:");
+    oauthValidation.recommendations.forEach(rec => console.log(`  ${rec}`));
   }
 
   if (isLocalhost()) {
@@ -120,6 +176,7 @@ export const debugLocalhostAuth = () => {
     console.log("     - 127.0.0.1");
     console.log("  2. Check OAuth redirect URLs in Firebase Console include:");
     console.log(`     - ${oauthUrls.redirectUrl}`);
+    console.log(`     - ${oauthUrls.callbackUrl}`);
     console.log("  3. Verify .env file has correct Firebase configuration");
     console.log("  4. Check browser console for CORS errors");
     console.log("  5. Ensure VITE_ENABLE_OAUTH=true in .env file");
@@ -128,6 +185,7 @@ export const debugLocalhostAuth = () => {
   return {
     environment: envInfo,
     firebase: firebaseValidation,
+    oauth: oauthValidation,
     oauthUrls: isLocalhost() ? getLocalhostOAuthUrls() : null,
   };
 };

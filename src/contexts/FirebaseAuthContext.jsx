@@ -212,122 +212,156 @@ export const FirebaseAuthProvider = ({ children }) => {
   useEffect(() => {
     console.log("🔐 Setting up Firebase Auth listener...");
 
-    const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
-      if (firebaseUser) {
-        console.log("🔄 Auth state changed:", firebaseUser.email);
+    let unsubscribe = null;
 
-        try {
-          // Handle redirect result for OAuth
-          const result = await getRedirectResult(auth);
-          if (result) {
-            console.log(
-              "✅ OAuth redirect result received:",
-              result.user.email
+    // Handle OAuth redirect result first
+    const handleRedirectResult = async () => {
+      try {
+        console.log("🔄 Checking for OAuth redirect result...");
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log("✅ OAuth redirect result received:", result.user.email);
+          showSuccess("Successfully signed in with Google!");
+
+          // Clear any URL parameters that might have been added during OAuth
+          if (
+            window.location.search.includes("state=") ||
+            window.location.search.includes("code=")
+          ) {
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname
             );
-            showSuccess("Successfully signed in with Google!");
           }
 
-          // Check if user profile exists in Firestore
-          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          // If we're on the callback route, redirect to dashboard
+          if (window.location.pathname === "/auth/callback") {
+            console.log("🔄 On callback route, redirecting to dashboard...");
+            window.location.href = "/dashboard";
+          }
+        } else {
+          console.log("ℹ️ No OAuth redirect result found");
+        }
+      } catch (error) {
+        console.error("❌ Error handling redirect result:", error);
+      }
+    };
 
-          if (!userDoc.exists()) {
-            // Create new user profile
-            console.log("📝 Creating new user profile...");
-            const userProfile = {
-              email: firebaseUser.email,
-              name: firebaseUser.displayName || firebaseUser.email,
-              photoURL: firebaseUser.photoURL,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
+    // Handle redirect result first, then set up auth state listener
+    handleRedirectResult().then(() => {
+      unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
+        if (firebaseUser) {
+          console.log("🔄 Auth state changed:", firebaseUser.email);
 
-            try {
-              await setDoc(doc(db, "users", firebaseUser.uid), userProfile);
-              console.log("✅ User profile created successfully");
-              showSuccess("Profile created successfully!");
-            } catch (profileError) {
-              console.warn(
-                "⚠️ Could not create user profile, continuing with basic auth:",
-                profileError.message
-              );
-              // Note: showWarning is not available, using console.warn instead
-            }
-          } else {
-            // Update existing profile if there are changes
-            const existingProfile = userDoc.data();
-            const hasChanges =
-              existingProfile.email !== firebaseUser.email ||
-              existingProfile.name !==
-                (firebaseUser.displayName || firebaseUser.email) ||
-              existingProfile.photoURL !== firebaseUser.photoURL;
+          try {
+            // Check if user profile exists in Firestore
+            const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
 
-            if (hasChanges) {
-              console.log("📝 Updating existing user profile...");
-              const updatedProfile = {
-                ...existingProfile,
+            if (!userDoc.exists()) {
+              // Create new user profile
+              console.log("📝 Creating new user profile...");
+              const userProfile = {
                 email: firebaseUser.email,
                 name: firebaseUser.displayName || firebaseUser.email,
                 photoURL: firebaseUser.photoURL,
+                createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
               };
 
               try {
-                await setDoc(
-                  doc(db, "users", firebaseUser.uid),
-                  updatedProfile
-                );
-                console.log("✅ User profile updated successfully");
-                showInfo("Profile updated successfully!");
+                await setDoc(doc(db, "users", firebaseUser.uid), userProfile);
+                console.log("✅ User profile created successfully");
+                showSuccess("Profile created successfully!");
               } catch (profileError) {
                 console.warn(
-                  "⚠️ Could not update user profile, continuing with basic auth:",
+                  "⚠️ Could not create user profile, continuing with basic auth:",
                   profileError.message
                 );
                 // Note: showWarning is not available, using console.warn instead
               }
             } else {
-              console.log(
-                "✅ User profile already up to date, no changes needed"
-              );
+              // Update existing profile if there are changes
+              const existingProfile = userDoc.data();
+              const hasChanges =
+                existingProfile.email !== firebaseUser.email ||
+                existingProfile.name !==
+                  (firebaseUser.displayName || firebaseUser.email) ||
+                existingProfile.photoURL !== firebaseUser.photoURL;
+
+              if (hasChanges) {
+                console.log("📝 Updating existing user profile...");
+                const updatedProfile = {
+                  ...existingProfile,
+                  email: firebaseUser.email,
+                  name: firebaseUser.displayName || firebaseUser.email,
+                  photoURL: firebaseUser.photoURL,
+                  updatedAt: new Date().toISOString(),
+                };
+
+                try {
+                  await setDoc(
+                    doc(db, "users", firebaseUser.uid),
+                    updatedProfile
+                  );
+                  console.log("✅ User profile updated successfully");
+                  showInfo("Profile updated successfully!");
+                } catch (profileError) {
+                  console.warn(
+                    "⚠️ Could not update user profile, continuing with basic auth:",
+                    profileError.message
+                  );
+                  // Note: showWarning is not available, using console.warn instead
+                }
+              } else {
+                console.log(
+                  "✅ User profile already up to date, no changes needed"
+                );
+              }
             }
+
+            const user = {
+              id: firebaseUser.uid,
+              email: firebaseUser.email,
+              name: firebaseUser.displayName || firebaseUser.email,
+              photoURL: firebaseUser.photoURL,
+            };
+
+            console.log("✅ User authenticated:", user.email);
+            dispatch({
+              type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+              payload: { user },
+            });
+          } catch (error) {
+            console.error("❌ Error handling user profile:", error);
+            // Still dispatch auth state change with basic user info
+            const user = {
+              id: firebaseUser.uid,
+              email: firebaseUser.email,
+              name: firebaseUser.displayName || firebaseUser.email,
+              photoURL: firebaseUser.photoURL,
+            };
+            dispatch({
+              type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+              payload: { user },
+            });
           }
-
-          const user = {
-            id: firebaseUser.uid,
-            email: firebaseUser.email,
-            name: firebaseUser.displayName || firebaseUser.email,
-            photoURL: firebaseUser.photoURL,
-          };
-
-          console.log("✅ User authenticated:", user.email);
+        } else {
+          console.log("👋 User signed out");
           dispatch({
             type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
-            payload: { user },
-          });
-        } catch (error) {
-          console.error("❌ Error handling user profile:", error);
-          // Still dispatch auth state change with basic user info
-          const user = {
-            id: firebaseUser.uid,
-            email: firebaseUser.email,
-            name: firebaseUser.displayName || firebaseUser.email,
-            photoURL: firebaseUser.photoURL,
-          };
-          dispatch({
-            type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
-            payload: { user },
+            payload: { user: null },
           });
         }
-      } else {
-        console.log("👋 User signed out");
-        dispatch({
-          type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
-          payload: { user: null },
-        });
-      }
+      });
     });
 
-    return () => unsubscribe();
+    // Return cleanup function
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [auth, db, showSuccess, showInfo]);
 
   // Login with email and password
@@ -439,12 +473,22 @@ export const FirebaseAuthProvider = ({ children }) => {
       provider.addScope("profile");
       provider.setCustomParameters({
         prompt: "select_account",
+        // Set the redirect URL to ensure proper handling
+        redirect_uri: window.location.origin + "/auth/callback",
       });
+
+      console.log(
+        "🔐 OAuth Provider configured with redirect_uri:",
+        window.location.origin + "/auth/callback"
+      );
 
       // Use redirect instead of popup to avoid CORS issues
       console.log("📱 Calling signInWithRedirect...");
       await signInWithRedirect(auth, provider);
 
+      console.log(
+        "✅ signInWithRedirect completed - user should be redirected to Google"
+      );
       showInfo("Redirecting to Google for authentication...");
       // The auth state change listener will handle the rest after redirect
       return { success: true };

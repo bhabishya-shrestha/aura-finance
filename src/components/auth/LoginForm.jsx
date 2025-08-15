@@ -4,6 +4,7 @@ import { useFirebaseAuth } from "../../contexts/FirebaseAuthContext";
 import {
   debugLocalhostAuth,
   checkCommonLocalhostIssues,
+  validateOAuthRedirectConfig,
 } from "../../utils/localhostConfig";
 import auraLogo from "../../assets/aura-finance.png";
 
@@ -26,6 +27,15 @@ const LoginForm = ({ onSwitchToRegister }) => {
     if (issues.length > 0) {
       console.log("🏠 Localhost issues detected:", issues);
       debugLocalhostAuth();
+    }
+
+    // Also check OAuth redirect configuration
+    const oauthValidation = validateOAuthRedirectConfig();
+    if (oauthValidation.recommendations.length > 0) {
+      console.log(
+        "🔐 OAuth configuration recommendations:",
+        oauthValidation.recommendations
+      );
     }
   }, []);
 
