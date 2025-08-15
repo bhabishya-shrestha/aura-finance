@@ -13,6 +13,7 @@ import {
 } from "./contexts/FirebaseAuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import AccountsPage from "./pages/AccountsPage";
@@ -28,6 +29,7 @@ import MobileNav from "./components/MobileNav";
 import ErrorBoundary from "./components/ErrorBoundary";
 import LoadingSpinner from "./components/LoadingSpinner";
 import FirebaseTest from "./components/FirebaseTest";
+import NotificationToast from "./components/NotificationToast";
 
 import { initializeDatabase } from "./database";
 import useStore from "./store";
@@ -414,16 +416,19 @@ const App = () => {
     <ErrorBoundary>
       <ThemeProvider>
         <SettingsProvider>
-          <FirebaseAuthProvider>
-            <Router
-              future={{
-                v7_startTransition: true,
-                v7_relativeSplatPath: true,
-              }}
-            >
-              <AppContent />
-            </Router>
-          </FirebaseAuthProvider>
+          <NotificationProvider>
+            <FirebaseAuthProvider>
+              <Router
+                future={{
+                  v7_startTransition: true,
+                  v7_relativeSplatPath: true,
+                }}
+              >
+                <AppContent />
+                <NotificationToast />
+              </Router>
+            </FirebaseAuthProvider>
+          </NotificationProvider>
         </SettingsProvider>
       </ThemeProvider>
     </ErrorBoundary>

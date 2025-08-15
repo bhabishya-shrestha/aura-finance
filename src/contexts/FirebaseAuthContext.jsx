@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useReducer } from "react";
+import { useNotifications } from "./NotificationContext";
 import {
   getAuth,
   onAuthStateChanged,
@@ -6,7 +7,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   sendPasswordResetEmail,
 } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
@@ -137,10 +139,26 @@ export const FirebaseAuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const auth = getAuth(app);
   const db = getFirestore(app);
+  const { showSuccess, showInfo } = useNotifications();
 
   // Listen for auth state changes
   useEffect(() => {
     console.log("🔐 Setting up Firebase Auth listener...");
+
+    // Handle redirect result first
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log("✅ Redirect result received:", result.user.email);
+        }
+      } catch (error) {
+        console.error("❌ Error handling redirect result:", error);
+      }
+    };
+
+    // Handle redirect result immediately
+    handleRedirectResult();
 
     const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
       console.log(
@@ -154,7 +172,10 @@ export const FirebaseAuthProvider = ({ children }) => {
           const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
 
           if (!userDoc.exists()) {
-            console.log("📝 Creating new user profile...");
+            console.log(
+              "📝 Creating new user profile for:",
+              firebaseUser.email
+            );
             const userProfile = {
               email: firebaseUser.email,
               name: firebaseUser.displayName || firebaseUser.email,
@@ -162,18 +183,54 @@ export const FirebaseAuthProvider = ({ children }) => {
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             };
-            await setDoc(doc(db, "users", firebaseUser.uid), userProfile);
+
+            try {
+              await setDoc(doc(db, "users", firebaseUser.uid), userProfile);
+              console.log("✅ User profile created successfully");
+              showSuccess("Profile created successfully!");
+            } catch (profileError) {
+              console.warn(
+                "⚠️ Could not create user profile, continuing with basic auth:",
+                profileError.message
+              );
+              // Note: showWarning is not available, using console.warn instead
+            }
           } else {
-            console.log("📝 Updating existing user profile...");
-            const userProfile = {
-              email: firebaseUser.email,
-              name: firebaseUser.displayName || firebaseUser.email,
-              photoURL: firebaseUser.photoURL,
-              updatedAt: new Date().toISOString(),
-            };
-            await setDoc(doc(db, "users", firebaseUser.uid), userProfile, {
-              merge: true,
-            });
+            // Only update if there are actual changes to avoid unnecessary writes
+            const existingProfile = userDoc.data();
+            const hasChanges =
+              existingProfile.email !== firebaseUser.email ||
+              existingProfile.name !==
+                (firebaseUser.displayName || firebaseUser.email) ||
+              existingProfile.photoURL !== firebaseUser.photoURL;
+
+            if (hasChanges) {
+              console.log("📝 Updating existing user profile with changes...");
+              const userProfile = {
+                email: firebaseUser.email,
+                name: firebaseUser.displayName || firebaseUser.email,
+                photoURL: firebaseUser.photoURL,
+                updatedAt: new Date().toISOString(),
+              };
+
+              try {
+                await setDoc(doc(db, "users", firebaseUser.uid), userProfile, {
+                  merge: true,
+                });
+                console.log("✅ User profile updated successfully");
+                showInfo("Profile updated successfully!");
+              } catch (profileError) {
+                console.warn(
+                  "⚠️ Could not update user profile, continuing with basic auth:",
+                  profileError.message
+                );
+                // Note: showWarning is not available, using console.warn instead
+              }
+            } else {
+              console.log(
+                "✅ User profile already up to date, no changes needed"
+              );
+            }
           }
 
           const user = {
@@ -212,7 +269,7 @@ export const FirebaseAuthProvider = ({ children }) => {
     });
 
     return () => unsubscribe();
-  }, [auth, db]);
+  }, [auth, db, showSuccess, showInfo]);
 
   // Login with email and password
   const login = async (email, password) => {
@@ -291,7 +348,7 @@ export const FirebaseAuthProvider = ({ children }) => {
     }
   };
 
-  // Sign in with Google (using popup instead of redirect)
+  // Sign in with Google (using redirect to avoid CORS issues)
   const signInWithGoogle = async () => {
     console.log("🚀 Starting Google OAuth sign-in...");
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
@@ -304,12 +361,12 @@ export const FirebaseAuthProvider = ({ children }) => {
         prompt: "select_account",
       });
 
-      console.log("📱 Calling signInWithPopup...");
-      const result = await signInWithPopup(auth, provider);
+      // Use redirect instead of popup to avoid CORS issues
+      console.log("📱 Calling signInWithRedirect...");
+      await signInWithRedirect(auth, provider);
 
-      console.log("✅ Google sign-in successful:", result.user.email);
-
-      // The auth state change listener will handle the rest
+      showInfo("Redirecting to Google for authentication...");
+      // The auth state change listener will handle the rest after redirect
       return { success: true };
     } catch (error) {
       console.error("❌ Google OAuth error:", error);

@@ -40,8 +40,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if isOwner(userId) && isValidUser(request.resource.data);
       allow create: if isAuthenticated() && 
-        request.auth.uid == userId && 
-        isValidUser(request.resource.data);
+        request.auth.uid == userId;
     }
     
     // Users can perform all operations on their own transactions
