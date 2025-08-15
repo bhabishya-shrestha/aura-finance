@@ -12,18 +12,18 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
-import useStore from "../store";
+import useProductionStore from "../store/productionStore";
 import { CATEGORIES } from "../utils/statementParser";
 
 const TransactionsPage = () => {
   const {
     transactions,
-    loadTransactions,
     accounts,
     updateTransaction,
     deleteTransaction,
-    deleteTransactions,
-  } = useStore();
+    initialize,
+    isInitialized,
+  } = useProductionStore();
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -41,8 +41,10 @@ const TransactionsPage = () => {
   const [transactionToDelete, setTransactionToDelete] = useState(null);
 
   useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
+    if (!isInitialized) {
+      initialize();
+    }
+  }, [initialize, isInitialized]);
 
   useEffect(() => {
     let filtered = [...transactions];
@@ -167,7 +169,7 @@ const TransactionsPage = () => {
       await Promise.all(updatePromises);
       setShowBulkAssignment(false);
       setSelectedTransactions(new Set());
-      await loadTransactions();
+      // Transactions will be updated automatically via real-time listeners
     } catch (error) {
       if (import.meta.env.DEV) {
         console.error("Error in bulk account assignment:", error);
@@ -206,7 +208,7 @@ const TransactionsPage = () => {
       await Promise.all(updatePromises);
       setShowBulkYearAssignment(false);
       setSelectedTransactions(new Set());
-      await loadTransactions();
+      // Transactions will be updated automatically via real-time listeners
 
       if (import.meta.env.DEV) {
         console.log("Bulk year assignment completed successfully");
@@ -241,7 +243,7 @@ const TransactionsPage = () => {
       await Promise.all(updatePromises);
       setShowBulkCategoryAssignment(false);
       setSelectedTransactions(new Set());
-      await loadTransactions();
+      // Transactions will be updated automatically via real-time listeners
 
       if (import.meta.env.DEV) {
         console.log("Bulk category assignment completed successfully");
@@ -276,7 +278,7 @@ const TransactionsPage = () => {
         });
         setShowCategoryModal(false);
         setEditingTransaction(null);
-        await loadTransactions();
+        // Transactions will be updated automatically via real-time listeners
 
         if (import.meta.env.DEV) {
           console.log("Transaction category updated successfully");
@@ -294,7 +296,7 @@ const TransactionsPage = () => {
       await deleteTransaction(transactionId);
       setShowDeleteConfirm(false);
       setTransactionToDelete(null);
-      await loadTransactions();
+      // Transactions will be updated automatically via real-time listeners
     } catch (error) {
       if (import.meta.env.DEV) {
         console.error("Error deleting transaction:", error);
@@ -310,9 +312,13 @@ const TransactionsPage = () => {
         );
       }
 
-      await deleteTransactions(Array.from(selectedTransactions));
+      // Delete transactions one by one since we don't have a batch delete function
+      const deletePromises = Array.from(selectedTransactions).map(
+        transactionId => deleteTransaction(transactionId)
+      );
+      await Promise.all(deletePromises);
       setSelectedTransactions(new Set());
-      await loadTransactions();
+      // Transactions will be updated automatically via real-time listeners
 
       if (import.meta.env.DEV) {
         console.log("Batch delete completed successfully");

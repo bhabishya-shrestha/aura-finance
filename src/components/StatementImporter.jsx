@@ -66,7 +66,12 @@ const StatementImporter = ({
   // Set the AI provider based on settings
   useEffect(() => {
     if (settings.aiProvider) {
-      aiService.setProvider(settings.aiProvider);
+      try {
+        aiService.setProvider(settings.aiProvider);
+      } catch (error) {
+        console.warn("Failed to set AI provider:", error.message);
+        // Don't throw error, just log it
+      }
     }
   }, [settings.aiProvider]);
 

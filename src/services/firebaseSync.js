@@ -12,6 +12,8 @@ class FirebaseSyncService {
     this.syncInProgress = false;
     this.lastSyncTime = null;
     this.deletedItems = new Set(); // Track deleted items to prevent restoration
+    this.isInitialized = false;
+    this.initializationPromise = null;
 
     // Listen for online/offline changes
     window.addEventListener("online", () => {
@@ -28,6 +30,34 @@ class FirebaseSyncService {
    * Initialize sync service
    */
   async initialize() {
+    // Prevent multiple simultaneous initializations
+    if (this.isInitialized) {
+      console.log("🔄 Firebase sync already initialized, skipping");
+      return;
+    }
+
+    if (this.initializationPromise) {
+      console.log(
+        "🔄 Firebase sync initialization already in progress, waiting"
+      );
+      return this.initializationPromise;
+    }
+
+    this.initializationPromise = this._initialize();
+
+    try {
+      await this.initializationPromise;
+    } finally {
+      this.initializationPromise = null;
+    }
+
+    return this.initializationPromise;
+  }
+
+  /**
+   * Internal initialization method
+   */
+  async _initialize() {
     try {
       // Check if user is authenticated with Firebase
       const user = await firebaseService.getCurrentUser();
@@ -35,6 +65,7 @@ class FirebaseSyncService {
         console.log("🔄 Firebase sync initialized for user:", user.uid);
         await this.syncData();
         this.startPeriodicSync();
+        this.isInitialized = true;
       } else {
         console.log("🔄 Firebase sync: No authenticated user found");
       }
@@ -394,6 +425,8 @@ class FirebaseSyncService {
   clearAllSyncState() {
     this.deletedItems.clear();
     this.lastSyncTime = null;
+    this.isInitialized = false;
+    this.initializationPromise = null;
     localStorage.removeItem("deletedItems");
     if (import.meta.env.DEV) {
       console.log("🧹 All sync state cleared");

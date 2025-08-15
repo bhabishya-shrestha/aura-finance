@@ -760,9 +760,27 @@ const useStore = create(
         // Get transactions by account
         getTransactionsByAccount: accountId => {
           const { transactions } = get();
+          if (import.meta.env.DEV) {
+            console.log("🔍 Filtering transactions for account:", accountId);
+            console.log("📊 Available transactions:", transactions.length);
+            console.log(
+              "💳 Account IDs in transactions:",
+              transactions.map(t => ({
+                id: t.id,
+                accountId: t.accountId,
+                type: typeof t.accountId,
+              }))
+            );
+          }
           return transactions.filter(
             transaction => transaction.accountId === accountId
           );
+        },
+
+        // Get recent transactions
+        getRecentTransactions: (limit = 5) => {
+          const { transactions } = get();
+          return transactions.slice(0, limit);
         },
 
         // Calculate account stats

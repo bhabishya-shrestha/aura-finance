@@ -273,16 +273,30 @@ class SecurityMiddleware {
       sanitizedCategory = "other"; // Default category
     }
 
-    return {
+    const sanitizedTransaction = {
       ...transaction,
       date: sanitizedDate,
       category: sanitizedCategory,
       description: this.sanitizeInput(transaction.description),
-      note: transaction.note ? this.sanitizeInput(transaction.note) : undefined,
-      tags: transaction.tags
-        ? transaction.tags.map(tag => this.sanitizeInput(tag))
-        : undefined,
     };
+
+    // Only include note if it exists and is not empty
+    if (transaction.note && transaction.note.trim()) {
+      sanitizedTransaction.note = this.sanitizeInput(transaction.note);
+    }
+
+    // Only include tags if they exist and are not empty
+    if (
+      transaction.tags &&
+      Array.isArray(transaction.tags) &&
+      transaction.tags.length > 0
+    ) {
+      sanitizedTransaction.tags = transaction.tags.map(tag =>
+        this.sanitizeInput(tag)
+      );
+    }
+
+    return sanitizedTransaction;
   }
 
   /**

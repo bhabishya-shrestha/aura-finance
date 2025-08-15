@@ -7,11 +7,13 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import {
+  FirebaseAuthProvider,
+  useFirebaseAuth,
+} from "./contexts/FirebaseAuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import AuthPage from "./pages/AuthPage";
-import AuthCallbackPage from "./pages/AuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
 import AccountsPage from "./pages/AccountsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
@@ -30,12 +32,11 @@ import FirebaseTest from "./components/FirebaseTest";
 import { initializeDatabase } from "./database";
 import useStore from "./store";
 import { useMobileViewport } from "./hooks/useMobileViewport";
-import firebaseSync from "./services/firebaseSync";
-import authBridge from "./services/authBridge";
+// Removed firebaseSync import as it's no longer needed
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading, isInitialized } = useAuth();
+  const { isAuthenticated, isLoading, isInitialized } = useFirebaseAuth();
 
   if (!isInitialized || isLoading) {
     return (
@@ -296,7 +297,7 @@ const AppLayout = () => {
 
 // Main App Content Component
 const AppContent = () => {
-  const { isAuthenticated, isInitialized } = useAuth();
+  const { isAuthenticated, isInitialized } = useFirebaseAuth();
 
   // Handle route parameter from 404 redirect
   useEffect(() => {
@@ -339,7 +340,6 @@ const AppContent = () => {
           isAuthenticated ? <Navigate to="/dashboard" replace /> : <AuthPage />
         }
       />
-      <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
       {/* Protected routes */}
       <Route
@@ -410,35 +410,11 @@ const AppContent = () => {
 
 // Main App Component with Providers
 const App = () => {
-  // Initialize Firebase sync when app starts
-  useEffect(() => {
-    let isInitializing = false;
-
-    const initializeSync = async () => {
-      if (isInitializing) return;
-      isInitializing = true;
-
-      try {
-        // Initialize auth bridge (links Supabase OAuth to Firebase)
-        await authBridge.initialize();
-
-        // Initialize Firebase sync (will be called by auth bridge if user is linked)
-        await firebaseSync.initialize();
-      } catch (error) {
-        console.log("App initialization error:", error);
-      } finally {
-        isInitializing = false;
-      }
-    };
-
-    initializeSync();
-  }, []);
-
   return (
     <ErrorBoundary>
       <ThemeProvider>
         <SettingsProvider>
-          <AuthProvider>
+          <FirebaseAuthProvider>
             <Router
               future={{
                 v7_startTransition: true,
@@ -447,7 +423,7 @@ const App = () => {
             >
               <AppContent />
             </Router>
-          </AuthProvider>
+          </FirebaseAuthProvider>
         </SettingsProvider>
       </ThemeProvider>
     </ErrorBoundary>

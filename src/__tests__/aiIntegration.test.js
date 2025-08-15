@@ -198,9 +198,9 @@ describe("AI Integration Tests", () => {
         approachingLimit: true,
       });
 
-      await expect(aiService.setProvider("gemini")).rejects.toThrow(
-        "Daily limit exceeded for Gemini API. Please try again tomorrow or switch providers."
-      );
+      // Should handle gracefully by disabling the provider instead of throwing
+      await aiService.setProvider("gemini");
+      expect(aiService.currentProvider).toBe(null); // Provider should be disabled
     });
   });
 

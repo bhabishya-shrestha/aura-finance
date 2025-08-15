@@ -50,12 +50,17 @@ const firebaseConfig = {
     process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId:
     import.meta.env?.VITE_FIREBASE_APP_ID || process.env.VITE_FIREBASE_APP_ID,
+  // Disable hosted configuration loading
+  measurementId: undefined,
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+// Export app for use in other modules
+export { app };
 
 // Initialize security middleware with the Firestore instance
 SecurityMiddleware.initializeFirebase(db).catch(error => {
@@ -65,6 +70,8 @@ SecurityMiddleware.initializeFirebase(db).catch(error => {
 class FirebaseService {
   constructor() {
     this.currentUser = null;
+    this.transactionUnsubscribe = null;
+    this.accountUnsubscribe = null;
     this.setupAuthListener();
   }
 
@@ -179,6 +186,11 @@ class FirebaseService {
         this.currentUser.uid
       );
 
+      // Remove any undefined values that might have slipped through
+      const cleanData = Object.fromEntries(
+        Object.entries(sanitizedData).filter(([, value]) => value !== undefined)
+      );
+
       // Check rate limiting
       if (
         !SecurityMiddleware.checkRateLimit(this.currentUser.uid, "transactions")
@@ -209,10 +221,7 @@ class FirebaseService {
         );
       }
 
-      const docRef = await addDoc(
-        collection(db, "transactions"),
-        sanitizedData
-      );
+      const docRef = await addDoc(collection(db, "transactions"), cleanData);
 
       // Log successful operation
       await SecurityMiddleware.logSecurityEvent(
@@ -227,7 +236,7 @@ class FirebaseService {
 
       return {
         success: true,
-        data: { ...sanitizedData, id: docRef.id },
+        data: { ...cleanData, id: docRef.id },
       };
     } catch (error) {
       console.error("Add transaction error:", error);
@@ -236,23 +245,9 @@ class FirebaseService {
   }
 
   async getTransactionsSimple() {
-    // Check if user is authenticated either directly or through auth bridge
+    // Check if user is authenticated
     if (!this.currentUser) {
-      // Try to get user from auth bridge
-      try {
-        const { default: authBridge } = await import("./authBridge.js");
-        const userInfo = await authBridge.getUserSyncInfo();
-        if (!userInfo?.firebaseUser) {
-          return {
-            success: false,
-            error: "User not authenticated with Firebase",
-          };
-        }
-        // Set the current user from auth bridge
-        this.currentUser = userInfo.firebaseUser;
-      } catch (error) {
-        return { success: false, error: "User not authenticated" };
-      }
+      return { success: false, error: "User not authenticated" };
     }
 
     try {
@@ -276,23 +271,9 @@ class FirebaseService {
   }
 
   async getTransactions(filters = {}) {
-    // Check if user is authenticated either directly or through auth bridge
+    // Check if user is authenticated
     if (!this.currentUser) {
-      // Try to get user from auth bridge
-      try {
-        const { default: authBridge } = await import("./authBridge.js");
-        const userInfo = await authBridge.getUserSyncInfo();
-        if (!userInfo?.firebaseUser) {
-          return {
-            success: false,
-            error: "User not authenticated with Firebase",
-          };
-        }
-        // Set the current user from auth bridge
-        this.currentUser = userInfo.firebaseUser;
-      } catch (error) {
-        return { success: false, error: "User not authenticated" };
-      }
+      return { success: false, error: "User not authenticated" };
     }
 
     try {
@@ -329,23 +310,9 @@ class FirebaseService {
   }
 
   async updateTransaction(transactionId, updates) {
-    // Check if user is authenticated either directly or through auth bridge
+    // Check if user is authenticated
     if (!this.currentUser) {
-      // Try to get user from auth bridge
-      try {
-        const { default: authBridge } = await import("./authBridge.js");
-        const userInfo = await authBridge.getUserSyncInfo();
-        if (!userInfo?.firebaseUser) {
-          return {
-            success: false,
-            error: "User not authenticated with Firebase",
-          };
-        }
-        // Set the current user from auth bridge
-        this.currentUser = userInfo.firebaseUser;
-      } catch (error) {
-        return { success: false, error: "User not authenticated" };
-      }
+      return { success: false, error: "User not authenticated" };
     }
 
     try {
@@ -397,23 +364,9 @@ class FirebaseService {
   }
 
   async deleteTransaction(transactionId) {
-    // Check if user is authenticated either directly or through auth bridge
+    // Check if user is authenticated
     if (!this.currentUser) {
-      // Try to get user from auth bridge
-      try {
-        const { default: authBridge } = await import("./authBridge.js");
-        const userInfo = await authBridge.getUserSyncInfo();
-        if (!userInfo?.firebaseUser) {
-          return {
-            success: false,
-            error: "User not authenticated with Firebase",
-          };
-        }
-        // Set the current user from auth bridge
-        this.currentUser = userInfo.firebaseUser;
-      } catch (error) {
-        return { success: false, error: "User not authenticated" };
-      }
+      return { success: false, error: "User not authenticated" };
     }
 
     try {
@@ -465,11 +418,18 @@ class FirebaseService {
         updatedAt: serverTimestamp(),
       };
 
-      const docRef = await addDoc(collection(db, "accounts"), accountWithUser);
+      // Remove any undefined values that might have slipped through
+      const cleanData = Object.fromEntries(
+        Object.entries(accountWithUser).filter(
+          ([, value]) => value !== undefined
+        )
+      );
+
+      const docRef = await addDoc(collection(db, "accounts"), cleanData);
 
       return {
         success: true,
-        data: { ...accountWithUser, id: docRef.id },
+        data: { ...cleanData, id: docRef.id },
       };
     } catch (error) {
       console.error("Add account error:", error);
@@ -478,23 +438,9 @@ class FirebaseService {
   }
 
   async getAccounts() {
-    // Check if user is authenticated either directly or through auth bridge
+    // Check if user is authenticated
     if (!this.currentUser) {
-      // Try to get user from auth bridge
-      try {
-        const { default: authBridge } = await import("./authBridge.js");
-        const userInfo = await authBridge.getUserSyncInfo();
-        if (!userInfo?.firebaseUser) {
-          return {
-            success: false,
-            error: "User not authenticated with Firebase",
-          };
-        }
-        // Set the current user from auth bridge
-        this.currentUser = userInfo.firebaseUser;
-      } catch (error) {
-        return { success: false, error: "User not authenticated" };
-      }
+      return { success: false, error: "User not authenticated" };
     }
 
     try {
@@ -537,23 +483,9 @@ class FirebaseService {
   }
 
   async deleteAccount(accountId) {
-    // Check if user is authenticated either directly or through auth bridge
+    // Check if user is authenticated
     if (!this.currentUser) {
-      // Try to get user from auth bridge
-      try {
-        const { default: authBridge } = await import("./authBridge.js");
-        const userInfo = await authBridge.getUserSyncInfo();
-        if (!userInfo?.firebaseUser) {
-          return {
-            success: false,
-            error: "User not authenticated with Firebase",
-          };
-        }
-        // Set the current user from auth bridge
-        this.currentUser = userInfo.firebaseUser;
-      } catch (error) {
-        return { success: false, error: "User not authenticated" };
-      }
+      return { success: false, error: "User not authenticated" };
     }
 
     try {
@@ -617,24 +549,36 @@ class FirebaseService {
       return null;
     }
 
+    // Unsubscribe from previous listener if exists
+    if (this.transactionUnsubscribe) {
+      this.transactionUnsubscribe();
+    }
+
     const q = query(
       collection(db, "transactions"),
       where("userId", "==", this.currentUser.uid),
       orderBy("date", "desc")
     );
 
-    return onSnapshot(q, snapshot => {
+    this.transactionUnsubscribe = onSnapshot(q, snapshot => {
       const transactions = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       }));
       callback(transactions);
     });
+
+    return this.transactionUnsubscribe;
   }
 
   subscribeToAccounts(callback) {
     if (!this.currentUser) {
       return null;
+    }
+
+    // Unsubscribe from previous listener if exists
+    if (this.accountUnsubscribe) {
+      this.accountUnsubscribe();
     }
 
     const q = query(
@@ -643,13 +587,30 @@ class FirebaseService {
       orderBy("createdAt", "desc")
     );
 
-    return onSnapshot(q, snapshot => {
+    this.accountUnsubscribe = onSnapshot(q, snapshot => {
       const accounts = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       }));
       callback(accounts);
     });
+
+    return this.accountUnsubscribe;
+  }
+
+  // Unsubscribe methods
+  unsubscribeFromTransactions() {
+    if (this.transactionUnsubscribe) {
+      this.transactionUnsubscribe();
+      this.transactionUnsubscribe = null;
+    }
+  }
+
+  unsubscribeFromAccounts() {
+    if (this.accountUnsubscribe) {
+      this.accountUnsubscribe();
+      this.accountUnsubscribe = null;
+    }
   }
 
   // Data export/import
@@ -713,7 +674,8 @@ class FirebaseService {
 
   // Get current user
   getCurrentUser() {
-    return this.currentUser;
+    // Get the current user from Firebase Auth directly
+    return auth.currentUser;
   }
 
   // Check if user is authenticated

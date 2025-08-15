@@ -7,7 +7,8 @@ import {
   Upload,
   FileText,
 } from "lucide-react";
-import useStore from "../store";
+import useProductionStore from "../store/productionStore";
+import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 import StatementImporter from "../components/StatementImporter";
 import MobileStatementImporter from "../components/MobileStatementImporter";
 import AddTransaction from "../components/AddTransaction";
@@ -19,13 +20,9 @@ const DashboardPage = ({
   onImportClick,
   isModalOnly = false,
 }) => {
-  const {
-    transactions,
-    accounts,
-    addTransactions,
-    loadTransactions,
-    loadAccounts,
-  } = useStore();
+  const { transactions, accounts, addTransactions, initialize, isInitialized } =
+    useProductionStore();
+  const { isAuthenticated, isInitialized: authInitialized } = useFirebaseAuth();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [error, setError] = useState("");
@@ -34,9 +31,12 @@ const DashboardPage = ({
   const { isMobile } = useMobileViewport();
 
   useEffect(() => {
-    loadTransactions();
-    loadAccounts();
-  }, [loadTransactions, loadAccounts]);
+    // Only initialize the store when user is authenticated and auth is initialized
+    if (authInitialized && isAuthenticated && !isInitialized) {
+      console.log("🔐 User authenticated, initializing production store...");
+      initialize();
+    }
+  }, [authInitialized, isAuthenticated, isInitialized, initialize]);
 
   // Handle import trigger from floating action button
   useEffect(() => {
@@ -72,8 +72,7 @@ const DashboardPage = ({
       // Add the assigned transactions
       await addTransactions(assignedTransactions);
 
-      // Reload transactions to get updated data
-      await loadTransactions();
+      // Transactions will be updated automatically via real-time listeners
 
       // Close modal
       setIsImportModalOpen(false);

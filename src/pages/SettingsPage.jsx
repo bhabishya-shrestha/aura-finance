@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { useSettings } from "../contexts/SettingsContext";
 import { useTheme } from "../contexts/ThemeContext";
-import { useAuth } from "../contexts/AuthContext";
+import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 import useStore from "../store";
 import aiService from "../services/aiService";
 
@@ -35,7 +35,7 @@ const SettingsPage = () => {
     importSettings,
   } = useSettings();
   const { setTheme, currentTheme } = useTheme();
-  const { user } = useAuth();
+  const { user } = useFirebaseAuth();
   const {
     transactions,
     accounts,

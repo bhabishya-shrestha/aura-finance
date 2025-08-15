@@ -62,26 +62,37 @@ class AIService {
       throw new Error(`Invalid provider: ${provider}`);
     }
 
-    // Validate that user can use this provider
-    const validation = await apiUsageService.validateApiUsage(provider);
-
-    if (!validation.can_proceed) {
-      throw new Error(
-        `Daily limit exceeded for ${this.providers[provider].name}. Please try again tomorrow or switch providers.`
-      );
-    }
-
-    this.currentProvider = provider;
-
-    // Save to localStorage
     try {
-      const settings = JSON.parse(
-        localStorage.getItem("aura_settings") || "{}"
-      );
-      settings.aiProvider = provider;
-      localStorage.setItem("aura_settings", JSON.stringify(settings));
+      // Validate that user can use this provider
+      const validation = await apiUsageService.validateApiUsage(provider);
+
+      if (!validation.can_proceed) {
+        console.warn(
+          `Daily limit exceeded for ${this.providers[provider].name}. Provider will be disabled.`
+        );
+        // Don't throw error, just disable the provider
+        this.currentProvider = null;
+        return;
+      }
+
+      this.currentProvider = provider;
+
+      // Save to localStorage
+      try {
+        const settings = JSON.parse(
+          localStorage.getItem("aura_settings") || "{}"
+        );
+        settings.aiProvider = provider;
+        localStorage.setItem("aura_settings", JSON.stringify(settings));
+      } catch (error) {
+        // console.warn("Failed to save AI provider setting:", error);
+      }
     } catch (error) {
-      // console.warn("Failed to save AI provider setting:", error);
+      console.warn(
+        "Failed to validate API usage, disabling AI provider:",
+        error.message
+      );
+      this.currentProvider = null;
     }
   }
 

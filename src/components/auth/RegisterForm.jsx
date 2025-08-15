@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Mail, Lock, User, Loader2 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useFirebaseAuth } from "../../contexts/FirebaseAuthContext";
 import auraLogo from "../../assets/aura-finance.png";
 
 const RegisterForm = ({ onSwitchToLogin }) => {
@@ -14,7 +14,7 @@ const RegisterForm = ({ onSwitchToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const { register, isLoading, error, clearError } = useAuth();
+  const { register, isLoading, error, clearError } = useFirebaseAuth();
 
   const validateForm = () => {
     const newErrors = {};
