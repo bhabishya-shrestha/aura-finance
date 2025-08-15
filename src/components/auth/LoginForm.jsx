@@ -1,6 +1,10 @@
-import React, { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle } from "lucide-react";
 import { useFirebaseAuth } from "../../contexts/FirebaseAuthContext";
+import {
+  debugLocalhostAuth,
+  checkCommonLocalhostIssues,
+} from "../../utils/localhostConfig";
 import auraLogo from "../../assets/aura-finance.png";
 
 const LoginForm = ({ onSwitchToRegister }) => {
@@ -10,8 +14,20 @@ const LoginForm = ({ onSwitchToRegister }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [localhostIssues, setLocalhostIssues] = useState([]);
   const { login, signInWithGoogle, isLoading, error, clearError } =
     useFirebaseAuth();
+
+  // Check for localhost issues on component mount
+  useEffect(() => {
+    const issues = checkCommonLocalhostIssues();
+    setLocalhostIssues(issues);
+
+    if (issues.length > 0) {
+      console.log("🏠 Localhost issues detected:", issues);
+      debugLocalhostAuth();
+    }
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -91,6 +107,33 @@ const LoginForm = ({ onSwitchToRegister }) => {
             Sign in to your Aura Finance account
           </p>
         </div>
+
+        {/* Localhost Issues Display */}
+        {localhostIssues.length > 0 && (
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
+                  Localhost Configuration Issues Detected
+                </p>
+                <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
+                  {localhostIssues.map((issue, index) => (
+                    <li key={index} className="flex items-start gap-1">
+                      <span className="text-yellow-600 dark:text-yellow-400">
+                        •
+                      </span>
+                      <span>{issue}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+                  Check the browser console for detailed debugging information.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Error Display */}
         {error && (
@@ -217,16 +260,17 @@ const LoginForm = ({ onSwitchToRegister }) => {
             type="button"
             onClick={async () => {
               console.log("Google OAuth button clicked");
-              console.log("Environment check:");
-              console.log(
-                "- VITE_ENABLE_OAUTH:",
-                import.meta.env?.VITE_ENABLE_OAUTH
-              );
-              console.log(
-                "- VITE_FIREBASE_AUTH_DOMAIN:",
-                import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN
-              );
-              console.log("- Current URL:", window.location.href);
+
+              // Run localhost debugging if on localhost
+              if (
+                window.location.hostname === "localhost" ||
+                window.location.hostname === "127.0.0.1"
+              ) {
+                console.log(
+                  "🏠 Running on localhost - debugging OAuth configuration..."
+                );
+                debugLocalhostAuth();
+              }
 
               try {
                 const result = await signInWithGoogle();
