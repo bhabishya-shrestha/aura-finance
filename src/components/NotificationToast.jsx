@@ -5,7 +5,7 @@ import { useNotifications } from "../contexts/NotificationContext";
 const NotificationToast = () => {
   const { notifications, removeNotification } = useNotifications();
 
-  const getIcon = (type) => {
+  const getIcon = type => {
     switch (type) {
       case "success":
         return <CheckCircle className="w-5 h-5 text-green-500" />;
@@ -20,7 +20,7 @@ const NotificationToast = () => {
     }
   };
 
-  const getBackgroundColor = (type) => {
+  const getBackgroundColor = type => {
     switch (type) {
       case "success":
         return "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800";
@@ -35,7 +35,7 @@ const NotificationToast = () => {
     }
   };
 
-  const getTextColor = (type) => {
+  const getTextColor = type => {
     switch (type) {
       case "success":
         return "text-green-800 dark:text-green-200";
@@ -56,7 +56,7 @@ const NotificationToast = () => {
 
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
-      {notifications.map((notification) => (
+      {notifications.map(notification => (
         <div
           key={notification.id}
           className={`flex items-start gap-3 p-4 rounded-lg border shadow-lg animate-in slide-in-from-right-2 duration-300 ${getBackgroundColor(
@@ -67,7 +67,9 @@ const NotificationToast = () => {
             {getIcon(notification.type)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className={`text-sm font-medium ${getTextColor(notification.type)}`}>
+            <p
+              className={`text-sm font-medium ${getTextColor(notification.type)}`}
+            >
               {notification.message}
             </p>
           </div>

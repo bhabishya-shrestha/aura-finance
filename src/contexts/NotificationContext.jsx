@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
 
 const NotificationContext = createContext();
 
@@ -14,33 +20,36 @@ export const useNotifications = () => {
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
-
-  const addNotification = useCallback(
-    notification => {
-      const id = Date.now() + Math.random();
-      const newNotification = {
-        id,
-        ...notification,
-        timestamp: new Date(),
-      };
-
-      setNotifications(prev => [...prev, newNotification]);
-
-      // Auto-remove after duration (default 5 seconds)
-      const duration = notification.duration || 5000;
-      setTimeout(() => {
-        removeNotification(id);
-      }, duration);
-
-      return id;
-    },
-    [removeNotification]
-  );
+  const removeNotificationRef = useRef();
 
   const removeNotification = useCallback(id => {
     setNotifications(prev =>
       prev.filter(notification => notification.id !== id)
     );
+  }, []);
+
+  // Store the removeNotification function in the ref
+  removeNotificationRef.current = removeNotification;
+
+  const addNotification = useCallback(notification => {
+    const id = Date.now() + Math.random();
+    const newNotification = {
+      id,
+      ...notification,
+      timestamp: new Date(),
+    };
+
+    setNotifications(prev => [...prev, newNotification]);
+
+    // Auto-remove after duration (default 5 seconds)
+    const duration = notification.duration || 5000;
+    setTimeout(() => {
+      if (removeNotificationRef.current) {
+        removeNotificationRef.current(id);
+      }
+    }, duration);
+
+    return id;
   }, []);
 
   const clearAllNotifications = useCallback(() => {
