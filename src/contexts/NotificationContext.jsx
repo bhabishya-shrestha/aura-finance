@@ -15,24 +15,27 @@ export const useNotifications = () => {
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
 
-  const addNotification = useCallback(notification => {
-    const id = Date.now() + Math.random();
-    const newNotification = {
-      id,
-      ...notification,
-      timestamp: new Date(),
-    };
+  const addNotification = useCallback(
+    notification => {
+      const id = Date.now() + Math.random();
+      const newNotification = {
+        id,
+        ...notification,
+        timestamp: new Date(),
+      };
 
-    setNotifications(prev => [...prev, newNotification]);
+      setNotifications(prev => [...prev, newNotification]);
 
-    // Auto-remove after duration (default 5 seconds)
-    const duration = notification.duration || 5000;
-    setTimeout(() => {
-      removeNotification(id);
-    }, duration);
+      // Auto-remove after duration (default 5 seconds)
+      const duration = notification.duration || 5000;
+      setTimeout(() => {
+        removeNotification(id);
+      }, duration);
 
-    return id;
-  }, []);
+      return id;
+    },
+    [removeNotification]
+  );
 
   const removeNotification = useCallback(id => {
     setNotifications(prev =>

@@ -7,7 +7,6 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   GoogleAuthProvider,
-  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   sendPasswordResetEmail,
@@ -140,7 +139,7 @@ export const FirebaseAuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const { showSuccess, showError, showInfo } = useNotifications();
+  const { showSuccess, showInfo } = useNotifications();
 
   // Listen for auth state changes
   useEffect(() => {
@@ -194,9 +193,7 @@ export const FirebaseAuthProvider = ({ children }) => {
                 "⚠️ Could not create user profile, continuing with basic auth:",
                 profileError.message
               );
-              showWarning(
-                "Profile creation failed, but you can still use the app"
-              );
+              // Note: showWarning is not available, using console.warn instead
             }
           } else {
             // Only update if there are actual changes to avoid unnecessary writes
@@ -227,9 +224,7 @@ export const FirebaseAuthProvider = ({ children }) => {
                   "⚠️ Could not update user profile, continuing with basic auth:",
                   profileError.message
                 );
-                showWarning(
-                  "Profile update failed, but you can still use the app"
-                );
+                // Note: showWarning is not available, using console.warn instead
               }
             } else {
               console.log(
@@ -274,7 +269,7 @@ export const FirebaseAuthProvider = ({ children }) => {
     });
 
     return () => unsubscribe();
-  }, [auth, db]);
+  }, [auth, db, showSuccess, showInfo]);
 
   // Login with email and password
   const login = async (email, password) => {
