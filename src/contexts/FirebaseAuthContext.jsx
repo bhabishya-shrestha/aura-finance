@@ -37,6 +37,85 @@ const initialState = {
   isInitialized: false,
 };
 
+// Helper function to detect localhost
+const isLocalhost = () => {
+  return (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname.includes("localhost")
+  );
+};
+
+// Helper function to get Firebase error messages
+const getFirebaseErrorMessage = errorCode => {
+  const errorMessages = {
+    "auth/user-not-found": "No account found with this email address.",
+    "auth/wrong-password": "Incorrect password. Please try again.",
+    "auth/invalid-email": "Please enter a valid email address.",
+    "auth/weak-password": "Password should be at least 6 characters.",
+    "auth/email-already-in-use": "An account with this email already exists.",
+    "auth/too-many-requests":
+      "Too many failed attempts. Please try again later.",
+    "auth/network-request-failed":
+      "Network error. Please check your connection.",
+    "auth/popup-closed-by-user": "Login was cancelled.",
+    "auth/cancelled-popup-request": "Login was cancelled.",
+    "auth/popup-blocked":
+      "Popup was blocked. Please allow popups for this site.",
+    "auth/account-exists-with-different-credential":
+      "An account already exists with the same email but different sign-in credentials.",
+    "auth/operation-not-allowed": "This sign-in method is not enabled.",
+    "auth/invalid-credential": "Invalid credentials. Please try again.",
+    "auth/user-disabled": "This account has been disabled.",
+    "auth/requires-recent-login": "Please log in again to continue.",
+    "auth/redirect-cancelled-by-user": "Login was cancelled.",
+    "auth/redirect-operation-pending": "Login is already in progress.",
+    "auth/timeout": "Login timed out. Please try again.",
+    "auth/unauthorized-domain":
+      "This domain is not authorized for OAuth sign-in.",
+    "auth/unsupported-persistence-type":
+      "This browser doesn't support the requested persistence type.",
+    "auth/web-storage-unsupported": "This browser doesn't support web storage.",
+    "auth/invalid-api-key": "Invalid API key. Please check your configuration.",
+    "auth/invalid-app-credential": "Invalid app credential.",
+    "auth/invalid-app-id": "Invalid app ID.",
+    "auth/invalid-user-token": "Invalid user token.",
+    "auth/invalid-tenant-id": "Invalid tenant ID.",
+    "auth/tenant-id-mismatch": "Tenant ID mismatch.",
+    "auth/operation-not-supported-in-this-environment":
+      "This operation is not supported in this environment.",
+    "auth/auth-domain-config-required":
+      "Auth domain configuration is required.",
+    "auth/missing-app-credential": "Missing app credential.",
+    "auth/missing-verification-code": "Missing verification code.",
+    "auth/missing-verification-id": "Missing verification ID.",
+    "auth/quota-exceeded": "Quota exceeded.",
+    "auth/retry-phone-auth": "Retry phone authentication.",
+    "auth/session-expired": "Session expired. Please log in again.",
+    "auth/unsupported-first-factor": "Unsupported first factor.",
+    "auth/unsupported-tenant-operation": "Unsupported tenant operation.",
+    "auth/unverified-email": "Please verify your email address.",
+    "auth/user-token-expired": "User token expired.",
+    "auth/web-api-not-available": "Web API not available.",
+    "auth/expired-action-code": "Action code expired.",
+    "auth/invalid-action-code": "Invalid action code.",
+    "auth/missing-action-code": "Missing action code.",
+    "auth/credential-already-in-use":
+      "This credential is already associated with another account.",
+    "auth/email-change-needs-verification": "Email change needs verification.",
+    "auth/missing-iframe-start": "Missing iframe start.",
+    "auth/auth/invalid-recaptcha-token": "Invalid reCAPTCHA token.",
+    "auth/missing-recaptcha-token": "Missing reCAPTCHA token.",
+    "auth/invalid-recaptcha-action": "Invalid reCAPTCHA action.",
+    "auth/missing-client-type": "Missing client type.",
+    "auth/missing-recaptcha-version": "Missing reCAPTCHA version.",
+    "auth/invalid-recaptcha-version": "Invalid reCAPTCHA version.",
+    "auth/invalid-req-type": "Invalid request type.",
+  };
+
+  return errorMessages[errorCode] || `Authentication error: ${errorCode}`;
+};
+
 // Reducer function
 const authReducer = (state, action) => {
   switch (action.type) {
@@ -107,75 +186,53 @@ const authReducer = (state, action) => {
   }
 };
 
-// Firebase error message helper
-const getFirebaseErrorMessage = errorCode => {
-  const errorMessages = {
-    "auth/user-not-found": "No account found with this email address.",
-    "auth/wrong-password": "Incorrect password.",
-    "auth/email-already-in-use": "An account with this email already exists.",
-    "auth/weak-password": "Password should be at least 6 characters.",
-    "auth/invalid-email": "Please enter a valid email address.",
-    "auth/popup-closed-by-user": "Sign-in was cancelled.",
-    "auth/popup-blocked":
-      "Sign-in popup was blocked. Please allow popups for this site.",
-    "auth/cancelled-popup-request": "Sign-in was cancelled.",
-    "auth/account-exists-with-different-credential":
-      "An account already exists with the same email address but different sign-in credentials.",
-    "auth/operation-not-allowed": "This sign-in method is not enabled.",
-    "auth/user-disabled": "This account has been disabled.",
-    "auth/too-many-requests":
-      "Too many failed attempts. Please try again later.",
-    "auth/network-request-failed":
-      "Network error. Please check your connection.",
-  };
-  return errorMessages[errorCode] || "An error occurred. Please try again.";
-};
-
 // Create context
 const FirebaseAuthContext = createContext();
+
+// Custom hook to use the auth context
+export const useFirebaseAuth = () => {
+  const context = useContext(FirebaseAuthContext);
+  if (!context) {
+    throw new Error(
+      "useFirebaseAuth must be used within a FirebaseAuthProvider"
+    );
+  }
+  return context;
+};
 
 // Provider component
 export const FirebaseAuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const { showSuccess, showInfo } = useNotifications();
+
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const { showSuccess, showInfo } = useNotifications();
 
   // Listen for auth state changes
   useEffect(() => {
     console.log("🔐 Setting up Firebase Auth listener...");
 
-    // Handle redirect result first
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          console.log("✅ Redirect result received:", result.user.email);
-        }
-      } catch (error) {
-        console.error("❌ Error handling redirect result:", error);
-      }
-    };
-
-    // Handle redirect result immediately
-    handleRedirectResult();
-
     const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
-      console.log(
-        "🔄 Auth state changed:",
-        firebaseUser ? firebaseUser.email : "signed out"
-      );
-
       if (firebaseUser) {
+        console.log("🔄 Auth state changed:", firebaseUser.email);
+
         try {
-          // Get or create user profile
+          // Handle redirect result for OAuth
+          const result = await getRedirectResult(auth);
+          if (result) {
+            console.log(
+              "✅ OAuth redirect result received:",
+              result.user.email
+            );
+            showSuccess("Successfully signed in with Google!");
+          }
+
+          // Check if user profile exists in Firestore
           const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
 
           if (!userDoc.exists()) {
-            console.log(
-              "📝 Creating new user profile for:",
-              firebaseUser.email
-            );
+            // Create new user profile
+            console.log("📝 Creating new user profile...");
             const userProfile = {
               email: firebaseUser.email,
               name: firebaseUser.displayName || firebaseUser.email,
@@ -196,7 +253,7 @@ export const FirebaseAuthProvider = ({ children }) => {
               // Note: showWarning is not available, using console.warn instead
             }
           } else {
-            // Only update if there are actual changes to avoid unnecessary writes
+            // Update existing profile if there are changes
             const existingProfile = userDoc.data();
             const hasChanges =
               existingProfile.email !== firebaseUser.email ||
@@ -205,8 +262,9 @@ export const FirebaseAuthProvider = ({ children }) => {
               existingProfile.photoURL !== firebaseUser.photoURL;
 
             if (hasChanges) {
-              console.log("📝 Updating existing user profile with changes...");
-              const userProfile = {
+              console.log("📝 Updating existing user profile...");
+              const updatedProfile = {
+                ...existingProfile,
                 email: firebaseUser.email,
                 name: firebaseUser.displayName || firebaseUser.email,
                 photoURL: firebaseUser.photoURL,
@@ -214,9 +272,10 @@ export const FirebaseAuthProvider = ({ children }) => {
               };
 
               try {
-                await setDoc(doc(db, "users", firebaseUser.uid), userProfile, {
-                  merge: true,
-                });
+                await setDoc(
+                  doc(db, "users", firebaseUser.uid),
+                  updatedProfile
+                );
                 console.log("✅ User profile updated successfully");
                 showInfo("Profile updated successfully!");
               } catch (profileError) {
@@ -354,6 +413,27 @@ export const FirebaseAuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
     try {
+      // Check if OAuth is enabled
+      const oauthEnabled = import.meta.env?.VITE_ENABLE_OAUTH === "true";
+      if (!oauthEnabled) {
+        throw new Error(
+          "OAuth is not enabled. Please check your configuration."
+        );
+      }
+
+      // Check if we're on localhost and provide specific guidance
+      if (isLocalhost()) {
+        console.log(
+          "🏠 Running on localhost - checking OAuth configuration..."
+        );
+        const authDomain = import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN;
+        if (!authDomain || !authDomain.includes("firebaseapp.com")) {
+          throw new Error(
+            "Invalid Firebase auth domain configuration for localhost."
+          );
+        }
+      }
+
       const provider = new GoogleAuthProvider();
       provider.addScope("email");
       provider.addScope("profile");
@@ -370,7 +450,7 @@ export const FirebaseAuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error("❌ Google OAuth error:", error);
-      const errorMessage = getFirebaseErrorMessage(error.code);
+      const errorMessage = getFirebaseErrorMessage(error.code) || error.message;
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: errorMessage,
@@ -407,7 +487,7 @@ export const FirebaseAuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
   };
 
-  // Set loading
+  // Set loading state
   const setLoading = loading => {
     dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: loading });
   };
@@ -428,15 +508,4 @@ export const FirebaseAuthProvider = ({ children }) => {
       {children}
     </FirebaseAuthContext.Provider>
   );
-};
-
-// Custom hook to use the auth context
-export const useFirebaseAuth = () => {
-  const context = useContext(FirebaseAuthContext);
-  if (!context) {
-    throw new Error(
-      "useFirebaseAuth must be used within a FirebaseAuthProvider"
-    );
-  }
-  return context;
 };
