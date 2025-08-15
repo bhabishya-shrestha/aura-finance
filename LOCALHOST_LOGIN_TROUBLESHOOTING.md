@@ -13,6 +13,7 @@ When you encounter login issues on localhost, the app will automatically detect 
 ## 🚨 Common Localhost Login Issues
 
 ### 1. Missing Environment Variables
+
 **Symptoms:** OAuth button doesn't work, Firebase errors
 **Solution:** Ensure `.env` file exists with correct Firebase configuration
 
@@ -25,6 +26,7 @@ cp env.example .env
 ```
 
 ### 2. OAuth Not Enabled
+
 **Symptoms:** Google OAuth button shows error or doesn't work
 **Solution:** Set OAuth flag in `.env` file
 
@@ -33,6 +35,7 @@ VITE_ENABLE_OAUTH=true
 ```
 
 ### 3. Firebase Auth Domain Issues
+
 **Symptoms:** "Unauthorized domain" errors
 **Solution:** Verify Firebase Console settings
 
@@ -44,6 +47,7 @@ VITE_ENABLE_OAUTH=true
    - `127.0.0.1`
 
 ### 4. OAuth Redirect URL Issues
+
 **Symptoms:** OAuth redirect fails or loops
 **Solution:** Configure OAuth redirect URLs in Firebase Console
 
@@ -54,6 +58,7 @@ VITE_ENABLE_OAUTH=true
    - `http://127.0.0.1:5173`
 
 ### 5. CORS Issues
+
 **Symptoms:** "Cross-Origin-Opener-Policy" errors
 **Solution:** The app now uses `signInWithRedirect` instead of `signInWithPopup` to avoid CORS issues
 
@@ -116,7 +121,7 @@ Run the debug function in browser console:
 
 ```javascript
 // Import the debug function
-import { debugLocalhostAuth } from './src/utils/localhostConfig.js';
+import { debugLocalhostAuth } from "./src/utils/localhostConfig.js";
 
 // Run debugging
 debugLocalhostAuth();
@@ -170,13 +175,13 @@ If issues persist:
 
 ## 🔄 Common Error Codes
 
-| Error Code | Meaning | Solution |
-|------------|---------|----------|
-| `auth/unauthorized-domain` | Domain not authorized | Add domain to Firebase Console |
-| `auth/redirect-cancelled-by-user` | User cancelled OAuth | Normal behavior, try again |
-| `auth/redirect-operation-pending` | OAuth already in progress | Wait or refresh page |
-| `auth/invalid-api-key` | Wrong API key | Check `.env` file |
-| `auth/auth-domain-config-required` | Missing auth domain | Check Firebase config |
+| Error Code                         | Meaning                   | Solution                       |
+| ---------------------------------- | ------------------------- | ------------------------------ |
+| `auth/unauthorized-domain`         | Domain not authorized     | Add domain to Firebase Console |
+| `auth/redirect-cancelled-by-user`  | User cancelled OAuth      | Normal behavior, try again     |
+| `auth/redirect-operation-pending`  | OAuth already in progress | Wait or refresh page           |
+| `auth/invalid-api-key`             | Wrong API key             | Check `.env` file              |
+| `auth/auth-domain-config-required` | Missing auth domain       | Check Firebase config          |
 
 ## 🎯 Success Indicators
 
