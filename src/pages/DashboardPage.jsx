@@ -72,8 +72,7 @@ const DashboardPage = ({
       // Add the assigned transactions
       await addTransactions(assignedTransactions);
 
-      // Reload transactions to get updated data
-      await loadTransactions();
+      // Transactions will be updated automatically via real-time listeners
 
       // Close modal
       setIsImportModalOpen(false);

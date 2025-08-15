@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Cloud, CloudOff, RefreshCw } from "lucide-react";
+import { Cloud, CloudOff, RefreshCw, Unlink, Link } from "lucide-react";
 import firebaseSync from "../services/firebaseSync";
 import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 

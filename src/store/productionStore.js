@@ -16,10 +16,10 @@ const useProductionStore = create(
     syncStatus: "idle", // idle, syncing, error, success
 
     // Actions
-    setLoading: (loading) => set({ isLoading: loading }),
-    setError: (error) => set({ error }),
+    setLoading: loading => set({ isLoading: loading }),
+    setError: error => set({ error }),
     clearError: () => set({ error: null }),
-    setSyncStatus: (status) => set({ syncStatus: status }),
+    setSyncStatus: status => set({ syncStatus: status }),
 
     // Initialize store and set up real-time listeners
     initialize: async () => {
@@ -29,11 +29,13 @@ const useProductionStore = create(
         // Check if user is authenticated
         const user = firebaseService.getCurrentUser();
         if (!user) {
-          console.log("❌ User not authenticated, skipping store initialization");
-          set({ 
-            isLoading: false, 
-            error: "User not authenticated", 
-            syncStatus: "error" 
+          console.log(
+            "❌ User not authenticated, skipping store initialization"
+          );
+          set({
+            isLoading: false,
+            error: "User not authenticated",
+            syncStatus: "error",
           });
           return;
         }
@@ -43,18 +45,18 @@ const useProductionStore = create(
         // Set up real-time listeners for transactions and accounts
         await get().setupRealtimeListeners();
 
-        set({ 
-          isLoading: false, 
-          isInitialized: true, 
+        set({
+          isLoading: false,
+          isInitialized: true,
           syncStatus: "success",
-          lastSyncTime: new Date()
+          lastSyncTime: new Date(),
         });
       } catch (error) {
         console.error("❌ Store initialization error:", error);
-        set({ 
-          isLoading: false, 
-          error: error.message, 
-          syncStatus: "error" 
+        set({
+          isLoading: false,
+          error: error.message,
+          syncStatus: "error",
         });
       }
     },
@@ -63,40 +65,50 @@ const useProductionStore = create(
     setupRealtimeListeners: async () => {
       try {
         // Listen for transaction changes
-        firebaseService.subscribeToTransactions((transactions) => {
+        firebaseService.subscribeToTransactions(transactions => {
           if (import.meta.env.DEV) {
-            console.log("🔄 Real-time transaction update:", transactions.length, "transactions");
+            console.log(
+              "🔄 Real-time transaction update:",
+              transactions.length,
+              "transactions"
+            );
           }
-          set({ 
-            transactions: transactions || [], 
+          set({
+            transactions: transactions || [],
             lastSyncTime: new Date(),
-            syncStatus: "success"
+            syncStatus: "success",
           });
         });
 
         // Listen for account changes
-        firebaseService.subscribeToAccounts((accounts) => {
+        firebaseService.subscribeToAccounts(accounts => {
           if (import.meta.env.DEV) {
-            console.log("🔄 Real-time account update:", accounts.length, "accounts");
+            console.log(
+              "🔄 Real-time account update:",
+              accounts.length,
+              "accounts"
+            );
           }
-          set({ 
-            accounts: accounts || [], 
+          set({
+            accounts: accounts || [],
             lastSyncTime: new Date(),
-            syncStatus: "success"
+            syncStatus: "success",
           });
         });
 
         // Listen for online/offline changes
         window.addEventListener("online", () => set({ isOnline: true }));
         window.addEventListener("offline", () => set({ isOnline: false }));
-
       } catch (error) {
-        set({ error: `Failed to setup listeners: ${error.message}`, syncStatus: "error" });
+        set({
+          error: `Failed to setup listeners: ${error.message}`,
+          syncStatus: "error",
+        });
       }
     },
 
     // Transaction actions with enhanced error handling
-    addTransaction: async (transactionData) => {
+    addTransaction: async transactionData => {
       try {
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
@@ -110,7 +122,7 @@ const useProductionStore = create(
         };
 
         const result = await firebaseService.addTransaction(sanitizedData);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -119,10 +131,10 @@ const useProductionStore = create(
         set({ isLoading: false, syncStatus: "success" });
         return result.data;
       } catch (error) {
-        set({ 
-          isLoading: false, 
-          error: error.message, 
-          syncStatus: "error" 
+        set({
+          isLoading: false,
+          error: error.message,
+          syncStatus: "error",
         });
         throw error;
       }
@@ -141,8 +153,11 @@ const useProductionStore = create(
           updatedAt: new Date().toISOString(),
         };
 
-        const result = await firebaseService.updateTransaction(transactionId, sanitizedUpdates);
-        
+        const result = await firebaseService.updateTransaction(
+          transactionId,
+          sanitizedUpdates
+        );
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -151,21 +166,21 @@ const useProductionStore = create(
         set({ isLoading: false, syncStatus: "success" });
         return result.data;
       } catch (error) {
-        set({ 
-          isLoading: false, 
-          error: error.message, 
-          syncStatus: "error" 
+        set({
+          isLoading: false,
+          error: error.message,
+          syncStatus: "error",
         });
         throw error;
       }
     },
 
-    deleteTransaction: async (transactionId) => {
+    deleteTransaction: async transactionId => {
       try {
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
         const result = await firebaseService.deleteTransaction(transactionId);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -173,17 +188,17 @@ const useProductionStore = create(
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
       } catch (error) {
-        set({ 
-          isLoading: false, 
-          error: error.message, 
-          syncStatus: "error" 
+        set({
+          isLoading: false,
+          error: error.message,
+          syncStatus: "error",
         });
         throw error;
       }
     },
 
     // Bulk transaction operations with proper error handling
-    addTransactions: async (transactionsData) => {
+    addTransactions: async transactionsData => {
       try {
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
@@ -222,22 +237,22 @@ const useProductionStore = create(
           errors,
         };
       } catch (error) {
-        set({ 
-          isLoading: false, 
-          error: error.message, 
-          syncStatus: "error" 
+        set({
+          isLoading: false,
+          error: error.message,
+          syncStatus: "error",
         });
         throw error;
       }
     },
 
     // Account actions
-    addAccount: async (accountData) => {
+    addAccount: async accountData => {
       try {
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
         const result = await firebaseService.addAccount(accountData);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -246,10 +261,10 @@ const useProductionStore = create(
         set({ isLoading: false, syncStatus: "success" });
         return result.data;
       } catch (error) {
-        set({ 
-          isLoading: false, 
-          error: error.message, 
-          syncStatus: "error" 
+        set({
+          isLoading: false,
+          error: error.message,
+          syncStatus: "error",
         });
         throw error;
       }
@@ -260,7 +275,7 @@ const useProductionStore = create(
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
         const result = await firebaseService.updateAccount(accountId, updates);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -269,21 +284,21 @@ const useProductionStore = create(
         set({ isLoading: false, syncStatus: "success" });
         return result.data;
       } catch (error) {
-        set({ 
-          isLoading: false, 
-          error: error.message, 
-          syncStatus: "error" 
+        set({
+          isLoading: false,
+          error: error.message,
+          syncStatus: "error",
         });
         throw error;
       }
     },
 
-    deleteAccount: async (accountId) => {
+    deleteAccount: async accountId => {
       try {
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
         const result = await firebaseService.deleteAccount(accountId);
-        
+
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -291,10 +306,10 @@ const useProductionStore = create(
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
       } catch (error) {
-        set({ 
-          isLoading: false, 
-          error: error.message, 
-          syncStatus: "error" 
+        set({
+          isLoading: false,
+          error: error.message,
+          syncStatus: "error",
         });
         throw error;
       }
@@ -308,15 +323,15 @@ const useProductionStore = create(
         .slice(0, limit);
     },
 
-    getTransactionsByAccount: (accountId) => {
+    getTransactionsByAccount: accountId => {
       const { transactions } = get();
       // Ensure consistent string comparison
-      return transactions.filter(t => 
-        t.accountId && t.accountId.toString() === accountId.toString()
+      return transactions.filter(
+        t => t.accountId && t.accountId.toString() === accountId.toString()
       );
     },
 
-    getAccountBalance: (accountId) => {
+    getAccountBalance: accountId => {
       const { accounts } = get();
       const account = accounts.find(acc => acc.id === accountId);
       return account ? account.balance || 0 : 0;
@@ -324,13 +339,18 @@ const useProductionStore = create(
 
     getNetWorth: () => {
       const { accounts } = get();
-      return accounts.reduce((total, account) => total + (account.balance || 0), 0);
+      return accounts.reduce(
+        (total, account) => total + (account.balance || 0),
+        0
+      );
     },
 
-    calculateAccountStats: (accountId) => {
+    calculateAccountStats: accountId => {
       const { transactions } = get();
       const accountTransactions = transactions.filter(
-        transaction => transaction.accountId && transaction.accountId.toString() === accountId.toString()
+        transaction =>
+          transaction.accountId &&
+          transaction.accountId.toString() === accountId.toString()
       );
       const recentTransactions = accountTransactions.slice(0, 30);
 
@@ -366,10 +386,11 @@ const useProductionStore = create(
         case "month":
           startDate = new Date(now.getFullYear(), now.getMonth(), 1);
           break;
-        case "quarter":
+        case "quarter": {
           const quarter = Math.floor(now.getMonth() / 3);
           startDate = new Date(now.getFullYear(), quarter * 3, 1);
           break;
+        }
         case "year":
           startDate = new Date(now.getFullYear(), 0, 1);
           break;
@@ -379,13 +400,16 @@ const useProductionStore = create(
 
       const filteredTransactions = transactions.filter(t => {
         const transactionDate = new Date(t.date);
-        return t.amount < 0 && transactionDate >= startDate && transactionDate <= now;
+        return (
+          t.amount < 0 && transactionDate >= startDate && transactionDate <= now
+        );
       });
 
       const categorySpending = {};
       filteredTransactions.forEach(t => {
         const category = t.category || "Uncategorized";
-        categorySpending[category] = (categorySpending[category] || 0) + Math.abs(t.amount);
+        categorySpending[category] =
+          (categorySpending[category] || 0) + Math.abs(t.amount);
       });
 
       return Object.entries(categorySpending)
@@ -442,10 +466,11 @@ const useProductionStore = create(
         case "month":
           startDate = new Date(now.getFullYear(), now.getMonth(), 1);
           break;
-        case "quarter":
+        case "quarter": {
           const quarter = Math.floor(now.getMonth() / 3);
           startDate = new Date(now.getFullYear(), quarter * 3, 1);
           break;
+        }
         case "year":
           startDate = new Date(now.getFullYear(), 0, 1);
           break;
@@ -490,7 +515,11 @@ const useProductionStore = create(
         lastSyncTime,
         isInitialized,
         syncStatus,
-        status: isInitialized ? (isOnline ? syncStatus : "offline") : "initializing",
+        status: isInitialized
+          ? isOnline
+            ? syncStatus
+            : "offline"
+          : "initializing",
       };
     },
 

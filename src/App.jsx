@@ -32,7 +32,7 @@ import FirebaseTest from "./components/FirebaseTest";
 import { initializeDatabase } from "./database";
 import useStore from "./store";
 import { useMobileViewport } from "./hooks/useMobileViewport";
-import firebaseSync from "./services/firebaseSync";
+// Removed firebaseSync import as it's no longer needed
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -340,7 +340,6 @@ const AppContent = () => {
           isAuthenticated ? <Navigate to="/dashboard" replace /> : <AuthPage />
         }
       />
-
 
       {/* Protected routes */}
       <Route

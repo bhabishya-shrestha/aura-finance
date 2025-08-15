@@ -188,9 +188,7 @@ class FirebaseService {
 
       // Remove any undefined values that might have slipped through
       const cleanData = Object.fromEntries(
-        Object.entries(sanitizedData).filter(
-          ([_, value]) => value !== undefined
-        )
+        Object.entries(sanitizedData).filter(([, value]) => value !== undefined)
       );
 
       // Check rate limiting
@@ -423,7 +421,7 @@ class FirebaseService {
       // Remove any undefined values that might have slipped through
       const cleanData = Object.fromEntries(
         Object.entries(accountWithUser).filter(
-          ([_, value]) => value !== undefined
+          ([, value]) => value !== undefined
         )
       );
 
