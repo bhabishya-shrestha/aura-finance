@@ -31,7 +31,8 @@ const ENV_CONFIG = {
   },
   production: {
     authDomain: "aura-finance-9777a.firebaseapp.com",
-    redirectUri: "https://aura-finance-6ixvujwgp-bhabishya-shresthas-projects.vercel.app",
+    redirectUri:
+      "https://aura-finance-6ixvujwgp-bhabishya-shresthas-projects.vercel.app",
   },
 };
 
@@ -77,19 +78,23 @@ class AuthError extends Error {
   }
 }
 
-const getErrorMessage = (errorCode) => {
+const getErrorMessage = errorCode => {
   const errorMessages = {
     "auth/user-not-found": "No account found with this email address.",
     "auth/wrong-password": "Incorrect password. Please try again.",
     "auth/invalid-email": "Please enter a valid email address.",
     "auth/weak-password": "Password should be at least 6 characters.",
     "auth/email-already-in-use": "An account with this email already exists.",
-    "auth/too-many-requests": "Too many failed attempts. Please try again later.",
-    "auth/network-request-failed": "Network error. Please check your connection.",
+    "auth/too-many-requests":
+      "Too many failed attempts. Please try again later.",
+    "auth/network-request-failed":
+      "Network error. Please check your connection.",
     "auth/popup-closed-by-user": "Login was cancelled.",
     "auth/cancelled-popup-request": "Login was cancelled.",
-    "auth/popup-blocked": "Popup was blocked. Please allow popups for this site.",
-    "auth/account-exists-with-different-credential": "An account already exists with the same email but different sign-in credentials.",
+    "auth/popup-blocked":
+      "Popup was blocked. Please allow popups for this site.",
+    "auth/account-exists-with-different-credential":
+      "An account already exists with the same email but different sign-in credentials.",
     "auth/operation-not-allowed": "This sign-in method is not enabled.",
     "auth/invalid-credential": "Invalid credentials. Please try again.",
     "auth/user-disabled": "This account has been disabled.",
@@ -97,8 +102,10 @@ const getErrorMessage = (errorCode) => {
     "auth/redirect-cancelled-by-user": "Login was cancelled.",
     "auth/redirect-operation-pending": "Login is already in progress.",
     "auth/timeout": "Login timed out. Please try again.",
-    "auth/unauthorized-domain": "This domain is not authorized for OAuth sign-in.",
-    "auth/unsupported-persistence-type": "This browser doesn't support the requested persistence type.",
+    "auth/unauthorized-domain":
+      "This domain is not authorized for OAuth sign-in.",
+    "auth/unsupported-persistence-type":
+      "This browser doesn't support the requested persistence type.",
     "auth/web-storage-unsupported": "This browser doesn't support web storage.",
     "auth/invalid-api-key": "Invalid API key. Please check your configuration.",
     "auth/invalid-app-credential": "Invalid app credential.",
@@ -106,8 +113,10 @@ const getErrorMessage = (errorCode) => {
     "auth/invalid-user-token": "Invalid user token.",
     "auth/invalid-tenant-id": "Invalid tenant ID.",
     "auth/tenant-id-mismatch": "Tenant ID mismatch.",
-    "auth/operation-not-supported-in-this-environment": "This operation is not supported in this environment.",
-    "auth/auth-domain-config-required": "Auth domain configuration is required.",
+    "auth/operation-not-supported-in-this-environment":
+      "This operation is not supported in this environment.",
+    "auth/auth-domain-config-required":
+      "Auth domain configuration is required.",
     "auth/missing-app-credential": "Missing app credential.",
     "auth/missing-verification-code": "Missing verification code.",
     "auth/missing-verification-id": "Missing verification ID.",
@@ -122,7 +131,8 @@ const getErrorMessage = (errorCode) => {
     "auth/expired-action-code": "Action code expired.",
     "auth/invalid-action-code": "Invalid action code.",
     "auth/missing-action-code": "Missing action code.",
-    "auth/credential-already-in-use": "This credential is already associated with another account.",
+    "auth/credential-already-in-use":
+      "This credential is already associated with another account.",
     "auth/email-change-needs-verification": "Email change needs verification.",
     "auth/missing-iframe-start": "Missing iframe start.",
     "auth/invalid-recaptcha-token": "Invalid reCAPTCHA token.",
@@ -150,7 +160,11 @@ const createUserProfile = async (userId, userData) => {
     return { success: true };
   } catch (error) {
     console.error("Failed to create user profile:", error);
-    throw new AuthError("PROFILE_CREATION_FAILED", "Failed to create user profile", { originalError: error });
+    throw new AuthError(
+      "PROFILE_CREATION_FAILED",
+      "Failed to create user profile",
+      { originalError: error }
+    );
   }
 };
 
@@ -165,11 +179,15 @@ const updateUserProfile = async (userId, updates) => {
     return { success: true };
   } catch (error) {
     console.error("Failed to update user profile:", error);
-    throw new AuthError("PROFILE_UPDATE_FAILED", "Failed to update user profile", { originalError: error });
+    throw new AuthError(
+      "PROFILE_UPDATE_FAILED",
+      "Failed to update user profile",
+      { originalError: error }
+    );
   }
 };
 
-const getUserProfile = async (userId) => {
+const getUserProfile = async userId => {
   try {
     const docRef = doc(db, "users", userId);
     const docSnap = await getDoc(docRef);
@@ -181,7 +199,9 @@ const getUserProfile = async (userId) => {
     }
   } catch (error) {
     console.error("Failed to get user profile:", error);
-    throw new AuthError("PROFILE_FETCH_FAILED", "Failed to get user profile", { originalError: error });
+    throw new AuthError("PROFILE_FETCH_FAILED", "Failed to get user profile", {
+      originalError: error,
+    });
   }
 };
 
@@ -192,7 +212,9 @@ const validateOAuthConfig = () => {
 
   // Check if OAuth is enabled
   if (import.meta.env.VITE_ENABLE_OAUTH !== "true") {
-    issues.push("OAuth is not enabled. Set VITE_ENABLE_OAUTH=true in your environment variables.");
+    issues.push(
+      "OAuth is not enabled. Set VITE_ENABLE_OAUTH=true in your environment variables."
+    );
   }
 
   // Check Firebase configuration
@@ -220,11 +242,11 @@ const validateOAuthConfig = () => {
 const createGoogleProvider = () => {
   const config = getConfig();
   const provider = new GoogleAuthProvider();
-  
+
   // Add scopes
   provider.addScope("email");
   provider.addScope("profile");
-  
+
   // Set custom parameters
   provider.setCustomParameters({
     prompt: "select_account",
@@ -253,20 +275,23 @@ class AuthService {
     this.initializationPromise = new Promise(async (resolve, reject) => {
       try {
         console.log("🔐 Initializing Auth Service...");
-        
+
         // Validate OAuth configuration
         const oauthValidation = validateOAuthConfig();
         console.log("🔍 OAuth Configuration:", oauthValidation);
-        
+
         if (!oauthValidation.isValid) {
-          console.warn("⚠️ OAuth configuration issues:", oauthValidation.issues);
+          console.warn(
+            "⚠️ OAuth configuration issues:",
+            oauthValidation.issues
+          );
         }
 
-        // Handle OAuth redirect result
-        await this.handleRedirectResult();
-
-        // Set up auth state listener
+        // Set up auth state listener FIRST
         this.setupAuthStateListener();
+
+        // Then handle OAuth redirect result
+        await this.handleRedirectResult();
 
         this.isInitialized = true;
         console.log("✅ Auth Service initialized successfully");
@@ -285,10 +310,16 @@ class AuthService {
     try {
       console.log("🔄 Checking for OAuth redirect result...");
       const result = await getRedirectResult(auth);
-      
+
       if (result) {
         console.log("✅ OAuth redirect result received:", result.user.email);
-        
+        console.log("🔍 OAuth result details:", {
+          user: result.user.email,
+          uid: result.user.uid,
+          displayName: result.user.displayName,
+          photoURL: result.user.photoURL,
+        });
+
         // Create or update user profile
         const userData = {
           email: result.user.email,
@@ -297,12 +328,28 @@ class AuthService {
         };
 
         await createUserProfile(result.user.uid, userData);
-        
+
         // Clear URL parameters
-        if (window.location.search.includes("state=") || window.location.search.includes("code=")) {
-          window.history.replaceState({}, document.title, window.location.pathname);
+        if (
+          window.location.search.includes("state=") ||
+          window.location.search.includes("code=")
+        ) {
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+          );
         }
 
+        // Update current user immediately
+        this.currentUser = {
+          id: result.user.uid,
+          email: result.user.email,
+          name: result.user.displayName || result.user.email,
+          photoURL: result.user.photoURL,
+        };
+
+        console.log("✅ User profile created and current user updated");
         return { success: true, user: result.user };
       } else {
         console.log("ℹ️ No OAuth redirect result found");
@@ -310,21 +357,44 @@ class AuthService {
       }
     } catch (error) {
       console.error("❌ Error handling redirect result:", error);
-      throw new AuthError("REDIRECT_HANDLING_FAILED", "Failed to handle OAuth redirect", { originalError: error });
+      throw new AuthError(
+        "REDIRECT_HANDLING_FAILED",
+        "Failed to handle OAuth redirect",
+        { originalError: error }
+      );
     }
   }
 
   // Set up auth state listener
   setupAuthStateListener() {
-    onAuthStateChanged(auth, async (firebaseUser) => {
+    console.log("🔧 Setting up auth state listener...");
+    onAuthStateChanged(auth, async firebaseUser => {
       try {
+        console.log(
+          "🔄 Auth state changed - Firebase user:",
+          firebaseUser ? firebaseUser.email : "null"
+        );
+
         if (firebaseUser) {
-          console.log("🔄 Auth state changed - User signed in:", firebaseUser.email);
-          
+          console.log(
+            "🔄 Auth state changed - User signed in:",
+            firebaseUser.email
+          );
+          console.log("🔍 Firebase user details:", {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+          });
+
           // Get or create user profile
           const profileResult = await getUserProfile(firebaseUser.uid);
-          
+
           if (!profileResult.success) {
+            console.log(
+              "📝 Creating new user profile for:",
+              firebaseUser.email
+            );
             // Create new profile
             const userData = {
               email: firebaseUser.email,
@@ -332,6 +402,11 @@ class AuthService {
               photoURL: firebaseUser.photoURL,
             };
             await createUserProfile(firebaseUser.uid, userData);
+          } else {
+            console.log(
+              "✅ User profile already exists for:",
+              firebaseUser.email
+            );
           }
 
           this.currentUser = {
@@ -340,12 +415,19 @@ class AuthService {
             name: firebaseUser.displayName || firebaseUser.email,
             photoURL: firebaseUser.photoURL,
           };
+
+          console.log("✅ Current user set to:", this.currentUser.email);
         } else {
           console.log("👋 Auth state changed - User signed out");
           this.currentUser = null;
         }
 
         // Notify listeners
+        console.log(
+          "📢 Notifying",
+          this.authStateListeners.size,
+          "auth state listeners"
+        );
         this.authStateListeners.forEach(listener => {
           try {
             listener(this.currentUser);
@@ -363,31 +445,44 @@ class AuthService {
   async signInWithGoogle() {
     try {
       console.log("🚀 Starting Google OAuth sign-in...");
-      
+
       // Validate configuration
       const oauthValidation = validateOAuthConfig();
       if (!oauthValidation.isValid) {
-        throw new AuthError("OAUTH_CONFIG_INVALID", oauthValidation.issues.join("; "));
+        throw new AuthError(
+          "OAUTH_CONFIG_INVALID",
+          oauthValidation.issues.join("; ")
+        );
       }
 
       // Create Google provider
       const provider = createGoogleProvider();
-      console.log("🔐 Google provider configured for environment:", oauthValidation.environment);
+      console.log(
+        "🔐 Google provider configured for environment:",
+        oauthValidation.environment
+      );
+      console.log("🔍 Provider details:", {
+        scopes: provider.scopes,
+        customParameters: provider.customParameters,
+      });
 
       // Sign in with redirect
+      console.log("📱 Calling signInWithRedirect...");
       await signInWithRedirect(auth, provider);
       console.log("✅ Redirect initiated successfully");
-      
+
       return { success: true };
     } catch (error) {
       console.error("❌ Google OAuth error:", error);
-      
+
       if (error instanceof AuthError) {
         throw error;
       }
-      
+
       const errorMessage = getErrorMessage(error.code) || error.message;
-      throw new AuthError("OAUTH_SIGNIN_FAILED", errorMessage, { originalError: error });
+      throw new AuthError("OAUTH_SIGNIN_FAILED", errorMessage, {
+        originalError: error,
+      });
     }
   }
 
@@ -395,8 +490,12 @@ class AuthService {
   async signInWithEmail(email, password) {
     try {
       console.log("🔐 Signing in with email:", email);
-      
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
 
       // Get or create user profile
@@ -414,7 +513,9 @@ class AuthService {
     } catch (error) {
       console.error("❌ Email sign-in error:", error);
       const errorMessage = getErrorMessage(error.code) || error.message;
-      throw new AuthError("EMAIL_SIGNIN_FAILED", errorMessage, { originalError: error });
+      throw new AuthError("EMAIL_SIGNIN_FAILED", errorMessage, {
+        originalError: error,
+      });
     }
   }
 
@@ -422,8 +523,12 @@ class AuthService {
   async registerWithEmail(email, password, name) {
     try {
       console.log("📝 Registering new user:", email);
-      
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
 
       // Create user profile
@@ -438,7 +543,9 @@ class AuthService {
     } catch (error) {
       console.error("❌ Registration error:", error);
       const errorMessage = getErrorMessage(error.code) || error.message;
-      throw new AuthError("REGISTRATION_FAILED", errorMessage, { originalError: error });
+      throw new AuthError("REGISTRATION_FAILED", errorMessage, {
+        originalError: error,
+      });
     }
   }
 
@@ -451,7 +558,9 @@ class AuthService {
       return { success: true };
     } catch (error) {
       console.error("❌ Sign out error:", error);
-      throw new AuthError("SIGNOUT_FAILED", "Failed to sign out", { originalError: error });
+      throw new AuthError("SIGNOUT_FAILED", "Failed to sign out", {
+        originalError: error,
+      });
     }
   }
 
@@ -464,7 +573,9 @@ class AuthService {
     } catch (error) {
       console.error("❌ Password reset error:", error);
       const errorMessage = getErrorMessage(error.code) || error.message;
-      throw new AuthError("PASSWORD_RESET_FAILED", errorMessage, { originalError: error });
+      throw new AuthError("PASSWORD_RESET_FAILED", errorMessage, {
+        originalError: error,
+      });
     }
   }
 
@@ -481,7 +592,7 @@ class AuthService {
   // Add auth state listener
   onAuthStateChanged(listener) {
     this.authStateListeners.add(listener);
-    
+
     // Return unsubscribe function
     return () => {
       this.authStateListeners.delete(listener);
