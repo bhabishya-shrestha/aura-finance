@@ -102,6 +102,29 @@ const useProductionStore = create(
       }
     },
 
+    // Clear local database and refresh from Firebase
+    clearLocalData: async () => {
+      try {
+        console.log("🧹 Clearing local database...");
+
+        // Import the database module
+        const { default: db } = await import("../database.js");
+
+        // Clear all local data
+        await db.transactions.clear();
+        await db.accounts.clear();
+
+        console.log("✅ Local database cleared");
+
+        // Force refresh from Firebase
+        await get().forceRefresh();
+
+        console.log("🎉 Local data cleared and refreshed from Firebase");
+      } catch (error) {
+        console.error("❌ Error clearing local data:", error);
+      }
+    },
+
     // Set up real-time listeners for Firestore
     setupRealtimeListeners: async () => {
       try {
