@@ -79,27 +79,18 @@ const AppLayout = () => {
 
   // Initialize update notification on first load
   useEffect(() => {
-    // Only set update notification if it doesn't exist AND we want to show it
-    // For now, we'll disable automatic update notifications to prevent persistent banners
-    // if (!lastUpdateNotification) {
-    //   setUpdateNotification({
-    //     version: "1.3.0",
-    //     features: [
-    //       "Enhanced document import with AI analysis",
-    //       "Improved analytics and data visualization",
-    //       "Better duplicate transaction detection",
-    //       "Enhanced statement parsing support",
-    //       "Streamlined account assignment workflow",
-    //       "Improved error handling and user feedback"
-    //     ],
-    //     bugFixes: [
-    //       "Fixed various UI layout and responsive design issues",
-    //       "Resolved transaction import and processing bugs",
-    //       "Improved overall app stability and performance"
-    //     ],
-    //   });
-    // }
-  }, [lastUpdateNotification, setUpdateNotification]);
+    const lastSeenVersion = localStorage.getItem("aura_last_seen_version");
+    const currentVersion = "1.3.0";
+    
+    if (lastSeenVersion !== currentVersion && !lastUpdateNotification) {
+      // Trigger the update notification
+      const { triggerUpdateNotification } = useStore.getState();
+      triggerUpdateNotification();
+      
+      // Mark this version as seen
+      localStorage.setItem("aura_last_seen_version", currentVersion);
+    }
+  }, [lastUpdateNotification]);
 
   // Device-specific update notifications - REMOVED: Should only show when user explicitly requests
   // useEffect(() => {

@@ -1619,24 +1619,57 @@ const useStore = create(
           });
         },
 
-        triggerUpdateNotification: () => {
-          const isMobile = window.innerWidth <= 768;
-
-          if (isMobile) {
-            set({
-              lastUpdateNotification: {
-                version: "1.1.0",
+        // Test notification function
+        addTestNotification: () => {
+          set(state => ({
+            notifications: [
+              {
+                id: Date.now(),
+                type: "success",
+                title: "Test Notification",
+                message: "This is a test notification to verify the system is working.",
                 timestamp: new Date().toISOString(),
-                features: [
-                  "Enhanced mobile navigation with improved sidebar design",
-                  "Better mobile header with proper notification indicators",
-                  "Improved mobile statement import process",
-                  "Enhanced mobile layout for accounts and transactions",
-                  "Professional mobile add account button design",
-                  "Better mobile viewport handling and responsive design",
-                ],
-                bugFixes: [
-                  "Fixed mobile browser compatibility issues",
+                read: false,
+              },
+              ...state.notifications,
+            ],
+            unreadCount: state.unreadCount + 1,
+          }));
+        },
+
+        triggerUpdateNotification: () => {
+          set({
+            lastUpdateNotification: {
+              version: "1.3.0",
+              timestamp: new Date().toISOString(),
+              features: [
+                "🔧 Fixed core data synchronization issues",
+                "🗑️ Enhanced transaction deletion with proper cleanup",
+                "📅 Dynamic year assignment with robust date handling",
+                "🔐 Improved Firebase permissions and security",
+                "📱 Better mobile layout and responsive design",
+                "⚡ Real-time data synchronization improvements",
+                "🛡️ Enhanced error handling and validation",
+                "🎯 Fixed React duplicate key warnings",
+                "🔄 Proper listener management and cleanup",
+                "📊 Improved transaction deduplication"
+              ],
+              bugFixes: [
+                "Fixed persistent 45 transactions issue",
+                "Fixed bulk year assignment errors",
+                "Fixed Firebase undefined field errors",
+                "Fixed React duplicate key warnings",
+                "Fixed real-time listener conflicts",
+                "Fixed cross-platform sync issues",
+                "Fixed mobile hamburger menu functionality",
+                "Fixed notification system integration",
+                "Fixed date validation edge cases",
+                "Fixed authentication state management"
+              ],
+              read: false,
+            },
+          });
+        },
                   "Resolved notification dropdown alignment on mobile",
                   "Fixed hamburger menu functionality",
                   "Improved icon centering in mobile header",
