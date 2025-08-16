@@ -379,7 +379,13 @@ class FirebaseService {
       }
 
       const transactionData = transactionSnapshot.data();
-      if (transactionData.userId !== this.currentUser.uid) {
+      
+      // Handle legacy transactions that might not have userId field
+      if (!transactionData.userId) {
+        console.warn(`Transaction ${transactionId} has no userId field, attempting to delete anyway`);
+        // For legacy transactions without userId, we'll try to delete them
+        // This is a migration strategy for old data
+      } else if (transactionData.userId !== this.currentUser.uid) {
         return {
           success: false,
           error: "Transaction does not belong to current user",
@@ -390,16 +396,38 @@ class FirebaseService {
       return { success: true };
     } catch (error) {
       console.error("Delete transaction error:", error);
+      
       // Check if it's a permissions error
       if (
         error.code === "permission-denied" ||
-        error.message.includes("permission")
+        error.message.includes("permission") ||
+        error.message.includes("Missing or insufficient permissions")
       ) {
+        // Try to get more information about the transaction
+        try {
+          const transactionDoc = doc(db, "transactions", transactionId);
+          const transactionSnapshot = await getDoc(transactionDoc);
+          
+          if (transactionSnapshot.exists()) {
+            const transactionData = transactionSnapshot.data();
+            console.error("Transaction data for debugging:", {
+              id: transactionId,
+              userId: transactionData.userId,
+              currentUser: this.currentUser.uid,
+              hasUserId: !!transactionData.userId,
+              transactionData: transactionData
+            });
+          }
+        } catch (debugError) {
+          console.error("Could not fetch transaction for debugging:", debugError);
+        }
+        
         return {
           success: false,
-          error: "Insufficient permissions to delete transaction",
+          error: "Insufficient permissions to delete transaction. Please try refreshing the page and try again.",
         };
       }
+      
       return { success: false, error: error.message };
     }
   }

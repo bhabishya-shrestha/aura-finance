@@ -175,7 +175,6 @@ const AppLayout = () => {
         <MobileSidebar
           isOpen={showMobileSidebar}
           onClose={() => setShowMobileSidebar(false)}
-          currentPage={currentPage}
         />
 
         <main className="mobile-content" id="main-content" tabIndex="-1">

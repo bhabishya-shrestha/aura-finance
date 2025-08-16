@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useCallback, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Home,
   CreditCard,
@@ -9,19 +10,23 @@ import {
   Cloud,
   CloudOff,
   RefreshCw,
-  // Removed unused Unlink import
   TrendingUp,
 } from "lucide-react";
 import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 import firebaseSync from "../services/firebaseSync";
 
-const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
+const MobileSidebar = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useFirebaseAuth();
   const [syncStatus, setSyncStatus] = useState({
     isOnline: true,
     syncInProgress: false,
     lastSyncTime: null,
   });
+
+  // Derive currentPage from URL
+  const currentPage = location.pathname.substring(1) || "dashboard";
 
   // Update sync status every 2 seconds
   useEffect(() => {
@@ -154,69 +159,59 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
     }
   }, [isOpen, handleTouchEnd]);
 
-  const navigationItems = [
+  const menuItems = [
     {
       id: "dashboard",
-      label: "Dashboard",
       icon: Home,
+      label: "Dashboard",
       description: "Overview of your finances",
+      path: "/dashboard",
     },
     {
       id: "accounts",
-      label: "Accounts",
       icon: CreditCard,
+      label: "Accounts",
       description: "Manage your accounts",
+      path: "/accounts",
     },
     {
       id: "analytics",
-      label: "Analytics",
       icon: BarChart3,
-      description: "Financial insights & reports",
+      label: "Analytics",
+      description: "Financial insights",
+      path: "/analytics",
     },
     {
       id: "transactions",
-      label: "Transactions",
       icon: FileText,
-      description: "View & manage transactions",
-    },
-    {
-      id: "reports",
-      label: "Reports",
-      icon: TrendingUp,
-      description: "Generate reports",
+      label: "Transactions",
+      description: "View all transactions",
+      path: "/transactions",
     },
     {
       id: "settings",
-      label: "Settings",
       icon: Settings,
-      description: "App preferences & account",
+      label: "Settings",
+      description: "App preferences",
+      path: "/settings",
     },
   ];
 
-  const handleNavigationClick = (pageId, event) => {
-    // Prevent event bubbling and default behavior
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      // Only call stopImmediatePropagation if it exists
-      if (typeof event.stopImmediatePropagation === "function") {
-        event.stopImmediatePropagation();
-      }
+  const handleMenuClick = (pageId) => {
+    const menuItem = menuItems.find(item => item.id === pageId);
+    if (menuItem) {
+      navigate(menuItem.path);
     }
-
-    // Add a small delay to ensure the click is processed
-    setTimeout(() => {
-      onPageChange(pageId);
-      onClose();
-    }, 10);
+    
+    // Close mobile sidebar after navigation
+    onClose();
   };
 
   const handleSignOut = async () => {
     try {
       await logout();
-      onClose();
     } catch (error) {
-      // Error signing out - could be logged to error reporting service
+      console.error("Error signing out:", error);
     }
   };
 
@@ -228,7 +223,7 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
     }
   };
 
-  const formatLastSync = timestamp => {
+  const formatLastSync = (timestamp) => {
     if (!timestamp) return "Never";
 
     const now = new Date();
@@ -275,11 +270,11 @@ const MobileSidebar = ({ isOpen, onClose, onPageChange, currentPage }) => {
           {/* Navigation */}
           <div className="flex-1 p-4 overflow-y-auto">
             <div className="space-y-1">
-              {navigationItems.map(item => (
+              {menuItems.map(item => (
                 <button
                   key={item.id}
-                  onClick={e => handleNavigationClick(item.id, e)}
-                  onTouchEnd={e => handleNavigationClick(item.id, e)}
+                  onClick={() => handleMenuClick(item.id)}
+                  onTouchEnd={() => handleMenuClick(item.id)}
                   className={`w-full flex items-center gap-3 p-3 text-left rounded-lg transition-colors active:scale-95 relative ${
                     currentPage === item.id
                       ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600"
