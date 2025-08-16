@@ -56,9 +56,19 @@ const TransactionsPage = () => {
     }, []);
 
     // Debug: Log if duplicates were found
-    if (import.meta.env.DEV && uniqueTransactions.length !== transactions.length) {
-      console.warn(`Found ${transactions.length - uniqueTransactions.length} duplicate transactions`);
-      console.warn('Original count:', transactions.length, 'Unique count:', uniqueTransactions.length);
+    if (
+      import.meta.env.DEV &&
+      uniqueTransactions.length !== transactions.length
+    ) {
+      console.warn(
+        `Found ${transactions.length - uniqueTransactions.length} duplicate transactions`
+      );
+      console.warn(
+        "Original count:",
+        transactions.length,
+        "Unique count:",
+        uniqueTransactions.length
+      );
     }
 
     let filtered = [...uniqueTransactions];

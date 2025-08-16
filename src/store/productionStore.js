@@ -61,6 +61,47 @@ const useProductionStore = create(
       }
     },
 
+    // Force refresh data from Firebase (useful for debugging sync issues)
+    forceRefresh: async () => {
+      try {
+        set({ isLoading: true, error: null, syncStatus: "syncing" });
+
+        // Check if user is authenticated
+        const user = firebaseService.getCurrentUser();
+        if (!user) {
+          throw new Error("User not authenticated");
+        }
+
+        console.log("🔄 Force refreshing data from Firebase...");
+
+        // Manually fetch fresh data from Firebase
+        const [transactionsResult, accountsResult] = await Promise.all([
+          firebaseService.getTransactions(),
+          firebaseService.getAccounts(),
+        ]);
+
+        if (transactionsResult.success && accountsResult.success) {
+          set({
+            transactions: transactionsResult.data || [],
+            accounts: accountsResult.data || [],
+            isLoading: false,
+            syncStatus: "success",
+            lastSyncTime: new Date(),
+          });
+          console.log("✅ Force refresh completed successfully");
+        } else {
+          throw new Error("Failed to fetch data from Firebase");
+        }
+      } catch (error) {
+        console.error("❌ Force refresh error:", error);
+        set({
+          isLoading: false,
+          error: error.message,
+          syncStatus: "error",
+        });
+      }
+    },
+
     // Set up real-time listeners for Firestore
     setupRealtimeListeners: async () => {
       try {

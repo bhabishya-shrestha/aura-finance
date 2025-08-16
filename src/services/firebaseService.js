@@ -415,7 +415,19 @@ class FirebaseService {
 
       console.log("✅ Proceeding with deletion...");
       await deleteDoc(transactionDoc);
-      console.log("✅ Transaction deleted successfully");
+      console.log("✅ Transaction deleted successfully from Firebase");
+
+      // Also delete from local IndexedDB if it exists there
+      try {
+        const { default: db } = await import("../database.js");
+        await db.transactions.delete(transactionId);
+        console.log("✅ Transaction deleted successfully from local database");
+      } catch (localError) {
+        console.log(
+          "ℹ️ Transaction not found in local database or already deleted"
+        );
+      }
+
       return { success: true };
     } catch (error) {
       console.error("❌ Delete transaction error:", error);
