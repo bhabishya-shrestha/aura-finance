@@ -5,7 +5,9 @@
  * Free tier includes: 1GB storage, 50K reads/day, 20K writes/day
  */
 
+import { initializeApp } from "firebase/app";
 import {
+  getFirestore,
   collection,
   doc,
   setDoc,
@@ -20,14 +22,45 @@ import {
   onSnapshot,
   serverTimestamp,
 } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+} from "firebase/auth";
 import SecurityMiddleware from "./securityMiddleware.js";
 
-// Import the Firebase app and auth instances from authService
-import authService from "./authService.js";
+// Firebase configuration (you'll get this from Firebase Console)
+const firebaseConfig = {
+  // Replace with your Firebase config
+  apiKey:
+    import.meta.env?.VITE_FIREBASE_API_KEY || process.env.VITE_FIREBASE_API_KEY,
+  authDomain:
+    import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN ||
+    process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId:
+    import.meta.env?.VITE_FIREBASE_PROJECT_ID ||
+    process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket:
+    import.meta.env?.VITE_FIREBASE_STORAGE_BUCKET ||
+    process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId:
+    import.meta.env?.VITE_FIREBASE_MESSAGING_SENDER_ID ||
+    process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId:
+    import.meta.env?.VITE_FIREBASE_APP_ID || process.env.VITE_FIREBASE_APP_ID,
+  // Disable hosted configuration loading
+  measurementId: undefined,
+};
 
-// Get the Firebase instances from authService
-const { app, auth, db } = authService.getFirebaseInstances();
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Export app for use in other modules
+export { app };
 
 // Initialize security middleware with the Firestore instance
 SecurityMiddleware.initializeFirebase(db).catch(error => {
@@ -54,28 +87,46 @@ class FirebaseService {
     });
   }
 
-  // Authentication methods - now delegated to authService
+  // Authentication methods
   async register(email, password, name) {
     try {
-      return await authService.registerWithEmail(email, password, name);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      // Create user profile
+      await this.createUserProfile(user.uid, { email, name });
+
+      return { success: true, user };
     } catch (error) {
       console.error("Registration error:", error);
+      // Throw the error so the auth bridge can handle it properly
       throw error;
     }
   }
 
   async login(email, password) {
     try {
-      return await authService.signInWithEmail(email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      return { success: true, user: userCredential.user };
     } catch (error) {
       console.error("Login error:", error);
+      // Throw the error so the auth bridge can handle it properly
       throw error;
     }
   }
 
   async logout() {
     try {
-      return await authService.signOut();
+      await signOut(auth);
+      return { success: true };
     } catch (error) {
       console.error("Logout error:", error);
       return { success: false, error: error.message };

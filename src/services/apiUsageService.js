@@ -9,14 +9,13 @@ import {
   setDoc,
   increment,
 } from "firebase/firestore";
-import authService from "./authService.js";
+import { app } from "./firebaseService.js";
 
 class ApiUsageService {
   constructor() {
-    // Get Firebase instances from authService
-    const { app, auth, db } = authService.getFirebaseInstances();
-    this.auth = auth;
-    this.db = db;
+    // Get Firebase instances directly
+    this.auth = getAuth(app);
+    this.db = getFirestore(app);
 
     // API usage limits and cost estimates
     this.apiLimits = {

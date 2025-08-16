@@ -1,6 +1,15 @@
 import React, { createContext, useContext, useEffect, useReducer } from "react";
 import { useNotifications } from "./NotificationContext";
-import authService, { AuthError } from "../services/authService";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
+} from "firebase/auth";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+import { app } from "../services/firebaseService";
 
 // Action types
 const AUTH_ACTIONS = {
@@ -14,9 +23,6 @@ const AUTH_ACTIONS = {
   REGISTER_FAILURE: "REGISTER_FAILURE",
   CLEAR_ERROR: "CLEAR_ERROR",
   SET_LOADING: "SET_LOADING",
-  INITIALIZATION_START: "INITIALIZATION_START",
-  INITIALIZATION_SUCCESS: "INITIALIZATION_SUCCESS",
-  INITIALIZATION_FAILURE: "INITIALIZATION_FAILURE",
 };
 
 // Initial state
@@ -24,43 +30,20 @@ const initialState = {
   user: null,
   isAuthenticated: false,
   isLoading: true,
-  isInitialized: false,
   error: null,
-  oauthConfig: null,
+  isInitialized: false,
 };
 
 // Reducer function
 const authReducer = (state, action) => {
   switch (action.type) {
-    case AUTH_ACTIONS.INITIALIZATION_START:
-      return {
-        ...state,
-        isLoading: true,
-        error: null,
-      };
-
-    case AUTH_ACTIONS.INITIALIZATION_SUCCESS:
-      return {
-        ...state,
-        isLoading: false,
-        isInitialized: true,
-        oauthConfig: action.payload.oauthConfig,
-        error: null,
-      };
-
-    case AUTH_ACTIONS.INITIALIZATION_FAILURE:
-      return {
-        ...state,
-        isLoading: false,
-        isInitialized: true,
-        error: action.payload,
-      };
-
     case AUTH_ACTIONS.AUTH_STATE_CHANGED:
       return {
         ...state,
         user: action.payload.user,
         isAuthenticated: !!action.payload.user,
+        isLoading: false,
+        isInitialized: true,
         error: null,
       };
 
@@ -80,6 +63,7 @@ const authReducer = (state, action) => {
         isAuthenticated: true,
         isLoading: false,
         error: null,
+        isInitialized: true,
       };
 
     case AUTH_ACTIONS.LOGIN_FAILURE:
@@ -90,6 +74,7 @@ const authReducer = (state, action) => {
         isAuthenticated: false,
         isLoading: false,
         error: action.payload,
+        isInitialized: true,
       };
 
     case AUTH_ACTIONS.LOGOUT:
@@ -99,6 +84,7 @@ const authReducer = (state, action) => {
         isAuthenticated: false,
         isLoading: false,
         error: null,
+        isInitialized: true,
       };
 
     case AUTH_ACTIONS.CLEAR_ERROR:
@@ -118,8 +104,273 @@ const authReducer = (state, action) => {
   }
 };
 
+// Firebase error message helper
+const getFirebaseErrorMessage = errorCode => {
+  const errorMessages = {
+    "auth/user-not-found": "No account found with this email address.",
+    "auth/wrong-password": "Incorrect password.",
+    "auth/email-already-in-use": "An account with this email already exists.",
+    "auth/weak-password": "Password should be at least 6 characters.",
+    "auth/invalid-email": "Please enter a valid email address.",
+    "auth/operation-not-allowed": "This sign-in method is not enabled.",
+    "auth/user-disabled": "This account has been disabled.",
+    "auth/too-many-requests":
+      "Too many failed attempts. Please try again later.",
+    "auth/network-request-failed":
+      "Network error. Please check your connection.",
+  };
+  return errorMessages[errorCode] || "An error occurred. Please try again.";
+};
+
 // Create context
 const FirebaseAuthContext = createContext();
+
+// Provider component
+export const FirebaseAuthProvider = ({ children }) => {
+  const [state, dispatch] = useReducer(authReducer, initialState);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const { showSuccess, showError, showInfo } = useNotifications();
+
+  // Listen for auth state changes
+  useEffect(() => {
+    console.log("🔐 Setting up Firebase Auth listener...");
+
+    const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
+      console.log(
+        "🔄 Auth state changed:",
+        firebaseUser ? firebaseUser.email : "signed out"
+      );
+
+      if (firebaseUser) {
+        try {
+          // Get or create user profile
+          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+
+          if (!userDoc.exists()) {
+            console.log(
+              "📝 Creating new user profile for:",
+              firebaseUser.email
+            );
+            const userProfile = {
+              email: firebaseUser.email,
+              name: firebaseUser.displayName || firebaseUser.email,
+              photoURL: firebaseUser.photoURL,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+
+            try {
+              await setDoc(doc(db, "users", firebaseUser.uid), userProfile);
+              console.log("✅ User profile created successfully");
+              showSuccess("Profile created successfully!");
+            } catch (profileError) {
+              console.warn(
+                "⚠️ Could not create user profile, continuing with basic auth:",
+                profileError.message
+              );
+            }
+          } else {
+            // Only update if there are actual changes to avoid unnecessary writes
+            const existingProfile = userDoc.data();
+            const hasChanges =
+              existingProfile.email !== firebaseUser.email ||
+              existingProfile.name !==
+                (firebaseUser.displayName || firebaseUser.email) ||
+              existingProfile.photoURL !== firebaseUser.photoURL;
+
+            if (hasChanges) {
+              console.log("📝 Updating existing user profile with changes...");
+              const userProfile = {
+                email: firebaseUser.email,
+                name: firebaseUser.displayName || firebaseUser.email,
+                photoURL: firebaseUser.photoURL,
+                updatedAt: new Date().toISOString(),
+              };
+
+              try {
+                await setDoc(doc(db, "users", firebaseUser.uid), userProfile, {
+                  merge: true,
+                });
+                console.log("✅ User profile updated successfully");
+                showInfo("Profile updated successfully!");
+              } catch (profileError) {
+                console.warn(
+                  "⚠️ Could not update user profile, continuing with basic auth:",
+                  profileError.message
+                );
+              }
+            } else {
+              console.log(
+                "✅ User profile already up to date, no changes needed"
+              );
+            }
+          }
+
+          const user = {
+            id: firebaseUser.uid,
+            email: firebaseUser.email,
+            name: firebaseUser.displayName || firebaseUser.email,
+            photoURL: firebaseUser.photoURL,
+          };
+
+          console.log("✅ User authenticated:", user.email);
+          dispatch({
+            type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+            payload: { user },
+          });
+        } catch (error) {
+          console.error("❌ Error handling user profile:", error);
+          // Still dispatch auth state change with basic user info
+          const user = {
+            id: firebaseUser.uid,
+            email: firebaseUser.email,
+            name: firebaseUser.displayName || firebaseUser.email,
+            photoURL: firebaseUser.photoURL,
+          };
+          dispatch({
+            type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+            payload: { user },
+          });
+        }
+      } else {
+        console.log("👋 User signed out");
+        dispatch({
+          type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+          payload: { user: null },
+        });
+      }
+    });
+
+    return () => unsubscribe();
+  }, [auth, db]);
+
+  // Login with email and password
+  const login = async (email, password) => {
+    dispatch({ type: AUTH_ACTIONS.LOGIN_START });
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = {
+        id: userCredential.user.uid,
+        email: userCredential.user.email,
+        name: userCredential.user.displayName || userCredential.user.email,
+        photoURL: userCredential.user.photoURL,
+      };
+
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_SUCCESS,
+        payload: { user },
+      });
+
+      return { success: true, user };
+    } catch (error) {
+      const errorMessage = getFirebaseErrorMessage(error.code);
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_FAILURE,
+        payload: errorMessage,
+      });
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  // Register with email and password
+  const register = async (email, password, name) => {
+    dispatch({ type: AUTH_ACTIONS.REGISTER_START });
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      // Create user profile in Firestore
+      const userProfile = {
+        email,
+        name,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      await setDoc(doc(db, "users", userCredential.user.uid), userProfile);
+
+      const user = {
+        id: userCredential.user.uid,
+        email: userCredential.user.email,
+        name,
+        photoURL: userCredential.user.photoURL,
+      };
+
+      dispatch({
+        type: AUTH_ACTIONS.REGISTER_SUCCESS,
+        payload: { user },
+      });
+
+      return { success: true, user };
+    } catch (error) {
+      const errorMessage = getFirebaseErrorMessage(error.code);
+      dispatch({
+        type: AUTH_ACTIONS.REGISTER_FAILURE,
+        payload: errorMessage,
+      });
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  // Logout
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      dispatch({ type: AUTH_ACTIONS.LOGOUT });
+      return { success: true };
+    } catch (error) {
+      console.error("Logout error:", error);
+      return { success: false, error: "Failed to logout" };
+    }
+  };
+
+  // Reset password
+  const resetPassword = async email => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return { success: true };
+    } catch (error) {
+      const errorMessage = getFirebaseErrorMessage(error.code);
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  // Clear error
+  const clearError = () => {
+    dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+  };
+
+  // Set loading
+  const setLoading = loading => {
+    dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: loading });
+  };
+
+  const value = {
+    ...state,
+    login,
+    register,
+    logout,
+    resetPassword,
+    clearError,
+    setLoading,
+  };
+
+  return (
+    <FirebaseAuthContext.Provider value={value}>
+      {children}
+    </FirebaseAuthContext.Provider>
+  );
+};
 
 // Custom hook to use the auth context
 export const useFirebaseAuth = () => {
@@ -130,276 +381,4 @@ export const useFirebaseAuth = () => {
     );
   }
   return context;
-};
-
-// Provider component
-export const FirebaseAuthProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, initialState);
-  const { showSuccess, showError, showInfo } = useNotifications();
-
-  // Initialize auth service
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        dispatch({ type: AUTH_ACTIONS.INITIALIZATION_START });
-
-        console.log("🔐 Initializing Firebase Auth Context...");
-
-        // Initialize the auth service
-        await authService.initialize();
-
-        // Get OAuth configuration
-        const oauthConfig = authService.getOAuthConfig();
-
-        // Set up auth state listener
-        const unsubscribe = authService.onAuthStateChanged(user => {
-          console.log(
-            "🔄 Auth state changed in context:",
-            user?.email || "signed out"
-          );
-
-          dispatch({
-            type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
-            payload: { user },
-          });
-
-          if (user) {
-            showSuccess(`Welcome back, ${user.name}!`);
-          }
-        });
-
-        dispatch({
-          type: AUTH_ACTIONS.INITIALIZATION_SUCCESS,
-          payload: { oauthConfig },
-        });
-
-        console.log("✅ Firebase Auth Context initialized successfully");
-
-        // Return cleanup function
-        return unsubscribe;
-      } catch (error) {
-        console.error("❌ Failed to initialize Firebase Auth Context:", error);
-
-        const errorMessage =
-          error instanceof AuthError
-            ? error.message
-            : "Failed to initialize authentication service";
-
-        dispatch({
-          type: AUTH_ACTIONS.INITIALIZATION_FAILURE,
-          payload: errorMessage,
-        });
-
-        showError(errorMessage);
-      }
-    };
-
-    initializeAuth();
-  }, [showSuccess, showError, showInfo]);
-
-  // Login with email and password
-  const login = async (email, password) => {
-    dispatch({ type: AUTH_ACTIONS.LOGIN_START });
-
-    try {
-      const result = await authService.signInWithEmail(email, password);
-
-      if (result.success) {
-        dispatch({
-          type: AUTH_ACTIONS.LOGIN_SUCCESS,
-          payload: { user: result.user },
-        });
-
-        return { success: true, user: result.user };
-      } else {
-        throw new Error("Login failed");
-      }
-    } catch (error) {
-      console.error("❌ Login error:", error);
-
-      const errorMessage =
-        error instanceof AuthError
-          ? error.message
-          : "Login failed. Please try again.";
-
-      dispatch({
-        type: AUTH_ACTIONS.LOGIN_FAILURE,
-        payload: errorMessage,
-      });
-
-      showError(errorMessage);
-      return { success: false, error: errorMessage };
-    }
-  };
-
-  // Register with email and password
-  const register = async (email, password, name) => {
-    dispatch({ type: AUTH_ACTIONS.REGISTER_START });
-
-    try {
-      const result = await authService.registerWithEmail(email, password, name);
-
-      if (result.success) {
-        dispatch({
-          type: AUTH_ACTIONS.REGISTER_SUCCESS,
-          payload: { user: result.user },
-        });
-
-        return { success: true, user: result.user };
-      } else {
-        throw new Error("Registration failed");
-      }
-    } catch (error) {
-      console.error("❌ Registration error:", error);
-
-      const errorMessage =
-        error instanceof AuthError
-          ? error.message
-          : "Registration failed. Please try again.";
-
-      dispatch({
-        type: AUTH_ACTIONS.REGISTER_FAILURE,
-        payload: errorMessage,
-      });
-
-      showError(errorMessage);
-      return { success: false, error: errorMessage };
-    }
-  };
-
-  // Sign in with Google OAuth
-  const signInWithGoogle = async () => {
-    dispatch({ type: AUTH_ACTIONS.LOGIN_START });
-
-    try {
-      // Check if OAuth is available
-      if (!authService.isOAuthAvailable()) {
-        const oauthConfig = authService.getOAuthConfig();
-        const errorMessage = oauthConfig.issues.join("; ");
-
-        dispatch({
-          type: AUTH_ACTIONS.LOGIN_FAILURE,
-          payload: errorMessage,
-        });
-
-        showError(errorMessage);
-        return { success: false, error: errorMessage };
-      }
-
-      console.log("🚀 Starting Google OAuth sign-in...");
-      showInfo("Redirecting to Google for authentication...");
-
-      const result = await authService.signInWithGoogle();
-
-      if (result.success) {
-        // The auth state listener will handle the success case
-        return { success: true };
-      } else {
-        throw new Error("OAuth sign-in failed");
-      }
-    } catch (error) {
-      console.error("❌ Google OAuth error:", error);
-
-      const errorMessage =
-        error instanceof AuthError
-          ? error.message
-          : "Google sign-in failed. Please try again.";
-
-      dispatch({
-        type: AUTH_ACTIONS.LOGIN_FAILURE,
-        payload: errorMessage,
-      });
-
-      showError(errorMessage);
-      return { success: false, error: errorMessage };
-    }
-  };
-
-  // Logout
-  const logout = async () => {
-    try {
-      const result = await authService.signOut();
-
-      if (result.success) {
-        dispatch({ type: AUTH_ACTIONS.LOGOUT });
-        showSuccess("Successfully signed out");
-        return { success: true };
-      } else {
-        throw new Error("Logout failed");
-      }
-    } catch (error) {
-      console.error("❌ Logout error:", error);
-
-      const errorMessage =
-        error instanceof AuthError
-          ? error.message
-          : "Failed to sign out. Please try again.";
-
-      showError(errorMessage);
-      return { success: false, error: errorMessage };
-    }
-  };
-
-  // Reset password
-  const resetPassword = async email => {
-    try {
-      const result = await authService.resetPassword(email);
-
-      if (result.success) {
-        showSuccess("Password reset email sent successfully");
-        return { success: true };
-      } else {
-        throw new Error("Password reset failed");
-      }
-    } catch (error) {
-      console.error("❌ Password reset error:", error);
-
-      const errorMessage =
-        error instanceof AuthError
-          ? error.message
-          : "Failed to send password reset email. Please try again.";
-
-      showError(errorMessage);
-      return { success: false, error: errorMessage };
-    }
-  };
-
-  // Clear error
-  const clearError = () => {
-    dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
-  };
-
-  // Set loading state
-  const setLoading = loading => {
-    dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: loading });
-  };
-
-  // Get OAuth configuration
-  const getOAuthConfig = () => {
-    return authService.getOAuthConfig();
-  };
-
-  // Check if OAuth is available
-  const isOAuthAvailable = () => {
-    return authService.isOAuthAvailable();
-  };
-
-  const value = {
-    ...state,
-    login,
-    register,
-    signInWithGoogle,
-    logout,
-    resetPassword,
-    clearError,
-    setLoading,
-    getOAuthConfig,
-    isOAuthAvailable,
-  };
-
-  return (
-    <FirebaseAuthContext.Provider value={value}>
-      {children}
-    </FirebaseAuthContext.Provider>
-  );
 };
