@@ -240,18 +240,15 @@ const validateOAuthConfig = () => {
 
 // Google OAuth provider setup
 const createGoogleProvider = () => {
-  const config = getConfig();
   const provider = new GoogleAuthProvider();
 
   // Add scopes
   provider.addScope("email");
   provider.addScope("profile");
 
-  // Set custom parameters
+  // Set custom parameters for better UX
   provider.setCustomParameters({
     prompt: "select_account",
-    // Use Firebase's default auth handler for production
-    redirect_uri: config.authDomain + "/__/auth/handler",
   });
 
   return provider;
@@ -328,18 +325,6 @@ class AuthService {
         };
 
         await createUserProfile(result.user.uid, userData);
-
-        // Clear URL parameters
-        if (
-          window.location.search.includes("state=") ||
-          window.location.search.includes("code=")
-        ) {
-          window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname
-          );
-        }
 
         // Update current user immediately
         this.currentUser = {
@@ -464,6 +449,7 @@ class AuthService {
       console.log("🔍 Provider details:", {
         scopes: provider.scopes,
         customParameters: provider.customParameters,
+        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
       });
 
       // Sign in with redirect
@@ -484,6 +470,28 @@ class AuthService {
         originalError: error,
       });
     }
+  }
+
+  // Test OAuth configuration
+  testOAuthConfig() {
+    const config = {
+      environment: getEnvironment(),
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY ? "✅ Set" : "❌ Missing",
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID
+        ? "✅ Set"
+        : "❌ Missing",
+      oauthEnabled:
+        import.meta.env.VITE_ENABLE_OAUTH === "true"
+          ? "✅ Enabled"
+          : "❌ Disabled",
+      currentUrl: window.location.href,
+      hostname: window.location.hostname,
+      isLocalhost: isLocalhost(),
+    };
+
+    console.log("🔍 OAuth Configuration Test:", config);
+    return config;
   }
 
   // Sign in with email and password
@@ -607,7 +615,7 @@ class AuthService {
   // Check if OAuth is available
   isOAuthAvailable() {
     const config = validateOAuthConfig();
-    return config.isValid && import.meta.env.VITE_ENABLE_OAUTH === "true";
+    return config.isValid;
   }
 
   // Get Firebase instances for other services
