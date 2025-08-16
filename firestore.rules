@@ -97,6 +97,11 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid;
     }
     
+    // API usage tracking collection - users can read and write their own usage data
+    match /api_usage/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

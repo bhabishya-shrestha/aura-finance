@@ -60,65 +60,89 @@ class ApiUsageService {
       return cached.data;
     }
 
-    // Fetch from Firestore
-    const usageDoc = doc(this.db, "api_usage", userId);
-    const usageSnapshot = await getDoc(usageDoc);
+    try {
+      // Fetch from Firestore
+      const usageDoc = doc(this.db, "api_usage", userId);
+      const usageSnapshot = await getDoc(usageDoc);
 
-    const today = new Date().toISOString().split("T")[0];
-    const usageData = usageSnapshot.exists() ? usageSnapshot.data() : {};
+      const today = new Date().toISOString().split("T")[0];
+      const usageData = usageSnapshot.exists() ? usageSnapshot.data() : {};
 
-    // Check if we need to reset daily usage (new day)
-    const lastUpdated = usageData.lastUpdated;
-    const needsReset = lastUpdated && lastUpdated !== today;
+      // Check if we need to reset daily usage (new day)
+      const lastUpdated = usageData.lastUpdated;
+      const needsReset = lastUpdated && lastUpdated !== today;
 
-    let currentUsage = 0;
-    if (!needsReset) {
-      currentUsage = usageData[provider]?.[today] || 0;
-    }
-
-    // If it's a new day, reset the usage and update the document
-    if (needsReset) {
-      try {
-        await setDoc(
-          usageDoc,
-          {
-            [provider]: {
-              [today]: 0,
-            },
-            lastUpdated: today,
-          },
-          { merge: true }
-        );
-
-        // Clear any old daily data to keep the document clean
-        const cleanData = { ...usageData };
-        if (cleanData[provider]) {
-          // Keep only today's data
-          cleanData[provider] = { [today]: 0 };
-        }
-        cleanData.lastUpdated = today;
-
-        await setDoc(usageDoc, cleanData, { merge: true });
-
-        console.log(`Reset daily API usage for ${provider} - new day detected`);
-      } catch (error) {
-        console.error("Failed to reset daily API usage:", error);
-        // Continue with 0 usage even if reset fails
+      let currentUsage = 0;
+      if (!needsReset) {
+        currentUsage = usageData[provider]?.[today] || 0;
       }
+
+      // If it's a new day, reset the usage and update the document
+      if (needsReset) {
+        try {
+          await setDoc(
+            usageDoc,
+            {
+              [provider]: {
+                [today]: 0,
+              },
+              lastUpdated: today,
+            },
+            { merge: true }
+          );
+
+          // Clear any old daily data to keep the document clean
+          const cleanData = { ...usageData };
+          if (cleanData[provider]) {
+            // Keep only today's data
+            cleanData[provider] = { [today]: 0 };
+          }
+          cleanData.lastUpdated = today;
+
+          await setDoc(usageDoc, cleanData, { merge: true });
+
+          console.log(
+            `Reset daily API usage for ${provider} - new day detected`
+          );
+        } catch (error) {
+          console.error("Failed to reset daily API usage:", error);
+          // Continue with 0 usage even if reset fails
+        }
+      }
+
+      const data = {
+        currentUsage,
+        lastUpdated: today,
+      };
+
+      // Cache the result
+      this.usageCache.set(cacheKey, {
+        data,
+        timestamp: Date.now(),
+      });
+
+      return data;
+    } catch (error) {
+      console.warn(
+        "Failed to fetch API usage from Firestore, using default values:",
+        error.message
+      );
+
+      // Return default data on error to prevent app from breaking
+      const today = new Date().toISOString().split("T")[0];
+      const data = {
+        currentUsage: 0,
+        lastUpdated: today,
+      };
+
+      // Cache the default result
+      this.usageCache.set(cacheKey, {
+        data,
+        timestamp: Date.now(),
+      });
+
+      return data;
     }
-
-    const data = {
-      currentUsage,
-      lastUpdated: today,
-    };
-
-    // Cache the result
-    this.usageCache.set(cacheKey, {
-      data,
-      timestamp: Date.now(),
-    });
-
-    return data;
   }
 
   /**
