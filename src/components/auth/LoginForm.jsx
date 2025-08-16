@@ -56,17 +56,27 @@ const LoginForm = ({ onSwitchToRegister }) => {
 
   const handleSubmit = async e => {
     e.preventDefault();
+    console.log("🔐 Login form submitted with:", {
+      email: formData.email,
+      password: formData.password ? "***" : "empty",
+    });
 
     if (!validateForm()) {
+      console.log("❌ Form validation failed");
       return;
     }
 
+    console.log("✅ Form validation passed, attempting login...");
     const result = await login(formData.email, formData.password);
+    console.log("🔐 Login result:", result);
 
     if (!result.success) {
+      console.log("❌ Login failed:", result.error);
       // Error is already handled by the auth context
       return;
     }
+
+    console.log("✅ Login successful!");
   };
 
   return (

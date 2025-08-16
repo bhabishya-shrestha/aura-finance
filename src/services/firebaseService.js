@@ -55,9 +55,22 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+console.log("🔥 Initializing Firebase with config:", {
+  apiKey: firebaseConfig.apiKey ? "***" : "missing",
+  authDomain: firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId,
+  storageBucket: firebaseConfig.storageBucket,
+  messagingSenderId: firebaseConfig.messagingSenderId,
+  appId: firebaseConfig.appId ? "***" : "missing"
+});
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+console.log("✅ Firebase initialized successfully");
+console.log("🔐 Auth instance:", auth);
+console.log("🗄️ Firestore instance:", db);
 
 // Export app for use in other modules
 export { app };
@@ -433,17 +446,37 @@ class FirebaseService {
       console.error("❌ Delete transaction error:", error);
       console.error("Error code:", error.code);
       console.error("Error message:", error.message);
-
       // Check if it's a permissions error
       if (
         error.code === "permission-denied" ||
-        error.message.includes("permission")
+        error.message.includes("permission") ||
+        error.message.includes("Missing or insufficient permissions")
       ) {
+        // Try to get more information about the transaction
+        try {
+          const transactionDoc = doc(db, "transactions", transactionId);
+          const transactionSnapshot = await getDoc(transactionDoc);
+          
+          if (transactionSnapshot.exists()) {
+            const transactionData = transactionSnapshot.data();
+            console.error("Transaction data for debugging:", {
+              id: transactionId,
+              userId: transactionData.userId,
+              currentUser: this.currentUser.uid,
+              hasUserId: !!transactionData.userId,
+              transactionData: transactionData
+            });
+          }
+        } catch (debugError) {
+          console.error("Could not fetch transaction for debugging:", debugError);
+        }
+        
         return {
           success: false,
-          error: "Insufficient permissions to delete transaction",
+          error: "Insufficient permissions to delete transaction. Please try refreshing the page and try again.",
         };
       }
+      
       return { success: false, error: error.message };
     }
   }

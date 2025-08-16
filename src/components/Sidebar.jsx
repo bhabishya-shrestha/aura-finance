@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   BarChart3,
   Wallet,
@@ -9,18 +10,17 @@ import {
   Cloud,
   CloudOff,
   RefreshCw,
-  // Removed unused Unlink import
   LogOut,
 } from "lucide-react";
 import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 import firebaseSync from "../services/firebaseSync";
 
 const Sidebar = ({
-  onPageChange,
-  currentPage,
   isMobileOpen,
   onMobileToggle,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [syncStatus, setSyncStatus] = useState({
     isOnline: true,
@@ -30,6 +30,9 @@ const Sidebar = ({
   const [isSyncing, setIsSyncing] = useState(false);
   const { user, logout } = useFirebaseAuth();
 
+  // Derive currentPage from URL
+  const currentPage = location.pathname.substring(1) || "dashboard";
+
   // Update sync status every 2 seconds
   useEffect(() => {
     const interval = setInterval(() => {
@@ -37,7 +40,7 @@ const Sidebar = ({
     }, 2000);
 
     return () => clearInterval(interval);
-  }, []); // Removed unnecessary dependencies
+  }, []);
 
   // Generate personalized greeting based on time and user info
   const getPersonalizedGreeting = () => {
@@ -105,41 +108,51 @@ const Sidebar = ({
       icon: Home,
       label: "Dashboard",
       description: "Overview of your finances",
+      path: "/dashboard",
     },
     {
       id: "accounts",
       icon: Wallet,
       label: "Accounts",
       description: "Manage your accounts",
+      path: "/accounts",
     },
     {
       id: "analytics",
       icon: BarChart3,
       label: "Analytics",
       description: "Financial insights",
+      path: "/analytics",
     },
     {
       id: "transactions",
       icon: FileText,
       label: "Transactions",
       description: "View all transactions",
+      path: "/transactions",
     },
     {
       id: "reports",
       icon: TrendingUp,
       label: "Reports",
       description: "Generate reports",
+      path: "/reports",
     },
     {
       id: "settings",
       icon: Settings,
       label: "Settings",
       description: "App preferences",
+      path: "/settings",
     },
   ];
 
-  const handleMenuClick = pageId => {
-    onPageChange(pageId);
+  const handleMenuClick = (pageId) => {
+    const menuItem = menuItems.find(item => item.id === pageId);
+    if (menuItem) {
+      navigate(menuItem.path);
+    }
+    
     // Close mobile sidebar after navigation
     if (isMobileOpen) {
       onMobileToggle();
@@ -169,7 +182,7 @@ const Sidebar = ({
     }
   };
 
-  const formatLastSync = timestamp => {
+  const formatLastSync = (timestamp) => {
     if (!timestamp) return "Never";
 
     const now = new Date();
@@ -208,7 +221,7 @@ const Sidebar = ({
             className={`${isCollapsed ? "flex flex-col items-center" : "flex items-center justify-between"} mb-6`}
           >
             {!isCollapsed && (
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1 mr-3">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white leading-tight">
                   {getPersonalizedGreeting()}
                 </h2>

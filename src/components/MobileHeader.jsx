@@ -1,20 +1,21 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, Menu, ChevronDown, ChevronUp } from "lucide-react";
-// import { useAuth } from "../contexts/AuthContext";
+import { Bell, Menu, ChevronDown, ChevronUp, X, Rocket } from "lucide-react";
+import { useNotifications } from "../contexts/NotificationContext";
 import useStore from "../store";
 
 const MobileHeader = ({ onMenuClick }) => {
-  // const { } = useAuth();
-  const {
-    notifications,
-    unreadCount,
+  const { 
+    notifications, 
+    getUnreadCount, 
     markNotificationAsRead,
-    markAllNotificationsAsRead,
+    removeNotification,
+    releaseNotes 
+  } = useNotifications();
+  const {
     lastUpdateNotification,
     markUpdateNotificationAsRead,
   } = useStore();
   const [showNotifications, setShowNotifications] = useState(false);
-
   const [expandedNotifications, setExpandedNotifications] = useState(new Set());
   const headerRef = useRef(null);
 
@@ -70,10 +71,21 @@ const MobileHeader = ({ onMenuClick }) => {
         return "⚠️";
       case "error":
         return "❌";
+      case "release":
+        return "🚀";
       default:
         return "ℹ️";
     }
   };
+
+  const getNotificationTitle = (notification) => {
+    if (notification.type === "release") {
+      return `New version ${notification.releaseNotes?.version} is available!`;
+    }
+    return notification.message;
+  };
+
+  const unreadCount = getUnreadCount();
 
   return (
     <div
@@ -118,7 +130,7 @@ const MobileHeader = ({ onMenuClick }) => {
                       !lastUpdateNotification.read)) && (
                     <button
                       onClick={() => {
-                        markAllNotificationsAsRead();
+                        // markAllNotificationsAsRead(); // This is now handled by NotificationContext
                         if (
                           lastUpdateNotification &&
                           !lastUpdateNotification.read

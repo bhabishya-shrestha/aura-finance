@@ -38,7 +38,11 @@ const initialState = {
 const authReducer = (state, action) => {
   switch (action.type) {
     case AUTH_ACTIONS.AUTH_STATE_CHANGED:
-      return {
+      console.log(
+        "🔄 AUTH_STATE_CHANGED reducer called with payload:",
+        action.payload
+      );
+      const newState = {
         ...state,
         user: action.payload.user,
         isAuthenticated: !!action.payload.user,
@@ -46,6 +50,8 @@ const authReducer = (state, action) => {
         isInitialized: true,
         error: null,
       };
+      console.log("🔄 New auth state:", newState);
+      return newState;
 
     case AUTH_ACTIONS.LOGIN_START:
     case AUTH_ACTIONS.REGISTER_START:
@@ -164,6 +170,7 @@ export const FirebaseAuthProvider = ({ children }) => {
               await setDoc(doc(db, "users", firebaseUser.uid), userProfile);
               console.log("✅ User profile created successfully");
               showSuccess("Profile created successfully!");
+              console.log("🔔 Success notification should be shown");
             } catch (profileError) {
               console.warn(
                 "⚠️ Could not create user profile, continuing with basic auth:",
@@ -215,10 +222,12 @@ export const FirebaseAuthProvider = ({ children }) => {
           };
 
           console.log("✅ User authenticated:", user.email);
+          console.log("🔄 Dispatching AUTH_STATE_CHANGED with user:", user);
           dispatch({
             type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
             payload: { user },
           });
+          console.log("✅ AUTH_STATE_CHANGED dispatched");
         } catch (error) {
           console.error("❌ Error handling user profile:", error);
           // Still dispatch auth state change with basic user info
@@ -247,14 +256,21 @@ export const FirebaseAuthProvider = ({ children }) => {
 
   // Login with email and password
   const login = async (email, password) => {
+    console.log("🚀 Firebase login attempt for:", email);
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
     try {
+      console.log("🔐 Calling Firebase signInWithEmailAndPassword...");
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
+      console.log(
+        "✅ Firebase authentication successful:",
+        userCredential.user.email
+      );
+
       const user = {
         id: userCredential.user.uid,
         email: userCredential.user.email,
@@ -262,6 +278,7 @@ export const FirebaseAuthProvider = ({ children }) => {
         photoURL: userCredential.user.photoURL,
       };
 
+      console.log("👤 Dispatching login success with user:", user);
       dispatch({
         type: AUTH_ACTIONS.LOGIN_SUCCESS,
         payload: { user },
@@ -269,7 +286,9 @@ export const FirebaseAuthProvider = ({ children }) => {
 
       return { success: true, user };
     } catch (error) {
+      console.error("❌ Firebase login error:", error);
       const errorMessage = getFirebaseErrorMessage(error.code);
+      console.log("📝 Dispatching login failure with error:", errorMessage);
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: errorMessage,

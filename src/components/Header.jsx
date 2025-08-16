@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, Menu, Sun, Moon, X } from "lucide-react";
-// import { useAuth } from "../contexts/AuthContext";
+import { Bell, Menu, Sun, Moon, X, Rocket } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useNotifications } from "../contexts/NotificationContext";
 import useStore from "../store";
 import SearchBar from "./SearchBar";
 import auraLogo from "../assets/aura-finance.png";
 
 const Header = ({ onMenuToggle, showMenuButton = false }) => {
-  // const { } = useAuth();
   const { toggleTheme, currentTheme } = useTheme();
   const {
     notifications,
-    unreadCount,
+    getUnreadCount,
     markNotificationAsRead,
-    markAllNotificationsAsRead,
+    removeNotification,
+    releaseNotes,
+  } = useNotifications();
+  const {
     lastUpdateNotification,
     clearUpdateNotification,
     markUpdateNotificationAsRead,
@@ -62,14 +64,25 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
         return "⚠️";
       case "error":
         return "❌";
+      case "release":
+        return "🚀";
       default:
         return "ℹ️";
     }
   };
 
+  const getNotificationTitle = notification => {
+    if (notification.type === "release") {
+      return `New version ${notification.releaseNotes?.version} is available!`;
+    }
+    return notification.message;
+  };
+
   const toggleNotifications = () => {
     setShowNotifications(!showNotifications);
   };
+
+  const unreadCount = getUnreadCount();
 
   return (
     <header
@@ -152,7 +165,12 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
                         !lastUpdateNotification.read)) && (
                       <button
                         onClick={() => {
-                          markAllNotificationsAsRead();
+                          // Mark all notifications as read
+                          notifications.forEach(notification => {
+                            if (!notification.read) {
+                              markNotificationAsRead(notification.id);
+                            }
+                          });
                           if (
                             lastUpdateNotification &&
                             !lastUpdateNotification.read
@@ -263,11 +281,31 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
                                     : "text-gray-900 dark:text-white"
                                 }`}
                               >
-                                {notification.title}
+                                {getNotificationTitle(notification)}
                               </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {notification.message}
-                              </p>
+                              {notification.type === "release" &&
+                                notification.releaseNotes && (
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <p>
+                                      ✨{" "}
+                                      {notification.releaseNotes.features
+                                        ?.length || 0}{" "}
+                                      new features
+                                    </p>
+                                    <p>
+                                      🔧{" "}
+                                      {notification.releaseNotes.improvements
+                                        ?.length || 0}{" "}
+                                      improvements
+                                    </p>
+                                    <p>
+                                      🐛{" "}
+                                      {notification.releaseNotes.bugFixes
+                                        ?.length || 0}{" "}
+                                      bug fixes
+                                    </p>
+                                  </div>
+                                )}
                               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                                 {formatTimeAgo(notification.timestamp)}
                               </p>
@@ -275,6 +313,15 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
                             {!notification.read && (
                               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                             )}
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                removeNotification(notification.id);
+                              }}
+                              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors opacity-0 group-hover:opacity-100"
+                            >
+                              <X className="w-3 h-3 text-gray-400" />
+                            </button>
                           </div>
                         </div>
                       ))}

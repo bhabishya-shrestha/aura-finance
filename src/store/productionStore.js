@@ -244,36 +244,60 @@ const useProductionStore = create(
       }
     },
 
-    // Transaction actions with enhanced error handling
+    // Transaction actions
     addTransaction: async transactionData => {
       try {
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
-        // Ensure consistent data types
+        // Validate required fields
+        if (!transactionData.description?.trim()) {
+          throw new Error("Transaction description is required");
+        }
+        if (!transactionData.amount || isNaN(parseFloat(transactionData.amount))) {
+          throw new Error("Valid transaction amount is required");
+        }
+        if (!transactionData.date) {
+          throw new Error("Transaction date is required");
+        }
+        if (!transactionData.accountId) {
+          throw new Error("Account is required");
+        }
+
+        // Ensure proper data formatting
         const sanitizedData = {
           ...transactionData,
+          description: transactionData.description.trim(),
           accountId: transactionData.accountId?.toString(),
           amount: parseFloat(transactionData.amount),
           date: new Date(transactionData.date).toISOString(),
           category: transactionData.category || "Uncategorized",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
 
         const result = await firebaseService.addTransaction(sanitizedData);
 
         if (!result.success) {
-          throw new Error(result.error);
+          throw new Error(result.error || "Failed to add transaction");
         }
 
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
-        return result.data;
+        
+        // Return success with transaction data
+        return {
+          success: true,
+          data: result.data,
+          message: "Transaction added successfully"
+        };
       } catch (error) {
+        const errorMessage = error.message || "Failed to add transaction";
         set({
           isLoading: false,
-          error: error.message,
+          error: errorMessage,
           syncStatus: "error",
         });
-        throw error;
+        throw new Error(errorMessage);
       }
     },
 
@@ -281,9 +305,16 @@ const useProductionStore = create(
       try {
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
-        // Ensure consistent data types for updates
+        // Validate transaction exists
+        const existingTransaction = get().transactions.find(t => t.id === transactionId);
+        if (!existingTransaction) {
+          throw new Error("Transaction not found");
+        }
+
+        // Ensure proper data formatting
         const sanitizedUpdates = {
           ...updates,
+          description: updates.description?.trim(),
           accountId: updates.accountId?.toString(),
           amount: updates.amount ? parseFloat(updates.amount) : undefined,
           date: updates.date ? new Date(updates.date).toISOString() : undefined,
@@ -296,19 +327,25 @@ const useProductionStore = create(
         );
 
         if (!result.success) {
-          throw new Error(result.error);
+          throw new Error(result.error || "Failed to update transaction");
         }
 
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
-        return result.data;
+        
+        return {
+          success: true,
+          data: result.data,
+          message: "Transaction updated successfully"
+        };
       } catch (error) {
+        const errorMessage = error.message || "Failed to update transaction";
         set({
           isLoading: false,
-          error: error.message,
+          error: errorMessage,
           syncStatus: "error",
         });
-        throw error;
+        throw new Error(errorMessage);
       }
     },
 
@@ -316,21 +353,33 @@ const useProductionStore = create(
       try {
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
+        // Validate transaction exists
+        const existingTransaction = get().transactions.find(t => t.id === transactionId);
+        if (!existingTransaction) {
+          throw new Error("Transaction not found");
+        }
+
         const result = await firebaseService.deleteTransaction(transactionId);
 
         if (!result.success) {
-          throw new Error(result.error);
+          throw new Error(result.error || "Failed to delete transaction");
         }
 
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
+        
+        return {
+          success: true,
+          message: "Transaction deleted successfully"
+        };
       } catch (error) {
+        const errorMessage = error.message || "Failed to delete transaction";
         set({
           isLoading: false,
-          error: error.message,
+          error: errorMessage,
           syncStatus: "error",
         });
-        throw error;
+        throw new Error(errorMessage);
       }
     },
 
@@ -388,22 +437,49 @@ const useProductionStore = create(
       try {
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
-        const result = await firebaseService.addAccount(accountData);
+        // Validate required fields
+        if (!accountData.name?.trim()) {
+          throw new Error("Account name is required");
+        }
+        if (!accountData.type) {
+          throw new Error("Account type is required");
+        }
+        if (accountData.balance === undefined || accountData.balance === null || isNaN(parseFloat(accountData.balance))) {
+          throw new Error("Valid account balance is required");
+        }
+
+        // Ensure proper data formatting
+        const sanitizedData = {
+          ...accountData,
+          name: accountData.name.trim(),
+          balance: parseFloat(accountData.balance),
+          type: accountData.type.toLowerCase(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        const result = await firebaseService.addAccount(sanitizedData);
 
         if (!result.success) {
-          throw new Error(result.error);
+          throw new Error(result.error || "Failed to add account");
         }
 
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
-        return result.data;
+        
+        return {
+          success: true,
+          data: result.data,
+          message: "Account added successfully"
+        };
       } catch (error) {
+        const errorMessage = error.message || "Failed to add account";
         set({
           isLoading: false,
-          error: error.message,
+          error: errorMessage,
           syncStatus: "error",
         });
-        throw error;
+        throw new Error(errorMessage);
       }
     },
 
@@ -411,22 +487,43 @@ const useProductionStore = create(
       try {
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
-        const result = await firebaseService.updateAccount(accountId, updates);
+        // Validate account exists
+        const existingAccount = get().accounts.find(a => a.id === accountId);
+        if (!existingAccount) {
+          throw new Error("Account not found");
+        }
+
+        // Ensure proper data formatting
+        const sanitizedUpdates = {
+          ...updates,
+          name: updates.name?.trim(),
+          balance: updates.balance !== undefined ? parseFloat(updates.balance) : undefined,
+          type: updates.type?.toLowerCase(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        const result = await firebaseService.updateAccount(accountId, sanitizedUpdates);
 
         if (!result.success) {
-          throw new Error(result.error);
+          throw new Error(result.error || "Failed to update account");
         }
 
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
-        return result.data;
+        
+        return {
+          success: true,
+          data: result.data,
+          message: "Account updated successfully"
+        };
       } catch (error) {
+        const errorMessage = error.message || "Failed to update account";
         set({
           isLoading: false,
-          error: error.message,
+          error: errorMessage,
           syncStatus: "error",
         });
-        throw error;
+        throw new Error(errorMessage);
       }
     },
 
@@ -434,21 +531,39 @@ const useProductionStore = create(
       try {
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
+        // Validate account exists
+        const existingAccount = get().accounts.find(a => a.id === accountId);
+        if (!existingAccount) {
+          throw new Error("Account not found");
+        }
+
+        // Check if account has transactions
+        const accountTransactions = get().transactions.filter(t => t.accountId === accountId);
+        if (accountTransactions.length > 0) {
+          throw new Error("Cannot delete account with existing transactions. Please delete or reassign transactions first.");
+        }
+
         const result = await firebaseService.deleteAccount(accountId);
 
         if (!result.success) {
-          throw new Error(result.error);
+          throw new Error(result.error || "Failed to delete account");
         }
 
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
+        
+        return {
+          success: true,
+          message: "Account deleted successfully"
+        };
       } catch (error) {
+        const errorMessage = error.message || "Failed to delete account";
         set({
           isLoading: false,
-          error: error.message,
+          error: errorMessage,
           syncStatus: "error",
         });
-        throw error;
+        throw new Error(errorMessage);
       }
     },
 
