@@ -71,7 +71,6 @@ const AppLayout = () => {
   const {
     loadTransactions,
     loadAccounts,
-    setUpdateNotification,
     lastUpdateNotification,
   } = useStore();
   const isInitialized = useRef(false);

@@ -3,7 +3,7 @@
  * This script helps debug and clear the local IndexedDB database
  */
 
-import { debugDatabaseState, forceClearAllData } from "./src/database.js";
+import { debugDatabaseState } from "./src/database.js";
 
 async function debugLocalDatabase() {
   console.log("🔍 Debugging Local Database...");
