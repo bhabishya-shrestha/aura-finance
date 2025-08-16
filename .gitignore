@@ -123,6 +123,17 @@ src/assets/test*.png
 src/assets/sample*.png
 src/assets/demo*.png
 
+# Debug and test scripts
+debug-*.js
+test-*.js
+analyze-*.js
+cost-*.js
+deploy-*.js
+*-import-data.json
+security-report.json
+*.zip
+*.traineddata
+
 # GitGuardian cache
 .cache_ggshield
 
