@@ -36,11 +36,16 @@ service cloud.firestore {
              (data.name == null || (data.name is string && data.name.size() > 0 && data.name.size() < 100));
     }
     
+    // System health check collection - allow read for connectivity testing
+    match /_health_check/{document} {
+      allow read: if isAuthenticated();
+      allow write: if false; // No writes to health check
+    }
+    
     // Users can only access their own user profile
     match /users/{userId} {
-      allow read, write: if isOwner(userId) && isValidUser(request.resource.data);
-      allow create: if isAuthenticated() && 
-        request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
+      allow create: if isAuthenticated() && request.auth.uid == userId;
     }
     
     // Users can perform all operations on their own transactions
