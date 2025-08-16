@@ -55,9 +55,22 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+console.log("🔥 Initializing Firebase with config:", {
+  apiKey: firebaseConfig.apiKey ? "***" : "missing",
+  authDomain: firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId,
+  storageBucket: firebaseConfig.storageBucket,
+  messagingSenderId: firebaseConfig.messagingSenderId,
+  appId: firebaseConfig.appId ? "***" : "missing"
+});
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+console.log("✅ Firebase initialized successfully");
+console.log("🔐 Auth instance:", auth);
+console.log("🗄️ Firestore instance:", db);
 
 // Export app for use in other modules
 export { app };

@@ -8,12 +8,12 @@ import auraLogo from "../assets/aura-finance.png";
 
 const Header = ({ onMenuToggle, showMenuButton = false }) => {
   const { toggleTheme, currentTheme } = useTheme();
-  const { 
-    notifications, 
-    getUnreadCount, 
+  const {
+    notifications,
+    getUnreadCount,
     markNotificationAsRead,
     removeNotification,
-    releaseNotes 
+    releaseNotes,
   } = useNotifications();
   const {
     lastUpdateNotification,
@@ -71,7 +71,7 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
     }
   };
 
-  const getNotificationTitle = (notification) => {
+  const getNotificationTitle = notification => {
     if (notification.type === "release") {
       return `New version ${notification.releaseNotes?.version} is available!`;
     }
@@ -283,13 +283,29 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
                               >
                                 {getNotificationTitle(notification)}
                               </p>
-                              {notification.type === "release" && notification.releaseNotes && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  <p>✨ {notification.releaseNotes.features?.length || 0} new features</p>
-                                  <p>🔧 {notification.releaseNotes.improvements?.length || 0} improvements</p>
-                                  <p>🐛 {notification.releaseNotes.bugFixes?.length || 0} bug fixes</p>
-                                </div>
-                              )}
+                              {notification.type === "release" &&
+                                notification.releaseNotes && (
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <p>
+                                      ✨{" "}
+                                      {notification.releaseNotes.features
+                                        ?.length || 0}{" "}
+                                      new features
+                                    </p>
+                                    <p>
+                                      🔧{" "}
+                                      {notification.releaseNotes.improvements
+                                        ?.length || 0}{" "}
+                                      improvements
+                                    </p>
+                                    <p>
+                                      🐛{" "}
+                                      {notification.releaseNotes.bugFixes
+                                        ?.length || 0}{" "}
+                                      bug fixes
+                                    </p>
+                                  </div>
+                                )}
                               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                                 {formatTimeAgo(notification.timestamp)}
                               </p>

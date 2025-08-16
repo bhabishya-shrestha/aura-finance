@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sparkles, Shield, TrendingUp } from "lucide-react";
 import LoginForm from "../components/auth/LoginForm";
 import RegisterForm from "../components/auth/RegisterForm";
+import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
+  const navigate = useNavigate();
+  const { isAuthenticated, isInitialized } = useFirebaseAuth();
 
   useEffect(() => {
     // Add a small delay for smooth animation
     const timer = setTimeout(() => setIsLoaded(true), 100);
     return () => clearTimeout(timer);
   }, []);
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isInitialized && isAuthenticated) {
+      console.log("🔄 User is already authenticated, redirecting to dashboard");
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, isInitialized, navigate]);
 
   const features = [
     {

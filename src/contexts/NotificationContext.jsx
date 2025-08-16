@@ -34,7 +34,7 @@ export const NotificationProvider = ({ children }) => {
         const validNotifications = parsed.filter(notification => {
           const notificationTime = new Date(notification.timestamp);
           const now = new Date();
-          return (now - notificationTime) < 24 * 60 * 60 * 1000; // 24 hours
+          return now - notificationTime < 24 * 60 * 60 * 1000; // 24 hours
         });
         setNotifications(validNotifications);
       }
@@ -60,7 +60,12 @@ export const NotificationProvider = ({ children }) => {
   const checkForReleaseNotes = useCallback(() => {
     const currentVersion = "1.3.0";
     const lastSeenVersion = localStorage.getItem("aura_last_seen_version");
-    
+
+    console.log("🔍 Checking for release notes:", {
+      currentVersion,
+      lastSeenVersion,
+    });
+
     if (lastSeenVersion !== currentVersion) {
       const releaseInfo = {
         version: currentVersion,
@@ -75,7 +80,7 @@ export const NotificationProvider = ({ children }) => {
           "Enterprise-grade architecture improvements",
           "Comprehensive testing infrastructure",
           "Performance monitoring and optimization",
-          "Professional UI/UX enhancements"
+          "Professional UI/UX enhancements",
         ],
         bugFixes: [
           "Fixed sidebar navigation issues",
@@ -83,7 +88,7 @@ export const NotificationProvider = ({ children }) => {
           "Improved notification system reliability",
           "Enhanced mobile responsiveness",
           "Fixed UI layout and positioning issues",
-          "Improved overall app stability and performance"
+          "Improved overall app stability and performance",
         ],
         improvements: [
           "Split monolithic store into domain-specific stores",
@@ -91,10 +96,10 @@ export const NotificationProvider = ({ children }) => {
           "Implemented CI/CD pipeline with quality gates",
           "Added performance monitoring with Core Web Vitals",
           "Enhanced accessibility and keyboard navigation",
-          "Improved error boundaries and error handling"
-        ]
+          "Improved error boundaries and error handling",
+        ],
       };
-      
+
       setReleaseNotes(releaseInfo);
       localStorage.setItem("aura_last_seen_version", currentVersion);
     }
@@ -118,6 +123,7 @@ export const NotificationProvider = ({ children }) => {
       read: false,
     };
 
+    console.log("🔔 Adding notification:", newNotification);
     setNotifications(prev => [...prev, newNotification]);
 
     // Auto-remove after duration (default 5 seconds)
@@ -138,9 +144,7 @@ export const NotificationProvider = ({ children }) => {
   const markNotificationAsRead = useCallback(id => {
     setNotifications(prev =>
       prev.map(notification =>
-        notification.id === id
-          ? { ...notification, read: true }
-          : notification
+        notification.id === id ? { ...notification, read: true } : notification
       )
     );
   }, []);
@@ -198,7 +202,9 @@ export const NotificationProvider = ({ children }) => {
   );
 
   const showReleaseNotes = useCallback(() => {
+    console.log("🚀 showReleaseNotes called, releaseNotes:", releaseNotes);
     if (releaseNotes) {
+      console.log("🚀 Creating release notification");
       return addNotification({
         type: "release",
         message: `New version ${releaseNotes.version} is available!`,
@@ -206,6 +212,8 @@ export const NotificationProvider = ({ children }) => {
         icon: "🚀",
         releaseNotes,
       });
+    } else {
+      console.log("🚀 No release notes available");
     }
   }, [releaseNotes, addNotification]);
 

@@ -56,7 +56,14 @@ const PageLoading = ({ pageName = "page" }) => (
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading, isInitialized } = useFirebaseAuth();
 
+  console.log("🛡️ ProtectedRoute state:", {
+    isAuthenticated,
+    isLoading,
+    isInitialized,
+  });
+
   if (!isInitialized || isLoading) {
+    console.log("⏳ ProtectedRoute: Still loading...");
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <LoadingSpinner
@@ -69,9 +76,11 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
+    console.log("🚫 ProtectedRoute: Not authenticated, redirecting to /auth");
     return <Navigate to="/auth" replace />;
   }
 
+  console.log("✅ ProtectedRoute: Authenticated, rendering children");
   return children;
 };
 
@@ -96,9 +105,13 @@ const AppLayout = () => {
 
   // Show release notes on first load
   useEffect(() => {
-    const hasShownReleaseNotes = sessionStorage.getItem("aura_release_notes_shown");
+    const hasShownReleaseNotes = sessionStorage.getItem(
+      "aura_release_notes_shown"
+    );
+    console.log("📝 Release notes check:", { hasShownReleaseNotes });
     if (!hasShownReleaseNotes) {
       setTimeout(() => {
+        console.log("🚀 Showing release notes after delay");
         showReleaseNotes();
         sessionStorage.setItem("aura_release_notes_shown", "true");
       }, 2000); // Show after 2 seconds
@@ -168,7 +181,7 @@ const AppLayout = () => {
       <div className="mobile-layout">
         <MobileHeader
           currentPage={currentPage}
-          onMenuToggle={handleMenuToggle}
+          onMenuClick={handleMenuToggle}
           onImportTrigger={handleImportTrigger}
         />
 
