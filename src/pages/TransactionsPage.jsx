@@ -191,27 +191,72 @@ const TransactionsPage = () => {
           if (transaction) {
             // Create a new date with the selected year, keeping the same month and day
             const currentDate = new Date(transaction.date);
+            
+            if (import.meta.env.DEV) {
+              console.log(`Processing transaction ${transactionId}:`, {
+                originalDate: transaction.date,
+                currentDate: currentDate,
+                currentMonth: currentDate.getMonth(),
+                currentDay: currentDate.getDate(),
+                targetYear: year
+              });
+            }
 
             // Handle edge cases like February 29th in non-leap years
             let newDate;
             try {
-              newDate = new Date(
-                year,
-                currentDate.getMonth(),
-                currentDate.getDate()
-              );
+              // First try: create date with same month and day
+              newDate = new Date(year, currentDate.getMonth(), currentDate.getDate());
+              
+              if (import.meta.env.DEV) {
+                console.log(`First attempt - newDate:`, newDate);
+              }
 
               // Check if the date is valid (handles cases like Feb 29 in non-leap years)
               if (
                 newDate.getFullYear() !== year ||
-                newDate.getMonth() !== currentDate.getMonth()
+                newDate.getMonth() !== currentDate.getMonth() ||
+                isNaN(newDate.getTime())
               ) {
+                if (import.meta.env.DEV) {
+                  console.log(`Invalid date detected, trying fallback...`);
+                }
+                
                 // If the date is invalid, use the last day of the month
                 newDate = new Date(year, currentDate.getMonth() + 1, 0);
+                
+                if (import.meta.env.DEV) {
+                  console.log(`Fallback date:`, newDate);
+                }
+                
+                // Final validation
+                if (isNaN(newDate.getTime())) {
+                  if (import.meta.env.DEV) {
+                    console.log(`Fallback also failed, using January 1st of target year`);
+                  }
+                  // Ultimate fallback: January 1st of the target year
+                  newDate = new Date(year, 0, 1);
+                }
               }
             } catch (error) {
-              // Fallback to last day of the month if date creation fails
-              newDate = new Date(year, currentDate.getMonth() + 1, 0);
+              if (import.meta.env.DEV) {
+                console.log(`Exception in date creation:`, error);
+              }
+              // Ultimate fallback: January 1st of the target year
+              newDate = new Date(year, 0, 1);
+            }
+
+            // Final validation before toISOString
+            if (isNaN(newDate.getTime())) {
+              if (import.meta.env.DEV) {
+                console.error(`All date creation attempts failed for transaction ${transactionId}`);
+              }
+              // Skip this transaction if we can't create a valid date
+              return Promise.resolve();
+            }
+
+            if (import.meta.env.DEV) {
+              console.log(`Final valid date for transaction ${transactionId}:`, newDate);
             }
 
             return updateTransaction(transactionId, {
