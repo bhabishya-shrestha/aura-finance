@@ -55,7 +55,7 @@ export const NotificationProvider = ({ children }) => {
   // Check for new release notes on mount
   useEffect(() => {
     checkForReleaseNotes();
-  }, []);
+  }, [checkForReleaseNotes]);
 
   const checkForReleaseNotes = useCallback(() => {
     const currentVersion = "1.3.0";
