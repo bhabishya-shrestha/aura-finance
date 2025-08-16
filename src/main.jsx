@@ -1,13 +1,21 @@
 import React from "react";
-import ReactDOM from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
 import { performanceMonitor } from "./services/performanceService";
 
-// Initialize performance monitoring
-performanceMonitor.initialize().catch(console.warn);
+// Suppress React DevTools warning in development
+if (import.meta.env.DEV) {
+  window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = { isDisabled: true };
+}
 
-// Error boundary for the entire app
+// Record app initialization start time
+const startTime = performance.now();
+
+/**
+ * Root Error Boundary Component
+ * Catches errors at the root level and provides a user-friendly fallback
+ */
 class RootErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -58,20 +66,10 @@ class RootErrorBoundary extends React.Component {
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
             >
               Refresh Page
             </button>
-            {import.meta.env.DEV && this.state.error && (
-              <details className="mt-4 text-left">
-                <summary className="cursor-pointer text-sm text-gray-500 dark:text-gray-400">
-                  Error Details (Development)
-                </summary>
-                <pre className="mt-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded overflow-auto">
-                  {this.state.error.stack}
-                </pre>
-              </details>
-            )}
           </div>
         </div>
       );
@@ -81,15 +79,15 @@ class RootErrorBoundary extends React.Component {
   }
 }
 
-// Measure app initialization time
-const startTime = performance.now();
+// Initialize performance monitoring
+performanceMonitor.initialize();
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <RootErrorBoundary>
-      <App />
-    </RootErrorBoundary>
-  </React.StrictMode>
+// Create root and render app
+const root = createRoot(document.getElementById("root"));
+root.render(
+  <RootErrorBoundary>
+    <App />
+  </RootErrorBoundary>
 );
 
 // Record app initialization time

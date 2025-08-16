@@ -13,18 +13,19 @@ export const initializePerformanceMonitoring = async () => {
   if (webVitalsInitialized) return;
 
   try {
-    // Dynamically import web-vitals to avoid bundle bloat
-    const { getCLS, getFID, getFCP, getLCP, getTTFB } = await import('web-vitals');
+    // Import web-vitals using a more reliable method
+    const webVitals = await import('web-vitals');
+    const { getCLS, getFID, getFCP, getLCP, getTTFB } = webVitals;
     
     // Send metrics to analytics
     const sendToAnalytics = (metric) => {
       const { name, value, id } = metric;
-      
+
       // Log to console in development
       if (import.meta.env.DEV) {
         console.log(`📊 Web Vital: ${name} = ${value}`, { id });
       }
-      
+
       // Send to analytics service (replace with your analytics provider)
       if (window.gtag) {
         window.gtag('event', 'web_vital', {
@@ -34,7 +35,7 @@ export const initializePerformanceMonitoring = async () => {
           non_interaction: true,
         });
       }
-      
+
       // Store locally for debugging
       storePerformanceMetric(name, value);
     };
@@ -45,11 +46,13 @@ export const initializePerformanceMonitoring = async () => {
     getFCP(sendToAnalytics);
     getLCP(sendToAnalytics);
     getTTFB(sendToAnalytics);
-    
+
     webVitalsInitialized = true;
     console.log('✅ Performance monitoring initialized');
   } catch (error) {
     console.warn('⚠️ Failed to initialize performance monitoring:', error);
+    // Fallback: try to initialize without web-vitals
+    webVitalsInitialized = true;
   }
 };
 

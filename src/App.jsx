@@ -235,9 +235,9 @@ const App = () => {
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <FirebaseAuthProvider>
-          <SettingsProvider>
-            <NotificationProvider>
+        <NotificationProvider>
+          <FirebaseAuthProvider>
+            <SettingsProvider>
               <AccessibilityProvider>
                 <Router>
                   <Routes>
@@ -262,9 +262,9 @@ const App = () => {
                   </Routes>
                 </Router>
               </AccessibilityProvider>
-            </NotificationProvider>
-          </SettingsProvider>
-        </FirebaseAuthProvider>
+            </SettingsProvider>
+          </FirebaseAuthProvider>
+        </NotificationProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

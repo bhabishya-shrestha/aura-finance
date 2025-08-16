@@ -1,7 +1,7 @@
 {
   "name": "aura-finance",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "module",
   "description": "Personal finance management application with mobile optimization",
   "scripts": {
@@ -12,11 +12,15 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:local": "npm run lint && npm run test && npm run build && npm run test:build",
-    "test:unit": "vitest --run unit",
-    "test:integration": "vitest --run integration",
-    "test:e2e": "vitest --run e2e",
-    "test:coverage": "vitest --coverage",
+    "test:unit": "vitest --run --reporter=verbose src/__tests__/unit",
+    "test:integration": "vitest --run --reporter=verbose src/__tests__/integration",
+    "test:e2e": "vitest --run --reporter=verbose src/__tests__/e2e",
+    "test:coverage": "vitest --coverage --reporter=verbose",
+    "test:coverage:check": "npm run test:coverage && npm run check-coverage",
+    "check-coverage": "node scripts/check-coverage.js",
     "test:security": "npm audit --audit-level=high && npm run security",
+    "test:performance": "npm run build && lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-report.json",
+    "test:accessibility": "axe http://localhost:3000 --save results/accessibility-report.json",
     "preview": "vite preview",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -39,7 +43,15 @@
     "test:firebase": "node test-firebase-setup.js",
     "deploy:staging": "vercel --prod --target staging",
     "deploy:production": "vercel --prod",
-    "deploy:rollback": "vercel rollback"
+    "deploy:rollback": "vercel rollback",
+    "docs:generate": "node scripts/generate-docs.js",
+    "docs:serve": "node scripts/serve-docs.js",
+    "analyze": "npm run build && npx webpack-bundle-analyzer dist/assets/*.js",
+    "bundle:analyze": "ANALYZE=true npm run build",
+    "performance:monitor": "node scripts/performance-monitor.js",
+    "accessibility:test": "npm run build && npm run preview & sleep 5 && npm run test:accessibility",
+    "quality:check": "npm run lint && npm run format:check && npm run test:security && npm run test:coverage:check",
+    "ci:full": "npm run quality:check && npm run test:unit && npm run test:integration && npm run test:e2e && npm run test:performance"
   },
   "dependencies": {
     "@google-cloud/aiplatform": "^5.4.0",
@@ -58,12 +70,13 @@
     "recharts": "^2.8.0",
     "tesseract.js": "^6.0.1",
     "uuid": "^11.1.0",
-    "web-vitals": "^5.1.0",
+    "web-vitals": "^3.5.2",
     "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.5.2",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.3",
@@ -75,11 +88,30 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.20",
     "jsdom": "^26.1.0",
+    "lighthouse": "^11.6.0",
     "postcss": "^8.4.24",
     "prettier": "^3.0.0",
     "supabase": "^2.33.9",
     "tailwindcss": "^3.4.17",
     "vite": "^7.1.1",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "vitest-coverage-v8": "^3.2.4",
+    "webpack-bundle-analyzer": "^4.10.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
