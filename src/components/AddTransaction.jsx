@@ -9,6 +9,7 @@ import {
   Plus,
 } from "lucide-react";
 import useProductionStore from "../store/productionStore";
+import { useNotifications } from "../contexts/NotificationContext";
 import { CATEGORIES } from "../utils/statementParser";
 
 const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
@@ -20,6 +21,7 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
     initialize,
     isInitialized,
   } = useProductionStore();
+  const { showSuccess, showError } = useNotifications();
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     description: "",
@@ -130,25 +132,34 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
         date: new Date(formData.date).toISOString(),
       };
 
-      await addTransaction(transactionData);
+      const result = await addTransaction(transactionData);
 
-      // Reset form
-      setFormData({
-        description: "",
-        amount: "",
-        category: "Other",
-        date: new Date().toISOString().split("T")[0],
-        accountId:
-          accounts && accounts.length > 0 ? accounts[0].id.toString() : "",
-      });
-      setErrors({});
-      if (onClose) {
-        onClose();
+      if (result.success) {
+        showSuccess(result.message || "Transaction added successfully");
+        
+        // Reset form
+        setFormData({
+          description: "",
+          amount: "",
+          category: "Other",
+          date: new Date().toISOString().split("T")[0],
+          accountId:
+            accounts && accounts.length > 0 ? accounts[0].id.toString() : "",
+        });
+        setErrors({});
+        
+        if (onClose) {
+          onClose();
+        } else {
+          setShowModal(false);
+        }
       } else {
-        setShowModal(false);
+        showError(result.message || "Failed to add transaction");
       }
     } catch (error) {
-      setErrors({ submit: "Failed to add transaction. Please try again." });
+      const errorMessage = error.message || "Failed to add transaction. Please try again.";
+      showError(errorMessage);
+      setErrors({ submit: errorMessage });
     }
   };
 

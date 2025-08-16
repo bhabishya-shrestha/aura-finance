@@ -28,6 +28,7 @@ import NotificationToast from "./components/NotificationToast";
 import { initializeDatabase } from "./database";
 import useStore from "./store";
 import { useMobileViewport } from "./hooks/useMobileViewport";
+import { useNotifications } from "./contexts/NotificationContext";
 
 // Lazy load pages for code splitting
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -89,8 +90,20 @@ const AppLayout = () => {
     setUpdateNotification,
     lastUpdateNotification,
   } = useStore();
+  const { showReleaseNotes } = useNotifications();
   const isInitialized = useRef(false);
   const { isMobile, updateViewportHeight } = useMobileViewport();
+
+  // Show release notes on first load
+  useEffect(() => {
+    const hasShownReleaseNotes = sessionStorage.getItem("aura_release_notes_shown");
+    if (!hasShownReleaseNotes) {
+      setTimeout(() => {
+        showReleaseNotes();
+        sessionStorage.setItem("aura_release_notes_shown", "true");
+      }, 2000); // Show after 2 seconds
+    }
+  }, [showReleaseNotes]);
 
   // Initialize update notification on first load
   useEffect(() => {
@@ -192,7 +205,10 @@ const AppLayout = () => {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar currentPage={currentPage} />
+      <Sidebar
+        isMobileOpen={showMobileSidebar}
+        onMobileToggle={handleMenuToggle}
+      />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header

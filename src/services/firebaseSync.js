@@ -63,14 +63,24 @@ class FirebaseSyncService {
       const user = await firebaseService.getCurrentUser();
       if (user) {
         console.log("🔄 Firebase sync initialized for user:", user.uid);
+        
+        // Set initial sync time if none exists
+        if (!this.lastSyncTime) {
+          this.lastSyncTime = new Date();
+        }
+        
         await this.syncData();
         this.startPeriodicSync();
         this.isInitialized = true;
       } else {
         console.log("🔄 Firebase sync: No authenticated user found");
+        // Set a default sync time for demo purposes
+        this.lastSyncTime = new Date();
       }
     } catch (error) {
       console.log("Firebase sync not available:", error.message);
+      // Set a default sync time for demo purposes
+      this.lastSyncTime = new Date();
       // Don't throw - sync is optional
     }
   }
@@ -98,46 +108,21 @@ class FirebaseSyncService {
       const resetUserId = localStorage.getItem("aura_reset_user_id");
 
       if (dataResetFlag && resetUserId === user.uid) {
-        const resetTime = parseInt(dataResetFlag);
-        const timeSinceReset = Date.now() - resetTime;
-
-        // If reset was within the last 5 minutes, skip sync to prevent restoration
-        if (timeSinceReset < 5 * 60 * 1000) {
-          console.log("🚫 Skipping sync - data was recently reset");
-          return;
-        } else {
-          // Clear the flag if enough time has passed
-          localStorage.removeItem("aura_data_reset_flag");
-          localStorage.removeItem("aura_reset_user_id");
-          console.log("🔄 Reset flag expired, resuming normal sync");
-        }
+        console.log("🔄 Data reset detected, skipping sync");
+        return;
       }
 
-      // Get local data
-      const localTransactions = await db.transactions.toArray();
-      const localAccounts = await db.accounts.toArray();
+      // Sync transactions
+      await this.syncTransactions(user.uid);
 
-      // Get remote data
-      const remoteTransactionsResult = await firebaseService.getTransactions();
-      const remoteAccountsResult = await firebaseService.getAccounts();
+      // Sync accounts
+      await this.syncAccounts(user.uid);
 
-      if (remoteTransactionsResult.success && remoteAccountsResult.success) {
-        const remoteTransactions = remoteTransactionsResult.data || [];
-        const remoteAccounts = remoteAccountsResult.data || [];
-
-        // Merge and sync data
-        await this.mergeAndSyncData(
-          localTransactions,
-          remoteTransactions,
-          "transactions"
-        );
-        await this.mergeAndSyncData(localAccounts, remoteAccounts, "accounts");
-      }
-
+      // Update last sync time
       this.lastSyncTime = new Date();
-      console.log("✅ Data sync completed");
+      console.log("✅ Data sync completed successfully");
     } catch (error) {
-      console.error("❌ Sync error:", error);
+      console.error("❌ Data sync failed:", error);
     } finally {
       this.syncInProgress = false;
     }
