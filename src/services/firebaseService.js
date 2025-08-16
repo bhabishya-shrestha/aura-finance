@@ -78,7 +78,10 @@ class FirebaseService {
   // Setup authentication listener
   setupAuthListener() {
     onAuthStateChanged(auth, user => {
-      console.log("🔄 Firebase Auth state changed:", user ? user.email : "signed out");
+      console.log(
+        "🔄 Firebase Auth state changed:",
+        user ? user.email : "signed out"
+      );
       this.currentUser = user;
       if (user) {
         console.log("✅ User signed in:", user.email, "UID:", user.uid);
@@ -341,7 +344,14 @@ class FirebaseService {
             updatedAt: serverTimestamp(),
           };
 
-          await setDoc(docRef, transactionData);
+          // Clean the data by removing undefined values
+          const cleanTransactionData = Object.fromEntries(
+            Object.entries(transactionData).filter(
+              ([, value]) => value !== undefined
+            )
+          );
+
+          await setDoc(docRef, cleanTransactionData);
           console.log(`✅ Created transaction ${transactionId} in Firebase`);
           return { success: true, created: true };
         } else {
@@ -350,8 +360,13 @@ class FirebaseService {
         }
       } else {
         // Document exists, update it
+        // Clean the updates by removing undefined values
+        const cleanUpdates = Object.fromEntries(
+          Object.entries(updates).filter(([, value]) => value !== undefined)
+        );
+
         await updateDoc(docRef, {
-          ...updates,
+          ...cleanUpdates,
           updatedAt: serverTimestamp(),
         });
 
@@ -406,7 +421,7 @@ class FirebaseService {
       console.error("❌ Delete transaction error:", error);
       console.error("Error code:", error.code);
       console.error("Error message:", error.message);
-      
+
       // Check if it's a permissions error
       if (
         error.code === "permission-denied" ||
