@@ -45,56 +45,62 @@ service cloud.firestore {
     
     // Users can perform all operations on their own transactions
     match /transactions/{transactionId} {
+      // Read: User must be authenticated and own the transaction
       allow read: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid;
+        (resource == null || resource.data.userId == request.auth.uid);
       
+      // Create: User must be authenticated and set themselves as owner
       allow create: if isAuthenticated() && 
-        request.auth.uid == request.resource.data.userId;
-        // Removed validation requirement for create - handled by application layer
+        request.resource.data.userId == request.auth.uid;
       
+      // Update: User must be authenticated and own the transaction
       allow update: if isAuthenticated() && 
         resource.data.userId == request.auth.uid &&
-        request.auth.uid == request.resource.data.userId;
-        // Removed validation requirement for update - handled by application layer
+        request.resource.data.userId == request.auth.uid;
       
+      // Delete: User must be authenticated and own the transaction
+      // Handle case where document might not exist (already deleted)
       allow delete: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid;
+        (resource == null || resource.data.userId == request.auth.uid);
     }
     
     // Users can perform all operations on their own accounts
     match /accounts/{accountId} {
+      // Read: User must be authenticated and own the account
       allow read: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid;
+        (resource == null || resource.data.userId == request.auth.uid);
       
+      // Create: User must be authenticated and set themselves as owner
       allow create: if isAuthenticated() && 
-        request.auth.uid == request.resource.data.userId;
-        // Removed validation requirement for create - handled by application layer
+        request.resource.data.userId == request.auth.uid;
       
+      // Update: User must be authenticated and own the account
       allow update: if isAuthenticated() && 
         resource.data.userId == request.auth.uid &&
-        request.auth.uid == request.resource.data.userId;
-        // Removed validation requirement for update - handled by application layer
+        request.resource.data.userId == request.auth.uid;
       
+      // Delete: User must be authenticated and own the account
+      // Handle case where document might not exist (already deleted)
       allow delete: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid;
+        (resource == null || resource.data.userId == request.auth.uid);
     }
     
     // Audit trail collection
     match /audit/{auditId} {
       allow read: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid;
+        (resource == null || resource.data.userId == request.auth.uid);
       
       allow create: if isAuthenticated() && 
-        request.auth.uid == request.resource.data.userId;
+        request.resource.data.userId == request.auth.uid;
     }
     
     // Security logs collection - allow authenticated users to write security events
     match /security_logs/{logId} {
       allow create: if isAuthenticated() && 
-        request.auth.uid == request.resource.data.userId;
+        request.resource.data.userId == request.auth.uid;
       
       allow read: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid;
+        (resource == null || resource.data.userId == request.auth.uid);
     }
     
     // Deny all other access

@@ -594,9 +594,9 @@ const TransactionsPage = () => {
         </div>
       </div>
 
-      {/* Bulk Actions Bar */}
+      {/* Desktop Bulk Actions Bar */}
       {selectedTransactions.size > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+        <div className="hidden lg:block bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
@@ -633,6 +633,26 @@ const TransactionsPage = () => {
           </div>
         </div>
       )}
+
+      {/* Mobile Select All Button */}
+      {Array.isArray(filteredTransactions) &&
+        filteredTransactions.length > 0 && (
+          <div className="lg:hidden flex items-center justify-between mb-4">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {filteredTransactions.length} transaction
+              {filteredTransactions.length !== 1 ? "s" : ""}
+            </span>
+            <button
+              onClick={handleSelectAll}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+            >
+              {selectedTransactions.size === filteredTransactions.length &&
+              filteredTransactions.length > 0
+                ? "Deselect All"
+                : "Select All"}
+            </button>
+          </div>
+        )}
 
       {/* Mobile Transaction List */}
       <div className="lg:hidden space-y-3">

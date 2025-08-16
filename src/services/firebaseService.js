@@ -78,11 +78,12 @@ class FirebaseService {
   // Setup authentication listener
   setupAuthListener() {
     onAuthStateChanged(auth, user => {
+      console.log("🔄 Firebase Auth state changed:", user ? user.email : "signed out");
       this.currentUser = user;
       if (user) {
-        console.log("User signed in:", user.email);
+        console.log("✅ User signed in:", user.email, "UID:", user.uid);
       } else {
-        console.log("User signed out");
+        console.log("👋 User signed out");
       }
     });
   }
@@ -366,8 +367,13 @@ class FirebaseService {
   async deleteTransaction(transactionId) {
     // Check if user is authenticated
     if (!this.currentUser) {
+      console.error("❌ Delete transaction failed: User not authenticated");
+      console.log("Current user state:", this.currentUser);
       return { success: false, error: "User not authenticated" };
     }
+
+    console.log("🔐 Attempting to delete transaction:", transactionId);
+    console.log("👤 Current user:", this.currentUser.uid);
 
     try {
       // Check if the transaction exists and belongs to the current user
@@ -375,21 +381,32 @@ class FirebaseService {
       const transactionSnapshot = await getDoc(transactionDoc);
 
       if (!transactionSnapshot.exists()) {
+        console.log("✅ Transaction doesn't exist, considering it deleted");
         return { success: true }; // Transaction doesn't exist, consider it deleted
       }
 
       const transactionData = transactionSnapshot.data();
+      console.log("📄 Transaction data:", transactionData);
+      console.log("🔍 Transaction userId:", transactionData.userId);
+      console.log("🔍 Current user uid:", this.currentUser.uid);
+
       if (transactionData.userId !== this.currentUser.uid) {
+        console.error("❌ Transaction does not belong to current user");
         return {
           success: false,
           error: "Transaction does not belong to current user",
         };
       }
 
+      console.log("✅ Proceeding with deletion...");
       await deleteDoc(transactionDoc);
+      console.log("✅ Transaction deleted successfully");
       return { success: true };
     } catch (error) {
-      console.error("Delete transaction error:", error);
+      console.error("❌ Delete transaction error:", error);
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
+      
       // Check if it's a permissions error
       if (
         error.code === "permission-denied" ||
@@ -675,7 +692,12 @@ class FirebaseService {
   // Get current user
   getCurrentUser() {
     // Get the current user from Firebase Auth directly
-    return auth.currentUser;
+    const currentUser = auth.currentUser;
+    console.log("🔍 getCurrentUser() called:");
+    console.log("  auth.currentUser:", currentUser);
+    console.log("  this.currentUser:", this.currentUser);
+    console.log("  Returning:", currentUser);
+    return currentUser;
   }
 
   // Check if user is authenticated
