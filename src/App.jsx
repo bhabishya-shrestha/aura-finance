@@ -36,6 +36,47 @@ import useStore from "./store";
 import { useMobileViewport } from "./hooks/useMobileViewport";
 // Removed firebaseSync import as it's no longer needed
 
+// TEMPORARY: Auto-clear local database on app launch
+const clearLocalDatabaseOnLaunch = async () => {
+  try {
+    console.log("🧹 TEMPORARY: Auto-clearing local database on app launch...");
+    
+    // Check if we're in a browser environment
+    if (typeof window !== 'undefined' && window.indexedDB) {
+      // Use the existing database instance from the app
+      const { default: db } = await import("./database.js");
+      
+      // Get counts before clearing
+      const transactionCount = await db.transactions.count();
+      const accountCount = await db.accounts.count();
+      
+      console.log(`📊 Found ${transactionCount} transactions and ${accountCount} accounts in local DB`);
+      
+      if (transactionCount > 0) {
+        console.log("🗑️ Clearing local transactions...");
+        await db.transactions.clear();
+        console.log("✅ Local transactions cleared");
+      }
+      
+      if (accountCount > 0) {
+        console.log("🗑️ Clearing local accounts...");
+        await db.accounts.clear();
+        console.log("✅ Local accounts cleared");
+      }
+      
+      console.log("🎉 Local database cleared successfully!");
+      console.log("💡 This auto-clear will be removed once the sync issue is fixed");
+    }
+  } catch (error) {
+    console.error("❌ Error in auto-clear:", error);
+  }
+};
+
+// Run the auto-clear once when the app loads
+if (typeof window !== 'undefined') {
+  clearLocalDatabaseOnLaunch();
+}
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading, isInitialized } = useFirebaseAuth();
