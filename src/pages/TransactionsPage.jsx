@@ -47,7 +47,21 @@ const TransactionsPage = () => {
   }, [initialize, isInitialized]);
 
   useEffect(() => {
-    let filtered = [...transactions];
+    // Deduplicate transactions by ID to prevent React key conflicts
+    const uniqueTransactions = transactions.reduce((acc, transaction) => {
+      if (!acc.find(t => t.id === transaction.id)) {
+        acc.push(transaction);
+      }
+      return acc;
+    }, []);
+
+    // Debug: Log if duplicates were found
+    if (import.meta.env.DEV && uniqueTransactions.length !== transactions.length) {
+      console.warn(`Found ${transactions.length - uniqueTransactions.length} duplicate transactions`);
+      console.warn('Original count:', transactions.length, 'Unique count:', uniqueTransactions.length);
+    }
+
+    let filtered = [...uniqueTransactions];
 
     // Apply search filter
     if (searchTerm) {
@@ -191,14 +205,14 @@ const TransactionsPage = () => {
           if (transaction) {
             // Create a new date with the selected year, keeping the same month and day
             const currentDate = new Date(transaction.date);
-            
+
             if (import.meta.env.DEV) {
               console.log(`Processing transaction ${transactionId}:`, {
                 originalDate: transaction.date,
                 currentDate: currentDate,
                 currentMonth: currentDate.getMonth(),
                 currentDay: currentDate.getDate(),
-                targetYear: year
+                targetYear: year,
               });
             }
 
@@ -206,8 +220,12 @@ const TransactionsPage = () => {
             let newDate;
             try {
               // First try: create date with same month and day
-              newDate = new Date(year, currentDate.getMonth(), currentDate.getDate());
-              
+              newDate = new Date(
+                year,
+                currentDate.getMonth(),
+                currentDate.getDate()
+              );
+
               if (import.meta.env.DEV) {
                 console.log(`First attempt - newDate:`, newDate);
               }
@@ -221,18 +239,20 @@ const TransactionsPage = () => {
                 if (import.meta.env.DEV) {
                   console.log(`Invalid date detected, trying fallback...`);
                 }
-                
+
                 // If the date is invalid, use the last day of the month
                 newDate = new Date(year, currentDate.getMonth() + 1, 0);
-                
+
                 if (import.meta.env.DEV) {
                   console.log(`Fallback date:`, newDate);
                 }
-                
+
                 // Final validation
                 if (isNaN(newDate.getTime())) {
                   if (import.meta.env.DEV) {
-                    console.log(`Fallback also failed, using January 1st of target year`);
+                    console.log(
+                      `Fallback also failed, using January 1st of target year`
+                    );
                   }
                   // Ultimate fallback: January 1st of the target year
                   newDate = new Date(year, 0, 1);
@@ -249,14 +269,19 @@ const TransactionsPage = () => {
             // Final validation before toISOString
             if (isNaN(newDate.getTime())) {
               if (import.meta.env.DEV) {
-                console.error(`All date creation attempts failed for transaction ${transactionId}`);
+                console.error(
+                  `All date creation attempts failed for transaction ${transactionId}`
+                );
               }
               // Skip this transaction if we can't create a valid date
               return Promise.resolve();
             }
 
             if (import.meta.env.DEV) {
-              console.log(`Final valid date for transaction ${transactionId}:`, newDate);
+              console.log(
+                `Final valid date for transaction ${transactionId}:`,
+                newDate
+              );
             }
 
             return updateTransaction(transactionId, {
