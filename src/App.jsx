@@ -68,11 +68,7 @@ const AppLayout = () => {
 
   // Derive currentPage from URL
   const currentPage = location.pathname.substring(1) || "dashboard";
-  const {
-    loadTransactions,
-    loadAccounts,
-    lastUpdateNotification,
-  } = useStore();
+  const { loadTransactions, loadAccounts, lastUpdateNotification } = useStore();
   const isInitialized = useRef(false);
   const { isMobile, updateViewportHeight } = useMobileViewport();
 
