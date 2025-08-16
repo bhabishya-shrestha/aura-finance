@@ -10,7 +10,6 @@ import {
   Cloud,
   CloudOff,
   RefreshCw,
-  TrendingUp,
 } from "lucide-react";
 import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 import firebaseSync from "../services/firebaseSync";

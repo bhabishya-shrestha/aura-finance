@@ -41,21 +41,39 @@ global.PerformanceObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }));
 
-// Mock localStorage
+// Mock localStorage with actual storage
 const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+  store: {},
+  getItem: vi.fn((key) => {
+    return localStorageMock.store[key] || null;
+  }),
+  setItem: vi.fn((key, value) => {
+    localStorageMock.store[key] = value;
+  }),
+  removeItem: vi.fn((key) => {
+    delete localStorageMock.store[key];
+  }),
+  clear: vi.fn(() => {
+    localStorageMock.store = {};
+  }),
 };
 global.localStorage = localStorageMock;
 
-// Mock sessionStorage
+// Mock sessionStorage with actual storage
 const sessionStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+  store: {},
+  getItem: vi.fn((key) => {
+    return sessionStorageMock.store[key] || null;
+  }),
+  setItem: vi.fn((key, value) => {
+    sessionStorageMock.store[key] = value;
+  }),
+  removeItem: vi.fn((key) => {
+    delete sessionStorageMock.store[key];
+  }),
+  clear: vi.fn(() => {
+    sessionStorageMock.store = {};
+  }),
 };
 global.sessionStorage = sessionStorageMock;
 
@@ -172,7 +190,34 @@ vi.mock("../services/errorHandlingService", () => ({
 
 // Mock utils
 vi.mock("../utils/duplicateDetector", () => ({
-  findDuplicateTransactions: vi.fn(),
+  checkTransactionDuplicate: vi.fn().mockReturnValue({
+    isDuplicate: true,
+    confidence: 1.0,
+    matches: {
+      date: true,
+      amount: true,
+      description: true,
+      category: true,
+    },
+    existingTransaction: {},
+  }),
+  findDuplicateTransactions: vi.fn().mockReturnValue({
+    duplicates: [],
+    nonDuplicates: [],
+    summary: {
+      total: 0,
+      duplicates: 0,
+      nonDuplicates: 0,
+      duplicatePercentage: 0,
+    },
+  }),
+  groupDuplicatesByConfidence: vi.fn().mockReturnValue({
+    high: [],
+    medium: [],
+    low: [],
+    all: [],
+  }),
+  getDuplicateReason: vi.fn().mockReturnValue("same date, same amount (high confidence)"),
 }));
 
 // Mock React Router

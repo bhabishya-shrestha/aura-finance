@@ -5,7 +5,6 @@ import {
   Route,
   Navigate,
   useLocation,
-  useNavigate,
 } from "react-router-dom";
 import {
   FirebaseAuthProvider,
@@ -28,7 +27,6 @@ import NotificationToast from "./components/NotificationToast";
 import { initializeDatabase } from "./database";
 import useStore from "./store";
 import { useMobileViewport } from "./hooks/useMobileViewport";
-import { useNotifications } from "./contexts/NotificationContext";
 
 // Lazy load pages for code splitting
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -87,9 +85,7 @@ const ProtectedRoute = ({ children }) => {
 // Main App Layout Component
 const AppLayout = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
-  const [triggerImport, setTriggerImport] = useState(false);
 
   // Derive currentPage from URL
   const currentPage = location.pathname.substring(1) || "dashboard";
@@ -97,20 +93,7 @@ const AppLayout = () => {
   const isInitialized = useRef(false);
   const { isMobile, updateViewportHeight } = useMobileViewport();
 
-  // Show release notes on first load
-  useEffect(() => {
-    const hasShownReleaseNotes = sessionStorage.getItem(
-      "aura_release_notes_shown"
-    );
-    console.log("📝 Release notes check:", { hasShownReleaseNotes });
-    if (!hasShownReleaseNotes) {
-      setTimeout(() => {
-        console.log("🚀 Showing release notes after delay");
-        showReleaseNotes();
-        sessionStorage.setItem("aura_release_notes_shown", "true");
-      }, 2000); // Show after 2 seconds
-    }
-  }, [showReleaseNotes]);
+
 
   // Initialize update notification on first load
   useEffect(() => {
@@ -156,10 +139,7 @@ const AppLayout = () => {
     setShowMobileSidebar(!showMobileSidebar);
   };
 
-  const handleImportTrigger = () => {
-    setTriggerImport(true);
-    setTimeout(() => setTriggerImport(false), 100);
-  };
+
 
   if (isMobile) {
     return (
@@ -167,7 +147,6 @@ const AppLayout = () => {
         <MobileHeader
           currentPage={currentPage}
           onMenuClick={handleMenuToggle}
-          onImportTrigger={handleImportTrigger}
         />
 
         <MobileSidebar
@@ -211,7 +190,6 @@ const AppLayout = () => {
         <Header
           currentPage={currentPage}
           onMenuToggle={handleMenuToggle}
-          onImportTrigger={handleImportTrigger}
         />
 
         <main

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, Menu, Sun, Moon, X, Rocket } from "lucide-react";
+import { Bell, Menu, Sun, Moon, X } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useNotifications } from "../contexts/NotificationContext";
 import useStore from "../store";
@@ -12,8 +12,6 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
     notifications,
     getUnreadCount,
     markNotificationAsRead,
-    removeNotification,
-    releaseNotes,
   } = useNotifications();
   const {
     lastUpdateNotification,
@@ -313,15 +311,7 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
                             {!notification.read && (
                               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                             )}
-                            <button
-                              onClick={e => {
-                                e.stopPropagation();
-                                removeNotification(notification.id);
-                              }}
-                              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors opacity-0 group-hover:opacity-100"
-                            >
-                              <X className="w-3 h-3 text-gray-400" />
-                            </button>
+
                           </div>
                         </div>
                       ))}

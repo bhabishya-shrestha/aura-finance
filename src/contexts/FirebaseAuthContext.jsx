@@ -37,7 +37,7 @@ const initialState = {
 // Reducer function
 const authReducer = (state, action) => {
   switch (action.type) {
-    case AUTH_ACTIONS.AUTH_STATE_CHANGED:
+    case AUTH_ACTIONS.AUTH_STATE_CHANGED: {
       console.log(
         "🔄 AUTH_STATE_CHANGED reducer called with payload:",
         action.payload
@@ -52,6 +52,7 @@ const authReducer = (state, action) => {
       };
       console.log("🔄 New auth state:", newState);
       return newState;
+    }
 
     case AUTH_ACTIONS.LOGIN_START:
     case AUTH_ACTIONS.REGISTER_START:

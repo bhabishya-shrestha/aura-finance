@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, Menu, ChevronDown, ChevronUp, X, Rocket } from "lucide-react";
+import { Bell, Menu, ChevronDown, ChevronUp } from "lucide-react";
 import { useNotifications } from "../contexts/NotificationContext";
 import useStore from "../store";
 
@@ -7,9 +7,7 @@ const MobileHeader = ({ onMenuClick }) => {
   const { 
     notifications, 
     getUnreadCount, 
-    markNotificationAsRead,
-    removeNotification,
-    releaseNotes 
+    markNotificationAsRead
   } = useNotifications();
   const {
     lastUpdateNotification,
@@ -78,12 +76,7 @@ const MobileHeader = ({ onMenuClick }) => {
     }
   };
 
-  const getNotificationTitle = (notification) => {
-    if (notification.type === "release") {
-      return `New version ${notification.releaseNotes?.version} is available!`;
-    }
-    return notification.message;
-  };
+
 
   const unreadCount = getUnreadCount();
 

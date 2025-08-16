@@ -21,7 +21,7 @@ export const useAccessibility = () => {
  * Manages focus, keyboard navigation, and accessibility features
  */
 export const AccessibilityProvider = ({ children }) => {
-  const focusableElementsRef = useRef([]);
+
   const currentFocusIndexRef = useRef(0);
   const skipLinkRef = useRef(null);
 

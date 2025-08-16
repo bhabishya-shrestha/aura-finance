@@ -85,8 +85,8 @@ const Button = ({
 
   const buttonClasses = `
     ${baseClasses}
-    ${variants[variant]}
-    ${sizes[size]}
+    ${variants[variant] || variants.primary}
+    ${sizes[size] || sizes.md}
     ${className}
   `;
 
@@ -100,7 +100,7 @@ const Button = ({
 
   const renderIcon = () => {
     if (loading) {
-      return <Loader2 className={`${iconSizes[size]} animate-spin`} />;
+      return <Loader2 className={`${iconSizes[size] || iconSizes.md} animate-spin`} />;
     }
     return icon;
   };

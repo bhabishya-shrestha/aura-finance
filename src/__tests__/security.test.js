@@ -304,7 +304,7 @@ describe("Firebase Security Tests", () => {
     });
 
     test("should block requests exceeding rate limits", () => {
-      // Make 101 requests (over the 100 limit)
+      // Make 100 requests (exactly at the limit)
       for (let i = 0; i < 100; i++) {
         SecurityMiddleware.checkRateLimit(mockUserId, "transactions");
       }
