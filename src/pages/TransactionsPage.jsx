@@ -191,11 +191,28 @@ const TransactionsPage = () => {
           if (transaction) {
             // Create a new date with the selected year, keeping the same month and day
             const currentDate = new Date(transaction.date);
-            const newDate = new Date(
-              year,
-              currentDate.getMonth(),
-              currentDate.getDate()
-            );
+
+            // Handle edge cases like February 29th in non-leap years
+            let newDate;
+            try {
+              newDate = new Date(
+                year,
+                currentDate.getMonth(),
+                currentDate.getDate()
+              );
+
+              // Check if the date is valid (handles cases like Feb 29 in non-leap years)
+              if (
+                newDate.getFullYear() !== year ||
+                newDate.getMonth() !== currentDate.getMonth()
+              ) {
+                // If the date is invalid, use the last day of the month
+                newDate = new Date(year, currentDate.getMonth() + 1, 0);
+              }
+            } catch (error) {
+              // Fallback to last day of the month if date creation fails
+              newDate = new Date(year, currentDate.getMonth() + 1, 0);
+            }
 
             return updateTransaction(transactionId, {
               date: newDate.toISOString(),
@@ -984,17 +1001,25 @@ const TransactionsPage = () => {
               Assign to Year
             </h3>
             <div className="space-y-2 mb-6">
-              {[2024, 2023, 2022, 2021, 2020].map(year => (
-                <button
-                  key={year}
-                  onClick={() => handleBulkYearAssignment(year)}
-                  className="w-full p-3 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <div className="font-medium text-gray-900 dark:text-white">
-                    {year}
-                  </div>
-                </button>
-              ))}
+              {(() => {
+                const currentYear = new Date().getFullYear();
+                const years = [];
+                // Generate years from current year back to 2020
+                for (let year = currentYear; year >= 2020; year--) {
+                  years.push(year);
+                }
+                return years.map(year => (
+                  <button
+                    key={year}
+                    onClick={() => handleBulkYearAssignment(year)}
+                    className="w-full p-3 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {year}
+                    </div>
+                  </button>
+                ));
+              })()}
             </div>
             <button
               onClick={() => setShowBulkYearAssignment(false)}
