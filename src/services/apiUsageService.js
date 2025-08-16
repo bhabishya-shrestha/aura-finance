@@ -17,33 +17,122 @@ class ApiUsageService {
     this.auth = getAuth(app);
     this.db = getFirestore(app);
 
-    // API usage limits and cost estimates
+    // API usage limits and cost estimates - INCREASED LIMITS
     this.apiLimits = {
       huggingface: {
-        maxRequests: 10, // Increased from 5 - more generous since it's less accurate
-        maxDailyRequests: 1000, // Increased from 500 - much more generous
-        retryDelay: 8000, // Reduced from 12000 - faster retries
-        approachingLimitThreshold: 800, // Increased threshold
-        estimatedCostPerRequest: 0.0005, // Reduced cost estimate since it's less accurate
+        maxRequests: 20, // Increased from 10
+        maxDailyRequests: 2000, // Increased from 1000
+        retryDelay: 8000,
+        approachingLimitThreshold: 1600, // Increased threshold
+        estimatedCostPerRequest: 0.0005,
         description: "Less accurate but more uses - great for bulk processing",
-        accuracy: "85-90%", // Lower accuracy rating
+        accuracy: "85-90%",
         bestFor: "High volume, cost-conscious users",
       },
       gemini: {
-        maxRequests: 5,
-        maxDailyRequests: 100,
+        maxRequests: 15, // Increased from 5
+        maxDailyRequests: 300, // Increased from 100 - much more generous
         retryDelay: 15000,
-        approachingLimitThreshold: 80,
+        approachingLimitThreshold: 240, // Increased threshold
         estimatedCostPerRequest: 0.001,
         description: "High accuracy but fewer uses - best for precision",
-        accuracy: "95-98%", // Higher accuracy rating
+        accuracy: "95-98%",
         bestFor: "Precision-focused users",
       },
     };
+
+    // Cache for API usage to reduce Firestore calls
+    this.usageCache = new Map();
+    this.cacheExpiry = 5 * 60 * 1000; // 5 minutes
   }
 
   /**
-   * Validate if user can make an API request
+   * Get cached usage data or fetch from Firestore
+   * @param {string} userId - User ID
+   * @param {string} provider - API provider
+   * @returns {Promise<Object>} Usage data
+   */
+  async getCachedUsage(userId, provider) {
+    const cacheKey = `${userId}-${provider}`;
+    const cached = this.usageCache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
+      return cached.data;
+    }
+
+    // Fetch from Firestore
+    const usageDoc = doc(this.db, "api_usage", userId);
+    const usageSnapshot = await getDoc(usageDoc);
+
+    const today = new Date().toISOString().split("T")[0];
+    const usageData = usageSnapshot.exists() ? usageSnapshot.data() : {};
+
+    // Check if we need to reset daily usage (new day)
+    const lastUpdated = usageData.lastUpdated;
+    const needsReset = lastUpdated && lastUpdated !== today;
+
+    let currentUsage = 0;
+    if (!needsReset) {
+      currentUsage = usageData[provider]?.[today] || 0;
+    }
+
+    // If it's a new day, reset the usage and update the document
+    if (needsReset) {
+      try {
+        await setDoc(
+          usageDoc,
+          {
+            [provider]: {
+              [today]: 0,
+            },
+            lastUpdated: today,
+          },
+          { merge: true }
+        );
+
+        // Clear any old daily data to keep the document clean
+        const cleanData = { ...usageData };
+        if (cleanData[provider]) {
+          // Keep only today's data
+          cleanData[provider] = { [today]: 0 };
+        }
+        cleanData.lastUpdated = today;
+
+        await setDoc(usageDoc, cleanData, { merge: true });
+
+        console.log(`Reset daily API usage for ${provider} - new day detected`);
+      } catch (error) {
+        console.error("Failed to reset daily API usage:", error);
+        // Continue with 0 usage even if reset fails
+      }
+    }
+
+    const data = {
+      currentUsage,
+      lastUpdated: today,
+    };
+
+    // Cache the result
+    this.usageCache.set(cacheKey, {
+      data,
+      timestamp: Date.now(),
+    });
+
+    return data;
+  }
+
+  /**
+   * Clear cache for a specific user/provider
+   * @param {string} userId - User ID
+   * @param {string} provider - API provider
+   */
+  clearCache(userId, provider) {
+    const cacheKey = `${userId}-${provider}`;
+    this.usageCache.delete(cacheKey);
+  }
+
+  /**
+   * Validate if user can make an API request with improved error handling
    * @param {string} provider - 'gemini' or 'huggingface'
    * @returns {Promise<Object>} Validation result
    */
@@ -52,25 +141,42 @@ class ApiUsageService {
       const user = this.auth.currentUser;
 
       if (!user) {
-        throw new Error("User not authenticated");
+        // If no user, allow the request but log it
+        console.warn(
+          "No authenticated user for API validation, allowing request"
+        );
+        return {
+          success: true,
+          can_proceed: true,
+          current_usage: 0,
+          max_requests: this.apiLimits[provider]?.maxDailyRequests || 1000,
+          remaining_requests:
+            this.apiLimits[provider]?.maxDailyRequests || 1000,
+          approachingLimit: false,
+        };
       }
 
       if (!this.apiLimits[provider]) {
         throw new Error(`Invalid provider: ${provider}`);
       }
 
-      // Get user's API usage from Firestore
-      const usageDoc = doc(this.db, "api_usage", user.uid);
-      const usageSnapshot = await getDoc(usageDoc);
-
-      const today = new Date().toISOString().split("T")[0];
-      const currentUsage = usageSnapshot.exists()
-        ? usageSnapshot.data()[provider]?.[today] || 0
-        : 0;
-
+      // Get cached usage data (this will handle daily reset automatically)
+      const usageData = await this.getCachedUsage(user.uid, provider);
+      const currentUsage = usageData.currentUsage;
       const maxRequests = this.apiLimits[provider].maxDailyRequests;
       const remainingRequests = Math.max(0, maxRequests - currentUsage);
       const canProceed = currentUsage < maxRequests;
+
+      // Log usage for debugging (only in development)
+      if (process.env.NODE_ENV === "development") {
+        console.log(`API Usage for ${provider}:`, {
+          current: currentUsage,
+          max: maxRequests,
+          remaining: remainingRequests,
+          canProceed,
+          date: usageData.lastUpdated,
+        });
+      }
 
       return {
         success: true,
@@ -82,19 +188,91 @@ class ApiUsageService {
           currentUsage >= this.apiLimits[provider].approachingLimitThreshold,
       };
     } catch (error) {
+      console.error("API usage validation error:", error);
+
+      // On error, allow the request but log it
       return {
         success: false,
         error: error.message,
-        can_proceed: false,
+        can_proceed: true, // Allow request on error to prevent blocking users
         current_usage: 0,
-        max_requests: this.apiLimits[provider]?.maxDailyRequests || 0,
-        remaining_requests: 0,
+        max_requests: this.apiLimits[provider]?.maxDailyRequests || 1000,
+        remaining_requests: this.apiLimits[provider]?.maxDailyRequests || 1000,
       };
     }
   }
 
   /**
-   * Increment API usage counter
+   * Manually reset API usage for testing and debugging
+   * @param {string} provider - 'gemini' or 'huggingface'
+   * @returns {Promise<boolean>} True if successful
+   */
+  async forceResetApiUsage(provider) {
+    try {
+      const user = this.auth.currentUser;
+
+      if (!user) {
+        console.warn("No authenticated user for API usage reset");
+        return false;
+      }
+
+      const today = new Date().toISOString().split("T")[0];
+      const usageDoc = doc(this.db, "api_usage", user.uid);
+
+      // Reset to 0 for today
+      await setDoc(
+        usageDoc,
+        {
+          [provider]: {
+            [today]: 0,
+          },
+          lastUpdated: today,
+        },
+        { merge: true }
+      );
+
+      // Clear cache to force refresh
+      this.clearCache(user.uid, provider);
+
+      console.log(`Force reset API usage for ${provider} to 0`);
+      return true;
+    } catch (error) {
+      console.error("Failed to force reset API usage:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Get current API usage status for debugging
+   * @param {string} provider - 'gemini' or 'huggingface'
+   * @returns {Promise<Object>} Current usage status
+   */
+  async getCurrentUsageStatus(provider) {
+    try {
+      const user = this.auth.currentUser;
+
+      if (!user) {
+        return { error: "No authenticated user" };
+      }
+
+      const usageData = await this.getCachedUsage(user.uid, provider);
+      const maxRequests = this.apiLimits[provider]?.maxDailyRequests || 0;
+
+      return {
+        currentUsage: usageData.currentUsage,
+        maxRequests,
+        remainingRequests: Math.max(0, maxRequests - usageData.currentUsage),
+        lastUpdated: usageData.lastUpdated,
+        canProceed: usageData.currentUsage < maxRequests,
+      };
+    } catch (error) {
+      console.error("Failed to get current usage status:", error);
+      return { error: error.message };
+    }
+  }
+
+  /**
+   * Increment API usage counter with improved error handling
    * @param {string} provider - 'gemini' or 'huggingface'
    * @returns {Promise<boolean>} True if successful, false if limit exceeded
    */
@@ -103,45 +281,98 @@ class ApiUsageService {
       const user = this.auth.currentUser;
 
       if (!user) {
-        throw new Error("User not authenticated");
+        console.warn("No authenticated user for API usage increment, skipping");
+        return true;
       }
 
       if (!this.apiLimits[provider]) {
         throw new Error(`Invalid provider: ${provider}`);
       }
 
-      // First validate if user can make the request
+      // Validate before incrementing
       const validation = await this.validateApiUsage(provider);
       if (!validation.can_proceed) {
+        console.warn(
+          `API limit exceeded for ${provider}, cannot increment usage`
+        );
         return false;
       }
 
-      // Increment usage in Firestore
-      const usageDoc = doc(this.db, "api_usage", user.uid);
       const today = new Date().toISOString().split("T")[0];
+      const usageDoc = doc(this.db, "api_usage", user.uid);
 
+      // Use setDoc with merge to ensure the document exists
       await setDoc(
         usageDoc,
         {
           [provider]: {
             [today]: increment(1),
           },
+          lastUpdated: new Date().toISOString(),
         },
         { merge: true }
       );
 
+      // Clear cache to force refresh
+      this.clearCache(user.uid, provider);
+
       return true;
     } catch (error) {
-      console.error("API usage increment failed:", error);
-      return false;
+      console.error("Failed to increment API usage:", error);
+      // Don't block the user on increment failure
+      return true;
     }
   }
 
   /**
-   * Get comprehensive usage statistics for the current user
-   * @returns {Promise<Object>} Usage statistics
+   * Get user's API usage statistics
+   * @returns {Promise<Object>} Usage statistics for all providers
    */
   async getUserApiUsageStats() {
+    try {
+      const user = this.auth.currentUser;
+
+      if (!user) {
+        return {};
+      }
+
+      const usageDoc = doc(this.db, "api_usage", user.uid);
+      const usageSnapshot = await getDoc(usageDoc);
+
+      if (!usageSnapshot.exists()) {
+        return {};
+      }
+
+      const usageData = usageSnapshot.data();
+      const today = new Date().toISOString().split("T")[0];
+      const stats = {};
+
+      for (const [provider, limits] of Object.entries(this.apiLimits)) {
+        const currentUsage = usageData[provider]?.[today] || 0;
+        stats[provider] = {
+          current_usage: currentUsage,
+          max_requests: limits.maxDailyRequests,
+          remaining_requests: Math.max(
+            0,
+            limits.maxDailyRequests - currentUsage
+          ),
+          approaching_limit: currentUsage >= limits.approachingLimitThreshold,
+        };
+      }
+
+      return stats;
+    } catch (error) {
+      console.error("Failed to get API usage stats:", error);
+      return {};
+    }
+  }
+
+  /**
+   * Reset API usage for a specific provider (admin function)
+   * @param {string} provider - 'gemini' or 'huggingface'
+   * @returns {Promise<boolean>} True if successful
+   */
+  async resetApiUsage(provider) {
     try {
       const user = this.auth.currentUser;
 
@@ -149,167 +380,36 @@ class ApiUsageService {
         throw new Error("User not authenticated");
       }
 
-      // Get user's API usage from Firestore
-      const usageDoc = doc(this.db, "api_usage", user.uid);
-      const usageSnapshot = await getDoc(usageDoc);
-
       const today = new Date().toISOString().split("T")[0];
-      const usageData = usageSnapshot.exists() ? usageSnapshot.data() : {};
+      const usageDoc = doc(this.db, "api_usage", user.uid);
 
-      const geminiUsage = usageData.gemini?.[today] || 0;
-      const huggingfaceUsage = usageData.huggingface?.[today] || 0;
+      await setDoc(
+        usageDoc,
+        {
+          [provider]: {
+            [today]: 0,
+          },
+          lastUpdated: new Date().toISOString(),
+        },
+        { merge: true }
+      );
 
-      return {
-        success: true,
-        gemini: {
-          current_usage: geminiUsage,
-          max_requests: this.apiLimits.gemini.maxDailyRequests,
-          remaining_requests: Math.max(
-            0,
-            this.apiLimits.gemini.maxDailyRequests - geminiUsage
-          ),
-          approaching_limit:
-            geminiUsage >= this.apiLimits.gemini.approachingLimitThreshold,
-        },
-        huggingface: {
-          current_usage: huggingfaceUsage,
-          max_requests: this.apiLimits.huggingface.maxDailyRequests,
-          remaining_requests: Math.max(
-            0,
-            this.apiLimits.huggingface.maxDailyRequests - huggingfaceUsage
-          ),
-          approaching_limit:
-            huggingfaceUsage >=
-            this.apiLimits.huggingface.approachingLimitThreshold,
-        },
-      };
+      // Clear cache
+      this.clearCache(user.uid, provider);
+
+      return true;
     } catch (error) {
-      return {
-        success: false,
-        error: error.message,
-        gemini: {
-          current_usage: 0,
-          max_requests: this.apiLimits.gemini.maxDailyRequests,
-          remaining_requests: this.apiLimits.gemini.maxDailyRequests,
-          approaching_limit: false,
-        },
-        huggingface: {
-          current_usage: 0,
-          max_requests: this.apiLimits.huggingface.maxDailyRequests,
-          remaining_requests: this.apiLimits.huggingface.maxDailyRequests,
-          approaching_limit: false,
-        },
-      };
+      console.error("Failed to reset API usage:", error);
+      return false;
     }
   }
 
   /**
-   * Get current daily usage for a specific provider
-   * @param {string} provider - 'gemini' or 'huggingface'
-   * @returns {Promise<number>} Current usage count
+   * Get API limits configuration
+   * @returns {Object} API limits configuration
    */
-  async getDailyApiUsage(provider) {
-    try {
-      const user = this.auth.currentUser;
-
-      if (!user) {
-        return 0;
-      }
-
-      if (!this.apiLimits[provider]) {
-        return 0;
-      }
-
-      // Get user's API usage from Firestore
-      const usageDoc = doc(this.db, "api_usage", user.uid);
-      const usageSnapshot = await getDoc(usageDoc);
-
-      const today = new Date().toISOString().split("T")[0];
-      const usageData = usageSnapshot.exists() ? usageSnapshot.data() : {};
-
-      return usageData[provider]?.[today] || 0;
-    } catch (error) {
-      return 0;
-    }
-  }
-
-  /**
-   * Check if user is approaching limits for a provider
-   * @param {string} provider - 'gemini' or 'huggingface'
-   * @returns {Promise<boolean>} True if approaching limit
-   */
-  async isApproachingLimit(provider) {
-    const currentUsage = await this.getDailyApiUsage(provider);
-    const threshold = this.apiLimits[provider]?.approachingLimitThreshold || 0;
-    return currentUsage >= threshold;
-  }
-
-  /**
-   * Check if user has exceeded daily limit for a provider
-   * @param {string} provider - 'gemini' or 'huggingface'
-   * @returns {Promise<boolean>} True if limit exceeded
-   */
-  async hasExceededLimit(provider) {
-    const currentUsage = await this.getDailyApiUsage(provider);
-    const maxRequests = this.apiLimits[provider]?.maxDailyRequests || 0;
-    return currentUsage >= maxRequests;
-  }
-
-  /**
-   * Get provider configuration
-   * @param {string} provider - 'gemini' or 'huggingface'
-   * @returns {Object} Provider configuration
-   */
-  getProviderConfig(provider) {
-    return this.apiLimits[provider] || null;
-  }
-
-  /**
-   * Get all provider configurations
-   * @returns {Object} All provider configurations
-   */
-  getAllProviderConfigs() {
+  getApiLimits() {
     return this.apiLimits;
-  }
-
-  /**
-   * Get estimated cost for a provider
-   * @param {string} provider - 'gemini' or 'huggingface'
-   * @param {number} requestCount - Number of requests
-   * @returns {Object} Cost estimate
-   */
-  getCostEstimate(provider, requestCount = 1) {
-    const config = this.apiLimits[provider];
-    if (!config) {
-      return { error: `Invalid provider: ${provider}` };
-    }
-
-    const totalCost = config.estimatedCostPerRequest * requestCount;
-    const dailyCost = config.estimatedCostPerRequest * config.maxDailyRequests;
-
-    return {
-      costPerRequest: config.estimatedCostPerRequest,
-      totalCost,
-      dailyCost,
-      requestCount,
-      provider,
-    };
-  }
-
-  /**
-   * Get all provider cost estimates
-   * @returns {Object} Cost estimates for all providers
-   */
-  getAllCostEstimates() {
-    const estimates = {};
-    for (const [provider, config] of Object.entries(this.apiLimits)) {
-      estimates[provider] = {
-        costPerRequest: config.estimatedCostPerRequest,
-        dailyCost: config.estimatedCostPerRequest * config.maxDailyRequests,
-        maxDailyRequests: config.maxDailyRequests,
-      };
-    }
-    return estimates;
   }
 }
 
