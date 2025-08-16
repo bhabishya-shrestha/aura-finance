@@ -24,6 +24,13 @@ const useProductionStore = create(
     // Initialize store and set up real-time listeners
     initialize: async () => {
       try {
+        // Prevent multiple initializations
+        const currentState = get();
+        if (currentState.isInitialized) {
+          console.log("ℹ️ Store already initialized, skipping...");
+          return;
+        }
+
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
         // Check if user is authenticated
@@ -41,6 +48,10 @@ const useProductionStore = create(
         }
 
         console.log("✅ User authenticated:", user.email);
+
+        // Clean up any existing listeners first
+        firebaseService.unsubscribeFromTransactions();
+        firebaseService.unsubscribeFromAccounts();
 
         // Set up real-time listeners for transactions and accounts
         await get().setupRealtimeListeners();
@@ -125,49 +136,111 @@ const useProductionStore = create(
       }
     },
 
+    // Reset store state and listeners (useful for debugging)
+    resetStore: () => {
+      console.log("🔄 Resetting store state...");
+
+      // Clean up listeners
+      firebaseService.unsubscribeFromTransactions();
+      firebaseService.unsubscribeFromAccounts();
+
+      // Reset state
+      set({
+        transactions: [],
+        accounts: [],
+        isLoading: false,
+        error: null,
+        isInitialized: false,
+        lastSyncTime: null,
+        syncStatus: "idle",
+      });
+
+      console.log("✅ Store reset completed");
+    },
+
     // Set up real-time listeners for Firestore
     setupRealtimeListeners: async () => {
       try {
+        console.log("🔧 Setting up real-time listeners...");
+
         // Listen for transaction changes
-        firebaseService.subscribeToTransactions(transactions => {
-          if (import.meta.env.DEV) {
-            console.log(
-              "🔄 Real-time transaction update:",
-              transactions.length,
-              "transactions"
-            );
+        const transactionUnsubscribe = firebaseService.subscribeToTransactions(
+          transactions => {
+            if (import.meta.env.DEV) {
+              console.log(
+                "🔄 Real-time transaction update:",
+                transactions.length,
+                "transactions"
+              );
+            }
+
+            // Ensure we're getting valid data
+            if (Array.isArray(transactions)) {
+              set({
+                transactions: transactions,
+                lastSyncTime: new Date(),
+                syncStatus: "success",
+              });
+            } else {
+              console.warn(
+                "⚠️ Received invalid transaction data:",
+                transactions
+              );
+              set({
+                transactions: [],
+                lastSyncTime: new Date(),
+                syncStatus: "error",
+              });
+            }
           }
-          set({
-            transactions: transactions || [],
-            lastSyncTime: new Date(),
-            syncStatus: "success",
-          });
-        });
+        );
 
         // Listen for account changes
-        firebaseService.subscribeToAccounts(accounts => {
-          if (import.meta.env.DEV) {
-            console.log(
-              "🔄 Real-time account update:",
-              accounts.length,
-              "accounts"
-            );
+        const accountUnsubscribe = firebaseService.subscribeToAccounts(
+          accounts => {
+            if (import.meta.env.DEV) {
+              console.log(
+                "🔄 Real-time account update:",
+                accounts.length,
+                "accounts"
+              );
+            }
+
+            // Ensure we're getting valid data
+            if (Array.isArray(accounts)) {
+              set({
+                accounts: accounts,
+                lastSyncTime: new Date(),
+                syncStatus: "success",
+              });
+            } else {
+              console.warn("⚠️ Received invalid account data:", accounts);
+              set({
+                accounts: [],
+                lastSyncTime: new Date(),
+                syncStatus: "error",
+              });
+            }
           }
-          set({
-            accounts: accounts || [],
-            lastSyncTime: new Date(),
-            syncStatus: "success",
-          });
-        });
+        );
+
+        // Verify listeners were set up
+        if (!transactionUnsubscribe || !accountUnsubscribe) {
+          throw new Error("Failed to set up real-time listeners");
+        }
+
+        console.log("✅ Real-time listeners set up successfully");
 
         // Listen for online/offline changes
         window.addEventListener("online", () => set({ isOnline: true }));
         window.addEventListener("offline", () => set({ isOnline: false }));
       } catch (error) {
+        console.error("❌ Error setting up real-time listeners:", error);
         set({
           error: `Failed to setup listeners: ${error.message}`,
           syncStatus: "error",
         });
+        throw error;
       }
     },
 
