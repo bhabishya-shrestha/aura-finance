@@ -130,7 +130,7 @@ export const FirebaseAuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const { showSuccess, showError, showInfo } = useNotifications();
+  const { showSuccess, showInfo } = useNotifications();
 
   // Listen for auth state changes
   useEffect(() => {
@@ -243,7 +243,7 @@ export const FirebaseAuthProvider = ({ children }) => {
     });
 
     return () => unsubscribe();
-  }, [auth, db]);
+  }, [auth, db, showSuccess, showInfo]);
 
   // Login with email and password
   const login = async (email, password) => {
