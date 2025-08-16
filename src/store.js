@@ -1670,38 +1670,6 @@ const useStore = create(
             },
           });
         },
-                  "Resolved notification dropdown alignment on mobile",
-                  "Fixed hamburger menu functionality",
-                  "Improved icon centering in mobile header",
-                  "Enhanced mobile scroll behavior and touch interactions",
-                ],
-                read: false,
-              },
-            });
-          } else {
-            set({
-              lastUpdateNotification: {
-                version: "1.1.0",
-                timestamp: new Date().toISOString(),
-                features: [
-                  "Completely redesigned Analytics page with Fortune 500 standards",
-                  "Enhanced AI-powered account detection and assignment",
-                  "Professional transaction editing capabilities",
-                  "Improved statement processing with better error handling",
-                  "Enhanced account assignment modal with modern design",
-                  "Better data visualization and chart improvements",
-                ],
-                bugFixes: [
-                  "Fixed analytics data display and chart rendering issues",
-                  "Resolved transaction import and account assignment bugs",
-                  "Improved overall app stability and performance",
-                  "Fixed UI layout and responsive design issues",
-                ],
-                read: false,
-              },
-            });
-          }
-        },
       };
     },
     {
