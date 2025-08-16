@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, User, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+} from "lucide-react";
 import { useFirebaseAuth } from "../../contexts/FirebaseAuthContext";
 import auraLogo from "../../assets/aura-finance.png";
 
@@ -40,7 +49,8 @@ const RegisterForm = ({ onSwitchToLogin }) => {
     } else if (formData.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters";
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = "Password must contain at least one uppercase letter, one lowercase letter, and one number";
+      newErrors.password =
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number";
     }
 
     // Confirm password validation
@@ -83,7 +93,11 @@ const RegisterForm = ({ onSwitchToLogin }) => {
     }
 
     // Fix: Pass parameters in correct order (email, password, name)
-    const result = await register(formData.email, formData.password, formData.name.trim());
+    const result = await register(
+      formData.email,
+      formData.password,
+      formData.name.trim()
+    );
 
     if (!result.success) {
       // Error is already handled by the auth context
@@ -92,7 +106,13 @@ const RegisterForm = ({ onSwitchToLogin }) => {
   };
 
   const getPasswordStrength = () => {
-    if (!formData.password) return { strength: 0, color: "text-gray-400", text: "", bgColor: "bg-gray-200" };
+    if (!formData.password)
+      return {
+        strength: 0,
+        color: "text-gray-400",
+        text: "",
+        bgColor: "bg-gray-200",
+      };
 
     let strength = 0;
     const checks = [
@@ -286,7 +306,9 @@ const RegisterForm = ({ onSwitchToLogin }) => {
                     />
                   </div>
                   {passwordStrength.text && (
-                    <span className={`text-xs font-medium ${passwordStrength.color}`}>
+                    <span
+                      className={`text-xs font-medium ${passwordStrength.color}`}
+                    >
                       {passwordStrength.text}
                     </span>
                   )}

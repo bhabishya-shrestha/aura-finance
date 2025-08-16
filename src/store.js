@@ -1627,7 +1627,8 @@ const useStore = create(
                 id: Date.now(),
                 type: "success",
                 title: "Test Notification",
-                message: "This is a test notification to verify the system is working.",
+                message:
+                  "This is a test notification to verify the system is working.",
                 timestamp: new Date().toISOString(),
                 read: false,
               },
@@ -1652,7 +1653,7 @@ const useStore = create(
                 "🛡️ Enhanced error handling and validation",
                 "🎯 Fixed React duplicate key warnings",
                 "🔄 Proper listener management and cleanup",
-                "📊 Improved transaction deduplication"
+                "📊 Improved transaction deduplication",
               ],
               bugFixes: [
                 "Fixed persistent 45 transactions issue",
@@ -1664,7 +1665,7 @@ const useStore = create(
                 "Fixed mobile hamburger menu functionality",
                 "Fixed notification system integration",
                 "Fixed date validation edge cases",
-                "Fixed authentication state management"
+                "Fixed authentication state management",
               ],
               read: false,
             },

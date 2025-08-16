@@ -11,10 +11,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import {
-  getAuth,
-  onAuthStateChanged,
-} from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -33,21 +30,21 @@ const auth = getAuth(app);
 
 async function debugFirebaseAuth() {
   console.log("🔍 Debugging Firebase Authentication...");
-  
+
   // Check current auth state
   console.log("\n1. Current Auth State:");
   console.log("Auth currentUser:", auth.currentUser);
   console.log("Auth currentUser?.uid:", auth.currentUser?.uid);
   console.log("Auth currentUser?.email:", auth.currentUser?.email);
-  
+
   // Set up auth state listener
   console.log("\n2. Setting up auth state listener...");
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, user => {
     console.log("🔄 Auth state changed:");
     console.log("User:", user);
     console.log("User UID:", user?.uid);
     console.log("User email:", user?.email);
-    
+
     if (user) {
       // Test reading transactions
       testReadTransactions(user.uid);
@@ -57,16 +54,16 @@ async function debugFirebaseAuth() {
 
 async function testReadTransactions(userId) {
   console.log("\n3. Testing transaction read for user:", userId);
-  
+
   try {
     const transactionsQuery = query(
       collection(db, "transactions"),
       where("userId", "==", userId)
     );
-    
+
     const transactionsSnapshot = await getDocs(transactionsQuery);
     console.log("✅ Found", transactionsSnapshot.size, "transactions for user");
-    
+
     if (transactionsSnapshot.size > 0) {
       const firstTransaction = transactionsSnapshot.docs[0].data();
       console.log("📄 First transaction data:", firstTransaction);
@@ -74,24 +71,29 @@ async function testReadTransactions(userId) {
       console.log("🔍 Expected userId:", userId);
       console.log("🔍 Match:", firstTransaction.userId === userId);
     }
-    
+
     // Also check for transactions without userId
     const allTransactionsQuery = query(collection(db, "transactions"));
     const allTransactionsSnapshot = await getDocs(allTransactionsQuery);
-    console.log("📊 Total transactions in database:", allTransactionsSnapshot.size);
-    
+    console.log(
+      "📊 Total transactions in database:",
+      allTransactionsSnapshot.size
+    );
+
     const transactionsWithoutUserId = allTransactionsSnapshot.docs.filter(
       doc => !doc.data().userId
     );
-    console.log("⚠️ Transactions without userId:", transactionsWithoutUserId.length);
-    
+    console.log(
+      "⚠️ Transactions without userId:",
+      transactionsWithoutUserId.length
+    );
+
     if (transactionsWithoutUserId.length > 0) {
       console.log("❌ Found transactions without userId:");
       transactionsWithoutUserId.forEach((doc, index) => {
         console.log(`  ${index + 1}. ID: ${doc.id}, Data:`, doc.data());
       });
     }
-    
   } catch (error) {
     console.error("❌ Error reading transactions:", error);
   }

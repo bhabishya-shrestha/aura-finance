@@ -81,12 +81,12 @@ const AppLayout = () => {
   useEffect(() => {
     const lastSeenVersion = localStorage.getItem("aura_last_seen_version");
     const currentVersion = "1.3.0";
-    
+
     if (lastSeenVersion !== currentVersion && !lastUpdateNotification) {
       // Trigger the update notification
       const { triggerUpdateNotification } = useStore.getState();
       triggerUpdateNotification();
-      
+
       // Mark this version as seen
       localStorage.setItem("aura_last_seen_version", currentVersion);
     }
