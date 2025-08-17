@@ -1,11 +1,17 @@
 {
   "ci": {
     "collect": {
-      "url": ["http://localhost:4173/test.html"],
+      "url": [
+        "http://localhost:4173/",
+        "http://localhost:4173/dashboard",
+        "http://localhost:4173/transactions",
+        "http://localhost:4173/accounts"
+      ],
       "startServerCommand": "npm run preview",
       "startServerReadyPattern": "Local:",
       "startServerReadyTimeout": 10000,
-      "numberOfRuns": 3
+      "numberOfRuns": 3,
+      "puppeteerScript": "./scripts/lighthouse-auth.js"
     },
     "assert": {
       "assertions": {
