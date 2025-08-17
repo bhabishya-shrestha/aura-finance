@@ -253,7 +253,10 @@ const useProductionStore = create(
         if (!transactionData.description?.trim()) {
           throw new Error("Transaction description is required");
         }
-        if (!transactionData.amount || isNaN(parseFloat(transactionData.amount))) {
+        if (
+          !transactionData.amount ||
+          isNaN(parseFloat(transactionData.amount))
+        ) {
           throw new Error("Valid transaction amount is required");
         }
         if (!transactionData.date) {
@@ -283,12 +286,12 @@ const useProductionStore = create(
 
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
-        
+
         // Return success with transaction data
         return {
           success: true,
           data: result.data,
-          message: "Transaction added successfully"
+          message: "Transaction added successfully",
         };
       } catch (error) {
         const errorMessage = error.message || "Failed to add transaction";
@@ -306,7 +309,9 @@ const useProductionStore = create(
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
         // Validate transaction exists
-        const existingTransaction = get().transactions.find(t => t.id === transactionId);
+        const existingTransaction = get().transactions.find(
+          t => t.id === transactionId
+        );
         if (!existingTransaction) {
           throw new Error("Transaction not found");
         }
@@ -332,11 +337,11 @@ const useProductionStore = create(
 
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
-        
+
         return {
           success: true,
           data: result.data,
-          message: "Transaction updated successfully"
+          message: "Transaction updated successfully",
         };
       } catch (error) {
         const errorMessage = error.message || "Failed to update transaction";
@@ -354,7 +359,9 @@ const useProductionStore = create(
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
         // Validate transaction exists
-        const existingTransaction = get().transactions.find(t => t.id === transactionId);
+        const existingTransaction = get().transactions.find(
+          t => t.id === transactionId
+        );
         if (!existingTransaction) {
           throw new Error("Transaction not found");
         }
@@ -367,10 +374,10 @@ const useProductionStore = create(
 
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
-        
+
         return {
           success: true,
-          message: "Transaction deleted successfully"
+          message: "Transaction deleted successfully",
         };
       } catch (error) {
         const errorMessage = error.message || "Failed to delete transaction";
@@ -444,7 +451,11 @@ const useProductionStore = create(
         if (!accountData.type) {
           throw new Error("Account type is required");
         }
-        if (accountData.balance === undefined || accountData.balance === null || isNaN(parseFloat(accountData.balance))) {
+        if (
+          accountData.balance === undefined ||
+          accountData.balance === null ||
+          isNaN(parseFloat(accountData.balance))
+        ) {
           throw new Error("Valid account balance is required");
         }
 
@@ -466,11 +477,11 @@ const useProductionStore = create(
 
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
-        
+
         return {
           success: true,
           data: result.data,
-          message: "Account added successfully"
+          message: "Account added successfully",
         };
       } catch (error) {
         const errorMessage = error.message || "Failed to add account";
@@ -497,12 +508,18 @@ const useProductionStore = create(
         const sanitizedUpdates = {
           ...updates,
           name: updates.name?.trim(),
-          balance: updates.balance !== undefined ? parseFloat(updates.balance) : undefined,
+          balance:
+            updates.balance !== undefined
+              ? parseFloat(updates.balance)
+              : undefined,
           type: updates.type?.toLowerCase(),
           updatedAt: new Date().toISOString(),
         };
 
-        const result = await firebaseService.updateAccount(accountId, sanitizedUpdates);
+        const result = await firebaseService.updateAccount(
+          accountId,
+          sanitizedUpdates
+        );
 
         if (!result.success) {
           throw new Error(result.error || "Failed to update account");
@@ -510,11 +527,11 @@ const useProductionStore = create(
 
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
-        
+
         return {
           success: true,
           data: result.data,
-          message: "Account updated successfully"
+          message: "Account updated successfully",
         };
       } catch (error) {
         const errorMessage = error.message || "Failed to update account";
@@ -538,9 +555,13 @@ const useProductionStore = create(
         }
 
         // Check if account has transactions
-        const accountTransactions = get().transactions.filter(t => t.accountId === accountId);
+        const accountTransactions = get().transactions.filter(
+          t => t.accountId === accountId
+        );
         if (accountTransactions.length > 0) {
-          throw new Error("Cannot delete account with existing transactions. Please delete or reassign transactions first.");
+          throw new Error(
+            "Cannot delete account with existing transactions. Please delete or reassign transactions first."
+          );
         }
 
         const result = await firebaseService.deleteAccount(accountId);
@@ -551,10 +572,10 @@ const useProductionStore = create(
 
         // The real-time listener will automatically update the store
         set({ isLoading: false, syncStatus: "success" });
-        
+
         return {
           success: true,
-          message: "Account deleted successfully"
+          message: "Account deleted successfully",
         };
       } catch (error) {
         const errorMessage = error.message || "Failed to delete account";

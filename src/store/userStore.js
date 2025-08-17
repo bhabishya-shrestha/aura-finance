@@ -38,16 +38,16 @@ const useUserStore = create(
       lastUpdateNotification: null,
 
       // Actions
-      setCurrentUser: (user) => set({ currentUser: user }),
+      setCurrentUser: user => set({ currentUser: user }),
 
-      setUserPreferences: (preferences) =>
-        set((state) => ({
+      setUserPreferences: preferences =>
+        set(state => ({
           userPreferences: { ...state.userPreferences, ...preferences },
         })),
 
       // Update specific preference
       updatePreference: (category, key, value) =>
-        set((state) => ({
+        set(state => ({
           userPreferences: {
             ...state.userPreferences,
             [category]: {
@@ -58,8 +58,8 @@ const useUserStore = create(
         })),
 
       // Add notification
-      addNotification: (notification) =>
-        set((state) => ({
+      addNotification: notification =>
+        set(state => ({
           notifications: [
             {
               id: Date.now().toString(),
@@ -73,9 +73,9 @@ const useUserStore = create(
         })),
 
       // Mark notification as read
-      markNotificationAsRead: (notificationId) =>
-        set((state) => ({
-          notifications: state.notifications.map((notification) =>
+      markNotificationAsRead: notificationId =>
+        set(state => ({
+          notifications: state.notifications.map(notification =>
             notification.id === notificationId
               ? { ...notification, read: true }
               : notification
@@ -85,8 +85,8 @@ const useUserStore = create(
 
       // Mark all notifications as read
       markAllNotificationsAsRead: () =>
-        set((state) => ({
-          notifications: state.notifications.map((notification) => ({
+        set(state => ({
+          notifications: state.notifications.map(notification => ({
             ...notification,
             read: true,
           })),
@@ -94,20 +94,20 @@ const useUserStore = create(
         })),
 
       // Remove notification
-      removeNotification: (notificationId) =>
-        set((state) => ({
+      removeNotification: notificationId =>
+        set(state => ({
           notifications: state.notifications.filter(
-            (notification) => notification.id !== notificationId
+            notification => notification.id !== notificationId
           ),
           unreadCount: state.notifications.find(
-            (n) => n.id === notificationId && !n.read
+            n => n.id === notificationId && !n.read
           )
             ? Math.max(0, state.unreadCount - 1)
             : state.unreadCount,
         })),
 
       // Set update notification
-      setUpdateNotification: (notification) =>
+      setUpdateNotification: notification =>
         set({ lastUpdateNotification: notification }),
 
       // Clear update notification
@@ -115,7 +115,7 @@ const useUserStore = create(
 
       // Mark update notification as read
       markUpdateNotificationAsRead: () =>
-        set((state) => ({
+        set(state => ({
           lastUpdateNotification: state.lastUpdateNotification
             ? { ...state.lastUpdateNotification, read: true }
             : null,
@@ -124,12 +124,12 @@ const useUserStore = create(
       // Get user statistics
       getUserStats: () => {
         const { currentUser, notifications } = get();
-        
+
         return {
           user: currentUser,
           notificationStats: {
             total: notifications.length,
-            unread: notifications.filter((n) => !n.read).length,
+            unread: notifications.filter(n => !n.read).length,
             byType: notifications.reduce((acc, notification) => {
               const type = notification.type || "info";
               acc[type] = (acc[type] || 0) + 1;
@@ -143,7 +143,7 @@ const useUserStore = create(
       // Export user data
       exportUserData: () => {
         const { currentUser, userPreferences, notifications } = get();
-        
+
         return {
           user: currentUser,
           preferences: userPreferences,
@@ -154,27 +154,27 @@ const useUserStore = create(
       },
 
       // Import user data
-      importUserData: (data) => {
+      importUserData: data => {
         return performanceMonitor.measureFunction("importUserData", () => {
           try {
             if (data.user) {
               set({ currentUser: data.user });
             }
-            
+
             if (data.preferences) {
               set({ userPreferences: data.preferences });
             }
-            
+
             if (data.notifications) {
               set({ notifications: data.notifications });
             }
-            
+
             performanceMonitor.recordMetric("user_data_imported", {
               hasUser: !!data.user,
               hasPreferences: !!data.preferences,
               hasNotifications: !!data.notifications,
             });
-            
+
             return true;
           } catch (error) {
             console.error("Failed to import user data:", error);
@@ -196,7 +196,7 @@ const useUserStore = create(
               unreadCount: 0,
               lastUpdateNotification: null,
             });
-            
+
             performanceMonitor.recordMetric("user_data_cleared");
           } catch (error) {
             console.error("Failed to clear user data:", error);
@@ -209,11 +209,14 @@ const useUserStore = create(
       },
 
       // Validate user preferences
-      validatePreferences: (preferences) => {
+      validatePreferences: preferences => {
         const errors = [];
 
         // Validate theme
-        if (preferences.theme && !["light", "dark", "system"].includes(preferences.theme)) {
+        if (
+          preferences.theme &&
+          !["light", "dark", "system"].includes(preferences.theme)
+        ) {
           errors.push("Invalid theme preference");
         }
 
@@ -228,7 +231,10 @@ const useUserStore = create(
         }
 
         // Validate time format
-        if (preferences.timeFormat && !["12h", "24h"].includes(preferences.timeFormat)) {
+        if (
+          preferences.timeFormat &&
+          !["12h", "24h"].includes(preferences.timeFormat)
+        ) {
           errors.push("Invalid time format");
         }
 
@@ -244,21 +250,21 @@ const useUserStore = create(
       },
 
       // Get notification by ID
-      getNotificationById: (id) => {
+      getNotificationById: id => {
         const { notifications } = get();
-        return notifications.find((notification) => notification.id === id);
+        return notifications.find(notification => notification.id === id);
       },
 
       // Get notifications by type
-      getNotificationsByType: (type) => {
+      getNotificationsByType: type => {
         const { notifications } = get();
-        return notifications.filter((notification) => notification.type === type);
+        return notifications.filter(notification => notification.type === type);
       },
 
       // Get unread notifications
       getUnreadNotifications: () => {
         const { notifications } = get();
-        return notifications.filter((notification) => !notification.read);
+        return notifications.filter(notification => !notification.read);
       },
 
       // Get recent notifications
@@ -269,7 +275,7 @@ const useUserStore = create(
     }),
     {
       name: "aura-user-store",
-      partialize: (state) => ({
+      partialize: state => ({
         userPreferences: state.userPreferences,
         notifications: state.notifications.slice(0, 20), // Persist only last 20
         unreadCount: state.unreadCount,

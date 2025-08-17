@@ -29,6 +29,14 @@ const ACKNOWLEDGED_VULNERABILITIES = {
     plannedFix: "v1.2.0",
     description: "esbuild vulnerability in development server",
   },
+  1103907: {
+    package: "cookie",
+    severity: "low",
+    impact: "development-only",
+    status: "acknowledged",
+    plannedFix: "v1.3.0",
+    description: "cookie package vulnerability in development dependencies",
+  },
   unknown: {
     package: "vite-related",
     severity: "moderate",

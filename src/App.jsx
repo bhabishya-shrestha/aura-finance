@@ -93,8 +93,6 @@ const AppLayout = () => {
   const isInitialized = useRef(false);
   const { isMobile, updateViewportHeight } = useMobileViewport();
 
-
-
   // Initialize update notification on first load
   useEffect(() => {
     const lastSeenVersion = localStorage.getItem("aura_last_seen_version");
@@ -138,8 +136,6 @@ const AppLayout = () => {
   const handleMenuToggle = () => {
     setShowMobileSidebar(!showMobileSidebar);
   };
-
-
 
   if (isMobile) {
     return (
@@ -187,10 +183,7 @@ const AppLayout = () => {
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header
-          currentPage={currentPage}
-          onMenuToggle={handleMenuToggle}
-        />
+        <Header currentPage={currentPage} onMenuToggle={handleMenuToggle} />
 
         <main
           className="flex-1 overflow-y-auto p-6"

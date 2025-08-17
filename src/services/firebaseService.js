@@ -61,7 +61,7 @@ console.log("🔥 Initializing Firebase with config:", {
   projectId: firebaseConfig.projectId,
   storageBucket: firebaseConfig.storageBucket,
   messagingSenderId: firebaseConfig.messagingSenderId,
-  appId: firebaseConfig.appId ? "***" : "missing"
+  appId: firebaseConfig.appId ? "***" : "missing",
 });
 
 const app = initializeApp(firebaseConfig);
@@ -456,7 +456,7 @@ class FirebaseService {
         try {
           const transactionDoc = doc(db, "transactions", transactionId);
           const transactionSnapshot = await getDoc(transactionDoc);
-          
+
           if (transactionSnapshot.exists()) {
             const transactionData = transactionSnapshot.data();
             console.error("Transaction data for debugging:", {
@@ -464,19 +464,23 @@ class FirebaseService {
               userId: transactionData.userId,
               currentUser: this.currentUser.uid,
               hasUserId: !!transactionData.userId,
-              transactionData: transactionData
+              transactionData: transactionData,
             });
           }
         } catch (debugError) {
-          console.error("Could not fetch transaction for debugging:", debugError);
+          console.error(
+            "Could not fetch transaction for debugging:",
+            debugError
+          );
         }
-        
+
         return {
           success: false,
-          error: "Insufficient permissions to delete transaction. Please try refreshing the page and try again.",
+          error:
+            "Insufficient permissions to delete transaction. Please try refreshing the page and try again.",
         };
       }
-      
+
       return { success: false, error: error.message };
     }
   }

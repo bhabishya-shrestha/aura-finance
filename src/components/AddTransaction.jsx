@@ -136,7 +136,7 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
 
       if (result.success) {
         showSuccess(result.message || "Transaction added successfully");
-        
+
         // Reset form
         setFormData({
           description: "",
@@ -147,7 +147,7 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
             accounts && accounts.length > 0 ? accounts[0].id.toString() : "",
         });
         setErrors({});
-        
+
         if (onClose) {
           onClose();
         } else {
@@ -157,7 +157,8 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
         showError(result.message || "Failed to add transaction");
       }
     } catch (error) {
-      const errorMessage = error.message || "Failed to add transaction. Please try again.";
+      const errorMessage =
+        error.message || "Failed to add transaction. Please try again.";
       showError(errorMessage);
       setErrors({ submit: errorMessage });
     }

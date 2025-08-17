@@ -290,7 +290,6 @@ export const TextArea = forwardRef(
     },
     ref
   ) => {
-
     const baseClasses = `
     block w-full rounded-lg border transition-all duration-200
     focus:outline-none focus:ring-2 focus:ring-offset-0

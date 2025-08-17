@@ -1,9 +1,19 @@
 import React, { useState } from "react";
-import { X, CheckCircle, AlertCircle, AlertTriangle, Info, Rocket, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  X,
+  CheckCircle,
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  Rocket,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { useNotifications } from "../contexts/NotificationContext";
 
 const NotificationToast = () => {
-  const { notifications, removeNotification, markNotificationAsRead } = useNotifications();
+  const { notifications, removeNotification, markNotificationAsRead } =
+    useNotifications();
   const [expandedRelease, setExpandedRelease] = useState(null);
 
   const getIcon = type => {
@@ -57,17 +67,19 @@ const NotificationToast = () => {
     }
   };
 
-  const handleNotificationClick = (notification) => {
+  const handleNotificationClick = notification => {
     if (!notification.read) {
       markNotificationAsRead(notification.id);
     }
   };
 
-  const toggleReleaseExpansion = (notificationId) => {
-    setExpandedRelease(expandedRelease === notificationId ? null : notificationId);
+  const toggleReleaseExpansion = notificationId => {
+    setExpandedRelease(
+      expandedRelease === notificationId ? null : notificationId
+    );
   };
 
-  const renderReleaseNotes = (notification) => {
+  const renderReleaseNotes = notification => {
     if (notification.type !== "release" || !notification.releaseNotes) {
       return null;
     }
@@ -88,7 +100,7 @@ const NotificationToast = () => {
           )}
           {isExpanded ? "Hide details" : "View release notes"}
         </button>
-        
+
         {isExpanded && (
           <div className="space-y-3 text-sm">
             {releaseNotes.features && releaseNotes.features.length > 0 && (
@@ -106,23 +118,24 @@ const NotificationToast = () => {
                 </ul>
               </div>
             )}
-            
-            {releaseNotes.improvements && releaseNotes.improvements.length > 0 && (
-              <div>
-                <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-2">
-                  🔧 Improvements
-                </h4>
-                <ul className="space-y-1 text-purple-700 dark:text-purple-300">
-                  {releaseNotes.improvements.map((improvement, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="text-purple-500 mt-1">•</span>
-                      <span>{improvement}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            
+
+            {releaseNotes.improvements &&
+              releaseNotes.improvements.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-2">
+                    🔧 Improvements
+                  </h4>
+                  <ul className="space-y-1 text-purple-700 dark:text-purple-300">
+                    {releaseNotes.improvements.map((improvement, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <span className="text-purple-500 mt-1">•</span>
+                        <span>{improvement}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
             {releaseNotes.bugFixes && releaseNotes.bugFixes.length > 0 && (
               <div>
                 <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-2">
@@ -155,7 +168,7 @@ const NotificationToast = () => {
           key={notification.id}
           className={`flex items-start gap-3 p-4 rounded-lg border shadow-lg animate-in slide-in-from-right-2 duration-300 ${getBackgroundColor(
             notification.type
-          )} ${!notification.read ? 'ring-2 ring-purple-200 dark:ring-purple-800' : ''}`}
+          )} ${!notification.read ? "ring-2 ring-purple-200 dark:ring-purple-800" : ""}`}
           onClick={() => handleNotificationClick(notification)}
         >
           <div className="flex-shrink-0 mt-0.5">
@@ -170,7 +183,7 @@ const NotificationToast = () => {
             {renderReleaseNotes(notification)}
           </div>
           <button
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               removeNotification(notification.id);
             }}

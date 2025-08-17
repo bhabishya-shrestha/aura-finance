@@ -44,13 +44,13 @@ global.PerformanceObserver = vi.fn().mockImplementation(() => ({
 // Mock localStorage with actual storage
 const localStorageMock = {
   store: {},
-  getItem: vi.fn((key) => {
+  getItem: vi.fn(key => {
     return localStorageMock.store[key] || null;
   }),
   setItem: vi.fn((key, value) => {
     localStorageMock.store[key] = value;
   }),
-  removeItem: vi.fn((key) => {
+  removeItem: vi.fn(key => {
     delete localStorageMock.store[key];
   }),
   clear: vi.fn(() => {
@@ -62,13 +62,13 @@ global.localStorage = localStorageMock;
 // Mock sessionStorage with actual storage
 const sessionStorageMock = {
   store: {},
-  getItem: vi.fn((key) => {
+  getItem: vi.fn(key => {
     return sessionStorageMock.store[key] || null;
   }),
   setItem: vi.fn((key, value) => {
     sessionStorageMock.store[key] = value;
   }),
-  removeItem: vi.fn((key) => {
+  removeItem: vi.fn(key => {
     delete sessionStorageMock.store[key];
   }),
   clear: vi.fn(() => {
@@ -217,7 +217,9 @@ vi.mock("../utils/duplicateDetector", () => ({
     low: [],
     all: [],
   }),
-  getDuplicateReason: vi.fn().mockReturnValue("same date, same amount (high confidence)"),
+  getDuplicateReason: vi
+    .fn()
+    .mockReturnValue("same date, same amount (high confidence)"),
 }));
 
 // Mock React Router

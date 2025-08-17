@@ -196,12 +196,12 @@ const MobileSidebar = ({ isOpen, onClose }) => {
     },
   ];
 
-  const handleMenuClick = (pageId) => {
+  const handleMenuClick = pageId => {
     const menuItem = menuItems.find(item => item.id === pageId);
     if (menuItem) {
       navigate(menuItem.path);
     }
-    
+
     // Close mobile sidebar after navigation
     onClose();
   };
@@ -222,7 +222,7 @@ const MobileSidebar = ({ isOpen, onClose }) => {
     }
   };
 
-  const formatLastSync = (timestamp) => {
+  const formatLastSync = timestamp => {
     if (!timestamp) return "Never";
 
     const now = new Date();

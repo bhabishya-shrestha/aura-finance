@@ -8,11 +8,8 @@ import auraLogo from "../assets/aura-finance.png";
 
 const Header = ({ onMenuToggle, showMenuButton = false }) => {
   const { toggleTheme, currentTheme } = useTheme();
-  const {
-    notifications,
-    getUnreadCount,
-    markNotificationAsRead,
-  } = useNotifications();
+  const { notifications, getUnreadCount, markNotificationAsRead } =
+    useNotifications();
   const {
     lastUpdateNotification,
     clearUpdateNotification,
@@ -311,7 +308,6 @@ const Header = ({ onMenuToggle, showMenuButton = false }) => {
                             {!notification.read && (
                               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                             )}
-
                           </div>
                         </div>
                       ))}

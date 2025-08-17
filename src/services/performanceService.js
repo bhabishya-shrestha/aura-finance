@@ -14,16 +14,16 @@ export const initializePerformanceMonitoring = async () => {
 
   try {
     // Import web-vitals using a more reliable method
-    const webVitals = await import('web-vitals');
+    const webVitals = await import("web-vitals");
     const { getCLS, getFID, getFCP, getLCP, getTTFB } = webVitals;
-    
+
     // Verify that all functions are available
     if (!getCLS || !getFID || !getFCP || !getLCP || !getTTFB) {
-      throw new Error('Web Vitals functions not available');
+      throw new Error("Web Vitals functions not available");
     }
-    
+
     // Send metrics to analytics
-    const sendToAnalytics = (metric) => {
+    const sendToAnalytics = metric => {
       const { name, value, id } = metric;
 
       // Log to console in development
@@ -33,10 +33,10 @@ export const initializePerformanceMonitoring = async () => {
 
       // Send to analytics service (replace with your analytics provider)
       if (window.gtag) {
-        window.gtag('event', 'web_vital', {
-          event_category: 'Web Vitals',
+        window.gtag("event", "web_vital", {
+          event_category: "Web Vitals",
           event_label: name,
-          value: Math.round(name === 'CLS' ? value * 1000 : value),
+          value: Math.round(name === "CLS" ? value * 1000 : value),
           non_interaction: true,
         });
       }
@@ -53,9 +53,9 @@ export const initializePerformanceMonitoring = async () => {
     getTTFB(sendToAnalytics);
 
     webVitalsInitialized = true;
-    console.log('✅ Performance monitoring initialized');
+    console.log("✅ Performance monitoring initialized");
   } catch (error) {
-    console.warn('⚠️ Failed to initialize performance monitoring:', error);
+    console.warn("⚠️ Failed to initialize performance monitoring:", error);
     // Fallback: try to initialize without web-vitals
     webVitalsInitialized = true;
   }
@@ -66,14 +66,16 @@ export const initializePerformanceMonitoring = async () => {
  */
 const storePerformanceMetric = (name, value) => {
   try {
-    const metrics = JSON.parse(localStorage.getItem('aura_performance_metrics') || '{}');
+    const metrics = JSON.parse(
+      localStorage.getItem("aura_performance_metrics") || "{}"
+    );
     metrics[name] = {
       value,
       timestamp: Date.now(),
     };
-    localStorage.setItem('aura_performance_metrics', JSON.stringify(metrics));
+    localStorage.setItem("aura_performance_metrics", JSON.stringify(metrics));
   } catch (error) {
-    console.warn('Failed to store performance metric:', error);
+    console.warn("Failed to store performance metric:", error);
   }
 };
 
@@ -82,7 +84,7 @@ const storePerformanceMetric = (name, value) => {
  */
 export const getPerformanceMetrics = () => {
   try {
-    return JSON.parse(localStorage.getItem('aura_performance_metrics') || '{}');
+    return JSON.parse(localStorage.getItem("aura_performance_metrics") || "{}");
   } catch (error) {
     return {};
   }
@@ -114,12 +116,13 @@ class PerformanceMonitor {
    */
   setupPerformanceObservers() {
     // Monitor long tasks
-    if ('PerformanceObserver' in window) {
+    if ("PerformanceObserver" in window) {
       try {
-        const longTaskObserver = new PerformanceObserver((list) => {
+        const longTaskObserver = new PerformanceObserver(list => {
           for (const entry of list.getEntries()) {
-            if (entry.duration > 50) { // Tasks longer than 50ms
-              this.recordMetric('long_task', {
+            if (entry.duration > 50) {
+              // Tasks longer than 50ms
+              this.recordMetric("long_task", {
                 duration: entry.duration,
                 startTime: entry.startTime,
                 name: entry.name,
@@ -127,26 +130,28 @@ class PerformanceMonitor {
             }
           }
         });
-        longTaskObserver.observe({ entryTypes: ['longtask'] });
+        longTaskObserver.observe({ entryTypes: ["longtask"] });
       } catch (error) {
-        console.warn('Long task observer not supported:', error);
+        console.warn("Long task observer not supported:", error);
       }
 
       // Monitor navigation timing
       try {
-        const navigationObserver = new PerformanceObserver((list) => {
+        const navigationObserver = new PerformanceObserver(list => {
           for (const entry of list.getEntries()) {
-            this.recordMetric('navigation', {
+            this.recordMetric("navigation", {
               type: entry.type,
               duration: entry.duration,
-              domContentLoaded: entry.domContentLoadedEventEnd - entry.domContentLoadedEventStart,
+              domContentLoaded:
+                entry.domContentLoadedEventEnd -
+                entry.domContentLoadedEventStart,
               loadComplete: entry.loadEventEnd - entry.loadEventStart,
             });
           }
         });
-        navigationObserver.observe({ entryTypes: ['navigation'] });
+        navigationObserver.observe({ entryTypes: ["navigation"] });
       } catch (error) {
-        console.warn('Navigation observer not supported:', error);
+        console.warn("Navigation observer not supported:", error);
       }
     }
   }
@@ -162,7 +167,7 @@ class PerformanceMonitor {
     };
 
     this.metrics.set(name, metric);
-    
+
     // Notify observers
     if (this.observers.has(name)) {
       this.observers.get(name).forEach(callback => callback(metric));
@@ -221,7 +226,11 @@ class PerformanceMonitor {
       return result;
     } catch (error) {
       const duration = performance.now() - start;
-      this.recordMetric(`function_${name}`, { duration, success: false, error: error.message });
+      this.recordMetric(`function_${name}`, {
+        duration,
+        success: false,
+        error: error.message,
+      });
       throw error;
     }
   }
@@ -245,7 +254,7 @@ class PerformanceMonitor {
   getPerformanceReport() {
     const metrics = this.getAllMetrics();
     const webVitals = getPerformanceMetrics();
-    
+
     return {
       timestamp: Date.now(),
       metrics,
@@ -259,38 +268,47 @@ class PerformanceMonitor {
    */
   generateSummary(metrics, webVitals) {
     const summary = {
-      overall: 'good',
+      overall: "good",
       issues: [],
       recommendations: [],
     };
 
     // Check Web Vitals
     if (webVitals.LCP && webVitals.LCP.value > 2500) {
-      summary.overall = 'poor';
-      summary.issues.push('LCP is too slow (>2.5s)');
-      summary.recommendations.push('Optimize image loading and server response time');
+      summary.overall = "poor";
+      summary.issues.push("LCP is too slow (>2.5s)");
+      summary.recommendations.push(
+        "Optimize image loading and server response time"
+      );
     }
 
     if (webVitals.FID && webVitals.FID.value > 100) {
-      summary.overall = 'needs-improvement';
-      summary.issues.push('FID is too high (>100ms)');
-      summary.recommendations.push('Reduce JavaScript execution time');
+      summary.overall = "needs-improvement";
+      summary.issues.push("FID is too high (>100ms)");
+      summary.recommendations.push("Reduce JavaScript execution time");
     }
 
     if (webVitals.CLS && webVitals.CLS.value > 0.1) {
-      summary.overall = 'needs-improvement';
-      summary.issues.push('CLS is too high (>0.1)');
-      summary.recommendations.push('Fix layout shifts and use proper image dimensions');
+      summary.overall = "needs-improvement";
+      summary.issues.push("CLS is too high (>0.1)");
+      summary.recommendations.push(
+        "Fix layout shifts and use proper image dimensions"
+      );
     }
 
     // Check function performance
     const slowFunctions = Object.entries(metrics)
-      .filter(([name, metric]) => name.startsWith('function_') && metric.value.duration > 100)
+      .filter(
+        ([name, metric]) =>
+          name.startsWith("function_") && metric.value.duration > 100
+      )
       .map(([name, metric]) => ({ name, duration: metric.value.duration }));
 
     if (slowFunctions.length > 0) {
       summary.issues.push(`${slowFunctions.length} slow functions detected`);
-      summary.recommendations.push('Optimize slow functions or move to background threads');
+      summary.recommendations.push(
+        "Optimize slow functions or move to background threads"
+      );
     }
 
     return summary;
@@ -301,7 +319,7 @@ class PerformanceMonitor {
    */
   clear() {
     this.metrics.clear();
-    localStorage.removeItem('aura_performance_metrics');
+    localStorage.removeItem("aura_performance_metrics");
   }
 }
 
@@ -309,7 +327,7 @@ class PerformanceMonitor {
 export const performanceMonitor = new PerformanceMonitor();
 
 // Auto-initialize when imported
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   performanceMonitor.initialize();
 }
 

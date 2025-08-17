@@ -2,11 +2,11 @@
   "ci": {
     "collect": {
       "url": [
-        "http://localhost:3000/",
-        "http://localhost:3000/dashboard",
-        "http://localhost:3000/transactions",
-        "http://localhost:3000/accounts",
-        "http://localhost:3000/analytics"
+        "http://localhost:4173/",
+        "http://localhost:4173/dashboard",
+        "http://localhost:4173/transactions",
+        "http://localhost:4173/accounts",
+        "http://localhost:4173/analytics"
       ],
       "startServerCommand": "npm run preview",
       "startServerReadyPattern": "Local:",

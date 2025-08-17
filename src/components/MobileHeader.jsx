@@ -4,15 +4,9 @@ import { useNotifications } from "../contexts/NotificationContext";
 import useStore from "../store";
 
 const MobileHeader = ({ onMenuClick }) => {
-  const { 
-    notifications, 
-    getUnreadCount, 
-    markNotificationAsRead
-  } = useNotifications();
-  const {
-    lastUpdateNotification,
-    markUpdateNotificationAsRead,
-  } = useStore();
+  const { notifications, getUnreadCount, markNotificationAsRead } =
+    useNotifications();
+  const { lastUpdateNotification, markUpdateNotificationAsRead } = useStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const [expandedNotifications, setExpandedNotifications] = useState(new Set());
   const headerRef = useRef(null);
@@ -75,8 +69,6 @@ const MobileHeader = ({ onMenuClick }) => {
         return "ℹ️";
     }
   };
-
-
 
   const unreadCount = getUnreadCount();
 

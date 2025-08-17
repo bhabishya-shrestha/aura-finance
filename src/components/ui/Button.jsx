@@ -100,7 +100,11 @@ const Button = ({
 
   const renderIcon = () => {
     if (loading) {
-      return <Loader2 className={`${iconSizes[size] || iconSizes.md} animate-spin`} />;
+      return (
+        <Loader2
+          className={`${iconSizes[size] || iconSizes.md} animate-spin`}
+        />
+      );
     }
     return icon;
   };
