@@ -99,8 +99,10 @@ const TransactionsPage = () => {
 
     // Apply account filter
     if (selectedAccountId && selectedAccountId !== "all") {
-      filtered = filtered.filter(transaction => 
-        transaction.accountId && transaction.accountId.toString() === selectedAccountId.toString()
+      filtered = filtered.filter(
+        transaction =>
+          transaction.accountId &&
+          transaction.accountId.toString() === selectedAccountId.toString()
       );
     }
 
@@ -134,7 +136,14 @@ const TransactionsPage = () => {
     });
 
     setFilteredTransactions(filtered);
-  }, [transactions, searchTerm, selectedFilter, selectedAccountId, sortBy, sortOrder]);
+  }, [
+    transactions,
+    searchTerm,
+    selectedFilter,
+    selectedAccountId,
+    sortBy,
+    sortOrder,
+  ]);
 
   const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
@@ -739,11 +748,14 @@ const TransactionsPage = () => {
         <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
           <div className="flex items-center gap-4">
             <span>
-              Showing {filteredTransactions.length} of {transactions.length} transactions
+              Showing {filteredTransactions.length} of {transactions.length}{" "}
+              transactions
             </span>
             {selectedAccountId !== "all" && (
               <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-md">
-                Account: {accounts.find(acc => acc.id === selectedAccountId)?.name || "Unknown"}
+                Account:{" "}
+                {accounts.find(acc => acc.id === selectedAccountId)?.name ||
+                  "Unknown"}
               </span>
             )}
             {selectedFilter !== "all" && (
