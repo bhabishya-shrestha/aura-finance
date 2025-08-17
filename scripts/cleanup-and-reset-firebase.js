@@ -1,6 +1,6 @@
 /**
  * Firebase Cleanup and Reset Script
- * 
+ *
  * This script completely cleans up all Firebase collections and recreates them
  * with proper relationships between accounts and transactions.
  */
@@ -80,18 +80,29 @@ async function cleanupAndResetFirebase() {
 
     // Step 2: Clean up all existing data
     console.log("🗑️ Cleaning up existing data...");
-    
-    const collectionsToClean = ["transactions", "accounts", "security_logs", "audit", "api_usage"];
-    
+
+    const collectionsToClean = [
+      "transactions",
+      "accounts",
+      "security_logs",
+      "audit",
+      "api_usage",
+    ];
+
     for (const collectionName of collectionsToClean) {
       console.log(`🧹 Cleaning ${collectionName}...`);
-      const q = query(collection(db, collectionName), where("userId", "==", user.uid));
+      const q = query(
+        collection(db, collectionName),
+        where("userId", "==", user.uid)
+      );
       const snapshot = await getDocs(q);
-      
+
       const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
       await Promise.all(deletePromises);
-      
-      console.log(`✅ Deleted ${snapshot.size} documents from ${collectionName}`);
+
+      console.log(
+        `✅ Deleted ${snapshot.size} documents from ${collectionName}`
+      );
     }
 
     // Step 3: Create user profile
@@ -150,7 +161,9 @@ async function cleanupAndResetFirebase() {
     }
 
     // Step 5: Create test transactions with proper account associations
-    console.log("💰 Creating test transactions with proper account associations...");
+    console.log(
+      "💰 Creating test transactions with proper account associations..."
+    );
     const transactions = [
       {
         userId: user.uid,
@@ -256,7 +269,14 @@ async function cleanupAndResetFirebase() {
       resource: "firebase_collections",
       timestamp: new Date().toISOString(),
       details: {
-        collections: ["users", "accounts", "transactions", "api_usage", "security_logs", "audit"],
+        collections: [
+          "users",
+          "accounts",
+          "transactions",
+          "api_usage",
+          "security_logs",
+          "audit",
+        ],
         status: "success",
         cleanupPerformed: true,
       },
@@ -288,19 +308,21 @@ async function cleanupAndResetFirebase() {
 
     // Step 10: Verify account-transaction relationships
     console.log("🔗 Verifying account-transaction relationships...");
-    
+
     for (let i = 0; i < accountIds.length; i++) {
       const accountId = accountIds[i];
       const accountName = accounts[i].name;
-      
+
       const transactionsQuery = query(
         collection(db, "transactions"),
         where("userId", "==", user.uid),
         where("accountId", "==", accountId)
       );
       const transactionsSnapshot = await getDocs(transactionsQuery);
-      
-      console.log(`✅ ${accountName}: ${transactionsSnapshot.size} transactions`);
+
+      console.log(
+        `✅ ${accountName}: ${transactionsSnapshot.size} transactions`
+      );
     }
 
     console.log("🎉 Firebase cleanup and reset completed successfully!");

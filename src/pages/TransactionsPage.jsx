@@ -766,7 +766,7 @@ const TransactionsPage = () => {
           </div>
           {searchTerm && (
             <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-md">
-              Search: "{searchTerm}"
+              Search: &quot;{searchTerm}&quot;
             </span>
           )}
         </div>
