@@ -1,26 +1,26 @@
 /**
  * Firebase Collections Setup Script
- * 
+ *
  * This script creates all necessary Firebase collections with proper structure
  * and ensures they work with the current security rules.
  */
 
 import { initializeApp } from "firebase/app";
-import { 
-  getFirestore, 
-  collection, 
-  doc, 
-  setDoc, 
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
   addDoc,
   getDocs,
   query,
   where,
-  deleteDoc
+  deleteDoc,
 } from "firebase/firestore";
-import { 
-  getAuth, 
+import {
+  getAuth,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword 
+  createUserWithEmailAndPassword,
 } from "firebase/auth";
 
 // Firebase configuration
@@ -44,22 +44,33 @@ const TEST_PASSWORD = "Test1234";
 
 async function setupFirebaseCollections() {
   console.log("🚀 Starting Firebase collections setup...");
-  
+
   try {
     // Step 1: Authenticate or create test user
     console.log("🔐 Authenticating test user...");
     let user;
-    
+
     try {
       // Try to sign in first
-      const userCredential = await signInWithEmailAndPassword(auth, TEST_EMAIL, TEST_PASSWORD);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        TEST_EMAIL,
+        TEST_PASSWORD
+      );
       user = userCredential.user;
       console.log("✅ User signed in:", user.email);
     } catch (error) {
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+      if (
+        error.code === "auth/user-not-found" ||
+        error.code === "auth/invalid-credential"
+      ) {
         // Create new user
         console.log("📝 Creating new test user...");
-        const userCredential = await createUserWithEmailAndPassword(auth, TEST_EMAIL, TEST_PASSWORD);
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          TEST_EMAIL,
+          TEST_PASSWORD
+        );
         user = userCredential.user;
         console.log("✅ New user created:", user.email);
       } else {
@@ -76,7 +87,7 @@ async function setupFirebaseCollections() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    
+
     await setDoc(doc(db, "users", user.uid), userProfile);
     console.log("✅ User profile created");
 
@@ -87,7 +98,7 @@ async function setupFirebaseCollections() {
         userId: user.uid,
         name: "Main Checking",
         type: "checking",
-        balance: 5000.00,
+        balance: 5000.0,
         currency: "USD",
         isActive: true,
         createdAt: new Date().toISOString(),
@@ -97,7 +108,7 @@ async function setupFirebaseCollections() {
         userId: user.uid,
         name: "Savings Account",
         type: "savings",
-        balance: 15000.00,
+        balance: 15000.0,
         currency: "USD",
         isActive: true,
         createdAt: new Date().toISOString(),
@@ -107,12 +118,12 @@ async function setupFirebaseCollections() {
         userId: user.uid,
         name: "Credit Card",
         type: "credit",
-        balance: -2500.00,
+        balance: -2500.0,
         currency: "USD",
         isActive: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      }
+      },
     ];
 
     const accountIds = [];
@@ -129,7 +140,7 @@ async function setupFirebaseCollections() {
         userId: user.uid,
         accountId: accountIds[0], // Main Checking
         description: "Grocery shopping",
-        amount: -125.50,
+        amount: -125.5,
         category: "Food & Dining",
         date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
         type: "expense",
@@ -140,7 +151,7 @@ async function setupFirebaseCollections() {
         userId: user.uid,
         accountId: accountIds[0], // Main Checking
         description: "Salary deposit",
-        amount: 3500.00,
+        amount: 3500.0,
         category: "Income",
         date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 1 week ago
         type: "income",
@@ -151,7 +162,7 @@ async function setupFirebaseCollections() {
         userId: user.uid,
         accountId: accountIds[1], // Savings
         description: "Emergency fund transfer",
-        amount: 500.00,
+        amount: 500.0,
         category: "Transfer",
         date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
         type: "transfer",
@@ -173,18 +184,20 @@ async function setupFirebaseCollections() {
         userId: user.uid,
         accountId: accountIds[0], // Main Checking
         description: "Coffee shop",
-        amount: -8.50,
+        amount: -8.5,
         category: "Food & Dining",
         date: new Date().toISOString(),
         type: "expense",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      }
+      },
     ];
 
     for (const transaction of transactions) {
       const docRef = await addDoc(collection(db, "transactions"), transaction);
-      console.log(`✅ Transaction created: ${transaction.description} (ID: ${docRef.id})`);
+      console.log(
+        `✅ Transaction created: ${transaction.description} (ID: ${docRef.id})`
+      );
     }
 
     // Step 5: Create API usage tracking
@@ -197,7 +210,7 @@ async function setupFirebaseCollections() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    
+
     await setDoc(doc(db, "api_usage", user.uid), apiUsage);
     console.log("✅ API usage tracking created");
 
@@ -215,7 +228,7 @@ async function setupFirebaseCollections() {
       ipAddress: "127.0.0.1",
       userAgent: "setup-script",
     };
-    
+
     await addDoc(collection(db, "security_logs"), securityLog);
     console.log("✅ Security log created");
 
@@ -227,21 +240,38 @@ async function setupFirebaseCollections() {
       resource: "firebase_collections",
       timestamp: new Date().toISOString(),
       details: {
-        collections: ["users", "accounts", "transactions", "api_usage", "security_logs", "audit"],
+        collections: [
+          "users",
+          "accounts",
+          "transactions",
+          "api_usage",
+          "security_logs",
+          "audit",
+        ],
         status: "success",
       },
     };
-    
+
     await addDoc(collection(db, "audit"), auditEntry);
     console.log("✅ Audit trail created");
 
     // Step 8: Verify collections
     console.log("🔍 Verifying collections...");
-    
-    const collections = ["users", "accounts", "transactions", "api_usage", "security_logs", "audit"];
-    
+
+    const collections = [
+      "users",
+      "accounts",
+      "transactions",
+      "api_usage",
+      "security_logs",
+      "audit",
+    ];
+
     for (const collectionName of collections) {
-      const q = query(collection(db, collectionName), where("userId", "==", user.uid));
+      const q = query(
+        collection(db, collectionName),
+        where("userId", "==", user.uid)
+      );
       const snapshot = await getDocs(q);
       console.log(`✅ ${collectionName}: ${snapshot.size} documents found`);
     }
@@ -252,14 +282,13 @@ async function setupFirebaseCollections() {
     console.log(`   - Accounts: ${accounts.length}`);
     console.log(`   - Transactions: ${transactions.length}`);
     console.log(`   - Collections: ${collections.length}`);
-    
+
     return {
       success: true,
       userId: user.uid,
       accounts: accountIds,
       collections: collections,
     };
-
   } catch (error) {
     console.error("❌ Setup failed:", error);
     console.error("Error code:", error.code);

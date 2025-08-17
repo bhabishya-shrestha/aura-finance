@@ -188,68 +188,35 @@ class FirebaseService {
     }
 
     try {
-      // Security validation and sanitization
+      // Simple validation
+      if (!transactionData.description?.trim()) {
+        return { success: false, error: "Description is required" };
+      }
+
+      if (typeof transactionData.amount !== "number") {
+        return { success: false, error: "Valid amount is required" };
+      }
+
+      // Prepare transaction data
       const transactionWithUser = {
         ...transactionData,
         userId: this.currentUser.uid,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        description: transactionData.description.trim(),
+        amount: transactionData.amount,
+        category: transactionData.category || "Other",
+        date: transactionData.date || new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
-      // Validate and sanitize data
-      const sanitizedData = await SecurityMiddleware.validateAndSanitize(
-        transactionWithUser,
-        "transaction",
-        this.currentUser.uid
-      );
-
-      // Remove any undefined values that might have slipped through
+      // Remove any undefined values
       const cleanData = Object.fromEntries(
-        Object.entries(sanitizedData).filter(([, value]) => value !== undefined)
+        Object.entries(transactionWithUser).filter(
+          ([, value]) => value !== undefined
+        )
       );
-
-      // Check rate limiting
-      if (
-        !SecurityMiddleware.checkRateLimit(this.currentUser.uid, "transactions")
-      ) {
-        await SecurityMiddleware.logSecurityEvent(
-          this.currentUser.uid,
-          "rate_limit_exceeded",
-          {
-            operation: "addTransaction",
-          }
-        );
-        return {
-          success: false,
-          error: "Rate limit exceeded. Please wait before trying again.",
-        };
-      }
-
-      // Check for suspicious activity
-      const isSuspicious = await SecurityMiddleware.checkSuspiciousActivity(
-        this.currentUser.uid,
-        "addTransaction",
-        sanitizedData
-      );
-
-      if (isSuspicious) {
-        console.warn(
-          "Suspicious activity detected during transaction creation"
-        );
-      }
 
       const docRef = await addDoc(collection(db, "transactions"), cleanData);
-
-      // Log successful operation
-      await SecurityMiddleware.logSecurityEvent(
-        this.currentUser.uid,
-        "transaction_created",
-        {
-          transactionId: docRef.id,
-          amount: sanitizedData.amount,
-          category: sanitizedData.category,
-        }
-      );
 
       return {
         success: true,
@@ -327,7 +294,6 @@ class FirebaseService {
   }
 
   async updateTransaction(transactionId, updates) {
-    // Check if user is authenticated
     if (!this.currentUser) {
       return { success: false, error: "User not authenticated" };
     }
@@ -335,57 +301,17 @@ class FirebaseService {
     try {
       const docRef = doc(db, "transactions", transactionId);
 
-      // Check if the document exists first
-      const docSnapshot = await getDoc(docRef);
+      // Clean the updates by removing undefined values
+      const cleanUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([, value]) => value !== undefined)
+      );
 
-      if (!docSnapshot.exists()) {
-        // Document doesn't exist in Firebase, create it instead
-        console.log(
-          `Transaction ${transactionId} doesn't exist in Firebase, creating it...`
-        );
+      await updateDoc(docRef, {
+        ...cleanUpdates,
+        updatedAt: new Date().toISOString(),
+      });
 
-        // Get the full transaction data from local store
-        const { default: db } = await import("../database.js");
-        const localTransaction = await db.transactions.get(transactionId);
-
-        if (localTransaction) {
-          // Create the document with full data plus updates
-          const transactionData = {
-            ...localTransaction,
-            ...updates,
-            userId: this.currentUser.uid,
-            updatedAt: serverTimestamp(),
-          };
-
-          // Clean the data by removing undefined values
-          const cleanTransactionData = Object.fromEntries(
-            Object.entries(transactionData).filter(
-              ([, value]) => value !== undefined
-            )
-          );
-
-          await setDoc(docRef, cleanTransactionData);
-          console.log(`✅ Created transaction ${transactionId} in Firebase`);
-          return { success: true, created: true };
-        } else {
-          console.warn(`Transaction ${transactionId} not found locally either`);
-          return { success: false, error: "Transaction not found locally" };
-        }
-      } else {
-        // Document exists, update it
-        // Clean the updates by removing undefined values
-        const cleanUpdates = Object.fromEntries(
-          Object.entries(updates).filter(([, value]) => value !== undefined)
-        );
-
-        await updateDoc(docRef, {
-          ...cleanUpdates,
-          updatedAt: serverTimestamp(),
-        });
-
-        console.log(`✅ Updated transaction ${transactionId} in Firebase`);
-        return { success: true, updated: true };
-      }
+      return { success: true };
     } catch (error) {
       console.error("Update transaction error:", error);
       return { success: false, error: error.message };
@@ -435,8 +361,8 @@ class FirebaseService {
       const accountWithUser = {
         ...accountData,
         userId: this.currentUser.uid,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
       // Remove any undefined values that might have slipped through
@@ -493,7 +419,7 @@ class FirebaseService {
       const docRef = doc(db, "accounts", accountId);
       await updateDoc(docRef, {
         ...updates,
-        updatedAt: serverTimestamp(),
+        updatedAt: new Date().toISOString(),
       });
 
       return { success: true };
