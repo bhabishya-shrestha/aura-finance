@@ -11,7 +11,7 @@
       "startServerReadyPattern": "Local:",
       "startServerReadyTimeout": 10000,
       "numberOfRuns": 3,
-      "puppeteerScript": "./scripts/lighthouse-auth.js"
+      "puppeteerScript": "./scripts/lighthouse-auth.cjs"
     },
     "assert": {
       "assertions": {
