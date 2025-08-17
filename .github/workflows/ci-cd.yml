@@ -148,7 +148,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [quality, unit-tests, integration-tests, e2e-tests, performance]
     if: github.ref == 'refs/heads/develop'
-    environment: staging
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
