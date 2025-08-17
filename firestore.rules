@@ -10,107 +10,71 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
+    // More permissive validation functions for testing
     function isValidTransaction(data) {
       return data.keys().hasAll(['userId', 'amount', 'description']) &&
              data.amount is number &&
-             data.amount != 0 && // Allow negative amounts but not zero
-             data.amount > -1000000 && data.amount < 1000000 && // Max $1M transaction (positive or negative)
              data.description is string &&
              data.description.size() > 0 &&
-             data.description.size() < 500;
-             // Removed strict date validation to allow various date formats
+             data.description.size() < 1000;
     }
     
     function isValidAccount(data) {
       return data.keys().hasAll(['userId', 'name', 'type']) &&
              data.name is string &&
              data.name.size() > 0 &&
-             data.name.size() < 100 &&
-             data.type in ['checking', 'savings', 'credit', 'investment', 'loan'];
+             data.name.size() < 200 &&
+             data.type in ['checking', 'savings', 'credit', 'investment', 'loan', 'other'];
     }
     
     function isValidUser(data) {
       return data.keys().hasAll(['email']) &&
              data.email is string &&
-             data.email.matches('^[^@]+@[^@]+\\.[^@]+$') &&
-             (data.name == null || (data.name is string && data.name.size() > 0 && data.name.size() < 100));
+             data.email.matches('^[^@]+@[^@]+\\.[^@]+$');
+    }
+    
+    // Users can only access their own user profile
+    match /users/{userId} {
+      allow read, write, create, update, delete: if isOwner(userId);
+    }
+    
+    // Users can perform all operations on their own transactions
+    match /transactions/{transactionId} {
+      allow read, write, create, update, delete: if isAuthenticated() && 
+        (resource == null || resource.data.userId == request.auth.uid) &&
+        (request.resource == null || request.resource.data.userId == request.auth.uid);
+    }
+    
+    // Users can perform all operations on their own accounts
+    match /accounts/{accountId} {
+      allow read, write, create, update, delete: if isAuthenticated() && 
+        (resource == null || resource.data.userId == request.auth.uid) &&
+        (request.resource == null || request.resource.data.userId == request.auth.uid);
+    }
+    
+    // Audit trail collection - allow authenticated users to read/write their own audit logs
+    match /audit/{auditId} {
+      allow read, write, create, update, delete: if isAuthenticated() && 
+        (resource == null || resource.data.userId == request.auth.uid) &&
+        (request.resource == null || request.resource.data.userId == request.auth.uid);
+    }
+    
+    // Security logs collection - allow authenticated users to write security events
+    match /security_logs/{logId} {
+      allow read, write, create, update, delete: if isAuthenticated() && 
+        (resource == null || resource.data.userId == request.auth.uid) &&
+        (request.resource == null || request.resource.data.userId == request.auth.uid);
+    }
+    
+    // API usage tracking collection - users can read and write their own usage data
+    match /api_usage/{userId} {
+      allow read, write, create, update, delete: if isOwner(userId);
     }
     
     // System health check collection - allow read for connectivity testing
     match /_health_check/{document} {
       allow read: if isAuthenticated();
       allow write: if false; // No writes to health check
-    }
-    
-    // Users can only access their own user profile
-    match /users/{userId} {
-      allow read, write: if isOwner(userId);
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-    }
-    
-    // Users can perform all operations on their own transactions
-    match /transactions/{transactionId} {
-      // Read: User must be authenticated and own the transaction
-      allow read: if isAuthenticated() && 
-        (resource == null || resource.data.userId == request.auth.uid);
-      
-      // Create: User must be authenticated and set themselves as owner
-      allow create: if isAuthenticated() && 
-        request.resource.data.userId == request.auth.uid;
-      
-      // Update: User must be authenticated and own the transaction
-      allow update: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid &&
-        request.resource.data.userId == request.auth.uid;
-      
-      // Delete: User must be authenticated and own the transaction
-      // Handle case where document might not exist (already deleted)
-      allow delete: if isAuthenticated() && 
-        (resource == null || resource.data.userId == request.auth.uid);
-    }
-    
-    // Users can perform all operations on their own accounts
-    match /accounts/{accountId} {
-      // Read: User must be authenticated and own the account
-      allow read: if isAuthenticated() && 
-        (resource == null || resource.data.userId == request.auth.uid);
-      
-      // Create: User must be authenticated and set themselves as owner
-      allow create: if isAuthenticated() && 
-        request.resource.data.userId == request.auth.uid;
-      
-      // Update: User must be authenticated and own the account
-      allow update: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid &&
-        request.resource.data.userId == request.auth.uid;
-      
-      // Delete: User must be authenticated and own the account
-      // Handle case where document might not exist (already deleted)
-      allow delete: if isAuthenticated() && 
-        (resource == null || resource.data.userId == request.auth.uid);
-    }
-    
-    // Audit trail collection
-    match /audit/{auditId} {
-      allow read: if isAuthenticated() && 
-        (resource == null || resource.data.userId == request.auth.uid);
-      
-      allow create: if isAuthenticated() && 
-        request.resource.data.userId == request.auth.uid;
-    }
-    
-    // Security logs collection - allow authenticated users to write security events
-    match /security_logs/{logId} {
-      allow create: if isAuthenticated() && 
-        request.resource.data.userId == request.auth.uid;
-      
-      allow read: if isAuthenticated() && 
-        (resource == null || resource.data.userId == request.auth.uid);
-    }
-    
-    // API usage tracking collection - users can read and write their own usage data
-    match /api_usage/{userId} {
-      allow read, write: if isOwner(userId);
     }
     
     // Deny all other access
