@@ -5,7 +5,7 @@
  * It ensures the app is in an authenticated state for realistic testing.
  */
 
-module.exports = async page => {
+export default async page => {
   console.log("🔐 Starting authentication for Lighthouse...");
 
   try {
