@@ -52,11 +52,6 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [notifications]);
 
-  // Check for new release notes on mount
-  useEffect(() => {
-    checkForReleaseNotes();
-  }, [checkForReleaseNotes]);
-
   const checkForReleaseNotes = useCallback(() => {
     const currentVersion = "1.3.0";
     const lastSeenVersion = localStorage.getItem("aura_last_seen_version");
@@ -104,6 +99,11 @@ export const NotificationProvider = ({ children }) => {
       localStorage.setItem("aura_last_seen_version", currentVersion);
     }
   }, []);
+
+  // Check for new release notes on mount
+  useEffect(() => {
+    checkForReleaseNotes();
+  }, [checkForReleaseNotes]);
 
   const removeNotification = useCallback(id => {
     setNotifications(prev =>

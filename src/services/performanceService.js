@@ -17,6 +17,11 @@ export const initializePerformanceMonitoring = async () => {
     const webVitals = await import('web-vitals');
     const { getCLS, getFID, getFCP, getLCP, getTTFB } = webVitals;
     
+    // Verify that all functions are available
+    if (!getCLS || !getFID || !getFCP || !getLCP || !getTTFB) {
+      throw new Error('Web Vitals functions not available');
+    }
+    
     // Send metrics to analytics
     const sendToAnalytics = (metric) => {
       const { name, value, id } = metric;
