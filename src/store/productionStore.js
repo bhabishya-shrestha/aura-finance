@@ -544,7 +544,7 @@ const useProductionStore = create(
       }
     },
 
-    deleteAccount: async accountId => {
+    deleteAccount: async (accountId, options = {}) => {
       try {
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
@@ -558,12 +558,54 @@ const useProductionStore = create(
         const accountTransactions = get().transactions.filter(
           t => t.accountId === accountId
         );
+
         if (accountTransactions.length > 0) {
-          throw new Error(
-            "Cannot delete account with existing transactions. Please delete or reassign transactions first."
-          );
+          if (options.deleteTransactions) {
+            // Delete all transactions for this account
+            console.log(`🗑️ Deleting ${accountTransactions.length} transactions for account ${accountId}`);
+            
+            const deletePromises = accountTransactions.map(transaction =>
+              firebaseService.deleteTransaction(transaction.id)
+            );
+            
+            const deleteResults = await Promise.all(deletePromises);
+            const failedDeletes = deleteResults.filter(result => !result.success);
+            
+            if (failedDeletes.length > 0) {
+              throw new Error(`Failed to delete ${failedDeletes.length} transactions`);
+            }
+            
+            console.log(`✅ Deleted ${accountTransactions.length} transactions`);
+          } else if (options.reassignToAccountId) {
+            // Reassign transactions to another account
+            console.log(`🔄 Reassigning ${accountTransactions.length} transactions to account ${options.reassignToAccountId}`);
+            
+            const reassignPromises = accountTransactions.map(transaction =>
+              firebaseService.updateTransaction(transaction.id, {
+                accountId: options.reassignToAccountId,
+                updatedAt: new Date().toISOString(),
+              })
+            );
+            
+            const reassignResults = await Promise.all(reassignPromises);
+            const failedReassigns = reassignResults.filter(result => !result.success);
+            
+            if (failedReassigns.length > 0) {
+              throw new Error(`Failed to reassign ${failedReassigns.length} transactions`);
+            }
+            
+            console.log(`✅ Reassigned ${accountTransactions.length} transactions`);
+          } else {
+            // Default behavior: prevent deletion
+            throw new Error(
+              `Cannot delete account with ${accountTransactions.length} existing transactions. ` +
+              `Use options.deleteTransactions: true to delete transactions, or ` +
+              `options.reassignToAccountId to reassign them to another account.`
+            );
+          }
         }
 
+        // Now delete the account
         const result = await firebaseService.deleteAccount(accountId);
 
         if (!result.success) {
@@ -575,7 +617,7 @@ const useProductionStore = create(
 
         return {
           success: true,
-          message: "Account deleted successfully",
+          message: `Account deleted successfully${accountTransactions.length > 0 ? ` (${accountTransactions.length} transactions ${options.deleteTransactions ? 'deleted' : 'reassigned'})` : ''}`,
         };
       } catch (error) {
         const errorMessage = error.message || "Failed to delete account";
