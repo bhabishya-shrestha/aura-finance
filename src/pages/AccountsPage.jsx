@@ -123,8 +123,10 @@ const AccountsPage = () => {
     if (!newBalance || isNaN(parseFloat(newBalance))) return;
 
     try {
-      const result = await updateAccount(accountId, { balance: parseFloat(newBalance) });
-      
+      const result = await updateAccount(accountId, {
+        balance: parseFloat(newBalance),
+      });
+
       if (result.success) {
         showSuccess(result.message || "Account balance updated successfully");
         setEditingBalance(null);
@@ -152,7 +154,7 @@ const AccountsPage = () => {
 
     try {
       const result = await deleteAccount(accountToDelete.id);
-      
+
       if (result.success) {
         showSuccess(result.message || "Account deleted successfully");
         setShowDeleteConfirm(false);

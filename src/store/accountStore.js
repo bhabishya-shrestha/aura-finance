@@ -17,9 +17,9 @@ const useAccountStore = create(
       selectedAccountId: null,
 
       // Actions
-      setLoading: (loading) => set({ isLoading: loading }),
+      setLoading: loading => set({ isLoading: loading }),
 
-      setSelectedAccount: (accountId) => set({ selectedAccountId: accountId }),
+      setSelectedAccount: accountId => set({ selectedAccountId: accountId }),
 
       // Load accounts from database
       loadAccounts: async () => {
@@ -47,7 +47,8 @@ const useAccountStore = create(
             }
 
             // Calculate account balances
-            const accountsWithBalances = await get().calculateAccountBalances(accounts);
+            const accountsWithBalances =
+              await get().calculateAccountBalances(accounts);
 
             set({ accounts: accountsWithBalances });
 
@@ -65,56 +66,59 @@ const useAccountStore = create(
       },
 
       // Calculate account balances
-      calculateAccountBalances: async (accounts) => {
-        return performanceMonitor.measureFunction("calculateAccountBalances", async () => {
-          try {
-            const accountsWithBalances = await Promise.all(
-              accounts.map(async (account) => {
-                const transactions = await db.transactions
-                  .where("accountId")
-                  .equals(account.id)
-                  .toArray();
+      calculateAccountBalances: async accounts => {
+        return performanceMonitor.measureFunction(
+          "calculateAccountBalances",
+          async () => {
+            try {
+              const accountsWithBalances = await Promise.all(
+                accounts.map(async account => {
+                  const transactions = await db.transactions
+                    .where("accountId")
+                    .equals(account.id)
+                    .toArray();
 
-                const balance = transactions.reduce((sum, transaction) => {
-                  return sum + transaction.amount;
-                }, account.initialBalance || 0);
+                  const balance = transactions.reduce((sum, transaction) => {
+                    return sum + transaction.amount;
+                  }, account.initialBalance || 0);
 
-                return {
-                  ...account,
-                  balance,
-                  transactionCount: transactions.length,
-                };
-              })
-            );
+                  return {
+                    ...account,
+                    balance,
+                    transactionCount: transactions.length,
+                  };
+                })
+              );
 
-            return accountsWithBalances;
-          } catch (error) {
-            console.error("Failed to calculate account balances:", error);
-            performanceMonitor.recordMetric("balance_calculation_error", {
-              error: error.message,
-            });
-            throw error;
+              return accountsWithBalances;
+            } catch (error) {
+              console.error("Failed to calculate account balances:", error);
+              performanceMonitor.recordMetric("balance_calculation_error", {
+                error: error.message,
+              });
+              throw error;
+            }
           }
-        });
+        );
       },
 
       // Add account
-      addAccount: async (account) => {
+      addAccount: async account => {
         return performanceMonitor.measureFunction("addAccount", async () => {
           try {
             const { loadAccounts } = get();
-            
+
             // Add to database
             const id = await db.accounts.add(account);
-            
+
             // Reload accounts to get updated list
             await loadAccounts();
-            
+
             performanceMonitor.recordMetric("account_added", {
               id,
               type: account.type,
             });
-            
+
             return id;
           } catch (error) {
             console.error("Failed to add account:", error);
@@ -131,18 +135,18 @@ const useAccountStore = create(
         return performanceMonitor.measureFunction("updateAccount", async () => {
           try {
             const { loadAccounts } = get();
-            
+
             // Update in database
             await db.accounts.update(id, updates);
-            
+
             // Reload accounts to get updated list
             await loadAccounts();
-            
+
             performanceMonitor.recordMetric("account_updated", {
               id,
               updates: Object.keys(updates),
             });
-            
+
             return id;
           } catch (error) {
             console.error("Failed to update account:", error);
@@ -155,11 +159,11 @@ const useAccountStore = create(
       },
 
       // Delete account
-      deleteAccount: async (id) => {
+      deleteAccount: async id => {
         return performanceMonitor.measureFunction("deleteAccount", async () => {
           try {
             const { loadAccounts } = get();
-            
+
             // Check if account has transactions
             const transactions = await db.transactions
               .where("accountId")
@@ -171,15 +175,15 @@ const useAccountStore = create(
                 `Cannot delete account with ${transactions} associated transactions`
               );
             }
-            
+
             // Delete from database
             await db.accounts.delete(id);
-            
+
             // Reload accounts to get updated list
             await loadAccounts();
-            
+
             performanceMonitor.recordMetric("account_deleted", { id });
-            
+
             return id;
           } catch (error) {
             console.error("Failed to delete account:", error);
@@ -192,34 +196,37 @@ const useAccountStore = create(
       },
 
       // Get account by ID
-      getAccountById: (id) => {
+      getAccountById: id => {
         const { accounts } = get();
-        return accounts.find((account) => account.id === id);
+        return accounts.find(account => account.id === id);
       },
 
       // Get accounts by type
-      getAccountsByType: (type) => {
+      getAccountsByType: type => {
         const { accounts } = get();
-        return accounts.filter((account) => account.type === type);
+        return accounts.filter(account => account.type === type);
       },
 
       // Get account statistics
       getAccountStats: () => {
         const { accounts } = get();
-        
+
         const stats = {
           total: accounts.length,
-          totalBalance: accounts.reduce((sum, account) => sum + account.balance, 0),
+          totalBalance: accounts.reduce(
+            (sum, account) => sum + account.balance,
+            0
+          ),
           byType: {},
           byBalance: {
-            positive: accounts.filter((account) => account.balance > 0).length,
-            negative: accounts.filter((account) => account.balance < 0).length,
-            zero: accounts.filter((account) => account.balance === 0).length,
+            positive: accounts.filter(account => account.balance > 0).length,
+            negative: accounts.filter(account => account.balance < 0).length,
+            zero: accounts.filter(account => account.balance === 0).length,
           },
         };
 
         // Calculate breakdown by type
-        accounts.forEach((account) => {
+        accounts.forEach(account => {
           const type = account.type || "Unknown";
           if (!stats.byType[type]) {
             stats.byType[type] = {
@@ -237,7 +244,7 @@ const useAccountStore = create(
       },
 
       // Validate account data
-      validateAccount: (account) => {
+      validateAccount: account => {
         const errors = [];
 
         if (!account.name || account.name.trim().length === 0) {
@@ -252,16 +259,29 @@ const useAccountStore = create(
           errors.push("Account type is required");
         }
 
-        if (!["checking", "savings", "credit", "investment", "loan"].includes(account.type)) {
+        if (
+          !["checking", "savings", "credit", "investment", "loan"].includes(
+            account.type
+          )
+        ) {
           errors.push("Invalid account type");
         }
 
-        if (account.initialBalance && typeof account.initialBalance !== "number") {
+        if (
+          account.initialBalance &&
+          typeof account.initialBalance !== "number"
+        ) {
           errors.push("Initial balance must be a number");
         }
 
-        if (account.initialBalance && (account.initialBalance < -1000000 || account.initialBalance > 1000000)) {
-          errors.push("Initial balance must be between -$1,000,000 and $1,000,000");
+        if (
+          account.initialBalance &&
+          (account.initialBalance < -1000000 ||
+            account.initialBalance > 1000000)
+        ) {
+          errors.push(
+            "Initial balance must be between -$1,000,000 and $1,000,000"
+          );
         }
 
         return {
@@ -272,25 +292,28 @@ const useAccountStore = create(
 
       // Clear all accounts
       clearAllAccounts: async () => {
-        return performanceMonitor.measureFunction("clearAllAccounts", async () => {
-          try {
-            await db.accounts.clear();
-            set({ accounts: [], selectedAccountId: null });
-            
-            performanceMonitor.recordMetric("all_accounts_cleared");
-          } catch (error) {
-            console.error("Failed to clear accounts:", error);
-            performanceMonitor.recordMetric("clear_accounts_error", {
-              error: error.message,
-            });
-            throw error;
+        return performanceMonitor.measureFunction(
+          "clearAllAccounts",
+          async () => {
+            try {
+              await db.accounts.clear();
+              set({ accounts: [], selectedAccountId: null });
+
+              performanceMonitor.recordMetric("all_accounts_cleared");
+            } catch (error) {
+              console.error("Failed to clear accounts:", error);
+              performanceMonitor.recordMetric("clear_accounts_error", {
+                error: error.message,
+              });
+              throw error;
+            }
           }
-        });
+        );
       },
     }),
     {
       name: "aura-account-store",
-      partialize: (state) => ({
+      partialize: state => ({
         selectedAccountId: state.selectedAccountId,
       }),
     }

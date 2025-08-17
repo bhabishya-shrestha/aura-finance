@@ -1,20 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, Menu, ChevronDown, ChevronUp, X, Rocket } from "lucide-react";
+import { Bell, Menu, ChevronDown, ChevronUp } from "lucide-react";
 import { useNotifications } from "../contexts/NotificationContext";
 import useStore from "../store";
 
 const MobileHeader = ({ onMenuClick }) => {
-  const { 
-    notifications, 
-    getUnreadCount, 
-    markNotificationAsRead,
-    removeNotification,
-    releaseNotes 
-  } = useNotifications();
-  const {
-    lastUpdateNotification,
-    markUpdateNotificationAsRead,
-  } = useStore();
+  const { notifications, getUnreadCount, markNotificationAsRead } =
+    useNotifications();
+  const { lastUpdateNotification, markUpdateNotificationAsRead } = useStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const [expandedNotifications, setExpandedNotifications] = useState(new Set());
   const headerRef = useRef(null);
@@ -76,13 +68,6 @@ const MobileHeader = ({ onMenuClick }) => {
       default:
         return "ℹ️";
     }
-  };
-
-  const getNotificationTitle = (notification) => {
-    if (notification.type === "release") {
-      return `New version ${notification.releaseNotes?.version} is available!`;
-    }
-    return notification.message;
   };
 
   const unreadCount = getUnreadCount();

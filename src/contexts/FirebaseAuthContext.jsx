@@ -37,7 +37,7 @@ const initialState = {
 // Reducer function
 const authReducer = (state, action) => {
   switch (action.type) {
-    case AUTH_ACTIONS.AUTH_STATE_CHANGED:
+    case AUTH_ACTIONS.AUTH_STATE_CHANGED: {
       console.log(
         "🔄 AUTH_STATE_CHANGED reducer called with payload:",
         action.payload
@@ -52,6 +52,7 @@ const authReducer = (state, action) => {
       };
       console.log("🔄 New auth state:", newState);
       return newState;
+    }
 
     case AUTH_ACTIONS.LOGIN_START:
     case AUTH_ACTIONS.REGISTER_START:
@@ -136,7 +137,7 @@ export const FirebaseAuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const { showSuccess, showError, showInfo } = useNotifications();
+  const { showSuccess, showInfo } = useNotifications();
 
   // Listen for auth state changes
   useEffect(() => {
@@ -252,7 +253,7 @@ export const FirebaseAuthProvider = ({ children }) => {
     });
 
     return () => unsubscribe();
-  }, [auth, db]);
+  }, [auth, db, showSuccess, showInfo]);
 
   // Login with email and password
   const login = async (email, password) => {

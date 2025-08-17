@@ -5,7 +5,6 @@ import {
   Route,
   Navigate,
   useLocation,
-  useNavigate,
 } from "react-router-dom";
 import {
   FirebaseAuthProvider,
@@ -28,7 +27,6 @@ import NotificationToast from "./components/NotificationToast";
 import { initializeDatabase } from "./database";
 import useStore from "./store";
 import { useMobileViewport } from "./hooks/useMobileViewport";
-import { useNotifications } from "./contexts/NotificationContext";
 
 // Lazy load pages for code splitting
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -87,60 +85,28 @@ const ProtectedRoute = ({ children }) => {
 // Main App Layout Component
 const AppLayout = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
-  const [triggerImport, setTriggerImport] = useState(false);
 
   // Derive currentPage from URL
   const currentPage = location.pathname.substring(1) || "dashboard";
-  const {
-    loadTransactions,
-    loadAccounts,
-    setUpdateNotification,
-    lastUpdateNotification,
-  } = useStore();
-  const { showReleaseNotes } = useNotifications();
+  const { loadTransactions, loadAccounts, lastUpdateNotification } = useStore();
   const isInitialized = useRef(false);
   const { isMobile, updateViewportHeight } = useMobileViewport();
 
-  // Show release notes on first load
-  useEffect(() => {
-    const hasShownReleaseNotes = sessionStorage.getItem(
-      "aura_release_notes_shown"
-    );
-    console.log("📝 Release notes check:", { hasShownReleaseNotes });
-    if (!hasShownReleaseNotes) {
-      setTimeout(() => {
-        console.log("🚀 Showing release notes after delay");
-        showReleaseNotes();
-        sessionStorage.setItem("aura_release_notes_shown", "true");
-      }, 2000); // Show after 2 seconds
-    }
-  }, [showReleaseNotes]);
-
   // Initialize update notification on first load
   useEffect(() => {
-    // Only set update notification if it doesn't exist AND we want to show it
-    // For now, we'll disable automatic update notifications to prevent persistent banners
-    // if (!lastUpdateNotification) {
-    //   setUpdateNotification({
-    //     version: "1.3.0",
-    //     features: [
-    //       "Enhanced document import with AI analysis",
-    //       "Improved analytics and data visualization",
-    //       "Better duplicate transaction detection",
-    //       "Enhanced statement parsing support",
-    //       "Streamlined account assignment workflow",
-    //       "Improved error handling and user feedback"
-    //     ],
-    //     bugFixes: [
-    //       "Fixed various UI layout and responsive design issues",
-    //       "Resolved transaction import and processing bugs",
-    //       "Improved overall app stability and performance"
-    //     ],
-    //   });
-    // }
-  }, [lastUpdateNotification, setUpdateNotification]);
+    const lastSeenVersion = localStorage.getItem("aura_last_seen_version");
+    const currentVersion = "1.3.0";
+
+    if (lastSeenVersion !== currentVersion && !lastUpdateNotification) {
+      // Trigger the update notification
+      const { triggerUpdateNotification } = useStore.getState();
+      triggerUpdateNotification();
+
+      // Mark this version as seen
+      localStorage.setItem("aura_last_seen_version", currentVersion);
+    }
+  }, [lastUpdateNotification]);
 
   // Initialize database and load data
   useEffect(() => {
@@ -171,18 +137,12 @@ const AppLayout = () => {
     setShowMobileSidebar(!showMobileSidebar);
   };
 
-  const handleImportTrigger = () => {
-    setTriggerImport(true);
-    setTimeout(() => setTriggerImport(false), 100);
-  };
-
   if (isMobile) {
     return (
       <div className="mobile-layout">
         <MobileHeader
           currentPage={currentPage}
           onMenuClick={handleMenuToggle}
-          onImportTrigger={handleImportTrigger}
         />
 
         <MobileSidebar
@@ -223,11 +183,7 @@ const AppLayout = () => {
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header
-          currentPage={currentPage}
-          onMenuToggle={handleMenuToggle}
-          onImportTrigger={handleImportTrigger}
-        />
+        <Header currentPage={currentPage} onMenuToggle={handleMenuToggle} />
 
         <main
           className="flex-1 overflow-y-auto p-6"

@@ -47,7 +47,31 @@ const TransactionsPage = () => {
   }, [initialize, isInitialized]);
 
   useEffect(() => {
-    let filtered = [...transactions];
+    // Deduplicate transactions by ID to prevent React key conflicts
+    const uniqueTransactions = transactions.reduce((acc, transaction) => {
+      if (!acc.find(t => t.id === transaction.id)) {
+        acc.push(transaction);
+      }
+      return acc;
+    }, []);
+
+    // Debug: Log if duplicates were found
+    if (
+      import.meta.env.DEV &&
+      uniqueTransactions.length !== transactions.length
+    ) {
+      console.warn(
+        `Found ${transactions.length - uniqueTransactions.length} duplicate transactions`
+      );
+      console.warn(
+        "Original count:",
+        transactions.length,
+        "Unique count:",
+        uniqueTransactions.length
+      );
+    }
+
+    let filtered = [...uniqueTransactions];
 
     // Apply search filter
     if (searchTerm) {
@@ -191,11 +215,84 @@ const TransactionsPage = () => {
           if (transaction) {
             // Create a new date with the selected year, keeping the same month and day
             const currentDate = new Date(transaction.date);
-            const newDate = new Date(
-              year,
-              currentDate.getMonth(),
-              currentDate.getDate()
-            );
+
+            if (import.meta.env.DEV) {
+              console.log(`Processing transaction ${transactionId}:`, {
+                originalDate: transaction.date,
+                currentDate: currentDate,
+                currentMonth: currentDate.getMonth(),
+                currentDay: currentDate.getDate(),
+                targetYear: year,
+              });
+            }
+
+            // Handle edge cases like February 29th in non-leap years
+            let newDate;
+            try {
+              // First try: create date with same month and day
+              newDate = new Date(
+                year,
+                currentDate.getMonth(),
+                currentDate.getDate()
+              );
+
+              if (import.meta.env.DEV) {
+                console.log(`First attempt - newDate:`, newDate);
+              }
+
+              // Check if the date is valid (handles cases like Feb 29 in non-leap years)
+              if (
+                newDate.getFullYear() !== year ||
+                newDate.getMonth() !== currentDate.getMonth() ||
+                isNaN(newDate.getTime())
+              ) {
+                if (import.meta.env.DEV) {
+                  console.log(`Invalid date detected, trying fallback...`);
+                }
+
+                // If the date is invalid, use the last day of the month
+                newDate = new Date(year, currentDate.getMonth() + 1, 0);
+
+                if (import.meta.env.DEV) {
+                  console.log(`Fallback date:`, newDate);
+                }
+
+                // Final validation
+                if (isNaN(newDate.getTime())) {
+                  if (import.meta.env.DEV) {
+                    console.log(
+                      `Fallback also failed, using January 1st of target year`
+                    );
+                  }
+                  // Ultimate fallback: January 1st of the target year
+                  newDate = new Date(year, 0, 1);
+                }
+              }
+            } catch (error) {
+              if (import.meta.env.DEV) {
+                console.log(`Exception in date creation:`, error);
+              }
+              // Ultimate fallback: January 1st of the target year
+              newDate = new Date(year, 0, 1);
+            }
+
+            // Final validation before toISOString
+            if (isNaN(newDate.getTime())) {
+              if (import.meta.env.DEV) {
+                console.error(
+                  `All date creation attempts failed for transaction ${transactionId}`
+                );
+              }
+              // Skip this transaction if we can't create a valid date
+              return Promise.resolve();
+            }
+
+            if (import.meta.env.DEV) {
+              console.log(
+                `Final valid date for transaction ${transactionId}:`,
+                newDate
+              );
+            }
 
             return updateTransaction(transactionId, {
               date: newDate.toISOString(),
@@ -594,9 +691,9 @@ const TransactionsPage = () => {
         </div>
       </div>
 
-      {/* Bulk Actions Bar */}
+      {/* Desktop Bulk Actions Bar */}
       {selectedTransactions.size > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+        <div className="hidden lg:block bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
@@ -633,6 +730,26 @@ const TransactionsPage = () => {
           </div>
         </div>
       )}
+
+      {/* Mobile Select All Button */}
+      {Array.isArray(filteredTransactions) &&
+        filteredTransactions.length > 0 && (
+          <div className="lg:hidden flex items-center justify-between mb-4">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {filteredTransactions.length} transaction
+              {filteredTransactions.length !== 1 ? "s" : ""}
+            </span>
+            <button
+              onClick={handleSelectAll}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+            >
+              {selectedTransactions.size === filteredTransactions.length &&
+              filteredTransactions.length > 0
+                ? "Deselect All"
+                : "Select All"}
+            </button>
+          </div>
+        )}
 
       {/* Mobile Transaction List */}
       <div className="lg:hidden space-y-3">
@@ -964,17 +1081,25 @@ const TransactionsPage = () => {
               Assign to Year
             </h3>
             <div className="space-y-2 mb-6">
-              {[2024, 2023, 2022, 2021, 2020].map(year => (
-                <button
-                  key={year}
-                  onClick={() => handleBulkYearAssignment(year)}
-                  className="w-full p-3 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <div className="font-medium text-gray-900 dark:text-white">
-                    {year}
-                  </div>
-                </button>
-              ))}
+              {(() => {
+                const currentYear = new Date().getFullYear();
+                const years = [];
+                // Generate years from current year back to 2020
+                for (let year = currentYear; year >= 2020; year--) {
+                  years.push(year);
+                }
+                return years.map(year => (
+                  <button
+                    key={year}
+                    onClick={() => handleBulkYearAssignment(year)}
+                    className="w-full p-3 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {year}
+                    </div>
+                  </button>
+                ));
+              })()}
             </div>
             <button
               onClick={() => setShowBulkYearAssignment(false)}

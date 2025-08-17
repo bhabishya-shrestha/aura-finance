@@ -1,27 +1,11 @@
-import React, { createContext, useContext, useEffect, useRef } from "react";
-
-/**
- * Accessibility Context
- * Provides keyboard navigation, focus management, and screen reader support
- */
-const AccessibilityContext = createContext();
-
-export const useAccessibility = () => {
-  const context = useContext(AccessibilityContext);
-  if (!context) {
-    throw new Error(
-      "useAccessibility must be used within an AccessibilityProvider"
-    );
-  }
-  return context;
-};
+import React, { useEffect, useRef } from "react";
+import { AccessibilityContext } from "../../hooks/useAccessibility";
 
 /**
  * Accessibility Provider Component
  * Manages focus, keyboard navigation, and accessibility features
  */
 export const AccessibilityProvider = ({ children }) => {
-  const focusableElementsRef = useRef([]);
   const currentFocusIndexRef = useRef(0);
   const skipLinkRef = useRef(null);
 
@@ -149,17 +133,17 @@ export const AccessibilityProvider = ({ children }) => {
     }, 1000);
   };
 
-  // Skip link functionality
-  const handleSkipLink = () => {
-    const mainContent = document.querySelector("main");
-    if (mainContent) {
-      mainContent.focus();
-      announce("Skipped to main content");
-    }
-  };
-
   // Initialize accessibility features
   useEffect(() => {
+    // Skip link functionality
+    const handleSkipLink = () => {
+      const mainContent = document.querySelector("main");
+      if (mainContent) {
+        mainContent.focus();
+        announce("Skipped to main content");
+      }
+    };
+
     // Add keyboard event listener
     document.addEventListener("keydown", handleKeyDown);
 

@@ -15,10 +15,7 @@ import {
 import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 import firebaseSync from "../services/firebaseSync";
 
-const Sidebar = ({
-  isMobileOpen,
-  onMobileToggle,
-}) => {
+const Sidebar = ({ isMobileOpen, onMobileToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -147,12 +144,12 @@ const Sidebar = ({
     },
   ];
 
-  const handleMenuClick = (pageId) => {
+  const handleMenuClick = pageId => {
     const menuItem = menuItems.find(item => item.id === pageId);
     if (menuItem) {
       navigate(menuItem.path);
     }
-    
+
     // Close mobile sidebar after navigation
     if (isMobileOpen) {
       onMobileToggle();
@@ -182,7 +179,7 @@ const Sidebar = ({
     }
   };
 
-  const formatLastSync = (timestamp) => {
+  const formatLastSync = timestamp => {
     if (!timestamp) return "Never";
 
     const now = new Date();

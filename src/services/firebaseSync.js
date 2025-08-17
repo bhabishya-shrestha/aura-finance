@@ -63,12 +63,12 @@ class FirebaseSyncService {
       const user = await firebaseService.getCurrentUser();
       if (user) {
         console.log("🔄 Firebase sync initialized for user:", user.uid);
-        
+
         // Set initial sync time if none exists
         if (!this.lastSyncTime) {
           this.lastSyncTime = new Date();
         }
-        
+
         await this.syncData();
         this.startPeriodicSync();
         this.isInitialized = true;

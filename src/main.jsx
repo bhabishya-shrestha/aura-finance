@@ -61,7 +61,7 @@ class RootErrorBoundary extends React.Component {
               Something went wrong
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              We're sorry, but something unexpected happened. Please try
+              We&apos;re sorry, but something unexpected happened. Please try
               refreshing the page.
             </p>
             <button

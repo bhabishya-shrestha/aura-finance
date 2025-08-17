@@ -822,7 +822,8 @@ const StatementImporter = ({
                         </p>
                         <ul className="space-y-1">
                           <li>
-                            • &quot;06/21&quot; → June 21st, 2024 (current year)
+                            • &quot;06/21&quot; → June 21st,{" "}
+                            {new Date().getFullYear()} (current year)
                           </li>
                           <li>
                             • &quot;12/25&quot; → December 25th, 2023 (previous
