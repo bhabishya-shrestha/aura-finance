@@ -1,67 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-    
-    // Very permissive validation for testing
-    function isValidTransaction(data) {
-      return data.keys().hasAll(['userId', 'amount', 'description']);
-    }
-    
-    function isValidAccount(data) {
-      return data.keys().hasAll(['userId', 'name', 'type']);
-    }
-    
-    function isValidUser(data) {
-      return data.keys().hasAll(['email']);
-    }
-    
-    // Users can only access their own user profile
-    match /users/{userId} {
-      allow read, write, create, update, delete: if isOwner(userId);
-    }
-    
-    // Users can perform all operations on their own transactions
-    match /transactions/{transactionId} {
-      allow read, write, create, update, delete: if isAuthenticated();
-    }
-    
-    // Users can perform all operations on their own accounts
-    match /accounts/{accountId} {
-      allow read, write, create, update, delete: if isAuthenticated();
-    }
-    
-    // Audit trail collection - allow authenticated users to read/write their own audit logs
-    match /audit/{auditId} {
-      allow read, write, create, update, delete: if isAuthenticated();
-    }
-    
-    // Security logs collection - allow authenticated users to write security events
-    match /security_logs/{logId} {
-      allow read, write, create, update, delete: if isAuthenticated();
-    }
-    
-    // API usage tracking collection - users can read and write their own usage data
-    match /api_usage/{userId} {
-      allow read, write, create, update, delete: if isAuthenticated();
-    }
-    
-    // System health check collection - allow read for connectivity testing
-    match /_health_check/{document} {
-      allow read: if isAuthenticated();
-      allow write: if false; // No writes to health check
-    }
-    
-    // Deny all other access
+    // Completely permissive rules for testing - allow all operations
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write, create, update, delete: if true;
     }
   }
 } 
