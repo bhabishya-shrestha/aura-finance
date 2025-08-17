@@ -396,7 +396,6 @@ class FirebaseService {
     // Check if user is authenticated
     if (!this.currentUser) {
       console.error("❌ Delete transaction failed: User not authenticated");
-      console.log("Current user state:", this.currentUser);
       return { success: false, error: "User not authenticated" };
     }
 
@@ -404,81 +403,22 @@ class FirebaseService {
     console.log("👤 Current user:", this.currentUser.uid);
 
     try {
-      // Check if the transaction exists and belongs to the current user
+      // Direct deletion without checking ownership first (rules will handle this)
       const transactionDoc = doc(db, "transactions", transactionId);
-      const transactionSnapshot = await getDoc(transactionDoc);
 
-      if (!transactionSnapshot.exists()) {
-        console.log("✅ Transaction doesn't exist, considering it deleted");
-        return { success: true }; // Transaction doesn't exist, consider it deleted
-      }
-
-      const transactionData = transactionSnapshot.data();
-      console.log("📄 Transaction data:", transactionData);
-      console.log("🔍 Transaction userId:", transactionData.userId);
-      console.log("🔍 Current user uid:", this.currentUser.uid);
-
-      if (transactionData.userId !== this.currentUser.uid) {
-        console.error("❌ Transaction does not belong to current user");
-        return {
-          success: false,
-          error: "Transaction does not belong to current user",
-        };
-      }
-
-      console.log("✅ Proceeding with deletion...");
+      // Try to delete directly - if it doesn't exist or user doesn't have permission,
+      // Firebase will throw an error that we can handle
       await deleteDoc(transactionDoc);
       console.log("✅ Transaction deleted successfully from Firebase");
-
-      // Also delete from local IndexedDB if it exists there
-      try {
-        const { default: db } = await import("../database.js");
-        await db.transactions.delete(transactionId);
-        console.log("✅ Transaction deleted successfully from local database");
-      } catch (localError) {
-        console.log(
-          "ℹ️ Transaction not found in local database or already deleted"
-        );
-      }
 
       return { success: true };
     } catch (error) {
       console.error("❌ Delete transaction error:", error);
-      console.error("Error code:", error.code);
-      console.error("Error message:", error.message);
-      // Check if it's a permissions error
-      if (
-        error.code === "permission-denied" ||
-        error.message.includes("permission") ||
-        error.message.includes("Missing or insufficient permissions")
-      ) {
-        // Try to get more information about the transaction
-        try {
-          const transactionDoc = doc(db, "transactions", transactionId);
-          const transactionSnapshot = await getDoc(transactionDoc);
 
-          if (transactionSnapshot.exists()) {
-            const transactionData = transactionSnapshot.data();
-            console.error("Transaction data for debugging:", {
-              id: transactionId,
-              userId: transactionData.userId,
-              currentUser: this.currentUser.uid,
-              hasUserId: !!transactionData.userId,
-              transactionData: transactionData,
-            });
-          }
-        } catch (debugError) {
-          console.error(
-            "Could not fetch transaction for debugging:",
-            debugError
-          );
-        }
-
-        return {
-          success: false,
-          error:
-            "Insufficient permissions to delete transaction. Please try refreshing the page and try again.",
-        };
+      // If document doesn't exist, consider it a successful deletion
+      if (error.code === "not-found" || error.message.includes("not found")) {
+        console.log("✅ Transaction doesn't exist, considering it deleted");
+        return { success: true };
       }
 
       return { success: false, error: error.message };
@@ -564,62 +504,22 @@ class FirebaseService {
   }
 
   async deleteAccount(accountId) {
-    // Check if user is authenticated
     if (!this.currentUser) {
       return { success: false, error: "User not authenticated" };
     }
 
     try {
-      // Check if the account exists and belongs to the current user
       const accountDoc = doc(db, "accounts", accountId);
-      const accountSnapshot = await getDoc(accountDoc);
-
-      if (!accountSnapshot.exists()) {
-        // Account doesn't exist in Firebase, but that's okay for deletion
-        console.log(
-          "Account not found in Firebase, proceeding with local deletion only"
-        );
-        return { success: true, localOnly: true };
-      }
-
-      const accountData = accountSnapshot.data();
-      if (accountData.userId !== this.currentUser.uid) {
-        return {
-          success: false,
-          error: "Account does not belong to current user",
-        };
-      }
-
-      // First delete all transactions for this account
-      const transactionsQuery = query(
-        collection(db, "transactions"),
-        where("userId", "==", this.currentUser.uid),
-        where("accountId", "==", accountId)
-      );
-
-      const transactionsSnapshot = await getDocs(transactionsQuery);
-      const deletePromises = transactionsSnapshot.docs.map(doc =>
-        deleteDoc(doc.ref)
-      );
-      await Promise.all(deletePromises);
-
-      // Then delete the account
       await deleteDoc(accountDoc);
-
       return { success: true };
     } catch (error) {
       console.error("Delete account error:", error);
-      // Check if it's a permissions error
-      if (
-        error.code === "permission-denied" ||
-        error.message.includes("permission") ||
-        error.message.includes("Missing or insufficient permissions")
-      ) {
-        return {
-          success: false,
-          error: "Insufficient permissions to delete account",
-        };
+
+      // If document doesn't exist, consider it a successful deletion
+      if (error.code === "not-found" || error.message.includes("not found")) {
+        return { success: true };
       }
+
       return { success: false, error: error.message };
     }
   }
