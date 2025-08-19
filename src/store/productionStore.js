@@ -92,8 +92,14 @@ const useProductionStore = create(
         ]);
 
         if (transactionsResult.success && accountsResult.success) {
+          // Process transactions with account information
+          const processedTransactions = get().processTransactionsWithAccounts(
+            transactionsResult.data || [],
+            accountsResult.data || []
+          );
+
           set({
-            transactions: transactionsResult.data || [],
+            transactions: processedTransactions,
             accounts: accountsResult.data || [],
             isLoading: false,
             syncStatus: "success",
@@ -158,10 +164,32 @@ const useProductionStore = create(
       console.log("✅ Store reset completed");
     },
 
+    // Helper function to process transactions with account information
+    processTransactionsWithAccounts: (transactions, accounts) => {
+      if (!Array.isArray(transactions) || !Array.isArray(accounts)) {
+        return transactions || [];
+      }
+
+      return transactions.map(transaction => {
+        const account = accounts.find(
+          acc =>
+            acc.id === transaction.accountId ||
+            acc.id === transaction.accountId?.toString()
+        );
+
+        return {
+          ...transaction,
+          account: account || null,
+        };
+      });
+    },
+
     // Set up real-time listeners for Firestore
     setupRealtimeListeners: async () => {
       try {
         console.log("🔧 Setting up real-time listeners...");
+
+        let currentAccounts = [];
 
         // Listen for transaction changes
         const transactionUnsubscribe = firebaseService.subscribeToTransactions(
@@ -176,8 +204,15 @@ const useProductionStore = create(
 
             // Ensure we're getting valid data
             if (Array.isArray(transactions)) {
+              // Process transactions with account information
+              const processedTransactions =
+                get().processTransactionsWithAccounts(
+                  transactions,
+                  currentAccounts
+                );
+
               set({
-                transactions: transactions,
+                transactions: processedTransactions,
                 lastSyncTime: new Date(),
                 syncStatus: "success",
               });
@@ -208,8 +243,19 @@ const useProductionStore = create(
 
             // Ensure we're getting valid data
             if (Array.isArray(accounts)) {
+              currentAccounts = accounts;
+
+              // Re-process existing transactions with new account data
+              const currentTransactions = get().transactions;
+              const processedTransactions =
+                get().processTransactionsWithAccounts(
+                  currentTransactions,
+                  accounts
+                );
+
               set({
                 accounts: accounts,
+                transactions: processedTransactions,
                 lastSyncTime: new Date(),
                 syncStatus: "success",
               });
@@ -504,17 +550,21 @@ const useProductionStore = create(
           throw new Error("Account not found");
         }
 
-        // Ensure proper data formatting
+        // Ensure proper data formatting - only include fields that are being updated
         const sanitizedUpdates = {
-          ...updates,
-          name: updates.name?.trim(),
-          balance:
-            updates.balance !== undefined
-              ? parseFloat(updates.balance)
-              : undefined,
-          type: updates.type?.toLowerCase(),
           updatedAt: new Date().toISOString(),
         };
+
+        // Only add fields that are actually being updated
+        if (updates.name !== undefined) {
+          sanitizedUpdates.name = updates.name.trim();
+        }
+        if (updates.balance !== undefined) {
+          sanitizedUpdates.balance = parseFloat(updates.balance);
+        }
+        if (updates.type !== undefined) {
+          sanitizedUpdates.type = updates.type.toLowerCase();
+        }
 
         const result = await firebaseService.updateAccount(
           accountId,
@@ -685,12 +735,25 @@ const useProductionStore = create(
       );
       const recentTransactions = accountTransactions.slice(0, 30);
 
+      // Categorize transactions based on type, with fallback to amount sign
       const income = recentTransactions
-        .filter(t => t.amount > 0)
-        .reduce((sum, t) => sum + t.amount, 0);
+        .filter(t => {
+          // If type is explicitly set, use it
+          if (t.type === "income") return true;
+          if (t.type === "expense") return false;
+          // Fallback to amount sign for backward compatibility
+          return t.amount > 0;
+        })
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
       const expenses = recentTransactions
-        .filter(t => t.amount < 0)
+        .filter(t => {
+          // If type is explicitly set, use it
+          if (t.type === "expense") return true;
+          if (t.type === "income") return false;
+          // Fallback to amount sign for backward compatibility
+          return t.amount < 0;
+        })
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
       const netFlow = income - expenses;
@@ -731,8 +794,10 @@ const useProductionStore = create(
 
       const filteredTransactions = transactions.filter(t => {
         const transactionDate = new Date(t.date);
+        const isExpense =
+          t.type === "expense" || (t.type !== "income" && t.amount < 0);
         return (
-          t.amount < 0 && transactionDate >= startDate && transactionDate <= now
+          isExpense && transactionDate >= startDate && transactionDate <= now
         );
       });
 
@@ -760,8 +825,10 @@ const useProductionStore = create(
 
         const monthTransactions = transactions.filter(t => {
           const transactionDate = new Date(t.date);
+          const isExpense =
+            t.type === "expense" || (t.type !== "income" && t.amount < 0);
           return (
-            t.amount < 0 &&
+            isExpense &&
             transactionDate >= monthStart &&
             transactionDate <= monthEnd
           );
@@ -820,11 +887,23 @@ const useProductionStore = create(
         );
 
         const income = accountTransactions
-          .filter(t => t.amount > 0)
-          .reduce((sum, t) => sum + t.amount, 0);
+          .filter(t => {
+            // If type is explicitly set, use it
+            if (t.type === "income") return true;
+            if (t.type === "expense") return false;
+            // Fallback to amount sign for backward compatibility
+            return t.amount > 0;
+          })
+          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
         const expenses = accountTransactions
-          .filter(t => t.amount < 0)
+          .filter(t => {
+            // If type is explicitly set, use it
+            if (t.type === "expense") return true;
+            if (t.type === "income") return false;
+            // Fallback to amount sign for backward compatibility
+            return t.amount < 0;
+          })
           .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
         return {
