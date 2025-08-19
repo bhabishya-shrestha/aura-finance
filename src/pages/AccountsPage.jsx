@@ -20,6 +20,7 @@ const AccountsPage = () => {
     deleteAccount,
     getAccountBalance,
     calculateAccountStats,
+    getTransactionsByAccount,
     isLoading,
     initialize,
     isInitialized,
@@ -332,15 +333,46 @@ const AccountsPage = () => {
               <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
                 Recent Transactions
               </h4>
-              {/* Assuming getTransactionsByAccount is available from the store or passed as a prop */}
-              {/* For now, we'll just show a placeholder if not available */}
-              {/* In a real app, this would fetch transactions from the store */}
-              {/* Example: const transactions = getTransactionsByAccount(account.id); */}
-              {/* For now, we'll just show a message */}
-              <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-                <DollarSign className="w-6 h-6 mx-auto mb-1 opacity-50" />
-                <p className="text-xs">No recent transactions data available</p>
-              </div>
+              {(() => {
+                const recentTransactions = getTransactionsByAccount(account.id)
+                  .sort((a, b) => new Date(b.date) - new Date(a.date))
+                  .slice(0, 5);
+                
+                if (recentTransactions.length === 0) {
+                  return (
+                    <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                      <DollarSign className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                      <p className="text-xs">No transactions yet</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-2">
+                    {recentTransactions.map(transaction => (
+                      <div key={transaction.id} className="flex items-center justify-between text-xs">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-gray-900 dark:text-white truncate">
+                            {transaction.description || "No description"}
+                          </p>
+                          <p className="text-gray-500 dark:text-gray-400">
+                            {new Date(transaction.date).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <span
+                          className={`ml-2 font-medium ${
+                            transaction.amount > 0
+                              ? "text-green-600 dark:text-green-400"
+                              : "text-red-600 dark:text-red-400"
+                          }`}
+                        >
+                          {formatCurrency(transaction.amount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -531,15 +563,46 @@ const AccountsPage = () => {
               <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Recent Transactions
               </h4>
-              {/* Assuming getTransactionsByAccount is available from the store or passed as a prop */}
-              {/* For now, we'll just show a placeholder if not available */}
-              {/* In a real app, this would fetch transactions from the store */}
-              {/* Example: const transactions = getTransactionsByAccount(account.id); */}
-              {/* For now, we'll just show a message */}
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <DollarSign className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>No recent transactions data available</p>
-              </div>
+              {(() => {
+                const recentTransactions = getTransactionsByAccount(account.id)
+                  .sort((a, b) => new Date(b.date) - new Date(a.date))
+                  .slice(0, 8);
+                
+                if (recentTransactions.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      <DollarSign className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p>No transactions yet</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-3">
+                    {recentTransactions.map(transaction => (
+                      <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {transaction.description || "No description"}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(transaction.date).toLocaleDateString()} • {transaction.category || "Uncategorized"}
+                          </p>
+                        </div>
+                        <span
+                          className={`ml-3 text-sm font-semibold ${
+                            transaction.amount > 0
+                              ? "text-green-600 dark:text-green-400"
+                              : "text-red-600 dark:text-red-400"
+                          }`}
+                        >
+                          {formatCurrency(transaction.amount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
