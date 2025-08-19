@@ -149,11 +149,12 @@ const AccountsPage = () => {
     setShowDeleteConfirm(true);
   };
 
-  const confirmDeleteAccount = async () => {
+  const confirmDeleteAccount = async (deleteTransactions = false) => {
     if (!accountToDelete) return;
 
     try {
-      const result = await deleteAccount(accountToDelete.id);
+      const options = deleteTransactions ? { deleteTransactions: true } : {};
+      const result = await deleteAccount(accountToDelete.id, options);
 
       if (result.success) {
         showSuccess(result.message || "Account deleted successfully");
@@ -164,7 +165,10 @@ const AccountsPage = () => {
       }
     } catch (error) {
       if (error.message.includes("existing transactions")) {
-        showWarning(error.message);
+        // Show a more helpful error with options
+        showWarning(
+          `${error.message}\n\nYou can:\n1. Delete the account and all its transactions\n2. Reassign transactions to another account first`
+        );
       } else {
         showError(error.message || "Failed to delete account");
       }

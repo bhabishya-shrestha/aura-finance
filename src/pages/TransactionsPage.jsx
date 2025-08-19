@@ -39,6 +39,7 @@ const TransactionsPage = () => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
+  const [selectedAccountId, setSelectedAccountId] = useState("all");
 
   useEffect(() => {
     if (!isInitialized) {
@@ -96,6 +97,15 @@ const TransactionsPage = () => {
       filtered = filtered.filter(transaction => transaction.type === "expense");
     }
 
+    // Apply account filter
+    if (selectedAccountId && selectedAccountId !== "all") {
+      filtered = filtered.filter(
+        transaction =>
+          transaction.accountId &&
+          transaction.accountId.toString() === selectedAccountId.toString()
+      );
+    }
+
     // Apply sorting
     filtered.sort((a, b) => {
       let aValue, bValue;
@@ -126,7 +136,14 @@ const TransactionsPage = () => {
     });
 
     setFilteredTransactions(filtered);
-  }, [transactions, searchTerm, selectedFilter, sortBy, sortOrder]);
+  }, [
+    transactions,
+    searchTerm,
+    selectedFilter,
+    selectedAccountId,
+    sortBy,
+    sortOrder,
+  ]);
 
   const formatCurrency = amount => {
     return new Intl.NumberFormat("en-US", {
@@ -491,6 +508,25 @@ const TransactionsPage = () => {
           </div>
         </div>
 
+        {/* Account Filter Section */}
+        <div className="space-y-4 mb-6">
+          <h4 className="font-medium text-gray-900 dark:text-white">
+            Filter by Account
+          </h4>
+          <select
+            value={selectedAccountId}
+            onChange={e => setSelectedAccountId(e.target.value)}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">All Accounts</option>
+            {accounts.map(account => (
+              <option key={account.id} value={account.id}>
+                {account.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Sort Section */}
         <div className="space-y-4">
           <h4 className="font-medium text-gray-900 dark:text-white">Sort by</h4>
@@ -669,6 +705,22 @@ const TransactionsPage = () => {
             </button>
           </div>
 
+          {/* Account Filter */}
+          <div className="relative">
+            <select
+              value={selectedAccountId}
+              onChange={e => setSelectedAccountId(e.target.value)}
+              className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">All Accounts</option>
+              {accounts.map(account => (
+                <option key={account.id} value={account.id}>
+                  {account.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Sort Dropdown */}
           <div className="relative">
             <select
@@ -688,6 +740,35 @@ const TransactionsPage = () => {
               <option value="description-desc">Description (Z-A)</option>
             </select>
           </div>
+        </div>
+      </div>
+
+      {/* Transaction Summary */}
+      <div className="hidden lg:block mb-4">
+        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-4">
+            <span>
+              Showing {filteredTransactions.length} of {transactions.length}{" "}
+              transactions
+            </span>
+            {selectedAccountId !== "all" && (
+              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-md">
+                Account:{" "}
+                {accounts.find(acc => acc.id === selectedAccountId)?.name ||
+                  "Unknown"}
+              </span>
+            )}
+            {selectedFilter !== "all" && (
+              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md capitalize">
+                Type: {selectedFilter}
+              </span>
+            )}
+          </div>
+          {searchTerm && (
+            <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-md">
+              Search: &quot;{searchTerm}&quot;
+            </span>
+          )}
         </div>
       </div>
 
