@@ -546,17 +546,21 @@ const useProductionStore = create(
           throw new Error("Account not found");
         }
 
-        // Ensure proper data formatting
+        // Ensure proper data formatting - only include fields that are being updated
         const sanitizedUpdates = {
-          ...updates,
-          name: updates.name?.trim(),
-          balance:
-            updates.balance !== undefined
-              ? parseFloat(updates.balance)
-              : undefined,
-          type: updates.type?.toLowerCase(),
           updatedAt: new Date().toISOString(),
         };
+
+        // Only add fields that are actually being updated
+        if (updates.name !== undefined) {
+          sanitizedUpdates.name = updates.name.trim();
+        }
+        if (updates.balance !== undefined) {
+          sanitizedUpdates.balance = parseFloat(updates.balance);
+        }
+        if (updates.type !== undefined) {
+          sanitizedUpdates.type = updates.type.toLowerCase();
+        }
 
         const result = await firebaseService.updateAccount(
           accountId,
