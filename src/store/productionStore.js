@@ -92,8 +92,14 @@ const useProductionStore = create(
         ]);
 
         if (transactionsResult.success && accountsResult.success) {
+          // Process transactions with account information
+          const processedTransactions = get().processTransactionsWithAccounts(
+            transactionsResult.data || [],
+            accountsResult.data || []
+          );
+
           set({
-            transactions: transactionsResult.data || [],
+            transactions: processedTransactions,
             accounts: accountsResult.data || [],
             isLoading: false,
             syncStatus: "success",
@@ -158,10 +164,30 @@ const useProductionStore = create(
       console.log("✅ Store reset completed");
     },
 
+    // Helper function to process transactions with account information
+    processTransactionsWithAccounts: (transactions, accounts) => {
+      if (!Array.isArray(transactions) || !Array.isArray(accounts)) {
+        return transactions || [];
+      }
+
+      return transactions.map(transaction => {
+        const account = accounts.find(
+          acc => acc.id === transaction.accountId || acc.id === transaction.accountId?.toString()
+        );
+        
+        return {
+          ...transaction,
+          account: account || null,
+        };
+      });
+    },
+
     // Set up real-time listeners for Firestore
     setupRealtimeListeners: async () => {
       try {
         console.log("🔧 Setting up real-time listeners...");
+
+        let currentAccounts = [];
 
         // Listen for transaction changes
         const transactionUnsubscribe = firebaseService.subscribeToTransactions(
@@ -176,8 +202,14 @@ const useProductionStore = create(
 
             // Ensure we're getting valid data
             if (Array.isArray(transactions)) {
+              // Process transactions with account information
+              const processedTransactions = get().processTransactionsWithAccounts(
+                transactions,
+                currentAccounts
+              );
+
               set({
-                transactions: transactions,
+                transactions: processedTransactions,
                 lastSyncTime: new Date(),
                 syncStatus: "success",
               });
@@ -208,8 +240,18 @@ const useProductionStore = create(
 
             // Ensure we're getting valid data
             if (Array.isArray(accounts)) {
+              currentAccounts = accounts;
+              
+              // Re-process existing transactions with new account data
+              const currentTransactions = get().transactions;
+              const processedTransactions = get().processTransactionsWithAccounts(
+                currentTransactions,
+                accounts
+              );
+
               set({
                 accounts: accounts,
+                transactions: processedTransactions,
                 lastSyncTime: new Date(),
                 syncStatus: "success",
               });
