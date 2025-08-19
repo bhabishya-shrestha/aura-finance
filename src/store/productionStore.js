@@ -825,7 +825,8 @@ const useProductionStore = create(
 
         const monthTransactions = transactions.filter(t => {
           const transactionDate = new Date(t.date);
-          const isExpense = t.type === "expense" || (t.type !== "income" && t.amount < 0);
+          const isExpense =
+            t.type === "expense" || (t.type !== "income" && t.amount < 0);
           return (
             isExpense &&
             transactionDate >= monthStart &&

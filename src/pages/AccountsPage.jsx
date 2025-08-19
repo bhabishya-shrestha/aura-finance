@@ -337,7 +337,7 @@ const AccountsPage = () => {
                 const recentTransactions = getTransactionsByAccount(account.id)
                   .sort((a, b) => new Date(b.date) - new Date(a.date))
                   .slice(0, 5);
-                
+
                 if (recentTransactions.length === 0) {
                   return (
                     <div className="text-center py-4 text-gray-500 dark:text-gray-400">
@@ -350,7 +350,10 @@ const AccountsPage = () => {
                 return (
                   <div className="space-y-2">
                     {recentTransactions.map(transaction => (
-                      <div key={transaction.id} className="flex items-center justify-between text-xs">
+                      <div
+                        key={transaction.id}
+                        className="flex items-center justify-between text-xs"
+                      >
                         <div className="flex-1 min-w-0">
                           <p className="text-gray-900 dark:text-white truncate">
                             {transaction.description || "No description"}
@@ -567,7 +570,7 @@ const AccountsPage = () => {
                 const recentTransactions = getTransactionsByAccount(account.id)
                   .sort((a, b) => new Date(b.date) - new Date(a.date))
                   .slice(0, 8);
-                
+
                 if (recentTransactions.length === 0) {
                   return (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -580,13 +583,17 @@ const AccountsPage = () => {
                 return (
                   <div className="space-y-3">
                     {recentTransactions.map(transaction => (
-                      <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                      <div
+                        key={transaction.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                      >
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                             {transaction.description || "No description"}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {new Date(transaction.date).toLocaleDateString()} • {transaction.category || "Uncategorized"}
+                            {new Date(transaction.date).toLocaleDateString()} •{" "}
+                            {transaction.category || "Uncategorized"}
                           </p>
                         </div>
                         <span
