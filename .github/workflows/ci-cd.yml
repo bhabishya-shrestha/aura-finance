@@ -208,7 +208,7 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: "--prod --target staging --yes"
+          vercel-args: "--prod --target staging --confirm"
 
       - name: Run smoke tests
         run: |
@@ -249,7 +249,7 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: "--prod --yes"
+          vercel-args: "--prod --confirm"
 
       - name: Run production smoke tests
         run: |
