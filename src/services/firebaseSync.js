@@ -5,6 +5,7 @@
 
 import firebaseService from "./firebaseService.js";
 import db from "../database.js";
+import { logger } from "../config/environment.js";
 
 class FirebaseSyncService {
   constructor() {
@@ -32,14 +33,12 @@ class FirebaseSyncService {
   async initialize() {
     // Prevent multiple simultaneous initializations
     if (this.isInitialized) {
-      console.log("🔄 Firebase sync already initialized, skipping");
+      logger.sync("Firebase sync already initialized, skipping");
       return;
     }
 
     if (this.initializationPromise) {
-      console.log(
-        "🔄 Firebase sync initialization already in progress, waiting"
-      );
+      logger.sync("Firebase sync initialization already in progress, waiting");
       return this.initializationPromise;
     }
 
@@ -62,7 +61,7 @@ class FirebaseSyncService {
       // Check if user is authenticated with Firebase
       const user = await firebaseService.getCurrentUser();
       if (user) {
-        console.log("🔄 Firebase sync initialized for user:", user.uid);
+        logger.sync("Firebase sync initialized for user:", user.uid);
 
         // Set initial sync time if none exists
         if (!this.lastSyncTime) {
@@ -73,12 +72,12 @@ class FirebaseSyncService {
         this.startPeriodicSync();
         this.isInitialized = true;
       } else {
-        console.log("🔄 Firebase sync: No authenticated user found");
+        logger.sync("Firebase sync: No authenticated user found");
         // Set a default sync time for demo purposes
         this.lastSyncTime = new Date();
       }
     } catch (error) {
-      console.log("Firebase sync not available:", error.message);
+      logger.warn("Firebase sync not available:", error.message);
       // Set a default sync time for demo purposes
       this.lastSyncTime = new Date();
       // Don't throw - sync is optional
@@ -95,11 +94,11 @@ class FirebaseSyncService {
 
     try {
       this.syncInProgress = true;
-      console.log("🔄 Starting data sync...");
+      logger.sync("Starting data sync...");
 
       const user = await firebaseService.getCurrentUser();
       if (!user) {
-        console.log("No authenticated user, skipping sync");
+        logger.sync("No authenticated user, skipping sync");
         return;
       }
 
@@ -108,7 +107,7 @@ class FirebaseSyncService {
       const resetUserId = localStorage.getItem("aura_reset_user_id");
 
       if (dataResetFlag && resetUserId === user.uid) {
-        console.log("🔄 Data reset detected, skipping sync");
+        logger.sync("Data reset detected, skipping sync");
         return;
       }
 
@@ -120,9 +119,9 @@ class FirebaseSyncService {
 
       // Update last sync time
       this.lastSyncTime = new Date();
-      console.log("✅ Data sync completed successfully");
+      logger.sync("Data sync completed successfully");
     } catch (error) {
-      console.error("❌ Data sync failed:", error);
+      logger.error("Data sync failed:", error);
     } finally {
       this.syncInProgress = false;
     }
@@ -358,6 +357,79 @@ class FirebaseSyncService {
       }
     } catch (error) {
       console.error(`Error deleting ${dataType} from local DB:`, error);
+    }
+  }
+
+  /**
+   * Sync transactions between IndexedDB and Firebase
+   */
+  async syncTransactions(userId) {
+    try {
+      console.log("🔄 Syncing transactions for user:", userId);
+
+      // Get local transactions from IndexedDB
+      const localTransactions = await db.transactions.toArray();
+      console.log(`📊 Found ${localTransactions.length} local transactions`);
+
+      // Get remote transactions from Firebase
+      const remoteResult = await firebaseService.getTransactionsSimple();
+      if (!remoteResult.success) {
+        console.warn(
+          "⚠️ Failed to get remote transactions:",
+          remoteResult.error
+        );
+        return;
+      }
+
+      const remoteTransactions = remoteResult.data || [];
+      console.log(`☁️ Found ${remoteTransactions.length} remote transactions`);
+
+      // Merge and sync data
+      const mergedTransactions = await this.mergeAndSyncData(
+        localTransactions,
+        remoteTransactions,
+        "transactions"
+      );
+
+      console.log(
+        `✅ Transaction sync completed. Total: ${mergedTransactions.length}`
+      );
+    } catch (error) {
+      console.error("❌ Transaction sync failed:", error);
+    }
+  }
+
+  /**
+   * Sync accounts between IndexedDB and Firebase
+   */
+  async syncAccounts(userId) {
+    try {
+      console.log("🔄 Syncing accounts for user:", userId);
+
+      // Get local accounts from IndexedDB
+      const localAccounts = await db.accounts.toArray();
+      console.log(`📊 Found ${localAccounts.length} local accounts`);
+
+      // Get remote accounts from Firebase
+      const remoteResult = await firebaseService.getAccounts();
+      if (!remoteResult.success) {
+        console.warn("⚠️ Failed to get remote accounts:", remoteResult.error);
+        return;
+      }
+
+      const remoteAccounts = remoteResult.data || [];
+      console.log(`☁️ Found ${remoteAccounts.length} remote accounts`);
+
+      // Merge and sync data
+      const mergedAccounts = await this.mergeAndSyncData(
+        localAccounts,
+        remoteAccounts,
+        "accounts"
+      );
+
+      console.log(`✅ Account sync completed. Total: ${mergedAccounts.length}`);
+    } catch (error) {
+      console.error("❌ Account sync failed:", error);
     }
   }
 

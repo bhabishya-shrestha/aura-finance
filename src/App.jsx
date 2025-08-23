@@ -23,6 +23,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import LoadingSpinner from "./components/LoadingSpinner";
 import { DashboardSkeleton } from "./components/ui/Skeleton";
 import NotificationToast from "./components/NotificationToast";
+import SyncStatus from "./components/SyncStatus";
 
 import { initializeDatabase } from "./database";
 import useStore from "./store";
@@ -171,6 +172,7 @@ const AppLayout = () => {
 
         <MobileNav currentPage={currentPage} />
         <NotificationToast />
+        <SyncStatus />
       </div>
     );
   }
@@ -210,6 +212,7 @@ const AppLayout = () => {
       </div>
 
       <NotificationToast />
+      <SyncStatus />
     </div>
   );
 };
