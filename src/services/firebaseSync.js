@@ -5,6 +5,7 @@
 
 import firebaseService from "./firebaseService.js";
 import db from "../database.js";
+import { logger } from "../config/environment.js";
 
 class FirebaseSyncService {
   constructor() {
@@ -32,14 +33,12 @@ class FirebaseSyncService {
   async initialize() {
     // Prevent multiple simultaneous initializations
     if (this.isInitialized) {
-      console.log("🔄 Firebase sync already initialized, skipping");
+      logger.sync("Firebase sync already initialized, skipping");
       return;
     }
 
     if (this.initializationPromise) {
-      console.log(
-        "🔄 Firebase sync initialization already in progress, waiting"
-      );
+      logger.sync("Firebase sync initialization already in progress, waiting");
       return this.initializationPromise;
     }
 
@@ -62,7 +61,7 @@ class FirebaseSyncService {
       // Check if user is authenticated with Firebase
       const user = await firebaseService.getCurrentUser();
       if (user) {
-        console.log("🔄 Firebase sync initialized for user:", user.uid);
+        logger.sync("Firebase sync initialized for user:", user.uid);
 
         // Set initial sync time if none exists
         if (!this.lastSyncTime) {
@@ -73,12 +72,12 @@ class FirebaseSyncService {
         this.startPeriodicSync();
         this.isInitialized = true;
       } else {
-        console.log("🔄 Firebase sync: No authenticated user found");
+        logger.sync("Firebase sync: No authenticated user found");
         // Set a default sync time for demo purposes
         this.lastSyncTime = new Date();
       }
     } catch (error) {
-      console.log("Firebase sync not available:", error.message);
+      logger.warn("Firebase sync not available:", error.message);
       // Set a default sync time for demo purposes
       this.lastSyncTime = new Date();
       // Don't throw - sync is optional
@@ -95,11 +94,11 @@ class FirebaseSyncService {
 
     try {
       this.syncInProgress = true;
-      console.log("🔄 Starting data sync...");
+      logger.sync("Starting data sync...");
 
       const user = await firebaseService.getCurrentUser();
       if (!user) {
-        console.log("No authenticated user, skipping sync");
+        logger.sync("No authenticated user, skipping sync");
         return;
       }
 
@@ -108,7 +107,7 @@ class FirebaseSyncService {
       const resetUserId = localStorage.getItem("aura_reset_user_id");
 
       if (dataResetFlag && resetUserId === user.uid) {
-        console.log("🔄 Data reset detected, skipping sync");
+        logger.sync("Data reset detected, skipping sync");
         return;
       }
 
@@ -120,9 +119,9 @@ class FirebaseSyncService {
 
       // Update last sync time
       this.lastSyncTime = new Date();
-      console.log("✅ Data sync completed successfully");
+      logger.sync("Data sync completed successfully");
     } catch (error) {
-      console.error("❌ Data sync failed:", error);
+      logger.error("Data sync failed:", error);
     } finally {
       this.syncInProgress = false;
     }
