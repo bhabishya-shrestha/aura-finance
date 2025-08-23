@@ -5,7 +5,6 @@
 
 import firebaseService from "./firebaseService.js";
 import db from "../database.js";
-import { logger } from "../config/environment.js";
 
 class FirebaseSyncService {
   constructor() {
@@ -33,12 +32,14 @@ class FirebaseSyncService {
   async initialize() {
     // Prevent multiple simultaneous initializations
     if (this.isInitialized) {
-      logger.sync("Firebase sync already initialized, skipping");
+      console.log("🔄 Firebase sync already initialized, skipping");
       return;
     }
 
     if (this.initializationPromise) {
-      logger.sync("Firebase sync initialization already in progress, waiting");
+      console.log(
+        "🔄 Firebase sync initialization already in progress, waiting"
+      );
       return this.initializationPromise;
     }
 
@@ -61,7 +62,7 @@ class FirebaseSyncService {
       // Check if user is authenticated with Firebase
       const user = await firebaseService.getCurrentUser();
       if (user) {
-        logger.sync("Firebase sync initialized for user:", user.uid);
+        console.log("🔄 Firebase sync initialized for user:", user.uid);
 
         // Set initial sync time if none exists
         if (!this.lastSyncTime) {
@@ -72,12 +73,12 @@ class FirebaseSyncService {
         this.startPeriodicSync();
         this.isInitialized = true;
       } else {
-        logger.sync("Firebase sync: No authenticated user found");
+        console.log("🔄 Firebase sync: No authenticated user found");
         // Set a default sync time for demo purposes
         this.lastSyncTime = new Date();
       }
     } catch (error) {
-      logger.warn("Firebase sync not available:", error.message);
+      console.log("Firebase sync not available:", error.message);
       // Set a default sync time for demo purposes
       this.lastSyncTime = new Date();
       // Don't throw - sync is optional
@@ -94,11 +95,11 @@ class FirebaseSyncService {
 
     try {
       this.syncInProgress = true;
-      logger.sync("Starting data sync...");
+      console.log("🔄 Starting data sync...");
 
       const user = await firebaseService.getCurrentUser();
       if (!user) {
-        logger.sync("No authenticated user, skipping sync");
+        console.log("No authenticated user, skipping sync");
         return;
       }
 
@@ -107,7 +108,7 @@ class FirebaseSyncService {
       const resetUserId = localStorage.getItem("aura_reset_user_id");
 
       if (dataResetFlag && resetUserId === user.uid) {
-        logger.sync("Data reset detected, skipping sync");
+        console.log("🔄 Data reset detected, skipping sync");
         return;
       }
 
@@ -119,81 +120,11 @@ class FirebaseSyncService {
 
       // Update last sync time
       this.lastSyncTime = new Date();
-      logger.sync("Data sync completed successfully");
+      console.log("✅ Data sync completed successfully");
     } catch (error) {
-      logger.error("Data sync failed:", error);
+      console.error("❌ Data sync failed:", error);
     } finally {
       this.syncInProgress = false;
-    }
-  }
-
-  /**
-   * Sync transactions between IndexedDB and Firebase
-   */
-  async syncTransactions(userId) {
-    try {
-      logger.sync("Syncing transactions for user:", userId);
-
-      // Get local transactions from IndexedDB
-      const localTransactions = await db.transactions.toArray();
-      logger.sync(`Found ${localTransactions.length} local transactions`);
-
-      // Get remote transactions from Firebase
-      const remoteResult = await firebaseService.getTransactionsSimple();
-      if (!remoteResult.success) {
-        logger.warn("Failed to get remote transactions:", remoteResult.error);
-        return;
-      }
-
-      const remoteTransactions = remoteResult.data || [];
-      logger.sync(`Found ${remoteTransactions.length} remote transactions`);
-
-      // Merge and sync data
-      const mergedTransactions = await this.mergeAndSyncData(
-        localTransactions,
-        remoteTransactions,
-        "transactions"
-      );
-
-      logger.sync(
-        `Transaction sync completed. Total: ${mergedTransactions.length}`
-      );
-    } catch (error) {
-      logger.error("Transaction sync failed:", error);
-    }
-  }
-
-  /**
-   * Sync accounts between IndexedDB and Firebase
-   */
-  async syncAccounts(userId) {
-    try {
-      logger.sync("Syncing accounts for user:", userId);
-
-      // Get local accounts from IndexedDB
-      const localAccounts = await db.accounts.toArray();
-      logger.sync(`Found ${localAccounts.length} local accounts`);
-
-      // Get remote accounts from Firebase
-      const remoteResult = await firebaseService.getAccounts();
-      if (!remoteResult.success) {
-        logger.warn("Failed to get remote accounts:", remoteResult.error);
-        return;
-      }
-
-      const remoteAccounts = remoteResult.data || [];
-      logger.sync(`Found ${remoteAccounts.length} remote accounts`);
-
-      // Merge and sync data
-      const mergedAccounts = await this.mergeAndSyncData(
-        localAccounts,
-        remoteAccounts,
-        "accounts"
-      );
-
-      logger.sync(`Account sync completed. Total: ${mergedAccounts.length}`);
-    } catch (error) {
-      logger.error("Account sync failed:", error);
     }
   }
 
@@ -216,26 +147,26 @@ class FirebaseSyncService {
       if (!localItem && remoteItem) {
         // Remote item doesn't exist locally - check if it was intentionally deleted
         if (this.deletedItems.has(deletedKey)) {
-          logger.sync(`Skipping restoration of deleted ${dataType}: ${id}`);
+          console.log(`🔄 Skipping restoration of deleted ${dataType}: ${id}`);
           // Delete from Firebase to sync the deletion
           try {
             await this.deleteFromFirebase(id, dataType);
-            logger.sync(`Deleted ${dataType} from Firebase: ${id}`);
+            console.log(`✅ Deleted ${dataType} from Firebase: ${id}`);
           } catch (error) {
-            logger.warn(
-              `Failed to delete ${dataType} from Firebase: ${id}`,
+            console.warn(
+              `⚠️  Failed to delete ${dataType} from Firebase: ${id}`,
               error
             );
           }
         } else {
           // Remote item doesn't exist locally and wasn't deleted - add it
-          logger.sync(`Adding remote ${dataType} to local: ${id}`);
+          console.log(`📥 Adding remote ${dataType} to local: ${id}`);
           mergedData.push(remoteItem);
           await this.addToLocal(remoteItem, dataType);
         }
       } else if (localItem && !remoteItem) {
         // Local item doesn't exist remotely - upload it
-        logger.sync(`Uploading local ${dataType} to Firebase: ${id}`);
+        console.log(`📤 Uploading local ${dataType} to Firebase: ${id}`);
         mergedData.push(localItem);
         await this.uploadToFirebase(localItem, dataType);
       } else if (localItem && remoteItem) {
@@ -248,12 +179,14 @@ class FirebaseSyncService {
         );
 
         if (localUpdated > remoteUpdated) {
-          logger.sync(`Resolving conflict for ${dataType}: ${id} (local wins)`);
+          console.log(
+            `🔄 Resolving conflict for ${dataType}: ${id} (local wins)`
+          );
           mergedData.push(localItem);
           await this.uploadToFirebase(localItem, dataType);
         } else {
-          logger.sync(
-            `Resolving conflict for ${dataType}: ${id} (remote wins)`
+          console.log(
+            `🔄 Resolving conflict for ${dataType}: ${id} (remote wins)`
           );
           mergedData.push(remoteItem);
           await this.updateLocal(remoteItem, dataType);
@@ -280,7 +213,7 @@ class FirebaseSyncService {
         localStorage.setItem("deletedItems", JSON.stringify(stored));
       }
     } catch (error) {
-      logger.error("Error storing deleted items:", error);
+      console.error("Error storing deleted items:", error);
     }
   }
 
@@ -295,7 +228,7 @@ class FirebaseSyncService {
       // Clean up old deleted items (older than 30 days)
       this.cleanupOldDeletedItems();
     } catch (error) {
-      logger.error("Error loading deleted items:", error);
+      console.error("Error loading deleted items:", error);
       this.deletedItems = new Set();
     }
   }
@@ -319,7 +252,7 @@ class FirebaseSyncService {
         this.deletedItems = new Set(recentDeletions);
       }
     } catch (error) {
-      logger.error("Error cleaning up deleted items:", error);
+      console.error("Error cleaning up deleted items:", error);
     }
   }
 
@@ -334,7 +267,7 @@ class FirebaseSyncService {
         await db.accounts.add(item);
       }
     } catch (error) {
-      logger.error(`Error adding ${dataType} to local DB:`, error);
+      console.error(`Error adding ${dataType} to local DB:`, error);
     }
   }
 
@@ -349,7 +282,7 @@ class FirebaseSyncService {
         await db.accounts.update(item.id, item);
       }
     } catch (error) {
-      logger.error(`Error updating ${dataType} in local DB:`, error);
+      console.error(`Error updating ${dataType} in local DB:`, error);
     }
   }
 
@@ -364,7 +297,7 @@ class FirebaseSyncService {
         await firebaseService.addAccount(item);
       }
     } catch (error) {
-      logger.error(`Error uploading ${dataType} to Firebase:`, error);
+      console.error(`Error uploading ${dataType} to Firebase:`, error);
     }
   }
 
@@ -376,7 +309,7 @@ class FirebaseSyncService {
       // Validate itemId - allow numbers and strings, convert to string
       if (!itemId) {
         if (import.meta.env.DEV) {
-          logger.warn(`Missing ${dataType} ID for Firebase deletion`);
+          console.warn(`Missing ${dataType} ID for Firebase deletion`);
         }
         return; // Skip deletion for missing IDs
       }
@@ -385,7 +318,7 @@ class FirebaseSyncService {
       const stringId = String(itemId);
       if (stringId.trim() === "") {
         if (import.meta.env.DEV) {
-          logger.warn(`Empty ${dataType} ID for Firebase deletion`);
+          console.warn(`Empty ${dataType} ID for Firebase deletion`);
         }
         return; // Skip deletion for empty IDs
       }
@@ -407,7 +340,7 @@ class FirebaseSyncService {
       }
     } catch (error) {
       if (import.meta.env.DEV) {
-        logger.error(`Error deleting ${dataType} from Firebase:`, error);
+        console.error(`Error deleting ${dataType} from Firebase:`, error);
       }
       // Don't re-throw - we want local operations to succeed even if Firebase fails
     }
@@ -424,7 +357,7 @@ class FirebaseSyncService {
         await db.accounts.delete(itemId);
       }
     } catch (error) {
-      logger.error(`Error deleting ${dataType} from local DB:`, error);
+      console.error(`Error deleting ${dataType} from local DB:`, error);
     }
   }
 
@@ -467,7 +400,7 @@ class FirebaseSyncService {
     this.deletedItems.clear();
     localStorage.removeItem("deletedItems");
     if (import.meta.env.DEV) {
-      logger.debug("Deleted items cleared for testing");
+      console.log("🧹 Deleted items cleared for testing");
     }
   }
 
@@ -481,7 +414,7 @@ class FirebaseSyncService {
     this.initializationPromise = null;
     localStorage.removeItem("deletedItems");
     if (import.meta.env.DEV) {
-      logger.debug("All sync state cleared");
+      console.log("🧹 All sync state cleared");
     }
   }
 
