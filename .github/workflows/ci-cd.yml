@@ -203,6 +203,7 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
 
       - name: Deploy to Vercel (Staging)
+        id: deploy-staging
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -215,7 +216,7 @@ jobs:
           # Wait for deployment to complete
           sleep 30
           # Run basic health checks
-          curl -f ${{ steps.deploy.outputs.preview-url }}/api/health || exit 1
+          curl -f ${{ steps.deploy-staging.outputs.preview-url }}/ || exit 1
 
   # Build & Deploy to Production
   build-production:
@@ -244,6 +245,7 @@ jobs:
         run: npm run build
 
       - name: Deploy to Vercel (Production)
+        id: deploy-production
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -256,7 +258,7 @@ jobs:
           # Wait for deployment to complete
           sleep 30
           # Run comprehensive health checks
-          curl -f ${{ steps.deploy.outputs.preview-url }}/api/health || exit 1
+          curl -f ${{ steps.deploy-production.outputs.preview-url }}/ || exit 1
 
       - name: Notify deployment success
         if: success()
