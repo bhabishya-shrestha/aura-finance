@@ -10,6 +10,7 @@ import {
 } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import { app } from "../services/firebaseService";
+import firebaseSync from "../services/firebaseSync";
 
 // Action types
 const AUTH_ACTIONS = {
@@ -229,6 +230,18 @@ export const FirebaseAuthProvider = ({ children }) => {
             payload: { user },
           });
           console.log("✅ AUTH_STATE_CHANGED dispatched");
+
+          // Initialize sync service for authenticated user
+          try {
+            console.log("🔄 Initializing Firebase sync service...");
+            await firebaseSync.initialize();
+            console.log("✅ Firebase sync service initialized");
+          } catch (syncError) {
+            console.warn(
+              "⚠️ Firebase sync initialization failed:",
+              syncError.message
+            );
+          }
         } catch (error) {
           console.error("❌ Error handling user profile:", error);
           // Still dispatch auth state change with basic user info
