@@ -362,6 +362,79 @@ class FirebaseSyncService {
   }
 
   /**
+   * Sync transactions between IndexedDB and Firebase
+   */
+  async syncTransactions(userId) {
+    try {
+      console.log("🔄 Syncing transactions for user:", userId);
+
+      // Get local transactions from IndexedDB
+      const localTransactions = await db.transactions.toArray();
+      console.log(`📊 Found ${localTransactions.length} local transactions`);
+
+      // Get remote transactions from Firebase
+      const remoteResult = await firebaseService.getTransactionsSimple();
+      if (!remoteResult.success) {
+        console.warn(
+          "⚠️ Failed to get remote transactions:",
+          remoteResult.error
+        );
+        return;
+      }
+
+      const remoteTransactions = remoteResult.data || [];
+      console.log(`☁️ Found ${remoteTransactions.length} remote transactions`);
+
+      // Merge and sync data
+      const mergedTransactions = await this.mergeAndSyncData(
+        localTransactions,
+        remoteTransactions,
+        "transactions"
+      );
+
+      console.log(
+        `✅ Transaction sync completed. Total: ${mergedTransactions.length}`
+      );
+    } catch (error) {
+      console.error("❌ Transaction sync failed:", error);
+    }
+  }
+
+  /**
+   * Sync accounts between IndexedDB and Firebase
+   */
+  async syncAccounts(userId) {
+    try {
+      console.log("🔄 Syncing accounts for user:", userId);
+
+      // Get local accounts from IndexedDB
+      const localAccounts = await db.accounts.toArray();
+      console.log(`📊 Found ${localAccounts.length} local accounts`);
+
+      // Get remote accounts from Firebase
+      const remoteResult = await firebaseService.getAccounts();
+      if (!remoteResult.success) {
+        console.warn("⚠️ Failed to get remote accounts:", remoteResult.error);
+        return;
+      }
+
+      const remoteAccounts = remoteResult.data || [];
+      console.log(`☁️ Found ${remoteAccounts.length} remote accounts`);
+
+      // Merge and sync data
+      const mergedAccounts = await this.mergeAndSyncData(
+        localAccounts,
+        remoteAccounts,
+        "accounts"
+      );
+
+      console.log(`✅ Account sync completed. Total: ${mergedAccounts.length}`);
+    } catch (error) {
+      console.error("❌ Account sync failed:", error);
+    }
+  }
+
+  /**
    * Start periodic sync (every 5 minutes)
    */
   startPeriodicSync() {
