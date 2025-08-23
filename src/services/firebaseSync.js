@@ -375,7 +375,10 @@ class FirebaseSyncService {
       // Get remote transactions from Firebase
       const remoteResult = await firebaseService.getTransactionsSimple();
       if (!remoteResult.success) {
-        console.warn("⚠️ Failed to get remote transactions:", remoteResult.error);
+        console.warn(
+          "⚠️ Failed to get remote transactions:",
+          remoteResult.error
+        );
         return;
       }
 
@@ -389,7 +392,9 @@ class FirebaseSyncService {
         "transactions"
       );
 
-      console.log(`✅ Transaction sync completed. Total: ${mergedTransactions.length}`);
+      console.log(
+        `✅ Transaction sync completed. Total: ${mergedTransactions.length}`
+      );
     } catch (error) {
       console.error("❌ Transaction sync failed:", error);
     }
