@@ -10,6 +10,8 @@ import {
 } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import { app } from "../services/firebaseService";
+import firebaseSync from "../services/firebaseSync";
+import { logger } from "../config/environment.js";
 
 // Action types
 const AUTH_ACTIONS = {
@@ -38,8 +40,8 @@ const initialState = {
 const authReducer = (state, action) => {
   switch (action.type) {
     case AUTH_ACTIONS.AUTH_STATE_CHANGED: {
-      console.log(
-        "🔄 AUTH_STATE_CHANGED reducer called with payload:",
+      logger.debug(
+        "AUTH_STATE_CHANGED reducer called with payload:",
         action.payload
       );
       const newState = {
@@ -50,7 +52,7 @@ const authReducer = (state, action) => {
         isInitialized: true,
         error: null,
       };
-      console.log("🔄 New auth state:", newState);
+      logger.debug("New auth state:", newState);
       return newState;
     }
 
@@ -141,11 +143,11 @@ export const FirebaseAuthProvider = ({ children }) => {
 
   // Listen for auth state changes
   useEffect(() => {
-    console.log("🔐 Setting up Firebase Auth listener...");
+    logger.debug("Setting up Firebase Auth listener...");
 
     const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
-      console.log(
-        "🔄 Auth state changed:",
+      logger.debug(
+        "Auth state changed:",
         firebaseUser ? firebaseUser.email : "signed out"
       );
 
@@ -155,10 +157,7 @@ export const FirebaseAuthProvider = ({ children }) => {
           const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
 
           if (!userDoc.exists()) {
-            console.log(
-              "📝 Creating new user profile for:",
-              firebaseUser.email
-            );
+            logger.info("Creating new user profile for:", firebaseUser.email);
             const userProfile = {
               email: firebaseUser.email,
               name: firebaseUser.displayName || firebaseUser.email,
@@ -169,9 +168,9 @@ export const FirebaseAuthProvider = ({ children }) => {
 
             try {
               await setDoc(doc(db, "users", firebaseUser.uid), userProfile);
-              console.log("✅ User profile created successfully");
+              logger.info("User profile created successfully");
               showSuccess("Profile created successfully!");
-              console.log("🔔 Success notification should be shown");
+              logger.debug("Success notification should be shown");
             } catch (profileError) {
               console.warn(
                 "⚠️ Could not create user profile, continuing with basic auth:",
@@ -188,7 +187,7 @@ export const FirebaseAuthProvider = ({ children }) => {
               existingProfile.photoURL !== firebaseUser.photoURL;
 
             if (hasChanges) {
-              console.log("📝 Updating existing user profile with changes...");
+              logger.info("Updating existing user profile with changes...");
               const userProfile = {
                 email: firebaseUser.email,
                 name: firebaseUser.displayName || firebaseUser.email,
@@ -200,7 +199,7 @@ export const FirebaseAuthProvider = ({ children }) => {
                 await setDoc(doc(db, "users", firebaseUser.uid), userProfile, {
                   merge: true,
                 });
-                console.log("✅ User profile updated successfully");
+                logger.info("User profile updated successfully");
                 showInfo("Profile updated successfully!");
               } catch (profileError) {
                 console.warn(
@@ -209,8 +208,8 @@ export const FirebaseAuthProvider = ({ children }) => {
                 );
               }
             } else {
-              console.log(
-                "✅ User profile already up to date, no changes needed"
+              logger.debug(
+                "User profile already up to date, no changes needed"
               );
             }
           }
@@ -222,15 +221,15 @@ export const FirebaseAuthProvider = ({ children }) => {
             photoURL: firebaseUser.photoURL,
           };
 
-          console.log("✅ User authenticated:", user.email);
-          console.log("🔄 Dispatching AUTH_STATE_CHANGED with user:", user);
+          logger.info("User authenticated:", user.email);
+          logger.debug("Dispatching AUTH_STATE_CHANGED with user:", user);
           dispatch({
             type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
             payload: { user },
           });
-          console.log("✅ AUTH_STATE_CHANGED dispatched");
+          logger.debug("AUTH_STATE_CHANGED dispatched");
         } catch (error) {
-          console.error("❌ Error handling user profile:", error);
+          logger.error("Error handling user profile:", error);
           // Still dispatch auth state change with basic user info
           const user = {
             id: firebaseUser.uid,
@@ -243,13 +242,13 @@ export const FirebaseAuthProvider = ({ children }) => {
             payload: { user },
           });
         }
-      } else {
-        console.log("👋 User signed out");
-        dispatch({
-          type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
-          payload: { user: null },
-        });
-      }
+              } else {
+          logger.info("User signed out");
+          dispatch({
+            type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+            payload: { user: null },
+          });
+        }
     });
 
     return () => unsubscribe();
@@ -257,20 +256,20 @@ export const FirebaseAuthProvider = ({ children }) => {
 
   // Login with email and password
   const login = async (email, password) => {
-    console.log("🚀 Firebase login attempt for:", email);
-    dispatch({ type: AUTH_ACTIONS.LOGIN_START });
+          logger.info("Firebase login attempt for:", email);
+      dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
-    try {
-      console.log("🔐 Calling Firebase signInWithEmailAndPassword...");
+      try {
+        logger.debug("Calling Firebase signInWithEmailAndPassword...");
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
-      console.log(
-        "✅ Firebase authentication successful:",
-        userCredential.user.email
-      );
+              logger.info(
+          "Firebase authentication successful:",
+          userCredential.user.email
+        );
 
       const user = {
         id: userCredential.user.uid,
@@ -279,7 +278,7 @@ export const FirebaseAuthProvider = ({ children }) => {
         photoURL: userCredential.user.photoURL,
       };
 
-      console.log("👤 Dispatching login success with user:", user);
+              logger.debug("Dispatching login success with user:", user);
       dispatch({
         type: AUTH_ACTIONS.LOGIN_SUCCESS,
         payload: { user },
@@ -287,9 +286,9 @@ export const FirebaseAuthProvider = ({ children }) => {
 
       return { success: true, user };
     } catch (error) {
-      console.error("❌ Firebase login error:", error);
+              logger.error("Firebase login error:", error);
       const errorMessage = getFirebaseErrorMessage(error.code);
-      console.log("📝 Dispatching login failure with error:", errorMessage);
+              logger.error("Dispatching login failure with error:", errorMessage);
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: errorMessage,
