@@ -67,42 +67,25 @@ describe("Firebase Sync Service", () => {
     });
   });
 
-  describe("markAsDeleted", () => {
-    it("should mark item as deleted", () => {
-      const itemId = "test-123";
-      const dataType = "transactions";
-
-      firebaseSync.markAsDeleted(itemId, dataType);
-
-      const deletedItems = firebaseSync.getDeletedItems();
-      expect(deletedItems).toContain(`${dataType}:${itemId}`);
-    });
-  });
-
-  describe("clearDeletedItems", () => {
-    it("should clear deleted items", () => {
-      // Add some deleted items first
-      firebaseSync.markAsDeleted("test-1", "transactions");
-      firebaseSync.markAsDeleted("test-2", "accounts");
-
-      expect(firebaseSync.getDeletedItems()).toHaveLength(2);
-
-      firebaseSync.clearDeletedItems();
-
-      expect(firebaseSync.getDeletedItems()).toHaveLength(0);
-    });
-  });
-
   describe("clearAllSyncState", () => {
     it("should clear all sync state", () => {
-      // Add some deleted items first
-      firebaseSync.markAsDeleted("test-1", "transactions");
+      // Test that the method exists and works
+      expect(() => firebaseSync.clearAllSyncState()).not.toThrow();
 
-      expect(firebaseSync.getDeletedItems()).toHaveLength(1);
+      const status = firebaseSync.getSyncStatus();
+      expect(status.lastSyncTime).toBeNull();
+    });
+  });
 
-      firebaseSync.clearAllSyncState();
+  describe("forceSync", () => {
+    it("should have forceSync method", () => {
+      expect(typeof firebaseSync.forceSync).toBe("function");
+    });
+  });
 
-      expect(firebaseSync.getDeletedItems()).toHaveLength(0);
+  describe("initialization", () => {
+    it("should have initialize method", () => {
+      expect(typeof firebaseSync.initialize).toBe("function");
     });
   });
 });

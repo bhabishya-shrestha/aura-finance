@@ -85,6 +85,7 @@ class FirebaseService {
     this.currentUser = null;
     this.transactionUnsubscribe = null;
     this.accountUnsubscribe = null;
+    this.authInitialized = false;
     this.setupAuthListener();
   }
 
@@ -96,6 +97,7 @@ class FirebaseService {
         user ? user.email : "signed out"
       );
       this.currentUser = user;
+      this.authInitialized = true;
       if (user) {
         console.log("✅ User signed in:", user.email, "UID:", user.uid);
       } else {
@@ -430,19 +432,77 @@ class FirebaseService {
   }
 
   async deleteAccount(accountId) {
+    console.log("🔍 deleteAccount called with accountId:", accountId);
+    console.log("🔍 currentUser:", this.currentUser);
+    console.log("🔍 auth.currentUser:", auth.currentUser);
+
+    // Wait for authentication to be initialized
+    if (!this.authInitialized) {
+      console.log("⏳ Waiting for authentication to initialize...");
+      await this.waitForAuth();
+    }
+
     if (!this.currentUser) {
-      return { success: false, error: "User not authenticated" };
+      console.error("❌ No currentUser in service instance");
+      // Try to get user from auth directly
+      const authUser = auth.currentUser;
+      if (authUser) {
+        console.log("✅ Found user in auth.currentUser, updating service");
+        this.currentUser = authUser;
+      } else {
+        console.error("❌ No user found in auth.currentUser either");
+        return { success: false, error: "User not authenticated" };
+      }
     }
 
     try {
+      console.log("🗑️ Attempting to delete account:", accountId);
       const accountDoc = doc(db, "accounts", accountId);
+
+      // First check if the document exists
+      const docSnap = await getDoc(accountDoc);
+      if (!docSnap.exists()) {
+        console.log(
+          "ℹ️ Account document doesn't exist in Firestore, considering deletion successful"
+        );
+        return { success: true };
+      }
+
+      console.log(
+        "📄 Account document exists in Firestore, proceeding with deletion"
+      );
+
+      // Verify the document belongs to the current user
+      const docData = docSnap.data();
+      if (docData.userId !== this.currentUser.uid) {
+        console.error("❌ Account doesn't belong to current user");
+        return {
+          success: false,
+          error: "Unauthorized: Account doesn't belong to current user",
+        };
+      }
+
+      // Delete the document
       await deleteDoc(accountDoc);
+      console.log("✅ Account deleted successfully from Firestore");
+
+      // Verify deletion by trying to read the document again
+      const verifySnap = await getDoc(accountDoc);
+      if (verifySnap.exists()) {
+        console.error("❌ Document still exists after deletion attempt");
+        return { success: false, error: "Failed to delete document" };
+      }
+
+      console.log("✅ Document deletion verified successfully");
       return { success: true };
     } catch (error) {
-      console.error("Delete account error:", error);
+      console.error("❌ Delete account error:", error);
+      console.error("❌ Error code:", error.code);
+      console.error("❌ Error message:", error.message);
 
       // If document doesn't exist, consider it a successful deletion
       if (error.code === "not-found" || error.message.includes("not found")) {
+        console.log("ℹ️ Document not found, considering deletion successful");
         return { success: true };
       }
 
@@ -593,6 +653,24 @@ class FirebaseService {
   // Check if user is authenticated
   isAuthenticated() {
     return !!this.currentUser;
+  }
+
+  // Wait for authentication to be initialized
+  async waitForAuth() {
+    if (this.authInitialized) {
+      return this.currentUser;
+    }
+
+    return new Promise(resolve => {
+      const checkAuth = () => {
+        if (this.authInitialized) {
+          resolve(this.currentUser);
+        } else {
+          setTimeout(checkAuth, 100);
+        }
+      };
+      checkAuth();
+    });
   }
 }
 
