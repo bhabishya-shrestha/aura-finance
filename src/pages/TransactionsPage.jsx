@@ -115,6 +115,9 @@ const TransactionsPage = () => {
         case "date":
           aValue = new Date(a.date);
           bValue = new Date(b.date);
+          // Compare by UTC epoch to avoid timezone day drift
+          aValue = aValue.getTime();
+          bValue = bValue.getTime();
           break;
         case "amount":
           aValue = Math.abs(a.amount);
@@ -125,8 +128,8 @@ const TransactionsPage = () => {
           bValue = b.description?.toLowerCase() || "";
           break;
         default:
-          aValue = new Date(a.date);
-          bValue = new Date(b.date);
+          aValue = new Date(a.date).getTime();
+          bValue = new Date(b.date).getTime();
       }
 
       if (sortOrder === "asc") {
@@ -154,10 +157,12 @@ const TransactionsPage = () => {
   };
 
   const formatDate = date => {
+    // Render using UTC to avoid off-by-one due to timezone shifts
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
+      timeZone: "UTC",
     });
   };
 
