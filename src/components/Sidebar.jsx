@@ -25,6 +25,7 @@ const Sidebar = ({ isMobileOpen, onMobileToggle }) => {
     lastSyncTime: null,
   });
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showSyncDetails, setShowSyncDetails] = useState(false);
   const { user, logout } = useFirebaseAuth();
 
   // Derive currentPage from URL
@@ -328,6 +329,13 @@ const Sidebar = ({ isMobileOpen, onMobileToggle }) => {
                         {formatLastSync(syncStatus.lastSyncTime)}
                       </div>
                     )}
+                    {syncStatus.syncInProgress && (
+                      <div className="mt-2">
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                          <div className="bg-blue-500 h-1 rounded-full animate-pulse" style={{ width: "60%" }}></div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 {syncStatus.isOnline &&
@@ -342,7 +350,39 @@ const Sidebar = ({ isMobileOpen, onMobileToggle }) => {
                       <RefreshCw className="w-3 h-3" />
                     </button>
                   )}
+                {!isCollapsed && (
+                  <button
+                    onClick={() => setShowSyncDetails(v => !v)}
+                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    title={showSyncDetails ? "Hide sync details" : "Show sync details"}
+                  >
+                    {/* Using a simple link icon SVG inline to avoid adding new imports */}
+                    <svg
+                      className="w-3 h-3"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                  </button>
+                )}
               </div>
+              {!isCollapsed && showSyncDetails && (
+                <div className="px-3 pb-3">
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div className="text-[11px] space-y-1 text-gray-600 dark:text-gray-300">
+                      <div className="font-medium">Firebase Sync</div>
+                      <div className="text-gray-500 dark:text-gray-400 truncate">{user?.email}</div>
+                      <div className="text-green-600 dark:text-green-400">Cross-device sync enabled</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
