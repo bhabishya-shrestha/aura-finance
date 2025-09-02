@@ -721,7 +721,7 @@ const AccountsPage = () => {
 
       {/* Accounts Grid */}
       {accounts.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4 lg:gap-6">
           {accounts.map(account => (
             <div key={account.id} className="lg:hidden">
               <MobileAccountCard account={account} />
