@@ -119,6 +119,35 @@ const useProductionStore = create(
       }
     },
 
+    // Force refresh accounts only (useful after deletions)
+    forceRefreshAccounts: async () => {
+      try {
+        console.log("🔄 Force refreshing accounts from Firebase...");
+        
+        const accountsResult = await firebaseService.getAccounts();
+        if (accountsResult.success) {
+          const currentState = get();
+          const updatedAccounts = accountsResult.data || [];
+          
+          console.log("📊 Accounts refresh results:");
+          console.log("  - Previous count:", currentState.accounts.length);
+          console.log("  - New count:", updatedAccounts.length);
+          
+          set({
+            accounts: updatedAccounts,
+            lastSyncTime: new Date(),
+          });
+          
+          return { success: true, accounts: updatedAccounts };
+        } else {
+          throw new Error("Failed to fetch accounts from Firebase");
+        }
+      } catch (error) {
+        console.error("❌ Force refresh accounts error:", error);
+        throw error;
+      }
+    },
+
     // Clear local database and refresh from Firebase
     clearLocalData: async () => {
       try {
@@ -162,6 +191,27 @@ const useProductionStore = create(
       });
 
       console.log("✅ Store reset completed");
+    },
+
+    // Manually remove account from store state (fallback method)
+    removeAccountFromState: (accountId) => {
+      const currentState = get();
+      const updatedAccounts = currentState.accounts.filter(acc => acc.id !== accountId);
+      const updatedTransactions = currentState.transactions.filter(trans => trans.accountId !== accountId);
+      
+      console.log("🗑️ Manually removing account from state:", accountId);
+      console.log("  - Accounts before:", currentState.accounts.length);
+      console.log("  - Accounts after:", updatedAccounts.length);
+      console.log("  - Transactions before:", currentState.transactions.length);
+      console.log("  - Transactions after:", updatedTransactions.length);
+      
+      set({
+        accounts: updatedAccounts,
+        transactions: updatedTransactions,
+        lastSyncTime: new Date(),
+      });
+      
+      return { success: true, accounts: updatedAccounts, transactions: updatedTransactions };
     },
 
     // Helper function to process transactions with account information
@@ -596,13 +646,16 @@ const useProductionStore = create(
 
     deleteAccount: async (accountId, options = {}) => {
       try {
+        console.log("🔍 productionStore.deleteAccount called with:", { accountId, options });
         set({ isLoading: true, error: null, syncStatus: "syncing" });
 
         // Validate account exists
         const existingAccount = get().accounts.find(a => a.id === accountId);
         if (!existingAccount) {
+          console.error("❌ Account not found in store:", accountId);
           throw new Error("Account not found");
         }
+        console.log("✅ Account found in store:", existingAccount);
 
         // Check if account has transactions
         const accountTransactions = get().transactions.filter(
@@ -671,15 +724,51 @@ const useProductionStore = create(
           }
         }
 
-        // Now delete the account
+        // Now delete the account from Firebase
+        console.log("🗑️ Calling firebaseService.deleteAccount with accountId:", accountId);
+        
+        // Ensure Firebase service is ready
+        if (!firebaseService.authInitialized) {
+          console.log("⏳ Waiting for Firebase service to be ready...");
+          await firebaseService.waitForAuth();
+        }
+        
         const result = await firebaseService.deleteAccount(accountId);
+        console.log("📊 firebaseService.deleteAccount result:", result);
 
         if (!result.success) {
+          console.error("❌ firebaseService.deleteAccount failed:", result.error);
           throw new Error(result.error || "Failed to delete account");
         }
+        console.log("✅ firebaseService.deleteAccount succeeded");
 
-        // The real-time listener will automatically update the store
-        set({ isLoading: false, syncStatus: "success" });
+        // CRITICAL: Update local state immediately to reflect the deletion
+        // This ensures the UI updates immediately, regardless of real-time listener timing
+        const currentState = get();
+        const updatedAccounts = currentState.accounts.filter(acc => acc.id !== accountId);
+        const updatedTransactions = currentState.transactions.filter(trans => trans.accountId !== accountId);
+        
+        console.log("🔄 Updating local state after deletion:");
+        console.log("  - Accounts before:", currentState.accounts.length);
+        console.log("  - Accounts after:", updatedAccounts.length);
+        console.log("  - Transactions before:", currentState.transactions.length);
+        console.log("  - Transactions after:", updatedTransactions.length);
+        
+        set({
+          accounts: updatedAccounts,
+          transactions: updatedTransactions,
+          isLoading: false,
+          syncStatus: "success",
+          lastSyncTime: new Date()
+        });
+
+        // Force a refresh of real-time listeners to ensure consistency
+        console.log("🔄 Refreshing real-time listeners...");
+        firebaseService.unsubscribeFromTransactions();
+        firebaseService.unsubscribeFromAccounts();
+        
+        // Set up listeners again
+        await get().setupRealtimeListeners();
 
         return {
           success: true,
@@ -687,6 +776,7 @@ const useProductionStore = create(
         };
       } catch (error) {
         const errorMessage = error.message || "Failed to delete account";
+        console.error("❌ deleteAccount error:", error);
         set({
           isLoading: false,
           error: errorMessage,
