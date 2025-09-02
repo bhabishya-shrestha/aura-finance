@@ -65,8 +65,13 @@ const AccountsPage = () => {
   };
 
   const getTransactionMs = t => {
-    // Prefer explicit date, then updatedAt, then createdAt
-    return toMs(t?.date) || toMs(t?.updatedAt) || toMs(t?.createdAt) || 0;
+    // Prefer most recent activity: updatedAt -> createdAt -> date
+    return (
+      toMs(t?.updatedAt) ||
+      toMs(t?.createdAt) ||
+      toMs(t?.date) ||
+      0
+    );
   };
 
   // Initialize store if needed
