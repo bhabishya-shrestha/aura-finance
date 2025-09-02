@@ -355,7 +355,7 @@ const AccountsPage = () => {
               {(() => {
                 const recentTransactions = getTransactionsByAccount(account.id)
                   .sort((a, b) => new Date(b.date) - new Date(a.date))
-                  .slice(0, 5);
+                  .slice(0, 3);
 
                 if (recentTransactions.length === 0) {
                   return (
@@ -588,7 +588,7 @@ const AccountsPage = () => {
               {(() => {
                 const recentTransactions = getTransactionsByAccount(account.id)
                   .sort((a, b) => new Date(b.date) - new Date(a.date))
-                  .slice(0, 8);
+                  .slice(0, 3);
 
                 if (recentTransactions.length === 0) {
                   return (
