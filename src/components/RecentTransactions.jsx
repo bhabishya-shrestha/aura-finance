@@ -67,7 +67,10 @@ const RecentTransactions = ({ onPageChange }) => {
     try {
       // Calculate final amount based on transaction type
       const baseAmount = parseFloat(editData.amount);
-      const finalAmount = calculateAmountWithSign(baseAmount, editData.transactionType);
+      const finalAmount = calculateAmountWithSign(
+        baseAmount,
+        editData.transactionType
+      );
 
       await updateTransaction(transactionId, {
         description: editData.description,
@@ -159,7 +162,12 @@ const RecentTransactions = ({ onPageChange }) => {
                     <div className="flex items-center gap-2 mt-1">
                       <button
                         type="button"
-                        onClick={() => setEditData({ ...editData, transactionType: "income" })}
+                        onClick={() =>
+                          setEditData({
+                            ...editData,
+                            transactionType: "income",
+                          })
+                        }
                         className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200 border ${
                           editData.transactionType === "income"
                             ? "bg-blue-600 text-white border-blue-600"
@@ -170,7 +178,12 @@ const RecentTransactions = ({ onPageChange }) => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setEditData({ ...editData, transactionType: "expense" })}
+                        onClick={() =>
+                          setEditData({
+                            ...editData,
+                            transactionType: "expense",
+                          })
+                        }
                         className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200 border ${
                           editData.transactionType === "expense"
                             ? "bg-blue-600 text-white border-blue-600"
@@ -181,10 +194,9 @@ const RecentTransactions = ({ onPageChange }) => {
                       </button>
                     </div>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {editData.transactionType === "income" 
+                      {editData.transactionType === "income"
                         ? "Amount will be recorded as positive (increases balance)"
-                        : "Amount will be recorded as negative (decreases balance)"
-                      }
+                        : "Amount will be recorded as negative (decreases balance)"}
                     </p>
                   </div>
 

@@ -86,8 +86,6 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
     }
   }, [accounts, formData.accountId]);
 
-
-
   const validateForm = () => {
     const newErrors = {};
 
@@ -134,7 +132,10 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
     try {
       // Calculate final amount based on transaction type
       const baseAmount = parseFloat(formData.amount);
-      const finalAmount = calculateAmountWithSign(baseAmount, formData.transactionType);
+      const finalAmount = calculateAmountWithSign(
+        baseAmount,
+        formData.transactionType
+      );
 
       // Ensure proper data types for production store
       const transactionData = {
