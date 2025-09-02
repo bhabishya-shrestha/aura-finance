@@ -212,7 +212,6 @@ const AppLayout = () => {
       </div>
 
       <NotificationToast />
-      <SyncStatus />
     </div>
   );
 };

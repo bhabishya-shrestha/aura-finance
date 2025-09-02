@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import useProductionStore from "../store/productionStore";
+import DatePicker from "../components/ui/DatePicker";
 import { CATEGORIES } from "../utils/statementParser";
 
 const TransactionsPage = () => {
@@ -115,6 +116,9 @@ const TransactionsPage = () => {
         case "date":
           aValue = new Date(a.date);
           bValue = new Date(b.date);
+          // Compare by UTC epoch to avoid timezone day drift
+          aValue = aValue.getTime();
+          bValue = bValue.getTime();
           break;
         case "amount":
           aValue = Math.abs(a.amount);
@@ -125,8 +129,8 @@ const TransactionsPage = () => {
           bValue = b.description?.toLowerCase() || "";
           break;
         default:
-          aValue = new Date(a.date);
-          bValue = new Date(b.date);
+          aValue = new Date(a.date).getTime();
+          bValue = new Date(b.date).getTime();
       }
 
       if (sortOrder === "asc") {
@@ -154,10 +158,12 @@ const TransactionsPage = () => {
   };
 
   const formatDate = date => {
+    // Render using UTC to avoid off-by-one due to timezone shifts
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
+      timeZone: "UTC",
     });
   };
 
@@ -1292,19 +1298,15 @@ const TransactionsPage = () => {
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Date
-                </label>
-                <input
-                  type="date"
+                <DatePicker
+                  label="Date"
                   value={editTransactionData.date}
-                  onChange={e =>
+                  onChange={ymd =>
                     setEditTransactionData({
                       ...editTransactionData,
-                      date: e.target.value,
+                      date: ymd,
                     })
                   }
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 />
               </div>
 

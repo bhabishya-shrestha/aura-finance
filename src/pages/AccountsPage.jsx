@@ -40,6 +40,35 @@ const AccountsPage = () => {
     balance: "",
   });
 
+  // Normalize various date shapes to milliseconds since epoch
+  const toMs = value => {
+    if (!value) return 0;
+    try {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        ("seconds" in value || "nanoseconds" in value)
+      ) {
+        const seconds = Number(value.seconds || 0);
+        const nanos = Number(value.nanoseconds || 0);
+        return seconds * 1000 + Math.floor(nanos / 1e6);
+      }
+      if (value instanceof Date && !isNaN(value)) {
+        return value.getTime();
+      }
+      const parsed = new Date(value);
+      const ms = parsed.getTime();
+      return isNaN(ms) ? 0 : ms;
+    } catch (_) {
+      return 0;
+    }
+  };
+
+  const getTransactionMs = t => {
+    // Prefer most recent activity: updatedAt -> createdAt -> date
+    return toMs(t?.updatedAt) || toMs(t?.createdAt) || toMs(t?.date) || 0;
+  };
+
   // Initialize store if needed
   useEffect(() => {
     if (!isInitialized) {
@@ -94,6 +123,14 @@ const AccountsPage = () => {
       maximumFractionDigits: 2,
     }).format(amount);
   };
+
+  const formatDateUTC = dateValue =>
+    new Date(dateValue).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    });
 
   const handleAddAccount = async () => {
     if (!formData.name || !formData.balance) return;
@@ -354,8 +391,8 @@ const AccountsPage = () => {
               </h4>
               {(() => {
                 const recentTransactions = getTransactionsByAccount(account.id)
-                  .sort((a, b) => new Date(b.date) - new Date(a.date))
-                  .slice(0, 5);
+                  .sort((a, b) => getTransactionMs(b) - getTransactionMs(a))
+                  .slice(0, 3);
 
                 if (recentTransactions.length === 0) {
                   return (
@@ -378,7 +415,7 @@ const AccountsPage = () => {
                             {transaction.description || "No description"}
                           </p>
                           <p className="text-gray-500 dark:text-gray-400">
-                            {new Date(transaction.date).toLocaleDateString()}
+                            {formatDateUTC(transaction.date)}
                           </p>
                         </div>
                         <span
@@ -587,8 +624,8 @@ const AccountsPage = () => {
               </h4>
               {(() => {
                 const recentTransactions = getTransactionsByAccount(account.id)
-                  .sort((a, b) => new Date(b.date) - new Date(a.date))
-                  .slice(0, 8);
+                  .sort((a, b) => getTransactionMs(b) - getTransactionMs(a))
+                  .slice(0, 3);
 
                 if (recentTransactions.length === 0) {
                   return (
@@ -611,7 +648,7 @@ const AccountsPage = () => {
                             {transaction.description || "No description"}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {new Date(transaction.date).toLocaleDateString()} •{" "}
+                            {formatDateUTC(transaction.date)} •{" "}
                             {transaction.category || "Uncategorized"}
                           </p>
                         </div>
@@ -684,7 +721,7 @@ const AccountsPage = () => {
 
       {/* Accounts Grid */}
       {accounts.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4 lg:gap-6">
           {accounts.map(account => (
             <div key={account.id} className="lg:hidden">
               <MobileAccountCard account={account} />
