@@ -154,6 +154,7 @@ export const FirebaseAuthProvider = ({ children }) => {
         try {
           // Get or create user profile
           const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          let profileData = null;
 
           if (!userDoc.exists()) {
             console.log(
@@ -182,6 +183,7 @@ export const FirebaseAuthProvider = ({ children }) => {
           } else {
             // Only update if there are actual changes to avoid unnecessary writes
             const existingProfile = userDoc.data();
+            profileData = existingProfile;
             const hasChanges =
               existingProfile.email !== firebaseUser.email ||
               existingProfile.name !==
@@ -219,7 +221,11 @@ export const FirebaseAuthProvider = ({ children }) => {
           const user = {
             id: firebaseUser.uid,
             email: firebaseUser.email,
-            name: firebaseUser.displayName || firebaseUser.email,
+            // Prefer Firestore profile name when available; fallback to displayName/email
+            name:
+              (profileData && profileData.name) ||
+              firebaseUser.displayName ||
+              firebaseUser.email,
             photoURL: firebaseUser.photoURL,
           };
 
