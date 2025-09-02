@@ -142,3 +142,4 @@ security-report.json
 
 # Documentation files
 PROJECT_DOCUMENTATION.md
+.env*.local

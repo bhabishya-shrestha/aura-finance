@@ -24,6 +24,8 @@ const AccountsPage = () => {
     isLoading,
     initialize,
     isInitialized,
+    forceRefreshAccounts,
+    removeAccountFromState,
   } = useProductionStore();
   const { showSuccess, showError, showWarning } = useNotifications();
   const [showAddModal, setShowAddModal] = useState(false);
@@ -155,16 +157,33 @@ const AccountsPage = () => {
 
     try {
       const options = deleteTransactions ? { deleteTransactions: true } : {};
+      console.log("🗑️ Attempting to delete account with options:", options);
+
       const result = await deleteAccount(accountToDelete.id, options);
 
       if (result.success) {
+        console.log("✅ Account deletion succeeded:", result);
         showSuccess(result.message || "Account deleted successfully");
         setShowDeleteConfirm(false);
         setAccountToDelete(null);
+
+        // Force refresh accounts to ensure UI is in sync
+        console.log("🔄 Force refreshing accounts after deletion...");
+        try {
+          await forceRefreshAccounts();
+          console.log("✅ Accounts refreshed successfully");
+        } catch (refreshError) {
+          console.warn("⚠️ Failed to refresh accounts:", refreshError);
+          // Fallback: manually remove from state
+          console.log("🔄 Using fallback: manually removing from state");
+          removeAccountFromState(accountToDelete.id);
+        }
       } else {
+        console.error("❌ Account deletion failed:", result);
         showError(result.message || "Failed to delete account");
       }
     } catch (error) {
+      console.error("❌ Account deletion error:", error);
       if (error.message.includes("existing transactions")) {
         // Show a more helpful error with options
         showWarning(
