@@ -97,9 +97,7 @@ const SettingsPage = () => {
 
     // Persist profile name to Firestore if provided
     try {
-      const firstName = (settings.firstName || "").trim();
-      const lastName = (settings.lastName || "").trim();
-      const fullName = [firstName, lastName].filter(Boolean).join(" ");
+      const fullName = (settings.fullName || "").trim();
       if (fullName) {
         await updateUserProfile({ name: fullName });
       }
@@ -506,40 +504,22 @@ const SettingsPage = () => {
                 </h3>
               </div>
               <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      First Name
+                      Full Name
                     </label>
                     <input
                       type="text"
                       value={
-                        settings.firstName ||
-                        user?.user_metadata?.full_name?.split(" ")[0] ||
+                        settings.fullName ||
+                        user?.user_metadata?.full_name ||
+                        user?.name ||
                         ""
                       }
-                      onChange={e => updateSetting("firstName", e.target.value)}
+                      onChange={e => updateSetting("fullName", e.target.value)}
                       className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                      placeholder="Enter your first name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      value={
-                        settings.lastName ||
-                        user?.user_metadata?.full_name
-                          ?.split(" ")
-                          .slice(1)
-                          .join(" ") ||
-                        ""
-                      }
-                      onChange={e => updateSetting("lastName", e.target.value)}
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                      placeholder="Enter your last name"
+                      placeholder="Enter your full name"
                     />
                   </div>
                 </div>
