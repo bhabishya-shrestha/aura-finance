@@ -41,30 +41,32 @@ const AccountsPage = () => {
   });
 
   // Normalize various date shapes to milliseconds since epoch
-  const getDateMs = dateValue => {
-    if (!dateValue) return 0;
+  const toMs = value => {
+    if (!value) return 0;
     try {
-      // Firestore Timestamp-like object
       if (
-        typeof dateValue === "object" &&
-        dateValue !== null &&
-        ("seconds" in dateValue || "nanoseconds" in dateValue)
+        typeof value === "object" &&
+        value !== null &&
+        ("seconds" in value || "nanoseconds" in value)
       ) {
-        const seconds = Number(dateValue.seconds || 0);
-        const nanos = Number(dateValue.nanoseconds || 0);
+        const seconds = Number(value.seconds || 0);
+        const nanos = Number(value.nanoseconds || 0);
         return seconds * 1000 + Math.floor(nanos / 1e6);
       }
-      // Native Date
-      if (dateValue instanceof Date && !isNaN(dateValue)) {
-        return dateValue.getTime();
+      if (value instanceof Date && !isNaN(value)) {
+        return value.getTime();
       }
-      // String or other
-      const parsed = new Date(dateValue);
+      const parsed = new Date(value);
       const ms = parsed.getTime();
       return isNaN(ms) ? 0 : ms;
     } catch (_) {
       return 0;
     }
+  };
+
+  const getTransactionMs = t => {
+    // Prefer explicit date, then updatedAt, then createdAt
+    return toMs(t?.date) || toMs(t?.updatedAt) || toMs(t?.createdAt) || 0;
   };
 
   // Initialize store if needed
@@ -381,7 +383,7 @@ const AccountsPage = () => {
               </h4>
               {(() => {
                 const recentTransactions = getTransactionsByAccount(account.id)
-                  .sort((a, b) => getDateMs(b.date) - getDateMs(a.date))
+                  .sort((a, b) => getTransactionMs(b) - getTransactionMs(a))
                   .slice(0, 3);
 
                 if (recentTransactions.length === 0) {
@@ -614,7 +616,7 @@ const AccountsPage = () => {
               </h4>
               {(() => {
                 const recentTransactions = getTransactionsByAccount(account.id)
-                  .sort((a, b) => getDateMs(b.date) - getDateMs(a.date))
+                  .sort((a, b) => getTransactionMs(b) - getTransactionMs(a))
                   .slice(0, 3);
 
                 if (recentTransactions.length === 0) {
