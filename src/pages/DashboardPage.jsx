@@ -275,7 +275,11 @@ const DashboardPage = ({
             Recent Transactions
           </h2>
           <button
-            onClick={() => (typeof onPageChange === "function" ? onPageChange("transactions") : navigate("/transactions"))}
+            onClick={() =>
+              typeof onPageChange === "function"
+                ? onPageChange("transactions")
+                : navigate("/transactions")
+            }
             className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
           >
             View All
@@ -293,7 +297,12 @@ const DashboardPage = ({
                     {transaction.description}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(transaction.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" })}
+                    {new Date(transaction.date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      timeZone: "UTC",
+                    })}
                   </p>
                 </div>
                 <p

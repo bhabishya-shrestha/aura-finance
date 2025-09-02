@@ -40,9 +40,10 @@ const MobileSidebar = ({ isOpen, onClose }) => {
   const getPersonalizedGreeting = () => {
     const hour = new Date().getHours();
     const rawName = (user?.name || "").trim();
-    const computedName = rawName && !rawName.includes("@")
-      ? rawName.split(" ")[0]
-      : (user?.email?.split("@")[0] || "there");
+    const computedName =
+      rawName && !rawName.includes("@")
+        ? rawName.split(" ")[0]
+        : user?.email?.split("@")[0] || "there";
     const userName = computedName || "there";
 
     let timeGreeting = "";

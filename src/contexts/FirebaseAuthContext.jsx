@@ -152,7 +152,8 @@ export const FirebaseAuthProvider = ({ children }) => {
         .map(s => s.charAt(0).toUpperCase() + s.slice(1))
         .join(" ");
 
-    const getEmailPrefixName = email => toTitleCase((email || "").split("@")[0]);
+    const getEmailPrefixName = email =>
+      toTitleCase((email || "").split("@")[0]);
 
     const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
       console.log(
@@ -174,7 +175,8 @@ export const FirebaseAuthProvider = ({ children }) => {
             const userProfile = {
               email: firebaseUser.email,
               name:
-                firebaseUser.displayName || getEmailPrefixName(firebaseUser.email),
+                firebaseUser.displayName ||
+                getEmailPrefixName(firebaseUser.email),
               photoURL: firebaseUser.photoURL,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),

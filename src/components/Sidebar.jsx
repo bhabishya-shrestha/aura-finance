@@ -45,9 +45,10 @@ const Sidebar = ({ isMobileOpen, onMobileToggle }) => {
     const hour = new Date().getHours();
     // Prefer a human-friendly name; if the stored name looks like an email, use the email prefix
     const rawName = (user?.name || "").trim();
-    const computedName = rawName && !rawName.includes("@")
-      ? rawName.split(" ")[0]
-      : (user?.email?.split("@")[0] || "there");
+    const computedName =
+      rawName && !rawName.includes("@")
+        ? rawName.split(" ")[0]
+        : user?.email?.split("@")[0] || "there";
     const userName = computedName || "there";
 
     let timeGreeting = "";
@@ -332,7 +333,10 @@ const Sidebar = ({ isMobileOpen, onMobileToggle }) => {
                     {syncStatus.syncInProgress && (
                       <div className="mt-2">
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
-                          <div className="bg-blue-500 h-1 rounded-full animate-pulse" style={{ width: "60%" }}></div>
+                          <div
+                            className="bg-blue-500 h-1 rounded-full animate-pulse"
+                            style={{ width: "60%" }}
+                          ></div>
                         </div>
                       </div>
                     )}
@@ -354,7 +358,11 @@ const Sidebar = ({ isMobileOpen, onMobileToggle }) => {
                   <button
                     onClick={() => setShowSyncDetails(v => !v)}
                     className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                    title={showSyncDetails ? "Hide sync details" : "Show sync details"}
+                    title={
+                      showSyncDetails
+                        ? "Hide sync details"
+                        : "Show sync details"
+                    }
                   >
                     {/* Using a simple link icon SVG inline to avoid adding new imports */}
                     <svg
@@ -377,8 +385,12 @@ const Sidebar = ({ isMobileOpen, onMobileToggle }) => {
                   <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                     <div className="text-[11px] space-y-1 text-gray-600 dark:text-gray-300">
                       <div className="font-medium">Firebase Sync</div>
-                      <div className="text-gray-500 dark:text-gray-400 truncate">{user?.email}</div>
-                      <div className="text-green-600 dark:text-green-400">Cross-device sync enabled</div>
+                      <div className="text-gray-500 dark:text-gray-400 truncate">
+                        {user?.email}
+                      </div>
+                      <div className="text-green-600 dark:text-green-400">
+                        Cross-device sync enabled
+                      </div>
                     </div>
                   </div>
                 </div>
