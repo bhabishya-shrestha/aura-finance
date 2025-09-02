@@ -458,31 +458,7 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
                 )}
               </div>
 
-              {/* Transaction Type Toggle */}
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <button
-                  type="button"
-                  onClick={() => handleTransactionTypeChange("income")}
-                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    formData.transactionType === "income"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-                  }`}
-                >
-                  <TrendingUp className="w-4 h-4 mr-2" /> Income
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleTransactionTypeChange("expense")}
-                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    formData.transactionType === "expense"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-                  }`}
-                >
-                  <TrendingDown className="w-4 h-4 mr-2" /> Expense
-                </button>
-              </div>
+              
 
               {/* Error message */}
               {error && (
