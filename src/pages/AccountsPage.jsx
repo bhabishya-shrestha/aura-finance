@@ -648,7 +648,8 @@ const AccountsPage = () => {
                             {transaction.description || "No description"}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatDateUTC(transaction.date)} • {transaction.category || "Uncategorized"}
+                            {formatDateUTC(transaction.date)} •{" "}
+                            {transaction.category || "Uncategorized"}
                           </p>
                         </div>
                         <span
@@ -720,7 +721,7 @@ const AccountsPage = () => {
 
       {/* Accounts Grid */}
       {accounts.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-4 lg:gap-6">
           {accounts.map(account => (
             <div key={account.id} className="lg:hidden">
               <MobileAccountCard account={account} />
