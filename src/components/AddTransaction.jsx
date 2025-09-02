@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   X,
   DollarSign,
-  Calendar,
   FileText,
   Tag,
   Wallet,
@@ -17,6 +16,7 @@ import {
   detectTransactionType,
   calculateAmountWithSign,
 } from "../utils/transactionUtils";
+import DatePicker from "./ui/DatePicker";
 
 const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
   const {
@@ -458,32 +458,6 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
                 )}
               </div>
 
-              {/* Transaction Type Toggle */}
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <button
-                  type="button"
-                  onClick={() => handleTransactionTypeChange("income")}
-                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    formData.transactionType === "income"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-                  }`}
-                >
-                  <TrendingUp className="w-4 h-4 mr-2" /> Income
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleTransactionTypeChange("expense")}
-                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    formData.transactionType === "expense"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-                  }`}
-                >
-                  <TrendingDown className="w-4 h-4 mr-2" /> Expense
-                </button>
-              </div>
-
               {/* Error message */}
               {error && (
                 <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -495,23 +469,13 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Date
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    className={`w-full pl-10 px-3 py-2 bg-white dark:bg-gray-700 border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
-                      errors.date
-                        ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                        : "border-gray-300 dark:border-gray-600"
-                    }`}
-                  />
-                </div>
+                <DatePicker
+                  label="Date"
+                  value={formData.date}
+                  onChange={ymd =>
+                    setFormData(prev => ({ ...prev, date: ymd }))
+                  }
+                />
                 {errors.date && (
                   <p className="mt-1 text-xs text-red-600 dark:text-red-400">
                     {errors.date}

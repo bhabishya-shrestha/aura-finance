@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   TrendingUp,
   TrendingDown,
@@ -24,6 +25,7 @@ const DashboardPage = ({
     useProductionStore();
   const { isAuthenticated, isInitialized: authInitialized } = useFirebaseAuth();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const [error, setError] = useState("");
 
@@ -86,7 +88,28 @@ const DashboardPage = ({
     (sum, account) => sum + account.balance,
     0
   );
-  const recentTransactions = transactions.slice(0, 5);
+  // Robust recent transactions: sort by date desc using epoch ms
+  const getMs = value => {
+    if (!value) return 0;
+    try {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        ("seconds" in value || "nanoseconds" in value)
+      ) {
+        const seconds = Number(value.seconds || 0);
+        const nanos = Number(value.nanoseconds || 0);
+        return seconds * 1000 + Math.floor(nanos / 1e6);
+      }
+      const ms = new Date(value).getTime();
+      return isNaN(ms) ? 0 : ms;
+    } catch (_) {
+      return 0;
+    }
+  };
+  const recentTransactions = [...transactions]
+    .sort((a, b) => getMs(b.date) - getMs(a.date))
+    .slice(0, 5);
   const monthlyIncome = transactions
     .filter(
       t => t.amount > 0 && new Date(t.date).getMonth() === new Date().getMonth()
@@ -252,7 +275,11 @@ const DashboardPage = ({
             Recent Transactions
           </h2>
           <button
-            onClick={() => onPageChange("transactions")}
+            onClick={() =>
+              typeof onPageChange === "function"
+                ? onPageChange("transactions")
+                : navigate("/transactions")
+            }
             className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
           >
             View All
@@ -270,7 +297,12 @@ const DashboardPage = ({
                     {transaction.description}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(transaction.date).toLocaleDateString()}
+                    {new Date(transaction.date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      timeZone: "UTC",
+                    })}
                   </p>
                 </div>
                 <p

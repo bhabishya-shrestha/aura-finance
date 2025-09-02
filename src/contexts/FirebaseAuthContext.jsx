@@ -144,6 +144,17 @@ export const FirebaseAuthProvider = ({ children }) => {
   useEffect(() => {
     console.log("🔐 Setting up Firebase Auth listener...");
 
+    const toTitleCase = str =>
+      (str || "")
+        .replace(/[-_.]+/g, " ")
+        .split(" ")
+        .filter(Boolean)
+        .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+        .join(" ");
+
+    const getEmailPrefixName = email =>
+      toTitleCase((email || "").split("@")[0]);
+
     const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
       console.log(
         "🔄 Auth state changed:",
@@ -154,6 +165,7 @@ export const FirebaseAuthProvider = ({ children }) => {
         try {
           // Get or create user profile
           const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          let profileData = null;
 
           if (!userDoc.exists()) {
             console.log(
@@ -162,7 +174,9 @@ export const FirebaseAuthProvider = ({ children }) => {
             );
             const userProfile = {
               email: firebaseUser.email,
-              name: firebaseUser.displayName || firebaseUser.email,
+              name:
+                firebaseUser.displayName ||
+                getEmailPrefixName(firebaseUser.email),
               photoURL: firebaseUser.photoURL,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
@@ -182,17 +196,23 @@ export const FirebaseAuthProvider = ({ children }) => {
           } else {
             // Only update if there are actual changes to avoid unnecessary writes
             const existingProfile = userDoc.data();
+            profileData = existingProfile;
+            const normalizedDesiredName =
+              firebaseUser.displayName ||
+              (existingProfile.name && !existingProfile.name.includes("@")
+                ? existingProfile.name
+                : getEmailPrefixName(firebaseUser.email));
+
             const hasChanges =
               existingProfile.email !== firebaseUser.email ||
-              existingProfile.name !==
-                (firebaseUser.displayName || firebaseUser.email) ||
+              existingProfile.name !== normalizedDesiredName ||
               existingProfile.photoURL !== firebaseUser.photoURL;
 
             if (hasChanges) {
               console.log("📝 Updating existing user profile with changes...");
               const userProfile = {
                 email: firebaseUser.email,
-                name: firebaseUser.displayName || firebaseUser.email,
+                name: normalizedDesiredName,
                 photoURL: firebaseUser.photoURL,
                 updatedAt: new Date().toISOString(),
               };
@@ -219,7 +239,13 @@ export const FirebaseAuthProvider = ({ children }) => {
           const user = {
             id: firebaseUser.uid,
             email: firebaseUser.email,
-            name: firebaseUser.displayName || firebaseUser.email,
+            // Prefer normalized profile name; fallback to displayName or email prefix
+            name:
+              (profileData && !profileData.name?.includes("@")
+                ? profileData.name
+                : null) ||
+              firebaseUser.displayName ||
+              getEmailPrefixName(firebaseUser.email),
             photoURL: firebaseUser.photoURL,
           };
 
@@ -388,6 +414,38 @@ export const FirebaseAuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: loading });
   };
 
+  // Update user profile fields in Firestore (e.g., name) and refresh local state
+  const updateUserProfile = async updatedFields => {
+    if (!state.user?.id) return { success: false, error: "Not authenticated" };
+    try {
+      const profileRef = doc(db, "users", state.user.id);
+      await setDoc(
+        profileRef,
+        {
+          ...updatedFields,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+
+      // Refresh local user state if name was updated
+      if (typeof updatedFields.name === "string" && updatedFields.name.trim()) {
+        const refreshedUser = {
+          ...state.user,
+          name: updatedFields.name.trim(),
+        };
+        dispatch({
+          type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+          payload: { user: refreshedUser },
+        });
+      }
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
   const value = {
     ...state,
     login,
@@ -396,6 +454,7 @@ export const FirebaseAuthProvider = ({ children }) => {
     resetPassword,
     clearError,
     setLoading,
+    updateUserProfile,
   };
 
   return (
