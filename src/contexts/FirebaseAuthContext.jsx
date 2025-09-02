@@ -412,6 +412,38 @@ export const FirebaseAuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: loading });
   };
 
+  // Update user profile fields in Firestore (e.g., name) and refresh local state
+  const updateUserProfile = async updatedFields => {
+    if (!state.user?.id) return { success: false, error: "Not authenticated" };
+    try {
+      const profileRef = doc(db, "users", state.user.id);
+      await setDoc(
+        profileRef,
+        {
+          ...updatedFields,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+
+      // Refresh local user state if name was updated
+      if (typeof updatedFields.name === "string" && updatedFields.name.trim()) {
+        const refreshedUser = {
+          ...state.user,
+          name: updatedFields.name.trim(),
+        };
+        dispatch({
+          type: AUTH_ACTIONS.AUTH_STATE_CHANGED,
+          payload: { user: refreshedUser },
+        });
+      }
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
   const value = {
     ...state,
     login,
@@ -420,6 +452,7 @@ export const FirebaseAuthProvider = ({ children }) => {
     resetPassword,
     clearError,
     setLoading,
+    updateUserProfile,
   };
 
   return (

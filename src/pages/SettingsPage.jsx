@@ -35,7 +35,7 @@ const SettingsPage = () => {
     importSettings,
   } = useSettings();
   const { setTheme, currentTheme } = useTheme();
-  const { user } = useFirebaseAuth();
+  const { user, updateUserProfile } = useFirebaseAuth();
   const {
     transactions,
     accounts,
@@ -95,16 +95,28 @@ const SettingsPage = () => {
       setIsNotificationVisible(true);
     }, 10);
 
-    // Simulate save delay
-    setTimeout(() => {
-      setIsSaving(false);
-      // Start fade out after 2.5 seconds
+    // Persist profile name to Firestore if provided
+    try {
+      const firstName = (settings.firstName || "").trim();
+      const lastName = (settings.lastName || "").trim();
+      const fullName = [firstName, lastName].filter(Boolean).join(" ");
+      if (fullName) {
+        await updateUserProfile({ name: fullName });
+      }
+    } catch (e) {
+      // Best-effort; UI confirmation remains
+    } finally {
+      // Simulate save delay
       setTimeout(() => {
-        setIsNotificationVisible(false);
-        // Clear message after fade out animation
-        setTimeout(() => setSaveMessage(""), 300);
-      }, 2500);
-    }, 1000);
+        setIsSaving(false);
+        // Start fade out after 2.5 seconds
+        setTimeout(() => {
+          setIsNotificationVisible(false);
+          // Clear message after fade out animation
+          setTimeout(() => setSaveMessage(""), 300);
+        }, 2500);
+      }, 1000);
+    }
   };
 
   const handleImportSettings = async event => {
