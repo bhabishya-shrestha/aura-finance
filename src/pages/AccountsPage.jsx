@@ -40,6 +40,33 @@ const AccountsPage = () => {
     balance: "",
   });
 
+  // Normalize various date shapes to milliseconds since epoch
+  const getDateMs = dateValue => {
+    if (!dateValue) return 0;
+    try {
+      // Firestore Timestamp-like object
+      if (
+        typeof dateValue === "object" &&
+        dateValue !== null &&
+        ("seconds" in dateValue || "nanoseconds" in dateValue)
+      ) {
+        const seconds = Number(dateValue.seconds || 0);
+        const nanos = Number(dateValue.nanoseconds || 0);
+        return seconds * 1000 + Math.floor(nanos / 1e6);
+      }
+      // Native Date
+      if (dateValue instanceof Date && !isNaN(dateValue)) {
+        return dateValue.getTime();
+      }
+      // String or other
+      const parsed = new Date(dateValue);
+      const ms = parsed.getTime();
+      return isNaN(ms) ? 0 : ms;
+    } catch (_) {
+      return 0;
+    }
+  };
+
   // Initialize store if needed
   useEffect(() => {
     if (!isInitialized) {
@@ -354,7 +381,7 @@ const AccountsPage = () => {
               </h4>
               {(() => {
                 const recentTransactions = getTransactionsByAccount(account.id)
-                  .sort((a, b) => new Date(b.date) - new Date(a.date))
+                  .sort((a, b) => getDateMs(b.date) - getDateMs(a.date))
                   .slice(0, 3);
 
                 if (recentTransactions.length === 0) {
@@ -587,7 +614,7 @@ const AccountsPage = () => {
               </h4>
               {(() => {
                 const recentTransactions = getTransactionsByAccount(account.id)
-                  .sort((a, b) => new Date(b.date) - new Date(a.date))
+                  .sort((a, b) => getDateMs(b.date) - getDateMs(a.date))
                   .slice(0, 3);
 
                 if (recentTransactions.length === 0) {
