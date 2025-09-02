@@ -66,12 +66,7 @@ const AccountsPage = () => {
 
   const getTransactionMs = t => {
     // Prefer most recent activity: updatedAt -> createdAt -> date
-    return (
-      toMs(t?.updatedAt) ||
-      toMs(t?.createdAt) ||
-      toMs(t?.date) ||
-      0
-    );
+    return toMs(t?.updatedAt) || toMs(t?.createdAt) || toMs(t?.date) || 0;
   };
 
   // Initialize store if needed
@@ -128,6 +123,14 @@ const AccountsPage = () => {
       maximumFractionDigits: 2,
     }).format(amount);
   };
+
+  const formatDateUTC = dateValue =>
+    new Date(dateValue).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    });
 
   const handleAddAccount = async () => {
     if (!formData.name || !formData.balance) return;
@@ -412,7 +415,7 @@ const AccountsPage = () => {
                             {transaction.description || "No description"}
                           </p>
                           <p className="text-gray-500 dark:text-gray-400">
-                            {new Date(transaction.date).toLocaleDateString()}
+                            {formatDateUTC(transaction.date)}
                           </p>
                         </div>
                         <span
@@ -645,8 +648,7 @@ const AccountsPage = () => {
                             {transaction.description || "No description"}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {new Date(transaction.date).toLocaleDateString()} •{" "}
-                            {transaction.category || "Uncategorized"}
+                            {formatDateUTC(transaction.date)} • {transaction.category || "Uncategorized"}
                           </p>
                         </div>
                         <span
