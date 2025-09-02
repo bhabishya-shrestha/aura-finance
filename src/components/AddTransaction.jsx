@@ -17,6 +17,7 @@ import {
   detectTransactionType,
   calculateAmountWithSign,
 } from "../utils/transactionUtils";
+import DatePicker from "./ui/DatePicker";
 
 const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
   const {
@@ -471,23 +472,13 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Date
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    className={`w-full pl-10 px-3 py-2 bg-white dark:bg-gray-700 border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
-                      errors.date
-                        ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                        : "border-gray-300 dark:border-gray-600"
-                    }`}
-                  />
-                </div>
+                <DatePicker
+                  label="Date"
+                  value={formData.date}
+                  onChange={ymd =>
+                    setFormData(prev => ({ ...prev, date: ymd }))
+                  }
+                />
                 {errors.date && (
                   <p className="mt-1 text-xs text-red-600 dark:text-red-400">
                     {errors.date}

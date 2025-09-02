@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import useProductionStore from "../store/productionStore";
+import DatePicker from "../components/ui/DatePicker";
 import { CATEGORIES } from "../utils/statementParser";
 
 const TransactionsPage = () => {
@@ -1297,19 +1298,15 @@ const TransactionsPage = () => {
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Date
-                </label>
-                <input
-                  type="date"
+                <DatePicker
+                  label="Date"
                   value={editTransactionData.date}
-                  onChange={e =>
+                  onChange={ymd =>
                     setEditTransactionData({
                       ...editTransactionData,
-                      date: e.target.value,
+                      date: ymd,
                     })
                   }
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 />
               </div>
 
