@@ -144,6 +144,16 @@ export const FirebaseAuthProvider = ({ children }) => {
   useEffect(() => {
     console.log("🔐 Setting up Firebase Auth listener...");
 
+    const toTitleCase = str =>
+      (str || "")
+        .replace(/[-_.]+/g, " ")
+        .split(" ")
+        .filter(Boolean)
+        .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+        .join(" ");
+
+    const getEmailPrefixName = email => toTitleCase((email || "").split("@")[0]);
+
     const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
       console.log(
         "🔄 Auth state changed:",
@@ -163,7 +173,8 @@ export const FirebaseAuthProvider = ({ children }) => {
             );
             const userProfile = {
               email: firebaseUser.email,
-              name: firebaseUser.displayName || firebaseUser.email,
+              name:
+                firebaseUser.displayName || getEmailPrefixName(firebaseUser.email),
               photoURL: firebaseUser.photoURL,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
@@ -184,17 +195,22 @@ export const FirebaseAuthProvider = ({ children }) => {
             // Only update if there are actual changes to avoid unnecessary writes
             const existingProfile = userDoc.data();
             profileData = existingProfile;
+            const normalizedDesiredName =
+              firebaseUser.displayName ||
+              (existingProfile.name && !existingProfile.name.includes("@")
+                ? existingProfile.name
+                : getEmailPrefixName(firebaseUser.email));
+
             const hasChanges =
               existingProfile.email !== firebaseUser.email ||
-              existingProfile.name !==
-                (firebaseUser.displayName || firebaseUser.email) ||
+              existingProfile.name !== normalizedDesiredName ||
               existingProfile.photoURL !== firebaseUser.photoURL;
 
             if (hasChanges) {
               console.log("📝 Updating existing user profile with changes...");
               const userProfile = {
                 email: firebaseUser.email,
-                name: firebaseUser.displayName || firebaseUser.email,
+                name: normalizedDesiredName,
                 photoURL: firebaseUser.photoURL,
                 updatedAt: new Date().toISOString(),
               };
@@ -221,11 +237,13 @@ export const FirebaseAuthProvider = ({ children }) => {
           const user = {
             id: firebaseUser.uid,
             email: firebaseUser.email,
-            // Prefer Firestore profile name when available; fallback to displayName/email
+            // Prefer normalized profile name; fallback to displayName or email prefix
             name:
-              (profileData && profileData.name) ||
+              (profileData && !profileData.name?.includes("@")
+                ? profileData.name
+                : null) ||
               firebaseUser.displayName ||
-              firebaseUser.email,
+              getEmailPrefixName(firebaseUser.email),
             photoURL: firebaseUser.photoURL,
           };
 
