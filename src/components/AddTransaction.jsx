@@ -7,10 +7,16 @@ import {
   Tag,
   Wallet,
   Plus,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import useProductionStore from "../store/productionStore";
 import { useNotifications } from "../contexts/NotificationContext";
 import { CATEGORIES } from "../utils/statementParser";
+import {
+  detectTransactionType,
+  calculateAmountWithSign,
+} from "../utils/transactionUtils";
 
 const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
   const {
@@ -29,6 +35,7 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
     category: "Other",
     date: new Date().toISOString().split("T")[0],
     accountId: "", // Start empty, will be set by useEffect
+    transactionType: "expense", // New field: "income" or "expense"
   });
   const [errors, setErrors] = useState({});
 
@@ -123,10 +130,17 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
     }
 
     try {
+      // Calculate final amount based on transaction type
+      const baseAmount = parseFloat(formData.amount);
+      const finalAmount = calculateAmountWithSign(
+        baseAmount,
+        formData.transactionType
+      );
+
       // Ensure proper data types for production store
       const transactionData = {
         description: formData.description.trim(),
-        amount: parseFloat(formData.amount),
+        amount: finalAmount,
         category: formData.category,
         accountId: formData.accountId.toString(), // Ensure string type
         date: new Date(formData.date).toISOString(),
@@ -145,6 +159,7 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
           date: new Date().toISOString().split("T")[0],
           accountId:
             accounts && accounts.length > 0 ? accounts[0].id.toString() : "",
+          transactionType: "expense",
         });
         setErrors({});
 
@@ -171,6 +186,15 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
       [name]: value,
     }));
 
+    // Auto-detect transaction type when description changes
+    if (name === "description") {
+      const detectedType = detectTransactionType(value);
+      setFormData(prev => ({
+        ...prev,
+        transactionType: detectedType,
+      }));
+    }
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -178,6 +202,13 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
         [name]: "",
       }));
     }
+  };
+
+  const handleTransactionTypeChange = newType => {
+    setFormData(prev => ({
+      ...prev,
+      transactionType: newType,
+    }));
   };
 
   const handleCancel = () => {
@@ -188,6 +219,7 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
       date: new Date().toISOString().split("T")[0],
       accountId:
         accounts && accounts.length > 0 ? accounts[0].id.toString() : "",
+      transactionType: "expense",
     });
     setErrors({});
     if (onClose) {
@@ -283,6 +315,44 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
                 )}
               </div>
 
+              {/* Transaction Type Toggle */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Transaction Type
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleTransactionTypeChange("income")}
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 border ${
+                      formData.transactionType === "income"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+                    }`}
+                  >
+                    <TrendingUp className="w-4 h-4 mr-2 inline" />
+                    Income
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleTransactionTypeChange("expense")}
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 border ${
+                      formData.transactionType === "expense"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+                    }`}
+                  >
+                    <TrendingDown className="w-4 h-4 mr-2 inline" />
+                    Expense
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {formData.transactionType === "income"
+                    ? "Amount will be recorded as positive (increases balance)"
+                    : "Amount will be recorded as negative (decreases balance)"}
+                </p>
+              </div>
+
               {/* Amount */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -304,6 +374,24 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
                         : "border-gray-300 dark:border-gray-600"
                     }`}
                   />
+                </div>
+                <div className="mt-1 flex items-center gap-2 text-xs">
+                  <span className="text-gray-500 dark:text-gray-400">
+                    Enter amount (always positive)
+                  </span>
+                  {formData.amount && (
+                    <span
+                      className={`font-medium ${
+                        formData.transactionType === "income"
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-red-600 dark:text-red-400"
+                      }`}
+                    >
+                      Will be recorded as:{" "}
+                      {formData.transactionType === "income" ? "+" : "-"}$
+                      {parseFloat(formData.amount || 0).toFixed(2)}
+                    </span>
+                  )}
                 </div>
                 {errors.amount && (
                   <p className="mt-1 text-xs text-red-600 dark:text-red-400">
@@ -368,6 +456,32 @@ const AddTransaction = ({ isOpen, onClose, isMobile = false }) => {
                     {errors.accountId}
                   </p>
                 )}
+              </div>
+
+              {/* Transaction Type Toggle */}
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={() => handleTransactionTypeChange("income")}
+                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                    formData.transactionType === "income"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  }`}
+                >
+                  <TrendingUp className="w-4 h-4 mr-2" /> Income
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTransactionTypeChange("expense")}
+                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                    formData.transactionType === "expense"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  }`}
+                >
+                  <TrendingDown className="w-4 h-4 mr-2" /> Expense
+                </button>
               </div>
 
               {/* Error message */}

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import useStore from "../store";
 import { CATEGORIES } from "../utils/statementParser";
+import { calculateAmountWithSign } from "../utils/transactionUtils";
 
 const RecentTransactions = ({ onPageChange }) => {
   const { getRecentTransactions, deleteTransaction, updateTransaction } =
@@ -55,18 +56,26 @@ const RecentTransactions = ({ onPageChange }) => {
     setEditingId(transaction.id);
     setEditData({
       description: transaction.description,
-      amount: transaction.amount,
+      amount: Math.abs(transaction.amount), // Store absolute value for editing
       category: transaction.category,
       date: formatDateForInput(transaction.date),
+      transactionType: transaction.amount > 0 ? "income" : "expense", // Add transaction type
     });
   };
 
   const handleSave = async transactionId => {
     try {
+      // Calculate final amount based on transaction type
+      const baseAmount = parseFloat(editData.amount);
+      const finalAmount = calculateAmountWithSign(
+        baseAmount,
+        editData.transactionType
+      );
+
       await updateTransaction(transactionId, {
         description: editData.description,
         date: new Date(editData.date).toISOString(),
-        amount: parseFloat(editData.amount),
+        amount: finalAmount,
       });
       setEditingId(null);
       setEditData({});
@@ -143,6 +152,52 @@ const RecentTransactions = ({ onPageChange }) => {
                         className="w-full mt-1 text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
+                  </div>
+
+                  {/* Transaction Type Toggle */}
+                  <div>
+                    <label className="text-xs text-muted uppercase tracking-wide">
+                      Transaction Type
+                    </label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditData({
+                            ...editData,
+                            transactionType: "income",
+                          })
+                        }
+                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200 border ${
+                          editData.transactionType === "income"
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+                        }`}
+                      >
+                        Income
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditData({
+                            ...editData,
+                            transactionType: "expense",
+                          })
+                        }
+                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200 border ${
+                          editData.transactionType === "expense"
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+                        }`}
+                      >
+                        Expense
+                      </button>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {editData.transactionType === "income"
+                        ? "Amount will be recorded as positive (increases balance)"
+                        : "Amount will be recorded as negative (decreases balance)"}
+                    </p>
                   </div>
 
                   <div>
