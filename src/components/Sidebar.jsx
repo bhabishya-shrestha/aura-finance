@@ -42,8 +42,12 @@ const Sidebar = ({ isMobileOpen, onMobileToggle }) => {
   // Generate personalized greeting based on time and user info
   const getPersonalizedGreeting = () => {
     const hour = new Date().getHours();
-    const userName =
-      user?.name?.split(" ")[0] || user?.email?.split("@")[0] || "there";
+    // Prefer a human-friendly name; if the stored name looks like an email, use the email prefix
+    const rawName = (user?.name || "").trim();
+    const computedName = rawName && !rawName.includes("@")
+      ? rawName.split(" ")[0]
+      : (user?.email?.split("@")[0] || "there");
+    const userName = computedName || "there";
 
     let timeGreeting = "";
     if (hour < 12) {
