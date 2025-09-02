@@ -1,42 +1,38 @@
 ## Quality of Life Improvements
 
-### Sidebar Sync (Desktop)
+### Sidebar Sync & UX
+- Merged floating sync widget into the sidebar on desktop; retained floating widget on mobile
+- Added details toggle and sync progress bar in the sidebar
 
-- Merged floating sync widget into the sidebar
-- Added details toggle and progress bar
-- Kept floating sync widget on mobile
-
-### Greeting Consistency
-
-- Sidebar/MobileSidebar prefer Firestore profile name
-- Fallback to displayName or email prefix
-- Settings uses a single Full Name field and persists to Firestore via auth context
+### Greeting & Profile Consistency
+- Sidebar/MobileSidebar now prefer Firestore profile name; fallback to displayName or email prefix
+- Settings Profile switched to a single “Full Name” field and now persists to Firestore via `updateUserProfile`
+- Auth context normalizes name (title-cased email prefix when needed) and hydrates from Firestore
 
 ### Accounts Page
-
 - Recent transactions per account limited to 3
-- Sort by latest activity (date → updatedAt → createdAt)
-- Wider layout on large screens: 2 columns at 2xl breakpoint (more readable)
-- Single-column until 2xl to avoid cramped cards
+- Correct date rendering (UTC) to prevent one-day shift
+- Robust sort for recent items: `updatedAt → createdAt → date`
+- Wider layout on large screens for readability:
+  - Single-column until 2xl
+  - Two columns at 2xl
 
 ### Transactions Tab
-
-- Display and sorting use UTC-safe epoch to prevent off-by-one day issues
-- Edit modal date uses the same UTC handling
+- Display and sorting use UTC-safe epoch to avoid off-by-one issues
+- Edit modal uses the same UTC handling
+- Fixed Dashboard “Recent Transactions” sorting by ms and dates in UTC
+- Fixed Dashboard “View All” to navigate when `onPageChange` isn’t provided
 
 ### Themed Date Picker
-
-- New reusable DatePicker component (dark/light)
-- Integrated into Add Transaction and Edit Transaction
-- Smart positioning: anchors to trigger, opens above/below, clamps to viewport and scrolls if needed
+- New reusable themed `DatePicker` (dark/light)
+- Integrated into Add Transaction and Edit Transaction modals
+- Smart positioning: anchored to trigger, opens above/below based on space, clamps to viewport with scrolling
 
 ## QA Steps
-
-1. Save Full Name in Settings → Sidebar greets with name
-2. Accounts → expand an account → shows latest 3 transactions
-3. Transactions → dates match the edit modal (no day shift)
-4. Add/Edit Transaction → date picker matches theme and never cuts off; opens attached to the field
+1) Settings → Profile: Save Full Name → Sidebar greets with name
+2) Accounts: expand an account → shows latest 3 transactions; dates correct (no day-shift)
+3) Transactions: list dates match edit modal dates; sorting by date behaves as expected
+4) Add/Edit Transaction: themed date picker attaches to field and never cuts off
 
 ## Follow-ups
-
-- Optional: enforce date ranges (e.g., no future dates) via DatePicker min/max props
+- Optional: enforce date ranges (e.g., disallow future dates) via DatePicker `min`/`max`
