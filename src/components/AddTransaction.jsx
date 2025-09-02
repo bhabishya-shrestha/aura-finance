@@ -1,15 +1,5 @@
 import React, { useState } from "react";
-import {
-  X,
-  DollarSign,
-  Calendar,
-  FileText,
-  Tag,
-  Wallet,
-  Plus,
-  TrendingUp,
-  TrendingDown,
-} from "lucide-react";
+import { X, DollarSign, FileText, Tag, Wallet, Plus, TrendingUp, TrendingDown } from "lucide-react";
 import useProductionStore from "../store/productionStore";
 import { useNotifications } from "../contexts/NotificationContext";
 import { CATEGORIES } from "../utils/statementParser";
