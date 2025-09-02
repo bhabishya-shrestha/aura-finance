@@ -158,7 +158,7 @@ const AccountsPage = () => {
     try {
       const options = deleteTransactions ? { deleteTransactions: true } : {};
       console.log("🗑️ Attempting to delete account with options:", options);
-      
+
       const result = await deleteAccount(accountToDelete.id, options);
 
       if (result.success) {
@@ -166,7 +166,7 @@ const AccountsPage = () => {
         showSuccess(result.message || "Account deleted successfully");
         setShowDeleteConfirm(false);
         setAccountToDelete(null);
-        
+
         // Force refresh accounts to ensure UI is in sync
         console.log("🔄 Force refreshing accounts after deletion...");
         try {
