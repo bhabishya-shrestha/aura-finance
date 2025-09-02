@@ -36,7 +36,6 @@ const TransactionsPage = () => {
     useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
@@ -371,11 +370,6 @@ const TransactionsPage = () => {
     }
   };
 
-  const handleEditTransaction = transaction => {
-    setEditingTransaction(transaction);
-    setShowCategoryModal(true);
-  };
-
   const handleEditTransactionFull = transaction => {
     setEditingTransaction(transaction);
     setEditTransactionData({
@@ -389,44 +383,16 @@ const TransactionsPage = () => {
     setShowEditModal(true);
   };
 
-  const handleUpdateTransactionCategory = async (
-    transactionId,
-    newCategory
-  ) => {
-    try {
-      if (import.meta.env.DEV) {
-        console.log(
-          `Updating transaction ${transactionId} category to ${newCategory}`
-        );
-      }
-
-      const transaction = transactions.find(t => t.id === transactionId);
-      if (transaction) {
-        await updateTransaction(transactionId, {
-          category: newCategory,
-        });
-        setShowCategoryModal(false);
-        setEditingTransaction(null);
-        // Transactions will be updated automatically via real-time listeners
-
-        if (import.meta.env.DEV) {
-          console.log("Transaction category updated successfully");
-        }
-      }
-    } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error("Error updating transaction category:", error);
-      }
-    }
-  };
-
   const handleUpdateTransactionFull = async () => {
     if (!editingTransaction) return;
 
     try {
       // Calculate final amount based on transaction type
       const baseAmount = parseFloat(editTransactionData.amount);
-      const finalAmount = editTransactionData.transactionType === "expense" ? -Math.abs(baseAmount) : Math.abs(baseAmount);
+      const finalAmount =
+        editTransactionData.transactionType === "expense"
+          ? -Math.abs(baseAmount)
+          : Math.abs(baseAmount);
 
       await updateTransaction(editingTransaction.id, {
         description: editTransactionData.description.trim(),
@@ -1022,9 +988,7 @@ const TransactionsPage = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          <span>
-                            {transaction.category || "Uncategorized"}
-                          </span>
+                          <span>{transaction.category || "Uncategorized"}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {transaction.account?.name || "Uncategorized Account"}
@@ -1043,7 +1007,9 @@ const TransactionsPage = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => handleEditTransactionFull(transaction)}
+                              onClick={() =>
+                                handleEditTransactionFull(transaction)
+                              }
                               className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                               title="Edit transaction"
                             >
@@ -1133,53 +1099,6 @@ const TransactionsPage = () => {
         </div>
       )}
 
-      {/* Individual Category Edit Modal */}
-      {showCategoryModal && editingTransaction && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Edit Transaction Category
-            </h3>
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Transaction: {editingTransaction.description}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Current Category:{" "}
-                {editingTransaction.category || "Uncategorized"}
-              </p>
-            </div>
-            <div className="space-y-2 mb-6">
-              {CATEGORIES.map(category => (
-                <button
-                  key={category}
-                  onClick={() =>
-                    handleUpdateTransactionCategory(
-                      editingTransaction.id,
-                      category
-                    )
-                  }
-                  className="w-full p-3 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <div className="font-medium text-gray-900 dark:text-white">
-                  {category}
-                  </div>
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => {
-                setShowCategoryModal(false);
-                setEditingTransaction(null);
-              }}
-              className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Full Transaction Edit Modal */}
       {showEditModal && editingTransaction && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -1200,7 +1119,13 @@ const TransactionsPage = () => {
               </button>
             </div>
 
-            <form onSubmit={(e) => { e.preventDefault(); handleUpdateTransactionFull(); }} className="space-y-4">
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                handleUpdateTransactionFull();
+              }}
+              className="space-y-4"
+            >
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1209,7 +1134,12 @@ const TransactionsPage = () => {
                 <input
                   type="text"
                   value={editTransactionData.description}
-                  onChange={(e) => setEditTransactionData({ ...editTransactionData, description: e.target.value })}
+                  onChange={e =>
+                    setEditTransactionData({
+                      ...editTransactionData,
+                      description: e.target.value,
+                    })
+                  }
                   className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   placeholder="Enter transaction description"
                 />
@@ -1223,7 +1153,12 @@ const TransactionsPage = () => {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setEditTransactionData({ ...editTransactionData, transactionType: "income" })}
+                    onClick={() =>
+                      setEditTransactionData({
+                        ...editTransactionData,
+                        transactionType: "income",
+                      })
+                    }
                     className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 border ${
                       editTransactionData.transactionType === "income"
                         ? "bg-blue-600 text-white border-blue-600"
@@ -1235,7 +1170,12 @@ const TransactionsPage = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEditTransactionData({ ...editTransactionData, transactionType: "expense" })}
+                    onClick={() =>
+                      setEditTransactionData({
+                        ...editTransactionData,
+                        transactionType: "expense",
+                      })
+                    }
                     className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 border ${
                       editTransactionData.transactionType === "expense"
                         ? "bg-blue-600 text-white border-blue-600"
@@ -1247,10 +1187,9 @@ const TransactionsPage = () => {
                   </button>
                 </div>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {editTransactionData.transactionType === "income" 
+                  {editTransactionData.transactionType === "income"
                     ? "Amount will be recorded as positive (increases balance)"
-                    : "Amount will be recorded as negative (decreases balance)"
-                  }
+                    : "Amount will be recorded as negative (decreases balance)"}
                 </p>
               </div>
 
@@ -1266,7 +1205,12 @@ const TransactionsPage = () => {
                   <input
                     type="number"
                     value={editTransactionData.amount}
-                    onChange={(e) => setEditTransactionData({ ...editTransactionData, amount: e.target.value })}
+                    onChange={e =>
+                      setEditTransactionData({
+                        ...editTransactionData,
+                        amount: e.target.value,
+                      })
+                    }
                     className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="0.00"
                     step="0.01"
@@ -1278,12 +1222,18 @@ const TransactionsPage = () => {
                     Enter amount (always positive)
                   </span>
                   {editTransactionData.amount && (
-                    <span className={`font-medium ${
-                      editTransactionData.transactionType === "income" 
-                        ? "text-green-600 dark:text-green-400" 
-                        : "text-red-600 dark:text-red-400"
-                    }`}>
-                      Will be recorded as: {editTransactionData.transactionType === "income" ? "+" : "-"}${parseFloat(editTransactionData.amount || 0).toFixed(2)}
+                    <span
+                      className={`font-medium ${
+                        editTransactionData.transactionType === "income"
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-red-600 dark:text-red-400"
+                      }`}
+                    >
+                      Will be recorded as:{" "}
+                      {editTransactionData.transactionType === "income"
+                        ? "+"
+                        : "-"}
+                      ${parseFloat(editTransactionData.amount || 0).toFixed(2)}
                     </span>
                   )}
                 </div>
@@ -1296,7 +1246,12 @@ const TransactionsPage = () => {
                 </label>
                 <select
                   value={editTransactionData.category}
-                  onChange={(e) => setEditTransactionData({ ...editTransactionData, category: e.target.value })}
+                  onChange={e =>
+                    setEditTransactionData({
+                      ...editTransactionData,
+                      category: e.target.value,
+                    })
+                  }
                   className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none"
                 >
                   {CATEGORIES.map(category => (
@@ -1314,7 +1269,12 @@ const TransactionsPage = () => {
                 </label>
                 <select
                   value={editTransactionData.accountId}
-                  onChange={(e) => setEditTransactionData({ ...editTransactionData, accountId: e.target.value })}
+                  onChange={e =>
+                    setEditTransactionData({
+                      ...editTransactionData,
+                      accountId: e.target.value,
+                    })
+                  }
                   className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none"
                 >
                   <option value="">Select an account...</option>
@@ -1338,7 +1298,12 @@ const TransactionsPage = () => {
                 <input
                   type="date"
                   value={editTransactionData.date}
-                  onChange={(e) => setEditTransactionData({ ...editTransactionData, date: e.target.value })}
+                  onChange={e =>
+                    setEditTransactionData({
+                      ...editTransactionData,
+                      date: e.target.value,
+                    })
+                  }
                   className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 />
               </div>
