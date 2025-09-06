@@ -40,6 +40,24 @@ const EmptyChartState = ({
   </div>
 );
 
+// Custom Tooltip Component for Category Charts
+const CategoryTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
+        <p className="font-medium text-gray-900 dark:text-white">
+          {data.category}
+        </p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          ${data.amount.toFixed(2)}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 // Chart Container Component
 const ChartContainer = ({
   title,
@@ -198,9 +216,7 @@ const SpendingByCategoryChart = ({ data, isMobile }) => {
             <Cell key={`cell-${index}`} fill={entry.fill} />
           ))}
         </Pie>
-        <Tooltip 
-          formatter={(value) => [`$${value.toFixed(2)}`, 'Amount']}
-        />
+        <Tooltip content={<CategoryTooltip />} />
       </PieChart>
     </ResponsiveContainer>
   );
