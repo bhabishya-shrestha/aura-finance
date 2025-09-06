@@ -259,7 +259,13 @@ const MonthlySpendingChart = ({ data, timeRange }) => {
             const label = dataKey === 'income' ? 'Income' : 'Spending';
             return [`$${value.toFixed(2)}`, label];
           }}
-          labelFormatter={(label) => `Period: ${label}`}
+          labelFormatter={(label, payload) => {
+            // Use the actual month from the data payload
+            if (payload && payload.length > 0) {
+              return `Period: ${payload[0].payload.month}`;
+            }
+            return `Period: ${label}`;
+          }}
           position={{ x: undefined, y: undefined }}
           allowEscapeViewBox={{ x: false, y: false }}
         />
@@ -332,7 +338,13 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
             const label = dataKey === 'income' ? 'Income' : 'Spending';
             return [`$${value.toFixed(2)}`, label];
           }}
-          labelFormatter={(label) => `Period: ${label}`}
+          labelFormatter={(label, payload) => {
+            // Use the actual period from the data payload
+            if (payload && payload.length > 0) {
+              return `Period: ${payload[0].payload.period}`;
+            }
+            return `Period: ${label}`;
+          }}
           position={{ x: undefined, y: undefined }}
           allowEscapeViewBox={{ x: false, y: false }}
         />
