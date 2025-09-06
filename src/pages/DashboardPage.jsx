@@ -110,15 +110,27 @@ const DashboardPage = ({
   const recentTransactions = [...transactions]
     .sort((a, b) => getMs(b.date) - getMs(a.date))
     .slice(0, 5);
+  // Calculate monthly income and expenses for current month
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
+  
   const monthlyIncome = transactions
-    .filter(
-      t => t.amount > 0 && new Date(t.date).getMonth() === new Date().getMonth()
-    )
+    .filter(t => {
+      if (t.amount <= 0) return false;
+      const transactionDate = new Date(getMs(t.date));
+      return transactionDate.getFullYear() === currentYear && 
+             transactionDate.getMonth() === currentMonth;
+    })
     .reduce((sum, t) => sum + t.amount, 0);
+    
   const monthlyExpenses = transactions
-    .filter(
-      t => t.amount < 0 && new Date(t.date).getMonth() === new Date().getMonth()
-    )
+    .filter(t => {
+      if (t.amount >= 0) return false;
+      const transactionDate = new Date(getMs(t.date));
+      return transactionDate.getFullYear() === currentYear && 
+             transactionDate.getMonth() === currentMonth;
+    })
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
   const QuickAnalyticsCard = ({
