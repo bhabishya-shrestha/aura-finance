@@ -184,13 +184,14 @@ const IncomeVsSpendingChart = ({ data }) => {
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data.data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+      <BarChart
+        data={data.data}
+        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+      >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
         <YAxis />
-        <Tooltip 
-          formatter={(value) => [`$${value.toFixed(2)}`, 'Amount']}
-        />
+        <Tooltip formatter={value => [`$${value.toFixed(2)}`, "Amount"]} />
         <Bar dataKey="amount" fill="#10b981" />
       </BarChart>
     </ResponsiveContainer>
@@ -228,35 +229,38 @@ const MonthlySpendingChart = ({ data, timeRange }) => {
   // Dynamic chart title based on time range
   const getChartTitle = () => {
     switch (timeRange) {
-      case 'week':
-        return 'Daily Spending Trend';
-      case 'month':
-        return 'Weekly Spending Trend';
-      case 'quarter':
-        return 'Monthly Spending Trend';
-      case 'year':
-        return 'Monthly Spending Trend';
+      case "week":
+        return "Daily Spending Trend";
+      case "month":
+        return "Weekly Spending Trend";
+      case "quarter":
+        return "Monthly Spending Trend";
+      case "year":
+        return "Monthly Spending Trend";
       default:
-        return 'Monthly Spending Trend';
+        return "Monthly Spending Trend";
     }
   };
 
   return (
     <ResponsiveContainer width="100%" height={350}>
-      <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
+      <LineChart
+        data={data}
+        margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+      >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis 
-          dataKey="month" 
+        <XAxis
+          dataKey="month"
           angle={-45}
           textAnchor="end"
           height={80}
           interval={0}
         />
         <YAxis />
-        <Tooltip 
+        <Tooltip
           formatter={(value, name, props) => {
             const dataKey = props.dataKey;
-            const label = dataKey === 'income' ? 'Income' : 'Spending';
+            const label = dataKey === "income" ? "Income" : "Spending";
             return [`$${value.toFixed(2)}`, label];
           }}
           labelFormatter={(label, payload) => {
@@ -269,10 +273,10 @@ const MonthlySpendingChart = ({ data, timeRange }) => {
           position={{ x: undefined, y: undefined }}
           allowEscapeViewBox={{ x: false, y: false }}
         />
-        <Legend 
-          verticalAlign="top" 
+        <Legend
+          verticalAlign="top"
           height={36}
-          wrapperStyle={{ paddingBottom: '10px' }}
+          wrapperStyle={{ paddingBottom: "10px" }}
         />
         <Line
           type="monotone"
@@ -297,21 +301,21 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
   if (!data || !data.length) return <EmptyChartState />;
 
   // Custom tick formatter based on time range
-  const formatXAxisTick = (tickItem) => {
-    if (!tickItem) return '';
-    
+  const formatXAxisTick = tickItem => {
+    if (!tickItem) return "";
+
     // For different time ranges, we might want different formatting
     switch (timeRange) {
-      case 'week':
+      case "week":
         // For week view, show day names or dates
         return tickItem;
-      case 'month':
+      case "month":
         // For month view, show week numbers
         return tickItem;
-      case 'quarter':
+      case "quarter":
         // For quarter view, show month names
         return tickItem;
-      case 'year':
+      case "year":
         // For year view, show month names
         return tickItem;
       default:
@@ -319,12 +323,60 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
     }
   };
 
+  // Get all unique categories across all periods
+  const allCategories = new Set();
+  data.forEach(period => {
+    period.categories.forEach(category => {
+      allCategories.add(category.category);
+    });
+  });
+
+  // Create data structure for stacked bar chart
+  const chartData = data.map(period => {
+    const dataPoint = { period: period.period };
+    
+    // Initialize all categories with 0
+    allCategories.forEach(category => {
+      dataPoint[category] = 0;
+    });
+
+    // Fill in actual values
+    period.categories.forEach(category => {
+      dataPoint[category.category] = category.amount;
+    });
+
+    return dataPoint;
+  });
+
+  // Create bars for each category
+  const categoryBars = Array.from(allCategories).map(category => {
+    // Find the color for this category from the first period that has it
+    const firstPeriodWithCategory = data.find(period => 
+      period.categories.some(cat => cat.category === category)
+    );
+    const categoryData = firstPeriodWithCategory?.categories.find(cat => cat.category === category);
+    const fillColor = categoryData?.fill || '#8884d8';
+
+    return (
+      <Bar 
+        key={category} 
+        dataKey={category} 
+        stackId="spending" 
+        fill={fillColor} 
+        name={category}
+      />
+    );
+  });
+
   return (
     <ResponsiveContainer width="100%" height={350}>
-      <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
+      <BarChart
+        data={chartData}
+        margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+      >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis 
-          dataKey="period" 
+        <XAxis
+          dataKey="period"
           tickFormatter={formatXAxisTick}
           angle={-45}
           textAnchor="end"
@@ -332,11 +384,9 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
           interval={0}
         />
         <YAxis />
-        <Tooltip 
-          formatter={(value, name, props) => {
-            const dataKey = props.dataKey;
-            const label = dataKey === 'income' ? 'Income' : 'Spending';
-            return [`$${value.toFixed(2)}`, label];
+        <Tooltip
+          formatter={(value, name) => {
+            return [`$${value.toFixed(2)}`, name];
           }}
           labelFormatter={(label, payload) => {
             // Use the actual period from the data payload
@@ -348,13 +398,12 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
           position={{ x: undefined, y: undefined }}
           allowEscapeViewBox={{ x: false, y: false }}
         />
-        <Legend 
-          verticalAlign="top" 
+        <Legend
+          verticalAlign="top"
           height={36}
-          wrapperStyle={{ paddingBottom: '10px' }}
+          wrapperStyle={{ paddingBottom: "10px" }}
         />
-        <Bar dataKey="income" fill="#10b981" name="Income" />
-        <Bar dataKey="spending" fill="#ef4444" name="Spending" />
+        {categoryBars}
       </BarChart>
     </ResponsiveContainer>
   );
@@ -416,13 +465,17 @@ const AnalyticsPage = () => {
     }
 
     // Use the analytics service to calculate all analytics for the selected time range
-    const allAnalytics = analyticsService.calculateAllAnalytics(transactions, timeRange);
-    
+    const allAnalytics = analyticsService.calculateAllAnalytics(
+      transactions,
+      timeRange
+    );
+
     return {
       spendingByCategory: allAnalytics.spendingByCategory,
       monthlySpending: allAnalytics.monthlySpending,
       incomeVsSpending: allAnalytics.incomeVsSpending,
       spendingTrends: allAnalytics.spendingTrends,
+      spendingTrendsByCategory: allAnalytics.spendingTrendsByCategory,
       netWorthTrend: allAnalytics.netWorthTrend,
       incomeTrend: allAnalytics.incomeTrend,
       spendingTrend: allAnalytics.spendingTrend,
@@ -437,6 +490,7 @@ const AnalyticsPage = () => {
     monthlySpending,
     incomeVsSpending,
     spendingTrends,
+    spendingTrendsByCategory,
     netWorthTrend,
     incomeTrend,
     spendingTrend,
@@ -448,7 +502,7 @@ const AnalyticsPage = () => {
     if (!transactions || !transactions.length) {
       return "$0.00";
     }
-    
+
     // Calculate net worth using the analytics service
     const netWorth = analyticsService.calculateNetWorth(transactions, []);
     return `$${netWorth.toFixed(2)}`;
@@ -457,16 +511,16 @@ const AnalyticsPage = () => {
   // Dynamic chart title based on time range
   const getSpendingTrendTitle = () => {
     switch (timeRange) {
-      case 'week':
-        return 'Daily Spending Trend';
-      case 'month':
-        return 'Weekly Spending Trend';
-      case 'quarter':
-        return 'Monthly Spending Trend';
-      case 'year':
-        return 'Monthly Spending Trend';
+      case "week":
+        return "Daily Spending Trend";
+      case "month":
+        return "Weekly Spending Trend";
+      case "quarter":
+        return "Monthly Spending Trend";
+      case "year":
+        return "Monthly Spending Trend";
       default:
-        return 'Monthly Spending Trend';
+        return "Monthly Spending Trend";
     }
   };
 
@@ -480,9 +534,9 @@ const AnalyticsPage = () => {
           onToggleExpand={() => toggleChartExpansion("incomeVsSpending")}
           isMobile={isMobile}
         >
-          <IncomeVsSpendingChart 
-            key={`income-vs-spending-${timeRange}`} 
-            data={incomeVsSpending} 
+          <IncomeVsSpendingChart
+            key={`income-vs-spending-${timeRange}`}
+            data={incomeVsSpending}
           />
         </ChartContainer>
 
@@ -507,10 +561,10 @@ const AnalyticsPage = () => {
         className="mb-6 sm:mb-8"
         isMobile={isMobile}
       >
-        <MonthlySpendingChart 
-          key={`monthly-spending-${timeRange}`} 
-          data={monthlySpending} 
-          timeRange={timeRange} 
+        <MonthlySpendingChart
+          key={`monthly-spending-${timeRange}`}
+          data={monthlySpending}
+          timeRange={timeRange}
         />
       </ChartContainer>
 
@@ -565,10 +619,10 @@ const AnalyticsPage = () => {
           onToggleExpand={() => toggleChartExpansion("spendingTrendsDetailed")}
           isMobile={isMobile}
         >
-          <SpendingTrendsChart 
-            key={`spending-trends-${timeRange}`} 
-            data={spendingTrends} 
-            timeRange={timeRange} 
+          <SpendingTrendsChart
+            key={`spending-trends-${timeRange}`}
+            data={spendingTrendsByCategory}
+            timeRange={timeRange}
           />
         </ChartContainer>
 

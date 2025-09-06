@@ -453,6 +453,149 @@ class AnalyticsService {
     );
   }
 
+  // Calculate spending trends by category for each period (works with pre-filtered transactions)
+  calculateSpendingTrendsByCategory(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("spendingTrendsByCategory", timeRange);
+
+    return this.getCachedOrCalculate(
+      cacheKey,
+      () => {
+        // Use transactions as-is (they should already be filtered)
+        const trends = [];
+        const now = new Date();
+        let periods, periodType, startDate, endDate;
+
+        // Calculate time range parameters
+        switch (timeRange) {
+          case "week":
+            periods = 7;
+            periodType = "day";
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() - 6);
+            endDate = new Date(now);
+            break;
+          case "month":
+            periods = 4;
+            periodType = "week";
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() - 28);
+            endDate = new Date(now);
+            break;
+          case "quarter":
+            periods = 3;
+            periodType = "month";
+            startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            break;
+          case "year":
+            periods = 12;
+            periodType = "month";
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date(now.getFullYear(), 11, 31);
+            break;
+          default:
+            periods = 4;
+            periodType = "week";
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() - 28);
+            endDate = new Date(now);
+        }
+
+        // Define color palette for categories
+        const colorPalette = [
+          '#FF6B6B', // Red
+          '#4ECDC4', // Teal
+          '#45B7D1', // Blue
+          '#96CEB4', // Green
+          '#FFEAA7', // Yellow
+          '#DDA0DD', // Plum
+          '#98D8C8', // Mint
+          '#F7DC6F', // Light Yellow
+          '#BB8FCE', // Light Purple
+          '#85C1E9', // Light Blue
+          '#F8C471', // Orange
+          '#82E0AA', // Light Green
+        ];
+
+        // Generate periods with category breakdown
+        for (let i = 0; i < periods; i++) {
+          let periodStart, periodEnd, periodLabel;
+
+          switch (periodType) {
+            case "day":
+              periodStart = new Date(startDate);
+              periodStart.setDate(startDate.getDate() + i);
+              periodEnd = new Date(periodStart);
+              periodLabel = periodStart.toLocaleDateString("default", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              });
+              break;
+            case "week":
+              periodStart = new Date(startDate);
+              periodStart.setDate(startDate.getDate() + i * 7);
+              periodEnd = new Date(periodStart);
+              periodEnd.setDate(periodStart.getDate() + 6);
+              periodLabel = `W${i + 1}`;
+              break;
+            case "month":
+              periodStart = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+              periodEnd = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, 0);
+              periodLabel = periodStart.toLocaleDateString("default", {
+                month: "short",
+                year: "2-digit",
+              });
+              break;
+            default:
+              periodStart = new Date(startDate);
+              periodStart.setDate(startDate.getDate() + i);
+              periodEnd = new Date(periodStart);
+              periodLabel = `Period ${i + 1}`;
+          }
+
+          // Filter transactions for this period
+          const periodTransactions = transactions.filter(transaction => {
+            const transactionDate = new Date(transaction.date);
+            return transactionDate >= periodStart && transactionDate <= periodEnd;
+          });
+
+          // Calculate spending by category for this period
+          const categoryData = {};
+          periodTransactions.forEach(transaction => {
+            if (transaction.amount < 0) {
+              const category = transaction.category || "Uncategorized";
+              if (!categoryData[category]) {
+                categoryData[category] = 0;
+              }
+              categoryData[category] += Math.abs(transaction.amount);
+            }
+          });
+
+          // Convert to array with colors
+          const categoryBreakdown = Object.entries(categoryData)
+            .map(([category, amount], index) => ({
+              category,
+              amount: parseFloat(amount.toFixed(2)),
+              fill: colorPalette[index % colorPalette.length],
+            }))
+            .sort((a, b) => b.amount - a.amount);
+
+          const totalSpending = categoryBreakdown.reduce((sum, item) => sum + item.amount, 0);
+
+          trends.push({
+            period: periodLabel,
+            totalSpending: parseFloat(totalSpending.toFixed(2)),
+            categories: categoryBreakdown,
+          });
+        }
+
+        return trends;
+      },
+      transactions
+    );
+  }
+
   // Calculate spending trends (works with pre-filtered transactions)
   calculateSpendingTrends(transactions, timeRange = "month") {
     const cacheKey = this.getCacheKey("spendingTrends", timeRange);
@@ -908,6 +1051,11 @@ class AnalyticsService {
           timeRange // Use the actual timeRange to generate correct period structure
         );
 
+        const spendingTrendsByCategory = this.calculateSpendingTrendsByCategory(
+          filteredTransactions,
+          timeRange // Use the actual timeRange to generate correct period structure
+        );
+
         const quickAnalytics = this.calculateQuickAnalytics(
           filteredTransactions,
           "all" // Use "all" since transactions are already filtered
@@ -929,6 +1077,7 @@ class AnalyticsService {
           monthlySpending,
           incomeVsSpending,
           spendingTrends,
+          spendingTrendsByCategory,
           quickAnalytics,
           avgDailySpending,
           netWorthTrend,
