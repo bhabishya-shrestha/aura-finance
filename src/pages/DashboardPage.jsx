@@ -115,9 +115,11 @@ const DashboardPage = ({
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
   
+  // Calculate monthly income and expenses based on amount sign (ignore type field)
+  // This ensures consistency regardless of how transactions were imported/added
   const monthlyIncome = transactions
     .filter(t => {
-      if (t.amount <= 0) return false;
+      if (t.amount <= 0) return false; // Only positive amounts are income
       const transactionDate = new Date(getMs(t.date));
       return transactionDate.getFullYear() === currentYear && 
              transactionDate.getMonth() === currentMonth;
@@ -126,7 +128,7 @@ const DashboardPage = ({
     
   const monthlyExpenses = transactions
     .filter(t => {
-      if (t.amount >= 0) return false;
+      if (t.amount >= 0) return false; // Only negative amounts are expenses
       const transactionDate = new Date(getMs(t.date));
       return transactionDate.getFullYear() === currentYear && 
              transactionDate.getMonth() === currentMonth;
