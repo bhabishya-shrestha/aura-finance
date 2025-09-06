@@ -9,6 +9,7 @@ import {
   FileText,
 } from "lucide-react";
 import useProductionStore from "../store/productionStore";
+import analyticsService from "../services/analyticsService";
 import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 import StatementImporter from "../components/StatementImporter";
 import MobileStatementImporter from "../components/MobileStatementImporter";
@@ -83,11 +84,8 @@ const DashboardPage = ({
     }
   };
 
-  // Calculate dashboard metrics
-  const totalBalance = accounts.reduce(
-    (sum, account) => sum + account.balance,
-    0
-  );
+  // Calculate dashboard metrics - use same net worth calculation as analytics
+  const totalBalance = analyticsService.calculateNetWorth(transactions || [], accounts || []);
   // Robust recent transactions: sort by date desc using epoch ms
   const getMs = value => {
     if (!value) return 0;

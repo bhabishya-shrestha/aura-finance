@@ -501,12 +501,9 @@ const AnalyticsPage = () => {
   } = analyticsData;
 
   const getNetWorth = () => {
-    if (!transactions || !transactions.length) {
-      return "$0.00";
-    }
-
     // Calculate net worth using the analytics service with accounts data
-    const netWorth = analyticsService.calculateNetWorth(transactions, accounts);
+    // This should match the dashboard calculation exactly
+    const netWorth = analyticsService.calculateNetWorth(transactions || [], accounts || []);
     return `$${netWorth.toFixed(2)}`;
   };
 
