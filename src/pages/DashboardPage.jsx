@@ -159,6 +159,12 @@ const DashboardPage = ({
         const [year, month, day] = dateValue.split('-').map(Number);
         return new Date(year, month - 1, day); // month is 0-indexed
       }
+      // Handle ISO date strings with timezone like "2025-09-01T00:00:00.000Z"
+      if (dateValue.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/)) {
+        const datePart = dateValue.split('T')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
+        return new Date(year, month - 1, day); // month is 0-indexed
+      }
       // For other string formats, use regular parsing
       return new Date(dateValue);
     }
@@ -202,6 +208,21 @@ const DashboardPage = ({
   const currentMonthTotals = calculateMonthlyTotals(currentYear, currentMonth);
   const monthlyIncome = currentMonthTotals.monthlyIncome;
   const monthlyExpenses = currentMonthTotals.monthlyExpenses;
+
+  // Debug logging for monthly calculations
+  if (import.meta.env.DEV) {
+    console.log("🔍 Monthly Calculation Debug:");
+    console.log(`Current month: ${currentYear}-${currentMonth + 1}`);
+    console.log(`Total transactions: ${transactions.length}`);
+    console.log(`Monthly expenses: $${monthlyExpenses}`);
+    
+    // Log first few transactions to see their dates
+    const firstFewTransactions = transactions.slice(0, 5);
+    firstFewTransactions.forEach((t, i) => {
+      const parsedDate = parseDateSafely(t.date);
+      console.log(`Transaction ${i + 1}: ${t.description} - Date: ${t.date} (parsed: ${parsedDate}) - Amount: ${t.amount}`);
+    });
+  }
 
   // Calculate previous month totals
   const previousMonthTotals = calculateMonthlyTotals(
