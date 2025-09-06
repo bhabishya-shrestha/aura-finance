@@ -414,7 +414,10 @@ const AnalyticsPage = () => {
           onToggleExpand={() => toggleChartExpansion("incomeVsSpending")}
           isMobile={isMobile}
         >
-          <IncomeVsSpendingChart data={incomeVsSpending} />
+          <IncomeVsSpendingChart 
+            key={`income-vs-spending-${timeRange}`} 
+            data={incomeVsSpending} 
+          />
         </ChartContainer>
 
         <ChartContainer
@@ -424,6 +427,7 @@ const AnalyticsPage = () => {
           isMobile={isMobile}
         >
           <SpendingByCategoryChart
+            key={`spending-by-category-${timeRange}`}
             data={spendingByCategory}
             isMobile={isMobile}
           />
@@ -437,7 +441,11 @@ const AnalyticsPage = () => {
         className="mb-6 sm:mb-8"
         isMobile={isMobile}
       >
-        <MonthlySpendingChart data={monthlySpending} timeRange={timeRange} />
+        <MonthlySpendingChart 
+          key={`monthly-spending-${timeRange}`} 
+          data={monthlySpending} 
+          timeRange={timeRange} 
+        />
       </ChartContainer>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
@@ -491,7 +499,11 @@ const AnalyticsPage = () => {
           onToggleExpand={() => toggleChartExpansion("spendingTrendsDetailed")}
           isMobile={isMobile}
         >
-          <SpendingTrendsChart data={spendingTrends} timeRange={timeRange} />
+          <SpendingTrendsChart 
+            key={`spending-trends-${timeRange}`} 
+            data={spendingTrends} 
+            timeRange={timeRange} 
+          />
         </ChartContainer>
 
         <ChartContainer

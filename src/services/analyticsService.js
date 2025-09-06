@@ -742,7 +742,7 @@ class AnalyticsService {
 
         const monthlySpending = this.calculateMonthlySpending(
           filteredTransactions,
-          "all" // Use "all" since transactions are already filtered
+          timeRange // Use the actual timeRange to generate correct period structure
         );
 
         const incomeVsSpending = this.calculateIncomeVsSpending(
@@ -752,7 +752,7 @@ class AnalyticsService {
 
         const spendingTrends = this.calculateSpendingTrends(
           filteredTransactions,
-          "all" // Use "all" since transactions are already filtered
+          timeRange // Use the actual timeRange to generate correct period structure
         );
 
         const quickAnalytics = this.calculateQuickAnalytics(
