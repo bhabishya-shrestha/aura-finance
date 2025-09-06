@@ -875,10 +875,18 @@ const useStore = create(
 
             const monthTransactions = transactions.filter(t => {
               const transactionDate = new Date(t.date);
+              
+              // Normalize transaction date to start of day to avoid timezone issues
+              const normalizedTransactionDate = new Date(
+                transactionDate.getFullYear(),
+                transactionDate.getMonth(),
+                transactionDate.getDate()
+              );
+              
               return (
                 t.amount < 0 &&
-                transactionDate >= monthStart &&
-                transactionDate <= monthEnd
+                normalizedTransactionDate >= monthStart &&
+                normalizedTransactionDate <= monthEnd
               );
             });
 

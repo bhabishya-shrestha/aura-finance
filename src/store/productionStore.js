@@ -941,10 +941,18 @@ const useProductionStore = create(
           const transactionDate = new Date(t.date);
           const isExpense =
             t.type === "expense" || (t.type !== "income" && t.amount < 0);
+          
+          // Normalize transaction date to start of day to avoid timezone issues
+          const normalizedTransactionDate = new Date(
+            transactionDate.getFullYear(),
+            transactionDate.getMonth(),
+            transactionDate.getDate()
+          );
+          
           return (
             isExpense &&
-            transactionDate >= monthStart &&
-            transactionDate <= monthEnd
+            normalizedTransactionDate >= monthStart &&
+            normalizedTransactionDate <= monthEnd
           );
         });
 

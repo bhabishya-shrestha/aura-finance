@@ -125,9 +125,14 @@ const DashboardPage = ({
       .filter(t => {
         if (t.amount <= 0) return false; // Only positive amounts are income
         const transactionDate = new Date(getMs(t.date));
+        
+        // Ensure we're comparing dates properly by normalizing to start of day
+        const normalizedTransactionDate = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
+        const targetDate = new Date(year, month, 1);
+        
         return (
-          transactionDate.getFullYear() === year &&
-          transactionDate.getMonth() === month
+          normalizedTransactionDate.getFullYear() === year &&
+          normalizedTransactionDate.getMonth() === month
         );
       })
       .reduce((sum, t) => sum + t.amount, 0);
@@ -136,9 +141,13 @@ const DashboardPage = ({
       .filter(t => {
         if (t.amount >= 0) return false; // Only negative amounts are expenses
         const transactionDate = new Date(getMs(t.date));
+        
+        // Ensure we're comparing dates properly by normalizing to start of day
+        const normalizedTransactionDate = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
+        
         return (
-          transactionDate.getFullYear() === year &&
-          transactionDate.getMonth() === month
+          normalizedTransactionDate.getFullYear() === year &&
+          normalizedTransactionDate.getMonth() === month
         );
       })
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
