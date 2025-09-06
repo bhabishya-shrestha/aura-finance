@@ -123,8 +123,32 @@ const DashboardPage = ({
   const parseDateSafely = (dateValue) => {
     if (!dateValue) return null;
     
-    // If it's already a Date object, use it
+    // If it's already a Date object, check if it was created with timezone issues
     if (dateValue instanceof Date) {
+      // Check if this Date object was created from an ISO string and has timezone issues
+      // The issue is that new Date('2025-09-01') becomes Aug 31 7PM in CDT
+      // We need to detect this pattern and reconstruct the correct date
+      
+      const hours = dateValue.getHours();
+      const minutes = dateValue.getMinutes();
+      const seconds = dateValue.getSeconds();
+      
+      // If it's not midnight local time, it might be a timezone-converted date
+      if (hours !== 0 || minutes !== 0 || seconds !== 0) {
+        // Check if this looks like a timezone-converted ISO date
+        // If the time is 19:00:00 (7 PM), it's likely CDT conversion from UTC midnight
+        if (hours === 19 && minutes === 0 && seconds === 0) {
+          // This is likely a timezone-converted date, reconstruct it
+          const year = dateValue.getFullYear();
+          const month = dateValue.getMonth();
+          const day = dateValue.getDate();
+          
+          // Create a new date at midnight local time for the next day
+          // (since the timezone conversion moved it to the previous day)
+          return new Date(year, month, day + 1);
+        }
+      }
+      
       return dateValue;
     }
     
