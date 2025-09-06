@@ -115,25 +115,66 @@ const DashboardPage = ({
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
   
-  // Calculate monthly income and expenses based on amount sign (ignore type field)
-  // This ensures consistency regardless of how transactions were imported/added
-  const monthlyIncome = transactions
-    .filter(t => {
-      if (t.amount <= 0) return false; // Only positive amounts are income
-      const transactionDate = new Date(getMs(t.date));
-      return transactionDate.getFullYear() === currentYear && 
-             transactionDate.getMonth() === currentMonth;
-    })
-    .reduce((sum, t) => sum + t.amount, 0);
-    
-  const monthlyExpenses = transactions
-    .filter(t => {
-      if (t.amount >= 0) return false; // Only negative amounts are expenses
-      const transactionDate = new Date(getMs(t.date));
-      return transactionDate.getFullYear() === currentYear && 
-             transactionDate.getMonth() === currentMonth;
-    })
-    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  // Calculate previous month for comparison
+  const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+  const previousYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+  
+  // Helper function to calculate monthly totals for a specific month/year
+  const calculateMonthlyTotals = (year, month) => {
+    const monthlyIncome = transactions
+      .filter(t => {
+        if (t.amount <= 0) return false; // Only positive amounts are income
+        const transactionDate = new Date(getMs(t.date));
+        return transactionDate.getFullYear() === year && 
+               transactionDate.getMonth() === month;
+      })
+      .reduce((sum, t) => sum + t.amount, 0);
+      
+    const monthlyExpenses = transactions
+      .filter(t => {
+        if (t.amount >= 0) return false; // Only negative amounts are expenses
+        const transactionDate = new Date(getMs(t.date));
+        return transactionDate.getFullYear() === year && 
+               transactionDate.getMonth() === month;
+      })
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      
+    return { monthlyIncome, monthlyExpenses };
+  };
+  
+  // Calculate current month totals
+  const currentMonthTotals = calculateMonthlyTotals(currentYear, currentMonth);
+  const monthlyIncome = currentMonthTotals.monthlyIncome;
+  const monthlyExpenses = currentMonthTotals.monthlyExpenses;
+  
+  // Calculate previous month totals
+  const previousMonthTotals = calculateMonthlyTotals(previousYear, previousMonth);
+  const previousMonthIncome = previousMonthTotals.monthlyIncome;
+  const previousMonthExpenses = previousMonthTotals.monthlyExpenses;
+  
+  // Calculate percentage changes
+  const calculatePercentageChange = (current, previous) => {
+    if (previous === 0) {
+      return current > 0 ? 100 : 0; // If no previous data, show 100% if current > 0
+    }
+    return ((current - previous) / previous) * 100;
+  };
+  
+  const incomePercentageChange = calculatePercentageChange(monthlyIncome, previousMonthIncome);
+  const expensePercentageChange = calculatePercentageChange(monthlyExpenses, previousMonthExpenses);
+  
+  // Format percentage changes
+  const formatPercentageChange = (change) => {
+    const sign = change >= 0 ? "+" : "";
+    return `${sign}${change.toFixed(1)}%`;
+  };
+  
+  const incomeChangeText = formatPercentageChange(incomePercentageChange);
+  const expenseChangeText = formatPercentageChange(expensePercentageChange);
+  
+  // Determine trend direction
+  const incomeTrend = incomePercentageChange >= 0 ? "up" : "down";
+  const expenseTrend = expensePercentageChange <= 0 ? "down" : "up"; // Lower expenses = good trend
 
   const QuickAnalyticsCard = ({
     title,
@@ -233,16 +274,16 @@ const DashboardPage = ({
         <QuickAnalyticsCard
           title="Monthly Income"
           value={`$${monthlyIncome.toLocaleString()}`}
-          change="+12.5%"
+          change={incomeChangeText}
           icon={TrendingUp}
-          trend="up"
+          trend={incomeTrend}
         />
         <QuickAnalyticsCard
           title="Monthly Expenses"
           value={`$${monthlyExpenses.toLocaleString()}`}
-          change="-8.2%"
+          change={expenseChangeText}
           icon={TrendingDown}
-          trend="down"
+          trend={expenseTrend}
         />
         <QuickAnalyticsCard
           title="Total Accounts"
