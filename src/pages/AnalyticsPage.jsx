@@ -166,11 +166,13 @@ const IncomeVsSpendingChart = ({ data }) => {
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data.data}>
+      <BarChart data={data.data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
         <YAxis />
-        <Tooltip />
+        <Tooltip 
+          formatter={(value) => [`$${value.toFixed(2)}`, 'Amount']}
+        />
         <Bar dataKey="amount" fill="#10b981" />
       </BarChart>
     </ResponsiveContainer>
@@ -182,7 +184,7 @@ const SpendingByCategoryChart = ({ data, isMobile }) => {
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <PieChart>
+      <PieChart margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
         <Pie
           data={data}
           cx="50%"
@@ -196,7 +198,9 @@ const SpendingByCategoryChart = ({ data, isMobile }) => {
             <Cell key={`cell-${index}`} fill={entry.fill} />
           ))}
         </Pie>
-        <Tooltip />
+        <Tooltip 
+          formatter={(value) => [`$${value.toFixed(2)}`, 'Amount']}
+        />
       </PieChart>
     </ResponsiveContainer>
   );
@@ -222,22 +226,28 @@ const MonthlySpendingChart = ({ data, timeRange }) => {
   };
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data}>
+    <ResponsiveContainer width="100%" height={350}>
+      <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis 
           dataKey="month" 
           angle={-45}
           textAnchor="end"
-          height={60}
+          height={80}
           interval={0}
         />
         <YAxis />
         <Tooltip 
           formatter={(value, name) => [`$${value.toFixed(2)}`, name === 'income' ? 'Income' : 'Spending']}
           labelFormatter={(label) => `Period: ${label}`}
+          position={{ x: undefined, y: undefined }}
+          allowEscapeViewBox={{ x: false, y: false }}
         />
-        <Legend />
+        <Legend 
+          verticalAlign="top" 
+          height={36}
+          wrapperStyle={{ paddingBottom: '10px' }}
+        />
         <Line
           type="monotone"
           dataKey="income"
@@ -284,23 +294,29 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
   };
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data}>
+    <ResponsiveContainer width="100%" height={350}>
+      <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis 
           dataKey="period" 
           tickFormatter={formatXAxisTick}
           angle={-45}
           textAnchor="end"
-          height={60}
+          height={80}
           interval={0}
         />
         <YAxis />
         <Tooltip 
           formatter={(value, name) => [`$${value.toFixed(2)}`, name === 'income' ? 'Income' : 'Spending']}
           labelFormatter={(label) => `Period: ${label}`}
+          position={{ x: undefined, y: undefined }}
+          allowEscapeViewBox={{ x: false, y: false }}
         />
-        <Legend />
+        <Legend 
+          verticalAlign="top" 
+          height={36}
+          wrapperStyle={{ paddingBottom: '10px' }}
+        />
         <Bar dataKey="income" fill="#10b981" name="Income" />
         <Bar dataKey="spending" fill="#ef4444" name="Spending" />
       </BarChart>
