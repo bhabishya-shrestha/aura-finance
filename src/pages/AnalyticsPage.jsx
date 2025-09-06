@@ -14,6 +14,7 @@ import {
   Area,
   ComposedChart,
   BarChart,
+  Legend,
 } from "recharts";
 import {
   TrendingUp,
@@ -226,20 +227,30 @@ const MonthlySpendingChart = ({ data, timeRange }) => {
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis 
           dataKey="month" 
-          angle={timeRange === 'week' ? -45 : 0}
-          textAnchor={timeRange === 'week' ? 'end' : 'middle'}
-          height={timeRange === 'week' ? 60 : 30}
+          angle={-45}
+          textAnchor="end"
+          height={60}
+          interval={0}
         />
         <YAxis />
         <Tooltip 
-          formatter={(value, name) => [`$${value.toFixed(2)}`, 'Spending']}
+          formatter={(value, name) => [`$${value.toFixed(2)}`, name === 'income' ? 'Income' : 'Spending']}
           labelFormatter={(label) => `Period: ${label}`}
+        />
+        <Legend />
+        <Line
+          type="monotone"
+          dataKey="income"
+          stroke="#10b981"
+          strokeWidth={2}
+          name="Income"
         />
         <Line
           type="monotone"
           dataKey="spending"
-          stroke="#3b82f6"
+          stroke="#ef4444"
           strokeWidth={2}
+          name="Spending"
         />
       </LineChart>
     </ResponsiveContainer>
@@ -279,16 +290,19 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
         <XAxis 
           dataKey="period" 
           tickFormatter={formatXAxisTick}
-          angle={timeRange === 'week' ? -45 : 0}
-          textAnchor={timeRange === 'week' ? 'end' : 'middle'}
-          height={timeRange === 'week' ? 60 : 30}
+          angle={-45}
+          textAnchor="end"
+          height={60}
+          interval={0}
         />
         <YAxis />
         <Tooltip 
-          formatter={(value, name) => [`$${value.toFixed(2)}`, 'Spending']}
+          formatter={(value, name) => [`$${value.toFixed(2)}`, name === 'income' ? 'Income' : 'Spending']}
           labelFormatter={(label) => `Period: ${label}`}
         />
-        <Bar dataKey="spending" fill="#3b82f6" />
+        <Legend />
+        <Bar dataKey="income" fill="#10b981" name="Income" />
+        <Bar dataKey="spending" fill="#ef4444" name="Spending" />
       </BarChart>
     </ResponsiveContainer>
   );
