@@ -218,12 +218,28 @@ class AnalyticsService {
           }
         });
 
+        // Define a diverse color palette for better category differentiation
+        const colorPalette = [
+          '#FF6B6B', // Red
+          '#4ECDC4', // Teal
+          '#45B7D1', // Blue
+          '#96CEB4', // Green
+          '#FFEAA7', // Yellow
+          '#DDA0DD', // Plum
+          '#98D8C8', // Mint
+          '#F7DC6F', // Light Yellow
+          '#BB8FCE', // Light Purple
+          '#85C1E9', // Light Blue
+          '#F8C471', // Orange
+          '#82E0AA', // Light Green
+        ];
+
         // Convert to array and sort by amount
         const result = Object.entries(categoryData)
-          .map(([category, amount]) => ({
+          .map(([category, amount], index) => ({
             category,
-            amount,
-            fill: "#667eea", // Default color, will be enhanced later
+            amount: parseFloat(amount.toFixed(2)), // Format to 2 decimal places
+            fill: colorPalette[index % colorPalette.length], // Assign colors from palette
           }))
           .sort((a, b) => b.amount - a.amount);
 
@@ -252,12 +268,12 @@ class AnalyticsService {
         const net = income - spending;
 
         return {
-          income,
-          spending,
-          net,
+          income: parseFloat(income.toFixed(2)), // Format to 2 decimal places
+          spending: parseFloat(spending.toFixed(2)), // Format to 2 decimal places
+          net: parseFloat(net.toFixed(2)), // Format to 2 decimal places
           data: [
-            { name: "Income", amount: income, fill: "#10b981" },
-            { name: "Spending", amount: spending, fill: "#ef4444" },
+            { name: "Income", amount: parseFloat(income.toFixed(2)), fill: "#10b981" },
+            { name: "Spending", amount: parseFloat(spending.toFixed(2)), fill: "#ef4444" },
           ],
         };
       },
@@ -354,7 +370,12 @@ class AnalyticsService {
           .sort(([monthKeyA], [monthKeyB]) =>
             monthKeyA.localeCompare(monthKeyB)
           )
-          .map(([, data]) => data);
+          .map(([, data]) => ({
+            ...data,
+            spending: parseFloat(data.spending.toFixed(2)), // Format to 2 decimal places
+            income: parseFloat(data.income.toFixed(2)), // Format to 2 decimal places
+            net: parseFloat(data.net.toFixed(2)), // Format to 2 decimal places
+          }));
 
         return sortedData;
       },
@@ -422,9 +443,9 @@ class AnalyticsService {
         const transactionCount = transactions.length;
 
         return {
-          income,
-          spending,
-          netSavings,
+          income: parseFloat(income.toFixed(2)), // Format to 2 decimal places
+          spending: parseFloat(spending.toFixed(2)), // Format to 2 decimal places
+          netSavings: parseFloat(netSavings.toFixed(2)), // Format to 2 decimal places
           transactionCount,
         };
       },
@@ -579,9 +600,9 @@ class AnalyticsService {
 
           trends.push({
             period: periodLabel,
-            spending: periodSpending,
-            income: periodIncome,
-            net: periodIncome - periodSpending,
+            spending: parseFloat(periodSpending.toFixed(2)), // Format to 2 decimal places
+            income: parseFloat(periodIncome.toFixed(2)), // Format to 2 decimal places
+            net: parseFloat((periodIncome - periodSpending).toFixed(2)), // Format to 2 decimal places
           });
         }
 
@@ -681,7 +702,7 @@ class AnalyticsService {
         const daysDiff = Math.ceil((now - startDate) / (1000 * 60 * 60 * 24));
         const avgDailySpending = daysDiff > 0 ? totalSpending / daysDiff : 0;
 
-        return avgDailySpending;
+        return parseFloat(avgDailySpending.toFixed(2)); // Format to 2 decimal places
       },
       transactions
     );
