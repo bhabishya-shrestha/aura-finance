@@ -641,6 +641,21 @@ const AccountsPage = () => {
         </button>
       </div>
 
+      {/* Desktop Add Account Button - Only show when accounts exist */}
+      {accounts.length > 0 && (
+        <div className="hidden lg:flex justify-end mb-6">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl px-6 py-3 flex items-center gap-3 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 active:scale-95 shadow-lg"
+          >
+            <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+              <Plus className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-semibold">Add Account</span>
+          </button>
+        </div>
+      )}
+
       {/* Accounts Grid */}
       {accounts.length > 0 ? (
         <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4 lg:gap-6">
