@@ -238,7 +238,11 @@ const MonthlySpendingChart = ({ data, timeRange }) => {
         />
         <YAxis />
         <Tooltip 
-          formatter={(value, name) => [`$${value.toFixed(2)}`, name === 'income' ? 'Income' : 'Spending']}
+          formatter={(value, name, props) => {
+            const dataKey = props.dataKey;
+            const label = dataKey === 'income' ? 'Income' : 'Spending';
+            return [`$${value.toFixed(2)}`, label];
+          }}
           labelFormatter={(label) => `Period: ${label}`}
           position={{ x: undefined, y: undefined }}
           allowEscapeViewBox={{ x: false, y: false }}
@@ -307,7 +311,11 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
         />
         <YAxis />
         <Tooltip 
-          formatter={(value, name) => [`$${value.toFixed(2)}`, name === 'income' ? 'Income' : 'Spending']}
+          formatter={(value, name, props) => {
+            const dataKey = props.dataKey;
+            const label = dataKey === 'income' ? 'Income' : 'Spending';
+            return [`$${value.toFixed(2)}`, label];
+          }}
           labelFormatter={(label) => `Period: ${label}`}
           position={{ x: undefined, y: undefined }}
           allowEscapeViewBox={{ x: false, y: false }}
