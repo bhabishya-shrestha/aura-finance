@@ -161,32 +161,17 @@ const MetricCard = ({
 
 // Chart Components
 const IncomeVsSpendingChart = ({ data }) => {
-  if (!data || !data.length) return <EmptyChartState />;
+  if (!data || !data.data || !data.data.length) return <EmptyChartState />;
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <ComposedChart data={data}>
+      <BarChart data={data.data}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="month" />
+        <XAxis dataKey="name" />
         <YAxis />
         <Tooltip />
-        <Area
-          type="monotone"
-          dataKey="income"
-          stackId="1"
-          stroke="#10b981"
-          fill="#10b981"
-          fillOpacity={0.3}
-        />
-        <Area
-          type="monotone"
-          dataKey="spending"
-          stackId="1"
-          stroke="#ef4444"
-          fill="#ef4444"
-          fillOpacity={0.3}
-        />
-      </ComposedChart>
+        <Bar dataKey="amount" fill="#10b981" />
+      </BarChart>
     </ResponsiveContainer>
   );
 };
@@ -204,7 +189,7 @@ const SpendingByCategoryChart = ({ data, isMobile }) => {
           innerRadius={isMobile ? 40 : 60}
           outerRadius={isMobile ? 80 : 100}
           paddingAngle={5}
-          dataKey="value"
+          dataKey="amount"
         >
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -244,10 +229,10 @@ const SpendingTrendsChart = ({ data }) => {
     <ResponsiveContainer width="100%" height={300}>
       <BarChart data={data}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="category" />
+        <XAxis dataKey="period" />
         <YAxis />
         <Tooltip />
-        <Bar dataKey="amount" fill="#3b82f6" />
+        <Bar dataKey="spending" fill="#3b82f6" />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -291,13 +276,13 @@ const AnalyticsPage = () => {
     }));
   };
 
-  // Analytics data calculation
+  // Analytics data calculation using the analytics service
   const analyticsData = useMemo(() => {
     if (!transactions || !transactions.length) {
       return {
         spendingByCategory: [],
         monthlySpending: [],
-        incomeVsSpending: { income: 0, spending: 0, net: 0 },
+        incomeVsSpending: { income: 0, spending: 0, net: 0, data: [] },
         spendingTrends: [],
         netWorthTrend: 0,
         incomeTrend: 0,
@@ -308,32 +293,22 @@ const AnalyticsPage = () => {
       };
     }
 
-    // Calculate analytics data here
-    // This is a simplified version - you can add your complex calculations
-    const income = transactions
-      .filter(t => t.amount > 0)
-      .reduce((sum, t) => sum + t.amount, 0);
-    const spending = transactions
-      .filter(t => t.amount < 0)
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const net = income - spending;
-
+    // Use the analytics service to calculate all analytics for the selected time range
+    const allAnalytics = analyticsService.calculateAllAnalytics(transactions, timeRange);
+    
     return {
-      spendingByCategory: [],
-      monthlySpending: [],
-      incomeVsSpending: { income, spending, net },
-      spendingTrends: [],
-      netWorthTrend: 0,
-      incomeTrend: 0,
-      spendingTrend: 0,
-      savingsTrend: 0,
-      quickAnalytics: {
-        transactionCount: transactions.length,
-        netSavings: net,
-      },
-      avgDailySpending: 0,
+      spendingByCategory: allAnalytics.spendingByCategory,
+      monthlySpending: allAnalytics.monthlySpending,
+      incomeVsSpending: allAnalytics.incomeVsSpending,
+      spendingTrends: allAnalytics.spendingTrends,
+      netWorthTrend: 0, // TODO: Implement net worth trend calculation
+      incomeTrend: 0, // TODO: Implement income trend calculation
+      spendingTrend: 0, // TODO: Implement spending trend calculation
+      savingsTrend: 0, // TODO: Implement savings trend calculation
+      quickAnalytics: allAnalytics.quickAnalytics,
+      avgDailySpending: allAnalytics.avgDailySpending,
     };
-  }, [transactions]);
+  }, [transactions, timeRange]);
 
   const {
     spendingByCategory,
@@ -348,7 +323,13 @@ const AnalyticsPage = () => {
   } = analyticsData;
 
   const getNetWorth = () => {
-    return "$0.00"; // Add your net worth calculation
+    if (!transactions || !transactions.length) {
+      return "$0.00";
+    }
+    
+    // Calculate net worth using the analytics service
+    const netWorth = analyticsService.calculateNetWorth(transactions, []);
+    return `$${netWorth.toFixed(2)}`;
   };
 
   // Render overview content
@@ -465,7 +446,7 @@ const AnalyticsPage = () => {
                     </span>
                   </div>
                   <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
-                    {item.percentage.toFixed(1)}%
+                    ${item.amount.toFixed(2)}
                   </div>
                 </div>
               ))}
@@ -520,12 +501,12 @@ const AnalyticsPage = () => {
   return (
     <div className="p-4 lg:p-6">
       {/* Controls */}
-      <div className="flex flex-col gap-3 flex-shrink-0 w-full sm:w-auto">
+      <div className="flex flex-col gap-3 flex-shrink-0 w-auto">
         {/* View Toggle */}
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-full sm:w-auto">
+        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-auto">
           <button
             onClick={() => setSelectedView("overview")}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
               selectedView === "overview"
                 ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -535,7 +516,7 @@ const AnalyticsPage = () => {
           </button>
           <button
             onClick={() => setSelectedView("detailed")}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
               selectedView === "detailed"
                 ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -546,12 +527,12 @@ const AnalyticsPage = () => {
         </div>
 
         {/* Time Range Selector */}
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-full sm:w-auto">
+        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-auto">
           {["week", "month", "quarter", "year"].map(range => (
             <button
               key={range}
               onClick={() => handleTimeRangeChange(range)}
-              className={`flex-1 sm:flex-none px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 timeRange === range
                   ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
