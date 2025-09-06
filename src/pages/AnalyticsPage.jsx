@@ -11,8 +11,6 @@ import {
   Cell,
   LineChart,
   Line,
-  Area,
-  ComposedChart,
   BarChart,
   Legend,
 } from "recharts";
@@ -41,7 +39,7 @@ const EmptyChartState = ({
 );
 
 // Custom Tooltip Component for Category Charts
-const CategoryTooltip = ({ active, payload, label }) => {
+const CategoryTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -223,24 +221,9 @@ const SpendingByCategoryChart = ({ data, isMobile }) => {
   );
 };
 
-const MonthlySpendingChart = ({ data, timeRange }) => {
+const MonthlySpendingChart = ({ data }) => {
   if (!data || !data.length) return <EmptyChartState />;
 
-  // Dynamic chart title based on time range
-  const getChartTitle = () => {
-    switch (timeRange) {
-      case "week":
-        return "Daily Spending Trend";
-      case "month":
-        return "Weekly Spending Trend";
-      case "quarter":
-        return "Monthly Spending Trend";
-      case "year":
-        return "Monthly Spending Trend";
-      default:
-        return "Monthly Spending Trend";
-    }
-  };
 
   return (
     <ResponsiveContainer width="100%" height={350}>
@@ -491,7 +474,6 @@ const AnalyticsPage = () => {
     spendingByCategory,
     monthlySpending,
     incomeVsSpending,
-    spendingTrends,
     spendingTrendsByCategory,
     netWorthTrend,
     incomeTrend,

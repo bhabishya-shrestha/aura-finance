@@ -11,7 +11,6 @@ import {
   Building2,
   TrendingUp,
   Coins,
-  Briefcase,
 } from "lucide-react";
 import useProductionStore from "../store/productionStore";
 import { useNotifications } from "../contexts/NotificationContext";

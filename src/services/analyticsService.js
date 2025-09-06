@@ -496,7 +496,7 @@ class AnalyticsService {
         // Use transactions as-is (they should already be filtered)
         const trends = [];
         const now = new Date();
-        let periods, periodType, startDate, endDate;
+        let periods, periodType, startDate;
 
         // Calculate time range parameters (matching original calculateSpendingTrends logic)
         switch (timeRange) {
@@ -1023,7 +1023,7 @@ class AnalyticsService {
     let startDate, endDate;
 
     switch (timeRange) {
-      case "week":
+      case "week": {
         // Previous week
         const lastWeek = new Date(now);
         lastWeek.setDate(now.getDate() - 7);
@@ -1032,14 +1032,16 @@ class AnalyticsService {
         startDate = weekStart;
         endDate = lastWeek;
         break;
-      case "month":
+      }
+      case "month": {
         // Previous month
         const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const monthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
         startDate = lastMonth;
         endDate = monthEnd;
         break;
-      case "quarter":
+      }
+      case "quarter": {
         // Previous quarter
         const currentQuarter = Math.floor(now.getMonth() / 3);
         const currentYear = now.getFullYear();
@@ -1049,11 +1051,13 @@ class AnalyticsService {
         startDate = new Date(prevQuarterYear, prevQuarter * 3, 1);
         endDate = new Date(prevQuarterYear, (prevQuarter + 1) * 3, 0);
         break;
-      case "year":
+      }
+      case "year": {
         // Previous year
         startDate = new Date(now.getFullYear() - 1, 0, 1);
         endDate = new Date(now.getFullYear() - 1, 11, 31);
         break;
+      }
       default:
         return [];
     }
