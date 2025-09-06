@@ -5,6 +5,47 @@ class AnalyticsService {
     this.cacheTimeout = 2 * 60 * 1000; // 2 minutes
     this.lastTransactionHash = null;
     this.lastCalculationTime = 0;
+
+    // Unified color palette for consistent category coloring across all charts
+    this.colorPalette = [
+      "#FF6B6B", // Red
+      "#4ECDC4", // Teal
+      "#45B7D1", // Blue
+      "#96CEB4", // Green
+      "#FFEAA7", // Yellow
+      "#DDA0DD", // Plum
+      "#98D8C8", // Mint
+      "#F7DC6F", // Light Yellow
+      "#BB8FCE", // Light Purple
+      "#85C1E9", // Light Blue
+      "#F8C471", // Orange
+      "#82E0AA", // Light Green
+    ];
+
+    // Category to color mapping for consistency
+    this.categoryColorMap = new Map();
+  }
+
+  // Get consistent color for a category across all charts
+  getCategoryColor(category) {
+    if (!this.categoryColorMap.has(category)) {
+      // Assign color based on category name hash for consistency
+      const hash = this.hashString(category);
+      const colorIndex = hash % this.colorPalette.length;
+      this.categoryColorMap.set(category, this.colorPalette[colorIndex]);
+    }
+    return this.categoryColorMap.get(category);
+  }
+
+  // Simple hash function for consistent color assignment
+  hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
   }
 
   // Generate a hash of transaction data for cache invalidation
@@ -218,28 +259,12 @@ class AnalyticsService {
           }
         });
 
-        // Define a diverse color palette for better category differentiation
-        const colorPalette = [
-          '#FF6B6B', // Red
-          '#4ECDC4', // Teal
-          '#45B7D1', // Blue
-          '#96CEB4', // Green
-          '#FFEAA7', // Yellow
-          '#DDA0DD', // Plum
-          '#98D8C8', // Mint
-          '#F7DC6F', // Light Yellow
-          '#BB8FCE', // Light Purple
-          '#85C1E9', // Light Blue
-          '#F8C471', // Orange
-          '#82E0AA', // Light Green
-        ];
-
-        // Convert to array and sort by amount
+        // Convert to array and sort by amount, using unified color system
         const result = Object.entries(categoryData)
-          .map(([category, amount], index) => ({
+          .map(([category, amount]) => ({
             category,
             amount: parseFloat(amount.toFixed(2)), // Format to 2 decimal places
-            fill: colorPalette[index % colorPalette.length], // Assign colors from palette
+            fill: this.getCategoryColor(category), // Use unified color system
           }))
           .sort((a, b) => b.amount - a.amount);
 
@@ -272,8 +297,16 @@ class AnalyticsService {
           spending: parseFloat(spending.toFixed(2)), // Format to 2 decimal places
           net: parseFloat(net.toFixed(2)), // Format to 2 decimal places
           data: [
-            { name: "Income", amount: parseFloat(income.toFixed(2)), fill: "#10b981" },
-            { name: "Spending", amount: parseFloat(spending.toFixed(2)), fill: "#ef4444" },
+            {
+              name: "Income",
+              amount: parseFloat(income.toFixed(2)),
+              fill: "#10b981",
+            },
+            {
+              name: "Spending",
+              amount: parseFloat(spending.toFixed(2)),
+              fill: "#ef4444",
+            },
           ],
         };
       },
@@ -495,21 +528,7 @@ class AnalyticsService {
             startDate = new Date(now.getTime() - 6 * 30 * 24 * 60 * 60 * 1000);
         }
 
-        // Define color palette for categories
-        const colorPalette = [
-          '#FF6B6B', // Red
-          '#4ECDC4', // Teal
-          '#45B7D1', // Blue
-          '#96CEB4', // Green
-          '#FFEAA7', // Yellow
-          '#DDA0DD', // Plum
-          '#98D8C8', // Mint
-          '#F7DC6F', // Light Yellow
-          '#BB8FCE', // Light Purple
-          '#85C1E9', // Light Blue
-          '#F8C471', // Orange
-          '#82E0AA', // Light Green
-        ];
+        // Use unified color system for consistent category coloring
 
         // Generate periods with category breakdown (matching original logic)
         for (let i = 0; i < periods; i++) {
@@ -567,7 +586,9 @@ class AnalyticsService {
           // Filter transactions for this period
           const periodTransactions = transactions.filter(transaction => {
             const transactionDate = new Date(transaction.date);
-            return transactionDate >= periodStart && transactionDate <= periodEnd;
+            return (
+              transactionDate >= periodStart && transactionDate <= periodEnd
+            );
           });
 
           // Calculate spending by category for this period
@@ -582,16 +603,19 @@ class AnalyticsService {
             }
           });
 
-          // Convert to array with colors
+          // Convert to array with colors using unified color system
           const categoryBreakdown = Object.entries(categoryData)
-            .map(([category, amount], index) => ({
+            .map(([category, amount]) => ({
               category,
               amount: parseFloat(amount.toFixed(2)),
-              fill: colorPalette[index % colorPalette.length],
+              fill: this.getCategoryColor(category), // Use unified color system
             }))
             .sort((a, b) => b.amount - a.amount);
 
-          const totalSpending = categoryBreakdown.reduce((sum, item) => sum + item.amount, 0);
+          const totalSpending = categoryBreakdown.reduce(
+            (sum, item) => sum + item.amount,
+            0
+          );
 
           trends.push({
             period: periodLabel,
@@ -873,16 +897,22 @@ class AnalyticsService {
   // Calculate net worth trend
   calculateNetWorthTrend(transactions, timeRange = "month") {
     const cacheKey = this.getCacheKey("netWorthTrend", timeRange);
-    
+
     return this.getCachedOrCalculate(
       cacheKey,
       () => {
         const currentNetWorth = this.calculateNetWorth(transactions, []);
-        
+
         // Calculate previous period net worth
-        const previousPeriodTransactions = this.getPreviousPeriodTransactions(transactions, timeRange);
-        const previousNetWorth = this.calculateNetWorth(previousPeriodTransactions, []);
-        
+        const previousPeriodTransactions = this.getPreviousPeriodTransactions(
+          transactions,
+          timeRange
+        );
+        const previousNetWorth = this.calculateNetWorth(
+          previousPeriodTransactions,
+          []
+        );
+
         return this.calculateTrendPercentage(currentNetWorth, previousNetWorth);
       },
       transactions
@@ -892,21 +922,27 @@ class AnalyticsService {
   // Calculate income trend
   calculateIncomeTrend(transactions, timeRange = "month") {
     const cacheKey = this.getCacheKey("incomeTrend", timeRange);
-    
+
     return this.getCachedOrCalculate(
       cacheKey,
       () => {
-        const filteredTransactions = this.filterTransactionsByTimeRange(transactions, timeRange);
+        const filteredTransactions = this.filterTransactionsByTimeRange(
+          transactions,
+          timeRange
+        );
         const currentIncome = filteredTransactions
           .filter(t => t.amount > 0)
           .reduce((sum, t) => sum + t.amount, 0);
-        
+
         // Calculate previous period income
-        const previousPeriodTransactions = this.getPreviousPeriodTransactions(transactions, timeRange);
+        const previousPeriodTransactions = this.getPreviousPeriodTransactions(
+          transactions,
+          timeRange
+        );
         const previousIncome = previousPeriodTransactions
           .filter(t => t.amount > 0)
           .reduce((sum, t) => sum + t.amount, 0);
-        
+
         return this.calculateTrendPercentage(currentIncome, previousIncome);
       },
       transactions
@@ -916,21 +952,27 @@ class AnalyticsService {
   // Calculate spending trend
   calculateSpendingTrend(transactions, timeRange = "month") {
     const cacheKey = this.getCacheKey("spendingTrend", timeRange);
-    
+
     return this.getCachedOrCalculate(
       cacheKey,
       () => {
-        const filteredTransactions = this.filterTransactionsByTimeRange(transactions, timeRange);
+        const filteredTransactions = this.filterTransactionsByTimeRange(
+          transactions,
+          timeRange
+        );
         const currentSpending = filteredTransactions
           .filter(t => t.amount < 0)
           .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-        
+
         // Calculate previous period spending
-        const previousPeriodTransactions = this.getPreviousPeriodTransactions(transactions, timeRange);
+        const previousPeriodTransactions = this.getPreviousPeriodTransactions(
+          transactions,
+          timeRange
+        );
         const previousSpending = previousPeriodTransactions
           .filter(t => t.amount < 0)
           .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-        
+
         return this.calculateTrendPercentage(currentSpending, previousSpending);
       },
       transactions
@@ -940,11 +982,14 @@ class AnalyticsService {
   // Calculate savings trend
   calculateSavingsTrend(transactions, timeRange = "month") {
     const cacheKey = this.getCacheKey("savingsTrend", timeRange);
-    
+
     return this.getCachedOrCalculate(
       cacheKey,
       () => {
-        const filteredTransactions = this.filterTransactionsByTimeRange(transactions, timeRange);
+        const filteredTransactions = this.filterTransactionsByTimeRange(
+          transactions,
+          timeRange
+        );
         const currentIncome = filteredTransactions
           .filter(t => t.amount > 0)
           .reduce((sum, t) => sum + t.amount, 0);
@@ -952,9 +997,12 @@ class AnalyticsService {
           .filter(t => t.amount < 0)
           .reduce((sum, t) => sum + Math.abs(t.amount), 0);
         const currentSavings = currentIncome - currentSpending;
-        
+
         // Calculate previous period savings
-        const previousPeriodTransactions = this.getPreviousPeriodTransactions(transactions, timeRange);
+        const previousPeriodTransactions = this.getPreviousPeriodTransactions(
+          transactions,
+          timeRange
+        );
         const previousIncome = previousPeriodTransactions
           .filter(t => t.amount > 0)
           .reduce((sum, t) => sum + t.amount, 0);
@@ -962,7 +1010,7 @@ class AnalyticsService {
           .filter(t => t.amount < 0)
           .reduce((sum, t) => sum + Math.abs(t.amount), 0);
         const previousSavings = previousIncome - previousSpending;
-        
+
         return this.calculateTrendPercentage(currentSavings, previousSavings);
       },
       transactions
@@ -973,7 +1021,7 @@ class AnalyticsService {
   getPreviousPeriodTransactions(transactions, timeRange = "month") {
     const now = new Date();
     let startDate, endDate;
-    
+
     switch (timeRange) {
       case "week":
         // Previous week
@@ -996,7 +1044,8 @@ class AnalyticsService {
         const currentQuarter = Math.floor(now.getMonth() / 3);
         const currentYear = now.getFullYear();
         const prevQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
-        const prevQuarterYear = currentQuarter === 0 ? currentYear - 1 : currentYear;
+        const prevQuarterYear =
+          currentQuarter === 0 ? currentYear - 1 : currentYear;
         startDate = new Date(prevQuarterYear, prevQuarter * 3, 1);
         endDate = new Date(prevQuarterYear, (prevQuarter + 1) * 3, 0);
         break;
@@ -1008,7 +1057,7 @@ class AnalyticsService {
       default:
         return [];
     }
-    
+
     return transactions.filter(transaction => {
       const transactionDate = new Date(transaction.date);
       return transactionDate >= startDate && transactionDate <= endDate;
@@ -1077,10 +1126,19 @@ class AnalyticsService {
         );
 
         // Calculate trend values for the selected time range
-        const netWorthTrend = this.calculateNetWorthTrend(transactions, timeRange);
+        const netWorthTrend = this.calculateNetWorthTrend(
+          transactions,
+          timeRange
+        );
         const incomeTrend = this.calculateIncomeTrend(transactions, timeRange);
-        const spendingTrend = this.calculateSpendingTrend(transactions, timeRange);
-        const savingsTrend = this.calculateSavingsTrend(transactions, timeRange);
+        const spendingTrend = this.calculateSpendingTrend(
+          transactions,
+          timeRange
+        );
+        const savingsTrend = this.calculateSavingsTrend(
+          transactions,
+          timeRange
+        );
 
         return {
           spendingByCategory,

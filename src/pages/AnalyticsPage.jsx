@@ -334,7 +334,7 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
   // Create data structure for stacked bar chart
   const chartData = data.map(period => {
     const dataPoint = { period: period.period };
-    
+
     // Initialize all categories with 0
     allCategories.forEach(category => {
       dataPoint[category] = 0;
@@ -351,18 +351,20 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
   // Create bars for each category
   const categoryBars = Array.from(allCategories).map(category => {
     // Find the color for this category from the first period that has it
-    const firstPeriodWithCategory = data.find(period => 
+    const firstPeriodWithCategory = data.find(period =>
       period.categories.some(cat => cat.category === category)
     );
-    const categoryData = firstPeriodWithCategory?.categories.find(cat => cat.category === category);
-    const fillColor = categoryData?.fill || '#8884d8';
+    const categoryData = firstPeriodWithCategory?.categories.find(
+      cat => cat.category === category
+    );
+    const fillColor = categoryData?.fill || "#8884d8";
 
     return (
-      <Bar 
-        key={category} 
-        dataKey={category} 
-        stackId="spending" 
-        fill={fillColor} 
+      <Bar
+        key={category}
+        dataKey={category}
+        stackId="spending"
+        fill={fillColor}
         name={category}
       />
     );
@@ -411,7 +413,7 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
 
 // Main Analytics Page Component
 const AnalyticsPage = () => {
-  const { transactions } = useProductionStore();
+  const { transactions, accounts } = useProductionStore();
   const [selectedView, setSelectedView] = useState("overview");
   const [timeRange, setTimeRange] = useState("week");
   const [isMobile, setIsMobile] = useState(false);
@@ -503,8 +505,8 @@ const AnalyticsPage = () => {
       return "$0.00";
     }
 
-    // Calculate net worth using the analytics service
-    const netWorth = analyticsService.calculateNetWorth(transactions, []);
+    // Calculate net worth using the analytics service with accounts data
+    const netWorth = analyticsService.calculateNetWorth(transactions, accounts);
     return `$${netWorth.toFixed(2)}`;
   };
 
