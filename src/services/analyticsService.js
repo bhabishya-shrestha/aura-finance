@@ -709,6 +709,159 @@ class AnalyticsService {
     );
   }
 
+  // Calculate trend percentage change between current and previous period
+  calculateTrendPercentage(currentValue, previousValue) {
+    if (previousValue === 0) {
+      return currentValue > 0 ? 100 : 0; // If no previous data, show 100% if current > 0
+    }
+    return ((currentValue - previousValue) / Math.abs(previousValue)) * 100;
+  }
+
+  // Calculate net worth trend
+  calculateNetWorthTrend(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("netWorthTrend", timeRange);
+    
+    return this.getCachedOrCalculate(
+      cacheKey,
+      () => {
+        const currentNetWorth = this.calculateNetWorth(transactions, []);
+        
+        // Calculate previous period net worth
+        const previousPeriodTransactions = this.getPreviousPeriodTransactions(transactions, timeRange);
+        const previousNetWorth = this.calculateNetWorth(previousPeriodTransactions, []);
+        
+        return this.calculateTrendPercentage(currentNetWorth, previousNetWorth);
+      },
+      transactions
+    );
+  }
+
+  // Calculate income trend
+  calculateIncomeTrend(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("incomeTrend", timeRange);
+    
+    return this.getCachedOrCalculate(
+      cacheKey,
+      () => {
+        const filteredTransactions = this.filterTransactionsByTimeRange(transactions, timeRange);
+        const currentIncome = filteredTransactions
+          .filter(t => t.amount > 0)
+          .reduce((sum, t) => sum + t.amount, 0);
+        
+        // Calculate previous period income
+        const previousPeriodTransactions = this.getPreviousPeriodTransactions(transactions, timeRange);
+        const previousIncome = previousPeriodTransactions
+          .filter(t => t.amount > 0)
+          .reduce((sum, t) => sum + t.amount, 0);
+        
+        return this.calculateTrendPercentage(currentIncome, previousIncome);
+      },
+      transactions
+    );
+  }
+
+  // Calculate spending trend
+  calculateSpendingTrend(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("spendingTrend", timeRange);
+    
+    return this.getCachedOrCalculate(
+      cacheKey,
+      () => {
+        const filteredTransactions = this.filterTransactionsByTimeRange(transactions, timeRange);
+        const currentSpending = filteredTransactions
+          .filter(t => t.amount < 0)
+          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        
+        // Calculate previous period spending
+        const previousPeriodTransactions = this.getPreviousPeriodTransactions(transactions, timeRange);
+        const previousSpending = previousPeriodTransactions
+          .filter(t => t.amount < 0)
+          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        
+        return this.calculateTrendPercentage(currentSpending, previousSpending);
+      },
+      transactions
+    );
+  }
+
+  // Calculate savings trend
+  calculateSavingsTrend(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("savingsTrend", timeRange);
+    
+    return this.getCachedOrCalculate(
+      cacheKey,
+      () => {
+        const filteredTransactions = this.filterTransactionsByTimeRange(transactions, timeRange);
+        const currentIncome = filteredTransactions
+          .filter(t => t.amount > 0)
+          .reduce((sum, t) => sum + t.amount, 0);
+        const currentSpending = filteredTransactions
+          .filter(t => t.amount < 0)
+          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        const currentSavings = currentIncome - currentSpending;
+        
+        // Calculate previous period savings
+        const previousPeriodTransactions = this.getPreviousPeriodTransactions(transactions, timeRange);
+        const previousIncome = previousPeriodTransactions
+          .filter(t => t.amount > 0)
+          .reduce((sum, t) => sum + t.amount, 0);
+        const previousSpending = previousPeriodTransactions
+          .filter(t => t.amount < 0)
+          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        const previousSavings = previousIncome - previousSpending;
+        
+        return this.calculateTrendPercentage(currentSavings, previousSavings);
+      },
+      transactions
+    );
+  }
+
+  // Get transactions from the previous period for comparison
+  getPreviousPeriodTransactions(transactions, timeRange = "month") {
+    const now = new Date();
+    let startDate, endDate;
+    
+    switch (timeRange) {
+      case "week":
+        // Previous week
+        const lastWeek = new Date(now);
+        lastWeek.setDate(now.getDate() - 7);
+        const weekStart = new Date(lastWeek);
+        weekStart.setDate(lastWeek.getDate() - 7);
+        startDate = weekStart;
+        endDate = lastWeek;
+        break;
+      case "month":
+        // Previous month
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        startDate = lastMonth;
+        endDate = monthEnd;
+        break;
+      case "quarter":
+        // Previous quarter
+        const currentQuarter = Math.floor(now.getMonth() / 3);
+        const currentYear = now.getFullYear();
+        const prevQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
+        const prevQuarterYear = currentQuarter === 0 ? currentYear - 1 : currentYear;
+        startDate = new Date(prevQuarterYear, prevQuarter * 3, 1);
+        endDate = new Date(prevQuarterYear, (prevQuarter + 1) * 3, 0);
+        break;
+      case "year":
+        // Previous year
+        startDate = new Date(now.getFullYear() - 1, 0, 1);
+        endDate = new Date(now.getFullYear() - 1, 11, 31);
+        break;
+      default:
+        return [];
+    }
+    
+    return transactions.filter(transaction => {
+      const transactionDate = new Date(transaction.date);
+      return transactionDate >= startDate && transactionDate <= endDate;
+    });
+  }
+
   // Calculate all analytics in a single batch for performance
   calculateAllAnalytics(transactions, timeRange = "month") {
     const cacheKey = this.getCacheKey("allAnalytics", timeRange);
@@ -765,6 +918,12 @@ class AnalyticsService {
           "all" // Use "all" since transactions are already filtered
         );
 
+        // Calculate trend values for the selected time range
+        const netWorthTrend = this.calculateNetWorthTrend(transactions, timeRange);
+        const incomeTrend = this.calculateIncomeTrend(transactions, timeRange);
+        const spendingTrend = this.calculateSpendingTrend(transactions, timeRange);
+        const savingsTrend = this.calculateSavingsTrend(transactions, timeRange);
+
         return {
           spendingByCategory,
           monthlySpending,
@@ -772,6 +931,10 @@ class AnalyticsService {
           spendingTrends,
           quickAnalytics,
           avgDailySpending,
+          netWorthTrend,
+          incomeTrend,
+          spendingTrend,
+          savingsTrend,
         };
       },
       transactions

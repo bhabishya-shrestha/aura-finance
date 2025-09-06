@@ -411,10 +411,10 @@ const AnalyticsPage = () => {
       monthlySpending: allAnalytics.monthlySpending,
       incomeVsSpending: allAnalytics.incomeVsSpending,
       spendingTrends: allAnalytics.spendingTrends,
-      netWorthTrend: 0, // TODO: Implement net worth trend calculation
-      incomeTrend: 0, // TODO: Implement income trend calculation
-      spendingTrend: 0, // TODO: Implement spending trend calculation
-      savingsTrend: 0, // TODO: Implement savings trend calculation
+      netWorthTrend: allAnalytics.netWorthTrend,
+      incomeTrend: allAnalytics.incomeTrend,
+      spendingTrend: allAnalytics.spendingTrend,
+      savingsTrend: allAnalytics.savingsTrend,
       quickAnalytics: allAnalytics.quickAnalytics,
       avgDailySpending: allAnalytics.avgDailySpending,
     };
