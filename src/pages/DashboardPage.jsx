@@ -120,19 +120,19 @@ const DashboardPage = ({
   const previousYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 
   // Helper function to safely parse dates without timezone issues
-  const parseDateSafely = (dateValue) => {
+  const parseDateSafely = dateValue => {
     if (!dateValue) return null;
-    
+
     // If it's already a Date object, check if it was created with timezone issues
     if (dateValue instanceof Date) {
       // Check if this Date object was created from an ISO string and has timezone issues
       // The issue is that new Date('2025-09-01') becomes Aug 31 7PM in CDT
       // We need to detect this pattern and reconstruct the correct date
-      
+
       const hours = dateValue.getHours();
       const minutes = dateValue.getMinutes();
       const seconds = dateValue.getSeconds();
-      
+
       // If it's not midnight local time, it might be a timezone-converted date
       if (hours !== 0 || minutes !== 0 || seconds !== 0) {
         // Check if this looks like a timezone-converted ISO date
@@ -142,33 +142,35 @@ const DashboardPage = ({
           const year = dateValue.getFullYear();
           const month = dateValue.getMonth();
           const day = dateValue.getDate();
-          
+
           // Create a new date at midnight local time for the next day
           // (since the timezone conversion moved it to the previous day)
           return new Date(year, month, day + 1);
         }
       }
-      
+
       return dateValue;
     }
-    
+
     // If it's a string, try to parse it as a local date to avoid timezone issues
-    if (typeof dateValue === 'string') {
+    if (typeof dateValue === "string") {
       // Handle ISO date strings like "2024-09-01" by parsing as local date
       if (dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        const [year, month, day] = dateValue.split('-').map(Number);
+        const [year, month, day] = dateValue.split("-").map(Number);
         return new Date(year, month - 1, day); // month is 0-indexed
       }
       // Handle ISO date strings with timezone like "2025-09-01T00:00:00.000Z"
-      if (dateValue.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/)) {
-        const datePart = dateValue.split('T')[0];
-        const [year, month, day] = datePart.split('-').map(Number);
+      if (
+        dateValue.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/)
+      ) {
+        const datePart = dateValue.split("T")[0];
+        const [year, month, day] = datePart.split("-").map(Number);
         return new Date(year, month - 1, day); // month is 0-indexed
       }
       // For other string formats, use regular parsing
       return new Date(dateValue);
     }
-    
+
     // For numbers (timestamps) or other formats, use regular parsing
     return new Date(dateValue);
   };
@@ -180,7 +182,7 @@ const DashboardPage = ({
         if (t.amount <= 0) return false; // Only positive amounts are income
         const transactionDate = parseDateSafely(t.date);
         if (!transactionDate || isNaN(transactionDate.getTime())) return false;
-        
+
         return (
           transactionDate.getFullYear() === year &&
           transactionDate.getMonth() === month
@@ -193,7 +195,7 @@ const DashboardPage = ({
         if (t.amount >= 0) return false; // Only negative amounts are expenses
         const transactionDate = parseDateSafely(t.date);
         if (!transactionDate || isNaN(transactionDate.getTime())) return false;
-        
+
         return (
           transactionDate.getFullYear() === year &&
           transactionDate.getMonth() === month
@@ -215,12 +217,14 @@ const DashboardPage = ({
     console.log(`Current month: ${currentYear}-${currentMonth + 1}`);
     console.log(`Total transactions: ${transactions.length}`);
     console.log(`Monthly expenses: $${monthlyExpenses}`);
-    
+
     // Log first few transactions to see their dates
     const firstFewTransactions = transactions.slice(0, 5);
     firstFewTransactions.forEach((t, i) => {
       const parsedDate = parseDateSafely(t.date);
-      console.log(`Transaction ${i + 1}: ${t.description} - Date: ${t.date} (parsed: ${parsedDate}) - Amount: ${t.amount}`);
+      console.log(
+        `Transaction ${i + 1}: ${t.description} - Date: ${t.date} (parsed: ${parsedDate}) - Amount: ${t.amount}`
+      );
     });
   }
 

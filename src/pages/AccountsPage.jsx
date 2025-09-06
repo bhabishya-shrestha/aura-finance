@@ -159,8 +159,7 @@ const AccountsPage = () => {
     }
   };
 
-
-  const handleEditAccount = (account) => {
+  const handleEditAccount = account => {
     setAccountToEdit(account);
     setEditFormData({
       name: account.name,
@@ -820,7 +819,10 @@ const AccountsPage = () => {
                   step="0.01"
                   value={editFormData.balance}
                   onChange={e =>
-                    setEditFormData({ ...editFormData, balance: e.target.value })
+                    setEditFormData({
+                      ...editFormData,
+                      balance: e.target.value,
+                    })
                   }
                   placeholder="0.00"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -837,7 +839,9 @@ const AccountsPage = () => {
               </button>
               <button
                 onClick={handleSaveAccountEdit}
-                disabled={!editFormData.name || !editFormData.balance || isLoading}
+                disabled={
+                  !editFormData.name || !editFormData.balance || isLoading
+                }
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isLoading ? "Saving..." : "Save Changes"}
