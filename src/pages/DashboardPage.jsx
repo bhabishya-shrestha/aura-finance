@@ -119,20 +119,41 @@ const DashboardPage = ({
   const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
   const previousYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 
+  // Helper function to safely parse dates without timezone issues
+  const parseDateSafely = (dateValue) => {
+    if (!dateValue) return null;
+    
+    // If it's already a Date object, use it
+    if (dateValue instanceof Date) {
+      return dateValue;
+    }
+    
+    // If it's a string, try to parse it as a local date to avoid timezone issues
+    if (typeof dateValue === 'string') {
+      // Handle ISO date strings like "2024-09-01" by parsing as local date
+      if (dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month, day] = dateValue.split('-').map(Number);
+        return new Date(year, month - 1, day); // month is 0-indexed
+      }
+      // For other string formats, use regular parsing
+      return new Date(dateValue);
+    }
+    
+    // For numbers (timestamps) or other formats, use regular parsing
+    return new Date(dateValue);
+  };
+
   // Helper function to calculate monthly totals for a specific month/year
   const calculateMonthlyTotals = (year, month) => {
     const monthlyIncome = transactions
       .filter(t => {
         if (t.amount <= 0) return false; // Only positive amounts are income
-        const transactionDate = new Date(getMs(t.date));
-        
-        // Ensure we're comparing dates properly by normalizing to start of day
-        const normalizedTransactionDate = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
-        const targetDate = new Date(year, month, 1);
+        const transactionDate = parseDateSafely(t.date);
+        if (!transactionDate || isNaN(transactionDate.getTime())) return false;
         
         return (
-          normalizedTransactionDate.getFullYear() === year &&
-          normalizedTransactionDate.getMonth() === month
+          transactionDate.getFullYear() === year &&
+          transactionDate.getMonth() === month
         );
       })
       .reduce((sum, t) => sum + t.amount, 0);
@@ -140,14 +161,12 @@ const DashboardPage = ({
     const monthlyExpenses = transactions
       .filter(t => {
         if (t.amount >= 0) return false; // Only negative amounts are expenses
-        const transactionDate = new Date(getMs(t.date));
-        
-        // Ensure we're comparing dates properly by normalizing to start of day
-        const normalizedTransactionDate = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
+        const transactionDate = parseDateSafely(t.date);
+        if (!transactionDate || isNaN(transactionDate.getTime())) return false;
         
         return (
-          normalizedTransactionDate.getFullYear() === year &&
-          normalizedTransactionDate.getMonth() === month
+          transactionDate.getFullYear() === year &&
+          transactionDate.getMonth() === month
         );
       })
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
