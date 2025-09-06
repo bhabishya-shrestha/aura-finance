@@ -465,40 +465,34 @@ class AnalyticsService {
         const now = new Date();
         let periods, periodType, startDate, endDate;
 
-        // Calculate time range parameters
+        // Calculate time range parameters (matching original calculateSpendingTrends logic)
         switch (timeRange) {
           case "week":
             periods = 7;
             periodType = "day";
-            startDate = new Date(now);
-            startDate.setDate(now.getDate() - 6);
-            endDate = new Date(now);
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             break;
           case "month":
-            periods = 4;
+            periods = 4; // 4 weeks
             periodType = "week";
-            startDate = new Date(now);
-            startDate.setDate(now.getDate() - 28);
-            endDate = new Date(now);
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
             break;
-          case "quarter":
+          case "quarter": {
             periods = 3;
             periodType = "month";
-            startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            const currentQuarter = Math.floor(now.getMonth() / 3);
+            startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
             break;
+          }
           case "year":
             periods = 12;
             periodType = "month";
             startDate = new Date(now.getFullYear(), 0, 1);
-            endDate = new Date(now.getFullYear(), 11, 31);
             break;
           default:
-            periods = 4;
-            periodType = "week";
-            startDate = new Date(now);
-            startDate.setDate(now.getDate() - 28);
-            endDate = new Date(now);
+            periods = 6;
+            periodType = "month";
+            startDate = new Date(now.getTime() - 6 * 30 * 24 * 60 * 60 * 1000);
         }
 
         // Define color palette for categories
@@ -517,40 +511,56 @@ class AnalyticsService {
           '#82E0AA', // Light Green
         ];
 
-        // Generate periods with category breakdown
+        // Generate periods with category breakdown (matching original logic)
         for (let i = 0; i < periods; i++) {
           let periodStart, periodEnd, periodLabel;
 
           switch (periodType) {
             case "day":
-              periodStart = new Date(startDate);
-              periodStart.setDate(startDate.getDate() + i);
-              periodEnd = new Date(periodStart);
-              periodLabel = periodStart.toLocaleDateString("default", {
+              periodStart = new Date(
+                startDate.getTime() + i * 24 * 60 * 60 * 1000
+              );
+              periodEnd = new Date(
+                periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
+              );
+              periodLabel = periodStart.toLocaleDateString("en-US", {
                 weekday: "short",
                 month: "short",
                 day: "numeric",
               });
               break;
             case "week":
-              periodStart = new Date(startDate);
-              periodStart.setDate(startDate.getDate() + i * 7);
-              periodEnd = new Date(periodStart);
-              periodEnd.setDate(periodStart.getDate() + 6);
+              periodStart = new Date(
+                startDate.getTime() + i * 7 * 24 * 60 * 60 * 1000
+              );
+              periodEnd = new Date(
+                periodStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1
+              );
               periodLabel = `W${i + 1}`;
               break;
             case "month":
-              periodStart = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
-              periodEnd = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, 0);
-              periodLabel = periodStart.toLocaleDateString("default", {
+              periodStart = new Date(
+                startDate.getFullYear(),
+                startDate.getMonth() + i,
+                1
+              );
+              periodEnd = new Date(
+                periodStart.getFullYear(),
+                periodStart.getMonth() + 1,
+                0
+              );
+              periodLabel = periodStart.toLocaleDateString("en-US", {
                 month: "short",
                 year: "2-digit",
               });
               break;
             default:
-              periodStart = new Date(startDate);
-              periodStart.setDate(startDate.getDate() + i);
-              periodEnd = new Date(periodStart);
+              periodStart = new Date(
+                startDate.getTime() + i * 30 * 24 * 60 * 60 * 1000
+              );
+              periodEnd = new Date(
+                periodStart.getTime() + 30 * 24 * 60 * 60 * 1000 - 1
+              );
               periodLabel = `Period ${i + 1}`;
           }
 
