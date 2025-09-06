@@ -224,7 +224,6 @@ const SpendingByCategoryChart = ({ data, isMobile }) => {
 const MonthlySpendingChart = ({ data }) => {
   if (!data || !data.length) return <EmptyChartState />;
 
-
   return (
     <ResponsiveContainer width="100%" height={350}>
       <LineChart
@@ -485,7 +484,10 @@ const AnalyticsPage = () => {
   const getNetWorth = () => {
     // Calculate net worth using the analytics service with accounts data
     // This should match the dashboard calculation exactly
-    const netWorth = analyticsService.calculateNetWorth(transactions || [], accounts || []);
+    const netWorth = analyticsService.calculateNetWorth(
+      transactions || [],
+      accounts || []
+    );
     return `$${netWorth.toFixed(2)}`;
   };
 

@@ -85,7 +85,10 @@ const DashboardPage = ({
   };
 
   // Calculate dashboard metrics - use same net worth calculation as analytics
-  const totalBalance = analyticsService.calculateNetWorth(transactions || [], accounts || []);
+  const totalBalance = analyticsService.calculateNetWorth(
+    transactions || [],
+    accounts || []
+  );
   // Robust recent transactions: sort by date desc using epoch ms
   const getMs = value => {
     if (!value) return 0;

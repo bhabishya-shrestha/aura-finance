@@ -1,5 +1,13 @@
 import React from "react";
-import { CreditCard, Wallet, PiggyBank, BarChart3, Building2, TrendingUp, Coins } from "lucide-react";
+import {
+  CreditCard,
+  Wallet,
+  PiggyBank,
+  BarChart3,
+  Building2,
+  TrendingUp,
+  Coins,
+} from "lucide-react";
 import useStore from "../store";
 
 const Accounts = () => {
