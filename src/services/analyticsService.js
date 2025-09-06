@@ -514,6 +514,7 @@ class AnalyticsService {
                 periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
               );
               periodLabel = periodStart.toLocaleDateString("en-US", {
+                weekday: "short",
                 month: "short",
                 day: "numeric",
               });
@@ -525,7 +526,7 @@ class AnalyticsService {
               periodEnd = new Date(
                 periodStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1
               );
-              periodLabel = `Week ${i + 1}`;
+              periodLabel = `W${i + 1}`;
               break;
             case "month":
               periodStart = new Date(

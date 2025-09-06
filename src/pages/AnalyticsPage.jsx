@@ -201,16 +201,40 @@ const SpendingByCategoryChart = ({ data, isMobile }) => {
   );
 };
 
-const MonthlySpendingChart = ({ data }) => {
+const MonthlySpendingChart = ({ data, timeRange }) => {
   if (!data || !data.length) return <EmptyChartState />;
+
+  // Dynamic chart title based on time range
+  const getChartTitle = () => {
+    switch (timeRange) {
+      case 'week':
+        return 'Daily Spending Trend';
+      case 'month':
+        return 'Weekly Spending Trend';
+      case 'quarter':
+        return 'Monthly Spending Trend';
+      case 'year':
+        return 'Monthly Spending Trend';
+      default:
+        return 'Monthly Spending Trend';
+    }
+  };
 
   return (
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="month" />
+        <XAxis 
+          dataKey="month" 
+          angle={timeRange === 'week' ? -45 : 0}
+          textAnchor={timeRange === 'week' ? 'end' : 'middle'}
+          height={timeRange === 'week' ? 60 : 30}
+        />
         <YAxis />
-        <Tooltip />
+        <Tooltip 
+          formatter={(value, name) => [`$${value.toFixed(2)}`, 'Spending']}
+          labelFormatter={(label) => `Period: ${label}`}
+        />
         <Line
           type="monotone"
           dataKey="spending"
@@ -222,16 +246,48 @@ const MonthlySpendingChart = ({ data }) => {
   );
 };
 
-const SpendingTrendsChart = ({ data }) => {
+const SpendingTrendsChart = ({ data, timeRange }) => {
   if (!data || !data.length) return <EmptyChartState />;
+
+  // Custom tick formatter based on time range
+  const formatXAxisTick = (tickItem) => {
+    if (!tickItem) return '';
+    
+    // For different time ranges, we might want different formatting
+    switch (timeRange) {
+      case 'week':
+        // For week view, show day names or dates
+        return tickItem;
+      case 'month':
+        // For month view, show week numbers
+        return tickItem;
+      case 'quarter':
+        // For quarter view, show month names
+        return tickItem;
+      case 'year':
+        // For year view, show month names
+        return tickItem;
+      default:
+        return tickItem;
+    }
+  };
 
   return (
     <ResponsiveContainer width="100%" height={300}>
       <BarChart data={data}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="period" />
+        <XAxis 
+          dataKey="period" 
+          tickFormatter={formatXAxisTick}
+          angle={timeRange === 'week' ? -45 : 0}
+          textAnchor={timeRange === 'week' ? 'end' : 'middle'}
+          height={timeRange === 'week' ? 60 : 30}
+        />
         <YAxis />
-        <Tooltip />
+        <Tooltip 
+          formatter={(value, name) => [`$${value.toFixed(2)}`, 'Spending']}
+          labelFormatter={(label) => `Period: ${label}`}
+        />
         <Bar dataKey="spending" fill="#3b82f6" />
       </BarChart>
     </ResponsiveContainer>
@@ -332,6 +388,22 @@ const AnalyticsPage = () => {
     return `$${netWorth.toFixed(2)}`;
   };
 
+  // Dynamic chart title based on time range
+  const getSpendingTrendTitle = () => {
+    switch (timeRange) {
+      case 'week':
+        return 'Daily Spending Trend';
+      case 'month':
+        return 'Weekly Spending Trend';
+      case 'quarter':
+        return 'Monthly Spending Trend';
+      case 'year':
+        return 'Monthly Spending Trend';
+      default:
+        return 'Monthly Spending Trend';
+    }
+  };
+
   // Render overview content
   const renderOverviewContent = () => (
     <>
@@ -359,13 +431,13 @@ const AnalyticsPage = () => {
       </div>
 
       <ChartContainer
-        title="Monthly Spending Trend"
+        title={getSpendingTrendTitle()}
         isExpanded={expandedCharts.monthlyTrend}
         onToggleExpand={() => toggleChartExpansion("monthlyTrend")}
         className="mb-6 sm:mb-8"
         isMobile={isMobile}
       >
-        <MonthlySpendingChart data={monthlySpending} />
+        <MonthlySpendingChart data={monthlySpending} timeRange={timeRange} />
       </ChartContainer>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
@@ -419,7 +491,7 @@ const AnalyticsPage = () => {
           onToggleExpand={() => toggleChartExpansion("spendingTrendsDetailed")}
           isMobile={isMobile}
         >
-          <SpendingTrendsChart data={spendingTrends} />
+          <SpendingTrendsChart data={spendingTrends} timeRange={timeRange} />
         </ChartContainer>
 
         <ChartContainer
