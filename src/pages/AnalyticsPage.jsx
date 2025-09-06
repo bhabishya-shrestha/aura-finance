@@ -501,9 +501,9 @@ const AnalyticsPage = () => {
   return (
     <div className="p-4 lg:p-6">
       {/* Controls */}
-      <div className="flex flex-col gap-3 flex-shrink-0 w-auto">
+      <div className="flex flex-col gap-3 flex-shrink-0 w-fit">
         {/* View Toggle */}
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-auto">
+        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-fit">
           <button
             onClick={() => setSelectedView("overview")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -527,7 +527,7 @@ const AnalyticsPage = () => {
         </div>
 
         {/* Time Range Selector */}
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-auto">
+        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-fit">
           {["week", "month", "quarter", "year"].map(range => (
             <button
               key={range}
