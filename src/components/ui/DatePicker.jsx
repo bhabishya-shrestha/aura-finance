@@ -17,10 +17,10 @@ const DatePicker = ({
   disabled = false,
   label = "",
 }) => {
-  const initial = value ? new Date(`${value}T00:00:00Z`) : new Date();
+  const initial = value ? new Date(`${value}T00:00:00`) : new Date();
   const [open, setOpen] = useState(false);
-  const [currentYear, setCurrentYear] = useState(initial.getUTCFullYear());
-  const [currentMonth, setCurrentMonth] = useState(initial.getUTCMonth());
+  const [currentYear, setCurrentYear] = useState(initial.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(initial.getMonth());
   const ref = useRef(null);
   const buttonRef = useRef(null);
   const popoverRef = useRef(null);
@@ -100,24 +100,24 @@ const DatePicker = ({
     };
   }, [open]);
 
-  const selectedDate = value ? new Date(`${value}T00:00:00Z`) : null;
+  const selectedDate = value ? new Date(`${value}T00:00:00`) : null;
 
   const goPrevMonth = () => {
-    const d = new Date(Date.UTC(currentYear, currentMonth, 1));
-    d.setUTCMonth(d.getUTCMonth() - 1);
-    setCurrentYear(d.getUTCFullYear());
-    setCurrentMonth(d.getUTCMonth());
+    const d = new Date(currentYear, currentMonth, 1);
+    d.setMonth(d.getMonth() - 1);
+    setCurrentYear(d.getFullYear());
+    setCurrentMonth(d.getMonth());
   };
   const goNextMonth = () => {
-    const d = new Date(Date.UTC(currentYear, currentMonth, 1));
-    d.setUTCMonth(d.getUTCMonth() + 1);
-    setCurrentYear(d.getUTCFullYear());
-    setCurrentMonth(d.getUTCMonth());
+    const d = new Date(currentYear, currentMonth, 1);
+    d.setMonth(d.getMonth() + 1);
+    setCurrentYear(d.getFullYear());
+    setCurrentMonth(d.getMonth());
   };
 
   const firstDayOfMonth = new Date(
-    Date.UTC(currentYear, currentMonth, 1)
-  ).getUTCDay();
+    currentYear, currentMonth, 1
+  ).getDay();
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
 
   const days = [];
@@ -126,7 +126,7 @@ const DatePicker = ({
 
   const handleSelect = day => {
     if (!day) return;
-    const selected = new Date(Date.UTC(currentYear, currentMonth, day));
+    const selected = new Date(currentYear, currentMonth, day);
     const ymd = toYMD(selected);
     // respect min/max if provided
     if (min && ymd < min) return;
@@ -150,11 +150,10 @@ const DatePicker = ({
         className={`w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-left text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
       >
         {value
-          ? new Date(`${value}T00:00:00Z`).toLocaleDateString("en-US", {
+          ? new Date(`${value}T00:00:00`).toLocaleDateString("en-US", {
               year: "numeric",
               month: "short",
               day: "numeric",
-              timeZone: "UTC",
             })
           : "Select date"}
       </button>
@@ -180,9 +179,9 @@ const DatePicker = ({
               ‹
             </button>
             <div className="text-sm font-medium text-gray-900 dark:text-white">
-              {new Date(Date.UTC(currentYear, currentMonth, 1)).toLocaleString(
+              {new Date(currentYear, currentMonth, 1).toLocaleString(
                 "en-US",
-                { month: "long", year: "numeric", timeZone: "UTC" }
+                { month: "long", year: "numeric" }
               )}
             </div>
             <button
@@ -206,7 +205,7 @@ const DatePicker = ({
             {days.map((d, idx) => {
               if (!d) return <div key={`e-${idx}`} className="h-8" />;
               const ymd = toYMD(
-                new Date(Date.UTC(currentYear, currentMonth, d))
+                new Date(currentYear, currentMonth, d)
               );
               const isSelected = selectedDate && toYMD(selectedDate) === ymd;
               const isDisabled = (min && ymd < min) || (max && ymd > max);
