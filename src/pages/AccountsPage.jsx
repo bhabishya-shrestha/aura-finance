@@ -8,6 +8,10 @@ import {
   Edit,
   Trash2,
   DollarSign,
+  Building2,
+  TrendingUp,
+  Coins,
+  Briefcase,
 } from "lucide-react";
 import useProductionStore from "../store/productionStore";
 import { useNotifications } from "../contexts/NotificationContext";
@@ -89,6 +93,16 @@ const AccountsPage = () => {
         return <Wallet className="w-4 h-4 sm:w-5 sm:h-5" />;
       case "savings":
         return <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5" />;
+      case "401k":
+      case "roth_ira":
+      case "traditional_ira":
+        return <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />;
+      case "investment":
+        return <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />;
+      case "business":
+        return <Building2 className="w-4 h-4 sm:w-5 sm:h-5" />;
+      case "other":
+        return <Coins className="w-4 h-4 sm:w-5 sm:h-5" />;
       default:
         return <Wallet className="w-4 h-4 sm:w-5 sm:h-5" />;
     }
@@ -102,6 +116,16 @@ const AccountsPage = () => {
         return "text-blue-600 dark:text-blue-400";
       case "savings":
         return "text-green-600 dark:text-green-400";
+      case "401k":
+      case "roth_ira":
+      case "traditional_ira":
+        return "text-orange-600 dark:text-orange-400";
+      case "investment":
+        return "text-indigo-600 dark:text-indigo-400";
+      case "business":
+        return "text-teal-600 dark:text-teal-400";
+      case "other":
+        return "text-gray-600 dark:text-gray-400";
       default:
         return "text-gray-600 dark:text-gray-400";
     }
@@ -115,6 +139,16 @@ const AccountsPage = () => {
         return "bg-blue-50 dark:bg-blue-900/20";
       case "savings":
         return "bg-green-50 dark:bg-green-900/20";
+      case "401k":
+      case "roth_ira":
+      case "traditional_ira":
+        return "bg-orange-50 dark:bg-orange-900/20";
+      case "investment":
+        return "bg-indigo-50 dark:bg-indigo-900/20";
+      case "business":
+        return "bg-teal-50 dark:bg-teal-900/20";
+      case "other":
+        return "bg-gray-50 dark:bg-gray-700";
       default:
         return "bg-gray-50 dark:bg-gray-700";
     }
@@ -737,6 +771,12 @@ const AccountsPage = () => {
                   <option value="checking">Checking</option>
                   <option value="savings">Savings</option>
                   <option value="credit">Credit Card</option>
+                  <option value="401k">401(k)</option>
+                  <option value="roth_ira">Roth IRA</option>
+                  <option value="traditional_ira">Traditional IRA</option>
+                  <option value="investment">Investment Account</option>
+                  <option value="business">Business Account</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
 
@@ -822,6 +862,12 @@ const AccountsPage = () => {
                   <option value="checking">Checking</option>
                   <option value="savings">Savings</option>
                   <option value="credit">Credit Card</option>
+                  <option value="401k">401(k)</option>
+                  <option value="roth_ira">Roth IRA</option>
+                  <option value="traditional_ira">Traditional IRA</option>
+                  <option value="investment">Investment Account</option>
+                  <option value="business">Business Account</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
 
