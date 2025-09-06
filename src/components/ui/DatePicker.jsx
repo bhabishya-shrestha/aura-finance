@@ -115,9 +115,7 @@ const DatePicker = ({
     setCurrentMonth(d.getMonth());
   };
 
-  const firstDayOfMonth = new Date(
-    currentYear, currentMonth, 1
-  ).getDay();
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
 
   const days = [];
@@ -179,10 +177,10 @@ const DatePicker = ({
               ‹
             </button>
             <div className="text-sm font-medium text-gray-900 dark:text-white">
-              {new Date(currentYear, currentMonth, 1).toLocaleString(
-                "en-US",
-                { month: "long", year: "numeric" }
-              )}
+              {new Date(currentYear, currentMonth, 1).toLocaleString("en-US", {
+                month: "long",
+                year: "numeric",
+              })}
             </div>
             <button
               type="button"
@@ -204,9 +202,7 @@ const DatePicker = ({
           <div className="grid grid-cols-7 gap-1">
             {days.map((d, idx) => {
               if (!d) return <div key={`e-${idx}`} className="h-8" />;
-              const ymd = toYMD(
-                new Date(currentYear, currentMonth, d)
-              );
+              const ymd = toYMD(new Date(currentYear, currentMonth, d));
               const isSelected = selectedDate && toYMD(selectedDate) === ymd;
               const isDisabled = (min && ymd < min) || (max && ymd > max);
               return (
