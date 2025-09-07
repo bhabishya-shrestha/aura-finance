@@ -227,10 +227,17 @@ class AnalyticsService {
           0
         );
 
-        const accountTotal = accounts.reduce(
-          (sum, a) => sum + (a.balance || 0),
-          0
-        );
+        const accountTotal = accounts.reduce((sum, a) => {
+          const balance = a.balance || 0;
+          // For credit accounts, positive balance means bank owes user (asset)
+          // For credit accounts, negative balance means user owes bank (liability)
+          // For other accounts, positive balance is asset, negative is liability
+          if (a.type === "credit") {
+            return sum + balance; // Credit balance is already correctly signed
+          } else {
+            return sum + balance; // Other accounts: positive = asset, negative = liability
+          }
+        }, 0);
 
         return transactionTotal + accountTotal;
       },

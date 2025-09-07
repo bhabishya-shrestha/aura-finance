@@ -91,6 +91,31 @@ const Accounts = () => {
     }).format(amount);
   };
 
+  const formatAccountType = type => {
+    switch (type) {
+      case "roth_ira":
+        return "Roth IRA";
+      case "traditional_ira":
+        return "Traditional IRA";
+      case "401k":
+        return "401(k)";
+      case "investment":
+        return "Investment";
+      case "business":
+        return "Business";
+      case "checking":
+        return "Checking";
+      case "savings":
+        return "Savings";
+      case "credit":
+        return "Credit Card";
+      case "other":
+        return "Other";
+      default:
+        return type.charAt(0).toUpperCase() + type.slice(1);
+    }
+  };
+
   return (
     <>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition-shadow">
@@ -124,9 +149,9 @@ const Accounts = () => {
                         {account.name}
                       </p>
                       <p
-                        className={`text-xs sm:text-sm capitalize truncate ${getAccountTypeColor(account.type)}`}
+                        className={`text-xs sm:text-sm truncate ${getAccountTypeColor(account.type)}`}
                       >
-                        {account.type}
+                        {formatAccountType(account.type)}
                       </p>
                     </div>
                   </div>
