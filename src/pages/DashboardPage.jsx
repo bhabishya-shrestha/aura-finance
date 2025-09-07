@@ -22,7 +22,7 @@ const DashboardPage = ({
   onImportClick,
   isModalOnly = false,
 }) => {
-  const { transactions, accounts, addTransactions, initialize, isInitialized } =
+  const { transactions, accounts, addTransactions, initialize, isInitialized, getNetWorth } =
     useProductionStore();
   const { isAuthenticated, isInitialized: authInitialized } = useFirebaseAuth();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -84,11 +84,8 @@ const DashboardPage = ({
     }
   };
 
-  // Calculate dashboard metrics - use same net worth calculation as analytics
-  const totalBalance = analyticsService.calculateNetWorth(
-    transactions || [],
-    accounts || []
-  );
+  // Calculate dashboard metrics - use store's net worth calculation for consistency
+  const totalBalance = getNetWorth();
   // Robust recent transactions: sort by date desc using epoch ms
   const getMs = value => {
     if (!value) return 0;

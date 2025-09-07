@@ -395,7 +395,7 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
 
 // Main Analytics Page Component
 const AnalyticsPage = () => {
-  const { transactions, accounts } = useProductionStore();
+  const { transactions, accounts, getNetWorth: storeGetNetWorth } = useProductionStore();
   const [selectedView, setSelectedView] = useState("overview");
   const [timeRange, setTimeRange] = useState("week");
   const [isMobile, setIsMobile] = useState(false);
@@ -482,12 +482,8 @@ const AnalyticsPage = () => {
   } = analyticsData;
 
   const getNetWorth = () => {
-    // Calculate net worth using the analytics service with accounts data
-    // This should match the dashboard calculation exactly
-    const netWorth = analyticsService.calculateNetWorth(
-      transactions || [],
-      accounts || []
-    );
+    // Use the store's getNetWorth method for consistency
+    const netWorth = storeGetNetWorth();
     return `$${netWorth.toFixed(2)}`;
   };
 
