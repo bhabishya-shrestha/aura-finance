@@ -48,9 +48,10 @@ const CategoryTooltip = ({ active, payload }) => {
           {data.category}
         </p>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          ${data.amount.toLocaleString('en-US', { 
-            minimumFractionDigits: 2, 
-            maximumFractionDigits: 2 
+          $
+          {data.amount.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
           })}
         </p>
       </div>
@@ -398,10 +399,7 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
 
 // Main Analytics Page Component
 const AnalyticsPage = () => {
-  const {
-    transactions,
-    getNetWorth: storeGetNetWorth,
-  } = useProductionStore();
+  const { transactions, getNetWorth: storeGetNetWorth } = useProductionStore();
   const [selectedView, setSelectedView] = useState("overview");
   const [timeRange, setTimeRange] = useState("week");
   const [isMobile, setIsMobile] = useState(false);
@@ -488,13 +486,12 @@ const AnalyticsPage = () => {
   } = analyticsData;
 
   // Format numbers with commas for better readability
-  const formatCurrency = (amount) => {
-    return `$${amount.toLocaleString('en-US', { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
+  const formatCurrency = amount => {
+    return `$${amount.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     })}`;
   };
-
 
   const getNetWorth = () => {
     // Use the store's getNetWorth method for consistency
