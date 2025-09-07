@@ -353,10 +353,10 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
   });
 
   return (
-    <ResponsiveContainer width="100%" height={350}>
+    <ResponsiveContainer width="100%" height={400}>
       <BarChart
         data={chartData}
-        margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+        margin={{ top: 20, right: 30, left: 20, bottom: 120 }}
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis
@@ -383,9 +383,9 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
           allowEscapeViewBox={{ x: false, y: false }}
         />
         <Legend
-          verticalAlign="top"
-          height={36}
-          wrapperStyle={{ paddingBottom: "10px" }}
+          verticalAlign="bottom"
+          height={60}
+          wrapperStyle={{ paddingTop: "20px" }}
         />
         {categoryBars}
       </BarChart>
