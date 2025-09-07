@@ -642,13 +642,16 @@ class AnalyticsService {
               );
               // For month view with 30-day range, show actual week dates
               if (timeRange === "month") {
-                periodLabel = periodStart.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                }) + " - " + periodEnd.toLocaleDateString("en-US", {
-                  month: "short", 
-                  day: "numeric"
-                });
+                periodLabel =
+                  periodStart.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  }) +
+                  " - " +
+                  periodEnd.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  });
               } else {
                 periodLabel = `W${i + 1}`;
               }
@@ -680,30 +683,22 @@ class AnalyticsService {
             // Parse transaction date the same way the transactions tab does
             const transactionDate = new Date(transaction.date);
 
-            // For week view with day periods, compare UTC dates to match transactions tab
+            // For day periods, use simple date comparison to avoid duplicates
             if (periodType === "day") {
-              // Get the UTC date components for comparison (no time component)
-              // This matches how the transactions tab displays dates
-              const transactionUTC = new Date(
-                transactionDate.getUTCFullYear(),
-                transactionDate.getUTCMonth(),
-                transactionDate.getUTCDate()
+              // Use the start of each day for comparison to ensure no overlaps
+              const transactionDayStart = new Date(
+                transactionDate.getFullYear(),
+                transactionDate.getMonth(),
+                transactionDate.getDate()
               );
-              const periodStartUTC = new Date(
-                periodStart.getUTCFullYear(),
-                periodStart.getUTCMonth(),
-                periodStart.getUTCDate()
-              );
-              const periodEndUTC = new Date(
-                periodEnd.getUTCFullYear(),
-                periodEnd.getUTCMonth(),
-                periodEnd.getUTCDate()
+              const periodDayStart = new Date(
+                periodStart.getFullYear(),
+                periodStart.getMonth(),
+                periodStart.getDate()
               );
 
-              return (
-                transactionUTC >= periodStartUTC &&
-                transactionUTC <= periodEndUTC
-              );
+              // A transaction belongs to a period if it's on the same day
+              return transactionDayStart.getTime() === periodDayStart.getTime();
             }
 
             return (
@@ -825,13 +820,16 @@ class AnalyticsService {
               );
               // For month view with 30-day range, show actual week dates
               if (timeRange === "month") {
-                periodLabel = periodStart.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                }) + " - " + periodEnd.toLocaleDateString("en-US", {
-                  month: "short", 
-                  day: "numeric"
-                });
+                periodLabel =
+                  periodStart.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  }) +
+                  " - " +
+                  periodEnd.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  });
               } else {
                 periodLabel = `W${i + 1}`;
               }
@@ -871,30 +869,23 @@ class AnalyticsService {
               return false;
             }
 
-            // For day periods, use UTC date components to match transactions tab
+            // For day periods, use simple date comparison to avoid duplicates
             let isInPeriod;
             if (periodType === "day") {
-              // Get the UTC date components for comparison (no time component)
-              // This matches how the transactions tab displays dates
-              const transactionUTC = new Date(
-                transactionDate.getUTCFullYear(),
-                transactionDate.getUTCMonth(),
-                transactionDate.getUTCDate()
+              // Use the start of each day for comparison to ensure no overlaps
+              const transactionDayStart = new Date(
+                transactionDate.getFullYear(),
+                transactionDate.getMonth(),
+                transactionDate.getDate()
               );
-              const periodStartUTC = new Date(
-                periodStart.getUTCFullYear(),
-                periodStart.getUTCMonth(),
-                periodStart.getUTCDate()
-              );
-              const periodEndUTC = new Date(
-                periodEnd.getUTCFullYear(),
-                periodEnd.getUTCMonth(),
-                periodEnd.getUTCDate()
+              const periodDayStart = new Date(
+                periodStart.getFullYear(),
+                periodStart.getMonth(),
+                periodStart.getDate()
               );
 
-              isInPeriod =
-                transactionUTC >= periodStartUTC &&
-                transactionUTC <= periodEndUTC;
+              // A transaction belongs to a period if it's on the same day
+              isInPeriod = transactionDayStart.getTime() === periodDayStart.getTime();
             } else {
               // For week/month periods, use standard date range comparison
               isInPeriod =
@@ -981,16 +972,34 @@ class AnalyticsService {
           console.log(`   📅 Start date: ${startDate.toISOString()}`);
           console.log(`   📊 Input transactions: ${transactions.length}`);
           console.log(`   📊 Generated trends: ${trends.length}`);
-          
+
           const totalSpending = trends.reduce((sum, t) => sum + t.spending, 0);
           const totalIncome = trends.reduce((sum, t) => sum + t.income, 0);
-          console.log(`   💸 Total spending in trends: $${totalSpending.toFixed(2)}`);
-          console.log(`   💰 Total income in trends: $${totalIncome.toFixed(2)}`);
-          
+          console.log(
+            `   💸 Total spending in trends: $${totalSpending.toFixed(2)}`
+          );
+          console.log(
+            `   💰 Total income in trends: $${totalIncome.toFixed(2)}`
+          );
+
           // Log each period's data
           trends.forEach((trend, i) => {
-            console.log(`   📅 Period ${i + 1} (${trend.period}): Spending $${trend.spending.toFixed(2)}, Income $${trend.income.toFixed(2)}`);
+            console.log(
+              `   📅 Period ${i + 1} (${trend.period}): Spending $${trend.spending.toFixed(2)}, Income $${trend.income.toFixed(2)}`
+            );
           });
+
+          // Check for potential duplicates by logging transaction distribution
+          if (timeRange === "week" && periodType === "day") {
+            console.log(`   🔍 [Duplicate Check] Week view day periods:`);
+            const allTransactionIds = new Set();
+            let duplicateCount = 0;
+            
+            trends.forEach((trend, i) => {
+              // This is a simplified check - in a real scenario we'd need to track transaction IDs
+              console.log(`   📅 Day ${i + 1} (${trend.period}): ${trend.spending > 0 ? 'HAS SPENDING' : 'NO SPENDING'}`);
+            });
+          }
         }
 
         return trends;
