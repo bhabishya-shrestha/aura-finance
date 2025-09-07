@@ -9,7 +9,6 @@ import {
   FileText,
 } from "lucide-react";
 import useProductionStore from "../store/productionStore";
-import analyticsService from "../services/analyticsService";
 import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 import StatementImporter from "../components/StatementImporter";
 import MobileStatementImporter from "../components/MobileStatementImporter";
@@ -22,8 +21,14 @@ const DashboardPage = ({
   onImportClick,
   isModalOnly = false,
 }) => {
-  const { transactions, accounts, addTransactions, initialize, isInitialized } =
-    useProductionStore();
+  const {
+    transactions,
+    accounts,
+    addTransactions,
+    initialize,
+    isInitialized,
+    getNetWorth,
+  } = useProductionStore();
   const { isAuthenticated, isInitialized: authInitialized } = useFirebaseAuth();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -84,11 +89,8 @@ const DashboardPage = ({
     }
   };
 
-  // Calculate dashboard metrics - use same net worth calculation as analytics
-  const totalBalance = analyticsService.calculateNetWorth(
-    transactions || [],
-    accounts || []
-  );
+  // Calculate dashboard metrics - use store's net worth calculation for consistency
+  const totalBalance = getNetWorth();
   // Robust recent transactions: sort by date desc using epoch ms
   const getMs = value => {
     if (!value) return 0;
