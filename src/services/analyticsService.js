@@ -993,7 +993,7 @@ class AnalyticsService {
           // Check for potential duplicates by logging transaction distribution
           if (timeRange === "week" && periodType === "day") {
             console.log(`   🔍 [Duplicate Check] Week view day periods:`);
-            
+
             trends.forEach((trend, i) => {
               // This is a simplified check - in a real scenario we'd need to track transaction IDs
               console.log(

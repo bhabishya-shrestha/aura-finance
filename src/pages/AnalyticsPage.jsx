@@ -422,6 +422,9 @@ const AnalyticsPage = () => {
   }, []);
 
   const handleTimeRangeChange = newRange => {
+    console.log(
+      `🔄 [Analytics Page] Changing time range from ${timeRange} to ${newRange}`
+    );
     setTimeRange(newRange);
     localStorage.setItem("aura-finance-timeRange", newRange);
     analyticsService.forceRefresh();
@@ -452,11 +455,51 @@ const AnalyticsPage = () => {
       };
     }
 
+    // Debug logging for input transactions
+    if (import.meta.env.DEV) {
+      console.log(
+        `🔄 [Analytics Page] Input transactions for ${timeRange}: ${transactions.length}`
+      );
+      const sept1stTransactions = transactions.filter(t => {
+        if (!t.date) return false;
+        const dateStr = typeof t.date === "string" ? t.date : t.date.toString();
+        return (
+          dateStr.includes("2025-09-01") || dateStr.includes("Sep 01 2025")
+        );
+      });
+      if (sept1stTransactions.length > 0) {
+        console.log(
+          `   🎯 SEPTEMBER 1ST TRANSACTIONS IN INPUT: ${sept1stTransactions.length}`
+        );
+        sept1stTransactions.forEach(t => {
+          console.log(`      ${t.date}: $${t.amount} - ${t.description}`);
+        });
+      } else {
+        console.log(
+          `   ❌ NO SEPTEMBER 1ST TRANSACTIONS IN INPUT for ${timeRange}`
+        );
+      }
+    }
+
     // Use the analytics service to calculate all analytics for the selected time range
     const allAnalytics = analyticsService.calculateAllAnalytics(
       transactions,
       timeRange
     );
+
+    // Debug logging for the analytics data received
+    if (import.meta.env.DEV) {
+      console.log(
+        `🔄 [Analytics Page] Analytics data received for ${timeRange}:`
+      );
+      console.log(
+        `   💸 incomeVsSpending.spending: $${allAnalytics.incomeVsSpending.spending}`
+      );
+      console.log(
+        `   📊 Raw allAnalytics.incomeVsSpending:`,
+        allAnalytics.incomeVsSpending
+      );
+    }
 
     return {
       spendingByCategory: allAnalytics.spendingByCategory,
@@ -484,6 +527,15 @@ const AnalyticsPage = () => {
     savingsTrend,
     quickAnalytics,
   } = analyticsData;
+
+  // Debug logging for Analytics page
+  if (import.meta.env.DEV) {
+    console.log(`📊 [Analytics Page Debug] Overview for ${timeRange}:`);
+    console.log(`   💰 Total Income: $${incomeVsSpending.income}`);
+    console.log(`   💸 Total Spending: $${incomeVsSpending.spending}`);
+    console.log(`   📈 Net Savings: $${incomeVsSpending.net}`);
+    console.log(`   📊 Raw incomeVsSpending:`, incomeVsSpending);
+  }
 
   // Format numbers with commas for better readability
   const formatCurrency = amount => {
