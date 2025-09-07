@@ -625,12 +625,11 @@ class AnalyticsService {
               periodEnd = new Date(
                 periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
               );
-              // Use UTC date formatting to match transactions tab display (avoids timezone shifts)
+              // Use local date formatting to match frontend display
               periodLabel = periodStart.toLocaleDateString("en-US", {
                 weekday: "short",
                 month: "short",
                 day: "numeric",
-                timeZone: "UTC",
               });
               break;
             case "week":
@@ -808,7 +807,6 @@ class AnalyticsService {
                 weekday: "short",
                 month: "short",
                 day: "numeric",
-                timeZone: "UTC",
               });
               break;
             case "week":
@@ -844,7 +842,6 @@ class AnalyticsService {
               periodLabel = periodStart.toLocaleDateString("en-US", {
                 month: "short",
                 year: "numeric",
-                timeZone: "UTC",
               });
               break;
           }
