@@ -836,7 +836,7 @@ const useProductionStore = create(
       const { accounts } = get();
       return accounts.reduce((total, account) => {
         const balance = account.balance || 0;
-        
+
         // Handle different account types properly
         switch (account.type) {
           case "credit":

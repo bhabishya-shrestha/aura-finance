@@ -395,7 +395,10 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
 
 // Main Analytics Page Component
 const AnalyticsPage = () => {
-  const { transactions, accounts, getNetWorth: storeGetNetWorth } = useProductionStore();
+  const {
+    transactions,
+    getNetWorth: storeGetNetWorth,
+  } = useProductionStore();
   const [selectedView, setSelectedView] = useState("overview");
   const [timeRange, setTimeRange] = useState("week");
   const [isMobile, setIsMobile] = useState(false);

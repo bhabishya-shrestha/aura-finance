@@ -9,7 +9,6 @@ import {
   FileText,
 } from "lucide-react";
 import useProductionStore from "../store/productionStore";
-import analyticsService from "../services/analyticsService";
 import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 import StatementImporter from "../components/StatementImporter";
 import MobileStatementImporter from "../components/MobileStatementImporter";
@@ -22,8 +21,14 @@ const DashboardPage = ({
   onImportClick,
   isModalOnly = false,
 }) => {
-  const { transactions, accounts, addTransactions, initialize, isInitialized, getNetWorth } =
-    useProductionStore();
+  const {
+    transactions,
+    accounts,
+    addTransactions,
+    initialize,
+    isInitialized,
+    getNetWorth,
+  } = useProductionStore();
   const { isAuthenticated, isInitialized: authInitialized } = useFirebaseAuth();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const navigate = useNavigate();
