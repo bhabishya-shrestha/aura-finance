@@ -618,9 +618,15 @@ class AnalyticsService {
 
           switch (periodType) {
             case "day":
-              // Calculate period boundaries in UTC to match the display
+              // Calculate period boundaries using local timezone
+              const dayStartTime =
+                startDate.getTime() + i * 24 * 60 * 60 * 1000;
+              const dayStartDate = new Date(dayStartTime);
+              // Create period start at midnight of the target day
               periodStart = new Date(
-                startDate.getTime() + i * 24 * 60 * 60 * 1000
+                dayStartDate.getFullYear(),
+                dayStartDate.getMonth(),
+                dayStartDate.getDate()
               );
               periodEnd = new Date(
                 periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
@@ -812,8 +818,15 @@ class AnalyticsService {
 
           switch (periodType) {
             case "day":
+              // Calculate period boundaries using local timezone
+              const dayStartTime =
+                startDate.getTime() + i * 24 * 60 * 60 * 1000;
+              const dayStartDate = new Date(dayStartTime);
+              // Create period start at midnight of the target day
               periodStart = new Date(
-                startDate.getTime() + i * 24 * 60 * 60 * 1000
+                dayStartDate.getFullYear(),
+                dayStartDate.getMonth(),
+                dayStartDate.getDate()
               );
               periodEnd = new Date(
                 periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
@@ -912,22 +925,22 @@ class AnalyticsService {
             }
 
             // Debug logging for first few transactions
-            if (import.meta.env.DEV && i < 3) {
-              // Log for first 3 periods
-              console.log("Period filtering debug:", {
-                periodLabel,
-                periodStart: periodStart.toISOString(),
-                periodEnd: periodEnd.toISOString(),
-                transactionDate: transactionDate.toISOString(),
-                isInPeriod,
-                transaction: {
-                  id: t.id,
-                  amount: t.amount,
-                  date: t.date,
-                  category: t.category,
-                },
-              });
-            }
+            // if (import.meta.env.DEV && i < 3) {
+            //   // Log for first 3 periods
+            //   console.log("Period filtering debug:", {
+            //     periodLabel,
+            //     periodStart: periodStart.toISOString(),
+            //     periodEnd: periodEnd.toISOString(),
+            //     transactionDate: transactionDate.toISOString(),
+            //     isInPeriod,
+            //     transaction: {
+            //       id: t.id,
+            //       amount: t.amount,
+            //       date: t.date,
+            //       category: t.category,
+            //     },
+            //   });
+            // }
 
             return isInPeriod;
           });
