@@ -885,7 +885,8 @@ class AnalyticsService {
               );
 
               // A transaction belongs to a period if it's on the same day
-              isInPeriod = transactionDayStart.getTime() === periodDayStart.getTime();
+              isInPeriod =
+                transactionDayStart.getTime() === periodDayStart.getTime();
             } else {
               // For week/month periods, use standard date range comparison
               isInPeriod =
@@ -992,12 +993,12 @@ class AnalyticsService {
           // Check for potential duplicates by logging transaction distribution
           if (timeRange === "week" && periodType === "day") {
             console.log(`   🔍 [Duplicate Check] Week view day periods:`);
-            const allTransactionIds = new Set();
-            let duplicateCount = 0;
             
             trends.forEach((trend, i) => {
               // This is a simplified check - in a real scenario we'd need to track transaction IDs
-              console.log(`   📅 Day ${i + 1} (${trend.period}): ${trend.spending > 0 ? 'HAS SPENDING' : 'NO SPENDING'}`);
+              console.log(
+                `   📅 Day ${i + 1} (${trend.period}): ${trend.spending > 0 ? "HAS SPENDING" : "NO SPENDING"}`
+              );
             });
           }
         }
