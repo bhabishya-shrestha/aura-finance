@@ -48,7 +48,11 @@ const CategoryTooltip = ({ active, payload }) => {
           {data.category}
         </p>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          ${data.amount.toFixed(2)}
+          $
+          {data.amount.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
         </p>
       </div>
     );
@@ -353,10 +357,10 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
   });
 
   return (
-    <ResponsiveContainer width="100%" height={350}>
+    <ResponsiveContainer width="100%" height={400}>
       <BarChart
         data={chartData}
-        margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+        margin={{ top: 20, right: 30, left: 20, bottom: 120 }}
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis
@@ -383,9 +387,9 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
           allowEscapeViewBox={{ x: false, y: false }}
         />
         <Legend
-          verticalAlign="top"
-          height={36}
-          wrapperStyle={{ paddingBottom: "10px" }}
+          verticalAlign="bottom"
+          height={60}
+          wrapperStyle={{ paddingTop: "20px" }}
         />
         {categoryBars}
       </BarChart>
@@ -395,7 +399,7 @@ const SpendingTrendsChart = ({ data, timeRange }) => {
 
 // Main Analytics Page Component
 const AnalyticsPage = () => {
-  const { transactions, accounts } = useProductionStore();
+  const { transactions, getNetWorth: storeGetNetWorth } = useProductionStore();
   const [selectedView, setSelectedView] = useState("overview");
   const [timeRange, setTimeRange] = useState("week");
   const [isMobile, setIsMobile] = useState(false);
@@ -418,6 +422,9 @@ const AnalyticsPage = () => {
   }, []);
 
   const handleTimeRangeChange = newRange => {
+    console.log(
+      `🔄 [Analytics Page] Changing time range from ${timeRange} to ${newRange}`
+    );
     setTimeRange(newRange);
     localStorage.setItem("aura-finance-timeRange", newRange);
     analyticsService.forceRefresh();
@@ -448,11 +455,51 @@ const AnalyticsPage = () => {
       };
     }
 
+    // Debug logging for input transactions
+    if (import.meta.env.DEV) {
+      console.log(
+        `🔄 [Analytics Page] Input transactions for ${timeRange}: ${transactions.length}`
+      );
+      const sept1stTransactions = transactions.filter(t => {
+        if (!t.date) return false;
+        const dateStr = typeof t.date === "string" ? t.date : t.date.toString();
+        return (
+          dateStr.includes("2025-09-01") || dateStr.includes("Sep 01 2025")
+        );
+      });
+      if (sept1stTransactions.length > 0) {
+        console.log(
+          `   🎯 SEPTEMBER 1ST TRANSACTIONS IN INPUT: ${sept1stTransactions.length}`
+        );
+        sept1stTransactions.forEach(t => {
+          console.log(`      ${t.date}: $${t.amount} - ${t.description}`);
+        });
+      } else {
+        console.log(
+          `   ❌ NO SEPTEMBER 1ST TRANSACTIONS IN INPUT for ${timeRange}`
+        );
+      }
+    }
+
     // Use the analytics service to calculate all analytics for the selected time range
     const allAnalytics = analyticsService.calculateAllAnalytics(
       transactions,
       timeRange
     );
+
+    // Debug logging for the analytics data received
+    if (import.meta.env.DEV) {
+      console.log(
+        `🔄 [Analytics Page] Analytics data received for ${timeRange}:`
+      );
+      console.log(
+        `   💸 incomeVsSpending.spending: $${allAnalytics.incomeVsSpending.spending}`
+      );
+      console.log(
+        `   📊 Raw allAnalytics.incomeVsSpending:`,
+        allAnalytics.incomeVsSpending
+      );
+    }
 
     return {
       spendingByCategory: allAnalytics.spendingByCategory,
@@ -481,14 +528,27 @@ const AnalyticsPage = () => {
     quickAnalytics,
   } = analyticsData;
 
+  // Debug logging for Analytics page
+  if (import.meta.env.DEV) {
+    console.log(`📊 [Analytics Page Debug] Overview for ${timeRange}:`);
+    console.log(`   💰 Total Income: $${incomeVsSpending.income}`);
+    console.log(`   💸 Total Spending: $${incomeVsSpending.spending}`);
+    console.log(`   📈 Net Savings: $${incomeVsSpending.net}`);
+    console.log(`   📊 Raw incomeVsSpending:`, incomeVsSpending);
+  }
+
+  // Format numbers with commas for better readability
+  const formatCurrency = amount => {
+    return `$${amount.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
   const getNetWorth = () => {
-    // Calculate net worth using the analytics service with accounts data
-    // This should match the dashboard calculation exactly
-    const netWorth = analyticsService.calculateNetWorth(
-      transactions || [],
-      accounts || []
-    );
-    return `$${netWorth.toFixed(2)}`;
+    // Use the store's getNetWorth method for consistency
+    const netWorth = storeGetNetWorth();
+    return formatCurrency(netWorth);
   };
 
   // Dynamic chart title based on time range
@@ -563,7 +623,7 @@ const AnalyticsPage = () => {
         />
         <MetricCard
           title="Total Income"
-          value={`$${incomeVsSpending.income.toFixed(2)}`}
+          value={formatCurrency(incomeVsSpending.income)}
           subtitle={`${quickAnalytics.transactionCount} transactions`}
           icon={TrendingUp}
           trend={incomeTrend}
@@ -572,7 +632,7 @@ const AnalyticsPage = () => {
         />
         <MetricCard
           title="Total Spending"
-          value={`$${incomeVsSpending.spending.toFixed(2)}`}
+          value={formatCurrency(incomeVsSpending.spending)}
           subtitle="All expenses this period"
           icon={TrendingDown}
           trend={spendingTrend}
@@ -581,7 +641,7 @@ const AnalyticsPage = () => {
         />
         <MetricCard
           title="Net Savings"
-          value={`$${incomeVsSpending.net.toFixed(2)}`}
+          value={formatCurrency(incomeVsSpending.net)}
           subtitle="Income minus spending"
           icon={PiggyBank}
           trend={savingsTrend}
@@ -633,7 +693,7 @@ const AnalyticsPage = () => {
                     </span>
                   </div>
                   <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
-                    ${item.amount.toFixed(2)}
+                    {formatCurrency(item.amount)}
                   </div>
                 </div>
               ))}
@@ -656,7 +716,7 @@ const AnalyticsPage = () => {
         />
         <MetricCard
           title="Total Income"
-          value={`$${incomeVsSpending.income.toFixed(2)}`}
+          value={formatCurrency(incomeVsSpending.income)}
           subtitle={`${quickAnalytics.transactionCount} transactions`}
           icon={TrendingUp}
           trend={incomeTrend}
@@ -665,7 +725,7 @@ const AnalyticsPage = () => {
         />
         <MetricCard
           title="Total Spending"
-          value={`$${incomeVsSpending.spending.toFixed(2)}`}
+          value={formatCurrency(incomeVsSpending.spending)}
           subtitle="All expenses this period"
           icon={TrendingDown}
           trend={spendingTrend}
@@ -674,7 +734,7 @@ const AnalyticsPage = () => {
         />
         <MetricCard
           title="Net Savings"
-          value={`$${incomeVsSpending.net.toFixed(2)}`}
+          value={formatCurrency(incomeVsSpending.net)}
           subtitle="Income minus spending"
           icon={PiggyBank}
           trend={savingsTrend}

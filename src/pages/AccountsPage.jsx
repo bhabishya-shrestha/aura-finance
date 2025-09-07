@@ -162,6 +162,31 @@ const AccountsPage = () => {
     }).format(amount);
   };
 
+  const formatAccountType = type => {
+    switch (type) {
+      case "roth_ira":
+        return "Roth IRA";
+      case "traditional_ira":
+        return "Traditional IRA";
+      case "401k":
+        return "401(k)";
+      case "investment":
+        return "Investment";
+      case "business":
+        return "Business";
+      case "checking":
+        return "Checking";
+      case "savings":
+        return "Savings";
+      case "credit":
+        return "Credit Card";
+      case "other":
+        return "Other";
+      default:
+        return type.charAt(0).toUpperCase() + type.slice(1);
+    }
+  };
+
   const formatDateUTC = dateValue =>
     new Date(dateValue).toLocaleDateString("en-US", {
       year: "numeric",
@@ -310,9 +335,9 @@ const AccountsPage = () => {
                   {account.name}
                 </h3>
                 <p
-                  className={`text-xs font-medium capitalize ${getAccountTypeColor(account.type)}`}
+                  className={`text-xs font-medium ${getAccountTypeColor(account.type)}`}
                 >
-                  {account.type} Account
+                  {formatAccountType(account.type)} Account
                 </p>
               </div>
             </div>
@@ -493,9 +518,9 @@ const AccountsPage = () => {
                   {account.name}
                 </h3>
                 <p
-                  className={`text-sm font-medium capitalize ${getAccountTypeColor(account.type)}`}
+                  className={`text-sm font-medium ${getAccountTypeColor(account.type)}`}
                 >
-                  {account.type} Account
+                  {formatAccountType(account.type)} Account
                 </p>
               </div>
             </div>

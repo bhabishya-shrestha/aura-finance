@@ -105,11 +105,13 @@ describe("AnalyticsService - Date Filtering", () => {
         "month"
       );
 
-      // Should include transactions from August 2025 only
-      expect(filtered).toHaveLength(2);
+      // Should include transactions from last 30 days (July 15, July 20, Aug 1, Aug 2)
+      expect(filtered).toHaveLength(4);
       expect(filtered.map(t => t.description)).toEqual([
         "Grocery Shopping",
         "Salary",
+        "Gas Station",
+        "Restaurant",
       ]);
     });
 
@@ -119,14 +121,15 @@ describe("AnalyticsService - Date Filtering", () => {
         "year"
       );
 
-      // Should include all transactions from 2025
-      expect(filtered).toHaveLength(5);
+      // Should include all transactions from last 365 days (all 2025 transactions)
+      expect(filtered).toHaveLength(6);
       expect(filtered.map(t => t.description)).toEqual([
         "Grocery Shopping",
         "Salary",
         "Gas Station",
         "Restaurant",
         "Movie Tickets",
+        "Old Transaction",
       ]);
     });
 
@@ -176,10 +179,10 @@ describe("AnalyticsService - Date Filtering", () => {
         "month"
       );
 
-      expect(analytics.quickAnalytics.transactionCount).toBe(2);
+      expect(analytics.quickAnalytics.transactionCount).toBe(4);
       expect(analytics.quickAnalytics.income).toBe(5000.0);
-      expect(analytics.quickAnalytics.spending).toBe(150.0);
-      expect(analytics.quickAnalytics.netSavings).toBe(4850.0);
+      expect(analytics.quickAnalytics.spending).toBe(280.0); // 150 + 45 + 85
+      expect(analytics.quickAnalytics.netSavings).toBe(4720.0);
     });
 
     test("should calculate analytics for year correctly", () => {
@@ -188,10 +191,10 @@ describe("AnalyticsService - Date Filtering", () => {
         "year"
       );
 
-      expect(analytics.quickAnalytics.transactionCount).toBe(5);
+      expect(analytics.quickAnalytics.transactionCount).toBe(6);
       expect(analytics.quickAnalytics.income).toBe(5000.0);
-      expect(analytics.quickAnalytics.spending).toBe(305.0);
-      expect(analytics.quickAnalytics.netSavings).toBe(4695.0);
+      expect(analytics.quickAnalytics.spending).toBe(405.0); // 150 + 45 + 85 + 25 + 100
+      expect(analytics.quickAnalytics.netSavings).toBe(4595.0);
     });
   });
 

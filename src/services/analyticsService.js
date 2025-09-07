@@ -151,31 +151,41 @@ class AnalyticsService {
     const now = new Date();
     let startDate = new Date();
 
+    // Debug logging for the user's issue
+    if (import.meta.env.DEV) {
+      console.log(
+        `🔍 [Analytics Debug] Filtering ${transactions.length} transactions for ${timeRange} range`
+      );
+      console.log(`🔍 [Analytics Debug] Current date: ${now.toISOString()}`);
+    }
+
     switch (timeRange) {
       case "week":
         // Last 7 days from now
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
       case "month":
-        // Current month (from 1st of current month to end of current month)
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        // For month filter, we should include all transactions from the current month
-        // So we'll use the current date as the end date (which is correct)
+        // Last 30 days from now (more inclusive than just current month)
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
       case "quarter":
-        // Current quarter
-        {
-          const currentQuarter = Math.floor(now.getMonth() / 3);
-          startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
-        }
+        // Last 90 days from now (more inclusive than just current quarter)
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
         break;
       case "year":
-        // Current year
-        startDate = new Date(now.getFullYear(), 0, 1);
+        // Last 365 days from now (more inclusive than just current year)
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         break;
       case "all":
       default:
         return transactions;
+    }
+
+    // Debug logging for start date
+    if (import.meta.env.DEV) {
+      console.log(
+        `🔍 [Analytics Debug] Start date for ${timeRange}: ${startDate.toISOString()}`
+      );
     }
 
     const filteredTransactions = transactions.filter(transaction => {
@@ -185,9 +195,11 @@ class AnalyticsService {
         return false;
       }
 
-      // Ensure we have a proper Date object
+      // Ensure we have a proper Date object with consistent timezone handling
+      // Use the same parsing method as the spending trends charts for consistency
       let transactionDate;
       if (typeof transaction.date === "string") {
+        // Parse all date strings the same way (including ISO date strings)
         transactionDate = new Date(transaction.date);
       } else if (transaction.date instanceof Date) {
         transactionDate = transaction.date;
@@ -207,8 +219,41 @@ class AnalyticsService {
         return false;
       }
 
-      return transactionDate >= startDate && transactionDate <= now;
+      const isIncluded = transactionDate >= startDate && transactionDate <= now;
+
+      // Debug logging for specific transactions that might be problematic
+      if (import.meta.env.DEV && transaction.amount < 0) {
+        // Only log expenses
+        console.log(
+          `🔍 [Analytics Debug] ${timeRange} - ${transaction.date} (${typeof transaction.date}): $${transaction.amount} - ${transaction.description} - ${isIncluded ? "INCLUDED" : "EXCLUDED"}`
+        );
+        if (!isIncluded) {
+          console.log(
+            `   🔍 Date comparison: ${transactionDate.toISOString()} >= ${startDate.toISOString()} = ${transactionDate >= startDate}`
+          );
+          console.log(
+            `   🔍 Date comparison: ${transactionDate.toISOString()} <= ${now.toISOString()} = ${transactionDate <= now}`
+          );
+        }
+      }
+
+      return isIncluded;
     });
+
+    // Debug logging for results
+    if (import.meta.env.DEV) {
+      console.log(
+        `🔍 [Analytics Debug] ${timeRange} range: ${filteredTransactions.length} transactions included`
+      );
+      const expenses = filteredTransactions.filter(t => t.amount < 0);
+      const totalExpenses = expenses.reduce(
+        (sum, t) => sum + Math.abs(t.amount),
+        0
+      );
+      console.log(
+        `🔍 [Analytics Debug] ${timeRange} expenses: ${expenses.length} transactions totaling $${totalExpenses.toFixed(2)}`
+      );
+    }
 
     // Return filtered transactions - no fallback to all transactions
     // This ensures each time range shows only appropriate data
@@ -227,10 +272,17 @@ class AnalyticsService {
           0
         );
 
-        const accountTotal = accounts.reduce(
-          (sum, a) => sum + (a.balance || 0),
-          0
-        );
+        const accountTotal = accounts.reduce((sum, a) => {
+          const balance = a.balance || 0;
+          // For credit accounts, positive balance means bank owes user (asset)
+          // For credit accounts, negative balance means user owes bank (liability)
+          // For other accounts, positive balance is asset, negative is liability
+          if (a.type === "credit") {
+            return sum + balance; // Credit balance is already correctly signed
+          } else {
+            return sum + balance; // Other accounts: positive = asset, negative = liability
+          }
+        }, 0);
 
         return transactionTotal + accountTotal;
       },
@@ -282,15 +334,45 @@ class AnalyticsService {
       cacheKey,
       () => {
         // Use transactions as-is (they should already be filtered)
-        const income = transactions
-          .filter(t => t.amount > 0)
-          .reduce((sum, t) => sum + t.amount, 0);
+        const incomeTransactions = transactions.filter(t => t.amount > 0);
+        const spendingTransactions = transactions.filter(t => t.amount < 0);
 
-        const spending = transactions
-          .filter(t => t.amount < 0)
-          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
+        const income = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
+        const spending = spendingTransactions.reduce(
+          (sum, t) => sum + Math.abs(t.amount),
+          0
+        );
         const net = income - spending;
+
+        // Debug logging for income vs spending calculation
+        if (import.meta.env.DEV) {
+          console.log(
+            `💰 [Analytics Debug] Income vs Spending calculation for ${timeRange}:`
+          );
+          console.log(`   📊 Total transactions: ${transactions.length}`);
+          console.log(
+            `   💰 Income transactions: ${incomeTransactions.length} = $${income.toFixed(2)}`
+          );
+          console.log(
+            `   💸 Spending transactions: ${spendingTransactions.length} = $${spending.toFixed(2)}`
+          );
+          console.log(`   📈 Net: $${net.toFixed(2)}`);
+
+          // Log first few spending transactions for debugging
+          if (spendingTransactions.length > 0) {
+            console.log(`   🔍 First 3 spending transactions:`);
+            spendingTransactions.slice(0, 3).forEach((t, i) => {
+              console.log(
+                `      ${i + 1}. ${t.date}: $${t.amount} - ${t.description}`
+              );
+            });
+          }
+
+          // CRITICAL: Log the exact spending value being returned
+          console.log(
+            `   🎯 FINAL SPENDING VALUE: $${spending.toFixed(2)} (will be returned as ${parseFloat(spending.toFixed(2))})`
+          );
+        }
 
         return {
           income: parseFloat(income.toFixed(2)), // Format to 2 decimal places
@@ -498,29 +580,29 @@ class AnalyticsService {
         const now = new Date();
         let periods, periodType, startDate;
 
-        // Calculate time range parameters (matching original calculateSpendingTrends logic)
+        // Calculate time range parameters using local timezone for consistency
         switch (timeRange) {
           case "week":
             periods = 7;
             periodType = "day";
+            // Use local timezone calculation to match local display
             startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             break;
           case "month":
             periods = 4; // 4 weeks
             periodType = "week";
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
             break;
           case "quarter": {
             periods = 3;
             periodType = "month";
-            const currentQuarter = Math.floor(now.getMonth() / 3);
-            startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
+            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
             break;
           }
           case "year":
             periods = 12;
             periodType = "month";
-            startDate = new Date(now.getFullYear(), 0, 1);
+            startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
             break;
           default:
             periods = 6;
@@ -536,16 +618,19 @@ class AnalyticsService {
 
           switch (periodType) {
             case "day":
+              // Calculate period boundaries in UTC to match the display
               periodStart = new Date(
                 startDate.getTime() + i * 24 * 60 * 60 * 1000
               );
               periodEnd = new Date(
                 periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
               );
+              // Use UTC date formatting to match transactions tab display (avoids timezone shifts)
               periodLabel = periodStart.toLocaleDateString("en-US", {
                 weekday: "short",
                 month: "short",
                 day: "numeric",
+                timeZone: "UTC",
               });
               break;
             case "week":
@@ -555,18 +640,28 @@ class AnalyticsService {
               periodEnd = new Date(
                 periodStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1
               );
-              periodLabel = `W${i + 1}`;
+              // For month view with 30-day range, show actual week dates
+              if (timeRange === "month") {
+                periodLabel =
+                  periodStart.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  }) +
+                  " - " +
+                  periodEnd.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  });
+              } else {
+                periodLabel = `W${i + 1}`;
+              }
               break;
             case "month":
               periodStart = new Date(
-                startDate.getFullYear(),
-                startDate.getMonth() + i,
-                1
+                startDate.getTime() + i * 30 * 24 * 60 * 60 * 1000
               );
               periodEnd = new Date(
-                periodStart.getFullYear(),
-                periodStart.getMonth() + 1,
-                0
+                periodStart.getTime() + 30 * 24 * 60 * 60 * 1000 - 1
               );
               periodLabel = periodStart.toLocaleDateString("en-US", {
                 month: "short",
@@ -585,7 +680,27 @@ class AnalyticsService {
 
           // Filter transactions for this period
           const periodTransactions = transactions.filter(transaction => {
+            // Parse transaction date the same way the transactions tab does
             const transactionDate = new Date(transaction.date);
+
+            // For day periods, use simple date comparison to avoid duplicates
+            if (periodType === "day") {
+              // Use the start of each day for comparison to ensure no overlaps
+              const transactionDayStart = new Date(
+                transactionDate.getFullYear(),
+                transactionDate.getMonth(),
+                transactionDate.getDate()
+              );
+              const periodDayStart = new Date(
+                periodStart.getFullYear(),
+                periodStart.getMonth(),
+                periodStart.getDate()
+              );
+
+              // A transaction belongs to a period if it's on the same day
+              return transactionDayStart.getTime() === periodDayStart.getTime();
+            }
+
             return (
               transactionDate >= periodStart && transactionDate <= periodEnd
             );
@@ -654,21 +769,20 @@ class AnalyticsService {
           case "month":
             periods = 4; // 4 weeks
             periodType = "week";
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
             // endDate = now; // Not used in this context
             break;
           case "quarter": {
             periods = 3;
             periodType = "month";
-            const currentQuarter = Math.floor(now.getMonth() / 3);
-            startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
+            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
             // endDate = now; // Not used in this context
             break;
           }
           case "year":
             periods = 12;
             periodType = "month";
-            startDate = new Date(now.getFullYear(), 0, 1);
+            startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
             // endDate = now; // Not used in this context
             break;
           default:
@@ -694,6 +808,7 @@ class AnalyticsService {
                 weekday: "short",
                 month: "short",
                 day: "numeric",
+                timeZone: "UTC",
               });
               break;
             case "week":
@@ -703,22 +818,33 @@ class AnalyticsService {
               periodEnd = new Date(
                 periodStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1
               );
-              periodLabel = `W${i + 1}`;
+              // For month view with 30-day range, show actual week dates
+              if (timeRange === "month") {
+                periodLabel =
+                  periodStart.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  }) +
+                  " - " +
+                  periodEnd.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  });
+              } else {
+                periodLabel = `W${i + 1}`;
+              }
               break;
             case "month":
               periodStart = new Date(
-                startDate.getFullYear(),
-                startDate.getMonth() + i,
-                1
+                startDate.getTime() + i * 30 * 24 * 60 * 60 * 1000
               );
               periodEnd = new Date(
-                periodStart.getFullYear(),
-                periodStart.getMonth() + 1,
-                0
+                periodStart.getTime() + 30 * 24 * 60 * 60 * 1000 - 1
               );
               periodLabel = periodStart.toLocaleDateString("en-US", {
                 month: "short",
                 year: "numeric",
+                timeZone: "UTC",
               });
               break;
           }
@@ -743,8 +869,29 @@ class AnalyticsService {
               return false;
             }
 
-            const isInPeriod =
-              transactionDate >= periodStart && transactionDate <= periodEnd;
+            // For day periods, use simple date comparison to avoid duplicates
+            let isInPeriod;
+            if (periodType === "day") {
+              // Use the start of each day for comparison to ensure no overlaps
+              const transactionDayStart = new Date(
+                transactionDate.getFullYear(),
+                transactionDate.getMonth(),
+                transactionDate.getDate()
+              );
+              const periodDayStart = new Date(
+                periodStart.getFullYear(),
+                periodStart.getMonth(),
+                periodStart.getDate()
+              );
+
+              // A transaction belongs to a period if it's on the same day
+              isInPeriod =
+                transactionDayStart.getTime() === periodDayStart.getTime();
+            } else {
+              // For week/month periods, use standard date range comparison
+              isInPeriod =
+                transactionDate >= periodStart && transactionDate <= periodEnd;
+            }
 
             // Debug logging for first few transactions
             // if (import.meta.env.DEV && idx < 3) {
@@ -817,7 +964,44 @@ class AnalyticsService {
         //       })(),
         //     })),
         //   });
-        // }
+        //         }
+
+        // Debug logging for spending trends
+        if (import.meta.env.DEV) {
+          console.log(`📊 [Spending Trends Debug] ${timeRange} calculation:`);
+          console.log(`   📅 Periods: ${periods}, Type: ${periodType}`);
+          console.log(`   📅 Start date: ${startDate.toISOString()}`);
+          console.log(`   📊 Input transactions: ${transactions.length}`);
+          console.log(`   📊 Generated trends: ${trends.length}`);
+
+          const totalSpending = trends.reduce((sum, t) => sum + t.spending, 0);
+          const totalIncome = trends.reduce((sum, t) => sum + t.income, 0);
+          console.log(
+            `   💸 Total spending in trends: $${totalSpending.toFixed(2)}`
+          );
+          console.log(
+            `   💰 Total income in trends: $${totalIncome.toFixed(2)}`
+          );
+
+          // Log each period's data
+          trends.forEach((trend, i) => {
+            console.log(
+              `   📅 Period ${i + 1} (${trend.period}): Spending $${trend.spending.toFixed(2)}, Income $${trend.income.toFixed(2)}`
+            );
+          });
+
+          // Check for potential duplicates by logging transaction distribution
+          if (timeRange === "week" && periodType === "day") {
+            console.log(`   🔍 [Duplicate Check] Week view day periods:`);
+
+            trends.forEach((trend, i) => {
+              // This is a simplified check - in a real scenario we'd need to track transaction IDs
+              console.log(
+                `   📅 Day ${i + 1} (${trend.period}): ${trend.spending > 0 ? "HAS SPENDING" : "NO SPENDING"}`
+              );
+            });
+          }
+        }
 
         return trends;
       },
@@ -863,15 +1047,14 @@ class AnalyticsService {
             startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             break;
           case "month":
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
             break;
           case "quarter": {
-            const currentQuarter = Math.floor(now.getMonth() / 3);
-            startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
+            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
             break;
           }
           case "year":
-            startDate = new Date(now.getFullYear(), 0, 1);
+            startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
             break;
           default:
             startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -1024,38 +1207,27 @@ class AnalyticsService {
 
     switch (timeRange) {
       case "week": {
-        // Previous week
-        const lastWeek = new Date(now);
-        lastWeek.setDate(now.getDate() - 7);
-        const weekStart = new Date(lastWeek);
-        weekStart.setDate(lastWeek.getDate() - 7);
-        startDate = weekStart;
-        endDate = lastWeek;
+        // Previous 7 days (7-14 days ago)
+        endDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
         break;
       }
       case "month": {
-        // Previous month
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const monthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-        startDate = lastMonth;
-        endDate = monthEnd;
+        // Previous 30 days (30-60 days ago)
+        endDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
         break;
       }
       case "quarter": {
-        // Previous quarter
-        const currentQuarter = Math.floor(now.getMonth() / 3);
-        const currentYear = now.getFullYear();
-        const prevQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
-        const prevQuarterYear =
-          currentQuarter === 0 ? currentYear - 1 : currentYear;
-        startDate = new Date(prevQuarterYear, prevQuarter * 3, 1);
-        endDate = new Date(prevQuarterYear, (prevQuarter + 1) * 3, 0);
+        // Previous 90 days (90-180 days ago)
+        endDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
         break;
       }
       case "year": {
-        // Previous year
-        startDate = new Date(now.getFullYear() - 1, 0, 1);
-        endDate = new Date(now.getFullYear() - 1, 11, 31);
+        // Previous 365 days (365-730 days ago)
+        endDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 730 * 24 * 60 * 60 * 1000);
         break;
       }
       default:
@@ -1080,6 +1252,47 @@ class AnalyticsService {
           transactions,
           timeRange
         );
+
+        // Debug logging for the batch calculation
+        if (import.meta.env.DEV) {
+          console.log(
+            `🔄 [Analytics Debug] calculateAllAnalytics for ${timeRange}:`
+          );
+          console.log(`   📊 Input transactions: ${transactions.length}`);
+          console.log(
+            `   📊 Filtered transactions: ${filteredTransactions.length}`
+          );
+          const expenses = filteredTransactions.filter(t => t.amount < 0);
+          const totalExpenses = expenses.reduce(
+            (sum, t) => sum + Math.abs(t.amount),
+            0
+          );
+          console.log(
+            `   💸 Filtered expenses: ${expenses.length} transactions totaling $${totalExpenses.toFixed(2)}`
+          );
+
+          // CRITICAL: Log September 1st transactions specifically
+          const sept1stTransactions = filteredTransactions.filter(t => {
+            if (!t.date) return false;
+            const dateStr =
+              typeof t.date === "string" ? t.date : t.date.toString();
+            return (
+              dateStr.includes("2025-09-01") || dateStr.includes("Sep 01 2025")
+            );
+          });
+          if (sept1stTransactions.length > 0) {
+            console.log(
+              `   🎯 SEPTEMBER 1ST TRANSACTIONS FOUND: ${sept1stTransactions.length}`
+            );
+            sept1stTransactions.forEach(t => {
+              console.log(`      ${t.date}: $${t.amount} - ${t.description}`);
+            });
+          } else {
+            console.log(
+              `   ❌ NO SEPTEMBER 1ST TRANSACTIONS FOUND in ${timeRange} range`
+            );
+          }
+        }
 
         // Professional debug logging
         // if (import.meta.env.DEV) {

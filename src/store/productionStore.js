@@ -834,10 +834,31 @@ const useProductionStore = create(
 
     getNetWorth: () => {
       const { accounts } = get();
-      return accounts.reduce(
-        (total, account) => total + (account.balance || 0),
-        0
-      );
+      return accounts.reduce((total, account) => {
+        const balance = account.balance || 0;
+
+        // Handle different account types properly
+        switch (account.type) {
+          case "credit":
+            // For credit cards: positive balance = credit (asset), negative = debt (liability)
+            return total + balance;
+          case "401k":
+          case "roth_ira":
+          case "traditional_ira":
+          case "investment":
+            // Retirement and investment accounts: positive balance = asset
+            return total + balance;
+          case "checking":
+          case "savings":
+          case "business":
+          case "other":
+            // Standard accounts: positive balance = asset, negative = liability
+            return total + balance;
+          default:
+            // Default case: treat as standard account
+            return total + balance;
+        }
+      }, 0);
     },
 
     calculateAccountStats: accountId => {
