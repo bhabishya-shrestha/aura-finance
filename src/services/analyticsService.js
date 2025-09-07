@@ -703,6 +703,19 @@ class AnalyticsService {
               transactionDate = new Date(transaction.date);
             }
 
+            // Debug logging for date parsing
+            if (import.meta.env.DEV && transaction.amount < 0 && i < 2) {
+              console.log("🔍 Date parsing debug:", {
+                originalDate: transaction.date,
+                originalType: typeof transaction.date,
+                parsedDate: transactionDate.toISOString(),
+                localDate: transactionDate.toLocaleDateString(),
+                periodLabel,
+                periodStart: periodStart.toISOString(),
+                periodEnd: periodEnd.toISOString(),
+              });
+            }
+
             // For day periods, use simple date comparison to avoid duplicates
             if (periodType === "day") {
               // Use the start of each day for comparison to ensure no overlaps
@@ -890,6 +903,19 @@ class AnalyticsService {
             } else {
               // Attempt to parse other formats, e.g., numbers as timestamps
               transactionDate = new Date(t.date);
+            }
+
+            // Debug logging for date parsing
+            if (import.meta.env.DEV && t.amount < 0 && i < 2) {
+              console.log("🔍 SpendingTrends date parsing debug:", {
+                originalDate: t.date,
+                originalType: typeof t.date,
+                parsedDate: transactionDate.toISOString(),
+                localDate: transactionDate.toLocaleDateString(),
+                periodLabel,
+                periodStart: periodStart.toISOString(),
+                periodEnd: periodEnd.toISOString(),
+              });
             }
 
             if (isNaN(transactionDate.getTime())) {
