@@ -640,18 +640,25 @@ class AnalyticsService {
               periodEnd = new Date(
                 periodStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1
               );
-              periodLabel = `W${i + 1}`;
+              // For month view with 30-day range, show actual week dates
+              if (timeRange === "month") {
+                periodLabel = periodStart.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                }) + " - " + periodEnd.toLocaleDateString("en-US", {
+                  month: "short", 
+                  day: "numeric"
+                });
+              } else {
+                periodLabel = `W${i + 1}`;
+              }
               break;
             case "month":
               periodStart = new Date(
-                startDate.getFullYear(),
-                startDate.getMonth() + i,
-                1
+                startDate.getTime() + i * 30 * 24 * 60 * 60 * 1000
               );
               periodEnd = new Date(
-                periodStart.getFullYear(),
-                periodStart.getMonth() + 1,
-                0
+                periodStart.getTime() + 30 * 24 * 60 * 60 * 1000 - 1
               );
               periodLabel = periodStart.toLocaleDateString("en-US", {
                 month: "short",
@@ -816,18 +823,25 @@ class AnalyticsService {
               periodEnd = new Date(
                 periodStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1
               );
-              periodLabel = `W${i + 1}`;
+              // For month view with 30-day range, show actual week dates
+              if (timeRange === "month") {
+                periodLabel = periodStart.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                }) + " - " + periodEnd.toLocaleDateString("en-US", {
+                  month: "short", 
+                  day: "numeric"
+                });
+              } else {
+                periodLabel = `W${i + 1}`;
+              }
               break;
             case "month":
               periodStart = new Date(
-                startDate.getFullYear(),
-                startDate.getMonth() + i,
-                1
+                startDate.getTime() + i * 30 * 24 * 60 * 60 * 1000
               );
               periodEnd = new Date(
-                periodStart.getFullYear(),
-                periodStart.getMonth() + 1,
-                0
+                periodStart.getTime() + 30 * 24 * 60 * 60 * 1000 - 1
               );
               periodLabel = periodStart.toLocaleDateString("en-US", {
                 month: "short",
@@ -958,7 +972,26 @@ class AnalyticsService {
         //       })(),
         //     })),
         //   });
-        // }
+        //         }
+
+        // Debug logging for spending trends
+        if (import.meta.env.DEV) {
+          console.log(`📊 [Spending Trends Debug] ${timeRange} calculation:`);
+          console.log(`   📅 Periods: ${periods}, Type: ${periodType}`);
+          console.log(`   📅 Start date: ${startDate.toISOString()}`);
+          console.log(`   📊 Input transactions: ${transactions.length}`);
+          console.log(`   📊 Generated trends: ${trends.length}`);
+          
+          const totalSpending = trends.reduce((sum, t) => sum + t.spending, 0);
+          const totalIncome = trends.reduce((sum, t) => sum + t.income, 0);
+          console.log(`   💸 Total spending in trends: $${totalSpending.toFixed(2)}`);
+          console.log(`   💰 Total income in trends: $${totalIncome.toFixed(2)}`);
+          
+          // Log each period's data
+          trends.forEach((trend, i) => {
+            console.log(`   📅 Period ${i + 1} (${trend.period}): Spending $${trend.spending.toFixed(2)}, Income $${trend.income.toFixed(2)}`);
+          });
+        }
 
         return trends;
       },
