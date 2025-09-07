@@ -9,6 +9,7 @@ import {
   FileText,
 } from "lucide-react";
 import useProductionStore from "../store/productionStore";
+import analyticsService from "../services/analyticsService";
 import { useFirebaseAuth } from "../contexts/FirebaseAuthContext";
 import StatementImporter from "../components/StatementImporter";
 import MobileStatementImporter from "../components/MobileStatementImporter";
@@ -83,10 +84,10 @@ const DashboardPage = ({
     }
   };
 
-  // Calculate dashboard metrics
-  const totalBalance = accounts.reduce(
-    (sum, account) => sum + account.balance,
-    0
+  // Calculate dashboard metrics - use same net worth calculation as analytics
+  const totalBalance = analyticsService.calculateNetWorth(
+    transactions || [],
+    accounts || []
   );
   // Robust recent transactions: sort by date desc using epoch ms
   const getMs = value => {
@@ -110,16 +111,161 @@ const DashboardPage = ({
   const recentTransactions = [...transactions]
     .sort((a, b) => getMs(b.date) - getMs(a.date))
     .slice(0, 5);
-  const monthlyIncome = transactions
-    .filter(
-      t => t.amount > 0 && new Date(t.date).getMonth() === new Date().getMonth()
-    )
-    .reduce((sum, t) => sum + t.amount, 0);
-  const monthlyExpenses = transactions
-    .filter(
-      t => t.amount < 0 && new Date(t.date).getMonth() === new Date().getMonth()
-    )
-    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  // Calculate monthly income and expenses for current month
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
+
+  // Calculate previous month for comparison
+  const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+  const previousYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+  // Helper function to safely parse dates without timezone issues
+  const parseDateSafely = dateValue => {
+    if (!dateValue) return null;
+
+    // If it's already a Date object, check if it was created with timezone issues
+    if (dateValue instanceof Date) {
+      // Check if this Date object was created from an ISO string and has timezone issues
+      // The issue is that new Date('2025-09-01') becomes Aug 31 7PM in CDT
+      // We need to detect this pattern and reconstruct the correct date
+
+      const hours = dateValue.getHours();
+      const minutes = dateValue.getMinutes();
+      const seconds = dateValue.getSeconds();
+
+      // If it's not midnight local time, it might be a timezone-converted date
+      if (hours !== 0 || minutes !== 0 || seconds !== 0) {
+        // Check if this looks like a timezone-converted ISO date
+        // If the time is 19:00:00 (7 PM), it's likely CDT conversion from UTC midnight
+        if (hours === 19 && minutes === 0 && seconds === 0) {
+          // This is likely a timezone-converted date, reconstruct it
+          const year = dateValue.getFullYear();
+          const month = dateValue.getMonth();
+          const day = dateValue.getDate();
+
+          // Create a new date at midnight local time for the next day
+          // (since the timezone conversion moved it to the previous day)
+          return new Date(year, month, day + 1);
+        }
+      }
+
+      return dateValue;
+    }
+
+    // If it's a string, try to parse it as a local date to avoid timezone issues
+    if (typeof dateValue === "string") {
+      // Handle ISO date strings like "2024-09-01" by parsing as local date
+      if (dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month, day] = dateValue.split("-").map(Number);
+        return new Date(year, month - 1, day); // month is 0-indexed
+      }
+      // Handle ISO date strings with timezone like "2025-09-01T00:00:00.000Z"
+      if (
+        dateValue.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/)
+      ) {
+        const datePart = dateValue.split("T")[0];
+        const [year, month, day] = datePart.split("-").map(Number);
+        return new Date(year, month - 1, day); // month is 0-indexed
+      }
+      // For other string formats, use regular parsing
+      return new Date(dateValue);
+    }
+
+    // For numbers (timestamps) or other formats, use regular parsing
+    return new Date(dateValue);
+  };
+
+  // Helper function to calculate monthly totals for a specific month/year
+  const calculateMonthlyTotals = (year, month) => {
+    const monthlyIncome = transactions
+      .filter(t => {
+        if (t.amount <= 0) return false; // Only positive amounts are income
+        const transactionDate = parseDateSafely(t.date);
+        if (!transactionDate || isNaN(transactionDate.getTime())) return false;
+
+        return (
+          transactionDate.getFullYear() === year &&
+          transactionDate.getMonth() === month
+        );
+      })
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const monthlyExpenses = transactions
+      .filter(t => {
+        if (t.amount >= 0) return false; // Only negative amounts are expenses
+        const transactionDate = parseDateSafely(t.date);
+        if (!transactionDate || isNaN(transactionDate.getTime())) return false;
+
+        return (
+          transactionDate.getFullYear() === year &&
+          transactionDate.getMonth() === month
+        );
+      })
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+    return { monthlyIncome, monthlyExpenses };
+  };
+
+  // Calculate current month totals
+  const currentMonthTotals = calculateMonthlyTotals(currentYear, currentMonth);
+  const monthlyIncome = currentMonthTotals.monthlyIncome;
+  const monthlyExpenses = currentMonthTotals.monthlyExpenses;
+
+  // Debug logging for monthly calculations
+  if (import.meta.env.DEV) {
+    console.log("🔍 Monthly Calculation Debug:");
+    console.log(`Current month: ${currentYear}-${currentMonth + 1}`);
+    console.log(`Total transactions: ${transactions.length}`);
+    console.log(`Monthly expenses: $${monthlyExpenses}`);
+
+    // Log first few transactions to see their dates
+    const firstFewTransactions = transactions.slice(0, 5);
+    firstFewTransactions.forEach((t, i) => {
+      const parsedDate = parseDateSafely(t.date);
+      console.log(
+        `Transaction ${i + 1}: ${t.description} - Date: ${t.date} (parsed: ${parsedDate}) - Amount: ${t.amount}`
+      );
+    });
+  }
+
+  // Calculate previous month totals
+  const previousMonthTotals = calculateMonthlyTotals(
+    previousYear,
+    previousMonth
+  );
+  const previousMonthIncome = previousMonthTotals.monthlyIncome;
+  const previousMonthExpenses = previousMonthTotals.monthlyExpenses;
+
+  // Calculate percentage changes
+  const calculatePercentageChange = (current, previous) => {
+    if (previous === 0) {
+      return current > 0 ? 100 : 0; // If no previous data, show 100% if current > 0
+    }
+    return ((current - previous) / previous) * 100;
+  };
+
+  const incomePercentageChange = calculatePercentageChange(
+    monthlyIncome,
+    previousMonthIncome
+  );
+  const expensePercentageChange = calculatePercentageChange(
+    monthlyExpenses,
+    previousMonthExpenses
+  );
+
+  // Format percentage changes
+  const formatPercentageChange = change => {
+    const sign = change >= 0 ? "+" : "";
+    return `${sign}${change.toFixed(1)}%`;
+  };
+
+  const incomeChangeText = formatPercentageChange(incomePercentageChange);
+  const expenseChangeText = formatPercentageChange(expensePercentageChange);
+
+  // Determine trend direction
+  const incomeTrend = incomePercentageChange >= 0 ? "up" : "down";
+  const expenseTrend = expensePercentageChange <= 0 ? "down" : "up"; // Lower expenses = good trend
 
   const QuickAnalyticsCard = ({
     title,
@@ -219,16 +365,16 @@ const DashboardPage = ({
         <QuickAnalyticsCard
           title="Monthly Income"
           value={`$${monthlyIncome.toLocaleString()}`}
-          change="+12.5%"
+          change={incomeChangeText}
           icon={TrendingUp}
-          trend="up"
+          trend={incomeTrend}
         />
         <QuickAnalyticsCard
           title="Monthly Expenses"
           value={`$${monthlyExpenses.toLocaleString()}`}
-          change="-8.2%"
+          change={expenseChangeText}
           icon={TrendingDown}
-          trend="down"
+          trend={expenseTrend}
         />
         <QuickAnalyticsCard
           title="Total Accounts"

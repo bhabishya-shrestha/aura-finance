@@ -11,9 +11,8 @@ import {
   Cell,
   LineChart,
   Line,
-  Area,
-  ComposedChart,
   BarChart,
+  Legend,
 } from "recharts";
 import {
   TrendingUp,
@@ -38,6 +37,24 @@ const EmptyChartState = ({
     <p className="text-gray-500 text-sm">{message}</p>
   </div>
 );
+
+// Custom Tooltip Component for Category Charts
+const CategoryTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
+        <p className="font-medium text-gray-900 dark:text-white">
+          {data.category}
+        </p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          ${data.amount.toFixed(2)}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 // Chart Container Component
 const ChartContainer = ({
@@ -161,32 +178,20 @@ const MetricCard = ({
 
 // Chart Components
 const IncomeVsSpendingChart = ({ data }) => {
-  if (!data || !data.length) return <EmptyChartState />;
+  if (!data || !data.data || !data.data.length) return <EmptyChartState />;
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <ComposedChart data={data}>
+      <BarChart
+        data={data.data}
+        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+      >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="month" />
+        <XAxis dataKey="name" />
         <YAxis />
-        <Tooltip />
-        <Area
-          type="monotone"
-          dataKey="income"
-          stackId="1"
-          stroke="#10b981"
-          fill="#10b981"
-          fillOpacity={0.3}
-        />
-        <Area
-          type="monotone"
-          dataKey="spending"
-          stackId="1"
-          stroke="#ef4444"
-          fill="#ef4444"
-          fillOpacity={0.3}
-        />
-      </ComposedChart>
+        <Tooltip formatter={value => [`$${value.toFixed(2)}`, "Amount"]} />
+        <Bar dataKey="amount" fill="#10b981" />
+      </BarChart>
     </ResponsiveContainer>
   );
 };
@@ -196,7 +201,7 @@ const SpendingByCategoryChart = ({ data, isMobile }) => {
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <PieChart>
+      <PieChart margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
         <Pie
           data={data}
           cx="50%"
@@ -204,13 +209,13 @@ const SpendingByCategoryChart = ({ data, isMobile }) => {
           innerRadius={isMobile ? 40 : 60}
           outerRadius={isMobile ? 80 : 100}
           paddingAngle={5}
-          dataKey="value"
+          dataKey="amount"
         >
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.fill} />
           ))}
         </Pie>
-        <Tooltip />
+        <Tooltip content={<CategoryTooltip />} />
       </PieChart>
     </ResponsiveContainer>
   );
@@ -220,34 +225,169 @@ const MonthlySpendingChart = ({ data }) => {
   if (!data || !data.length) return <EmptyChartState />;
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data}>
+    <ResponsiveContainer width="100%" height={350}>
+      <LineChart
+        data={data}
+        margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+      >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="month" />
+        <XAxis
+          dataKey="month"
+          angle={-45}
+          textAnchor="end"
+          height={80}
+          interval={0}
+        />
         <YAxis />
-        <Tooltip />
+        <Tooltip
+          formatter={(value, name, props) => {
+            const dataKey = props.dataKey;
+            const label = dataKey === "income" ? "Income" : "Spending";
+            return [`$${value.toFixed(2)}`, label];
+          }}
+          labelFormatter={(label, payload) => {
+            // Use the actual month from the data payload
+            if (payload && payload.length > 0) {
+              return `Period: ${payload[0].payload.month}`;
+            }
+            return `Period: ${label}`;
+          }}
+          position={{ x: undefined, y: undefined }}
+          allowEscapeViewBox={{ x: false, y: false }}
+        />
+        <Legend
+          verticalAlign="top"
+          height={36}
+          wrapperStyle={{ paddingBottom: "10px" }}
+        />
+        <Line
+          type="monotone"
+          dataKey="income"
+          stroke="#10b981"
+          strokeWidth={2}
+          name="Income"
+        />
         <Line
           type="monotone"
           dataKey="spending"
-          stroke="#3b82f6"
+          stroke="#ef4444"
           strokeWidth={2}
+          name="Spending"
         />
       </LineChart>
     </ResponsiveContainer>
   );
 };
 
-const SpendingTrendsChart = ({ data }) => {
+const SpendingTrendsChart = ({ data, timeRange }) => {
   if (!data || !data.length) return <EmptyChartState />;
 
+  // Custom tick formatter based on time range
+  const formatXAxisTick = tickItem => {
+    if (!tickItem) return "";
+
+    // For different time ranges, we might want different formatting
+    switch (timeRange) {
+      case "week":
+        // For week view, show day names or dates
+        return tickItem;
+      case "month":
+        // For month view, show week numbers
+        return tickItem;
+      case "quarter":
+        // For quarter view, show month names
+        return tickItem;
+      case "year":
+        // For year view, show month names
+        return tickItem;
+      default:
+        return tickItem;
+    }
+  };
+
+  // Get all unique categories across all periods
+  const allCategories = new Set();
+  data.forEach(period => {
+    period.categories.forEach(category => {
+      allCategories.add(category.category);
+    });
+  });
+
+  // Create data structure for stacked bar chart
+  const chartData = data.map(period => {
+    const dataPoint = { period: period.period };
+
+    // Initialize all categories with 0
+    allCategories.forEach(category => {
+      dataPoint[category] = 0;
+    });
+
+    // Fill in actual values
+    period.categories.forEach(category => {
+      dataPoint[category.category] = category.amount;
+    });
+
+    return dataPoint;
+  });
+
+  // Create bars for each category
+  const categoryBars = Array.from(allCategories).map(category => {
+    // Find the color for this category from the first period that has it
+    const firstPeriodWithCategory = data.find(period =>
+      period.categories.some(cat => cat.category === category)
+    );
+    const categoryData = firstPeriodWithCategory?.categories.find(
+      cat => cat.category === category
+    );
+    const fillColor = categoryData?.fill || "#8884d8";
+
+    return (
+      <Bar
+        key={category}
+        dataKey={category}
+        stackId="spending"
+        fill={fillColor}
+        name={category}
+      />
+    );
+  });
+
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data}>
+    <ResponsiveContainer width="100%" height={350}>
+      <BarChart
+        data={chartData}
+        margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+      >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="category" />
+        <XAxis
+          dataKey="period"
+          tickFormatter={formatXAxisTick}
+          angle={-45}
+          textAnchor="end"
+          height={80}
+          interval={0}
+        />
         <YAxis />
-        <Tooltip />
-        <Bar dataKey="amount" fill="#3b82f6" />
+        <Tooltip
+          formatter={(value, name) => {
+            return [`$${value.toFixed(2)}`, name];
+          }}
+          labelFormatter={(label, payload) => {
+            // Use the actual period from the data payload
+            if (payload && payload.length > 0) {
+              return `Period: ${payload[0].payload.period}`;
+            }
+            return `Period: ${label}`;
+          }}
+          position={{ x: undefined, y: undefined }}
+          allowEscapeViewBox={{ x: false, y: false }}
+        />
+        <Legend
+          verticalAlign="top"
+          height={36}
+          wrapperStyle={{ paddingBottom: "10px" }}
+        />
+        {categoryBars}
       </BarChart>
     </ResponsiveContainer>
   );
@@ -255,7 +395,7 @@ const SpendingTrendsChart = ({ data }) => {
 
 // Main Analytics Page Component
 const AnalyticsPage = () => {
-  const { transactions } = useProductionStore();
+  const { transactions, accounts } = useProductionStore();
   const [selectedView, setSelectedView] = useState("overview");
   const [timeRange, setTimeRange] = useState("week");
   const [isMobile, setIsMobile] = useState(false);
@@ -291,13 +431,13 @@ const AnalyticsPage = () => {
     }));
   };
 
-  // Analytics data calculation
+  // Analytics data calculation using the analytics service
   const analyticsData = useMemo(() => {
     if (!transactions || !transactions.length) {
       return {
         spendingByCategory: [],
         monthlySpending: [],
-        incomeVsSpending: { income: 0, spending: 0, net: 0 },
+        incomeVsSpending: { income: 0, spending: 0, net: 0, data: [] },
         spendingTrends: [],
         netWorthTrend: 0,
         incomeTrend: 0,
@@ -308,38 +448,32 @@ const AnalyticsPage = () => {
       };
     }
 
-    // Calculate analytics data here
-    // This is a simplified version - you can add your complex calculations
-    const income = transactions
-      .filter(t => t.amount > 0)
-      .reduce((sum, t) => sum + t.amount, 0);
-    const spending = transactions
-      .filter(t => t.amount < 0)
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const net = income - spending;
+    // Use the analytics service to calculate all analytics for the selected time range
+    const allAnalytics = analyticsService.calculateAllAnalytics(
+      transactions,
+      timeRange
+    );
 
     return {
-      spendingByCategory: [],
-      monthlySpending: [],
-      incomeVsSpending: { income, spending, net },
-      spendingTrends: [],
-      netWorthTrend: 0,
-      incomeTrend: 0,
-      spendingTrend: 0,
-      savingsTrend: 0,
-      quickAnalytics: {
-        transactionCount: transactions.length,
-        netSavings: net,
-      },
-      avgDailySpending: 0,
+      spendingByCategory: allAnalytics.spendingByCategory,
+      monthlySpending: allAnalytics.monthlySpending,
+      incomeVsSpending: allAnalytics.incomeVsSpending,
+      spendingTrends: allAnalytics.spendingTrends,
+      spendingTrendsByCategory: allAnalytics.spendingTrendsByCategory,
+      netWorthTrend: allAnalytics.netWorthTrend,
+      incomeTrend: allAnalytics.incomeTrend,
+      spendingTrend: allAnalytics.spendingTrend,
+      savingsTrend: allAnalytics.savingsTrend,
+      quickAnalytics: allAnalytics.quickAnalytics,
+      avgDailySpending: allAnalytics.avgDailySpending,
     };
-  }, [transactions]);
+  }, [transactions, timeRange]);
 
   const {
     spendingByCategory,
     monthlySpending,
     incomeVsSpending,
-    spendingTrends,
+    spendingTrendsByCategory,
     netWorthTrend,
     incomeTrend,
     spendingTrend,
@@ -348,7 +482,29 @@ const AnalyticsPage = () => {
   } = analyticsData;
 
   const getNetWorth = () => {
-    return "$0.00"; // Add your net worth calculation
+    // Calculate net worth using the analytics service with accounts data
+    // This should match the dashboard calculation exactly
+    const netWorth = analyticsService.calculateNetWorth(
+      transactions || [],
+      accounts || []
+    );
+    return `$${netWorth.toFixed(2)}`;
+  };
+
+  // Dynamic chart title based on time range
+  const getSpendingTrendTitle = () => {
+    switch (timeRange) {
+      case "week":
+        return "Daily Spending Trend";
+      case "month":
+        return "Weekly Spending Trend";
+      case "quarter":
+        return "Monthly Spending Trend";
+      case "year":
+        return "Monthly Spending Trend";
+      default:
+        return "Monthly Spending Trend";
+    }
   };
 
   // Render overview content
@@ -361,7 +517,10 @@ const AnalyticsPage = () => {
           onToggleExpand={() => toggleChartExpansion("incomeVsSpending")}
           isMobile={isMobile}
         >
-          <IncomeVsSpendingChart data={incomeVsSpending} />
+          <IncomeVsSpendingChart
+            key={`income-vs-spending-${timeRange}`}
+            data={incomeVsSpending}
+          />
         </ChartContainer>
 
         <ChartContainer
@@ -371,6 +530,7 @@ const AnalyticsPage = () => {
           isMobile={isMobile}
         >
           <SpendingByCategoryChart
+            key={`spending-by-category-${timeRange}`}
             data={spendingByCategory}
             isMobile={isMobile}
           />
@@ -378,13 +538,17 @@ const AnalyticsPage = () => {
       </div>
 
       <ChartContainer
-        title="Monthly Spending Trend"
+        title={getSpendingTrendTitle()}
         isExpanded={expandedCharts.monthlyTrend}
         onToggleExpand={() => toggleChartExpansion("monthlyTrend")}
         className="mb-6 sm:mb-8"
         isMobile={isMobile}
       >
-        <MonthlySpendingChart data={monthlySpending} />
+        <MonthlySpendingChart
+          key={`monthly-spending-${timeRange}`}
+          data={monthlySpending}
+          timeRange={timeRange}
+        />
       </ChartContainer>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
@@ -438,7 +602,11 @@ const AnalyticsPage = () => {
           onToggleExpand={() => toggleChartExpansion("spendingTrendsDetailed")}
           isMobile={isMobile}
         >
-          <SpendingTrendsChart data={spendingTrends} />
+          <SpendingTrendsChart
+            key={`spending-trends-${timeRange}`}
+            data={spendingTrendsByCategory}
+            timeRange={timeRange}
+          />
         </ChartContainer>
 
         <ChartContainer
@@ -465,7 +633,7 @@ const AnalyticsPage = () => {
                     </span>
                   </div>
                   <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
-                    {item.percentage.toFixed(1)}%
+                    ${item.amount.toFixed(2)}
                   </div>
                 </div>
               ))}
@@ -520,12 +688,12 @@ const AnalyticsPage = () => {
   return (
     <div className="p-4 lg:p-6">
       {/* Controls */}
-      <div className="flex flex-col gap-3 flex-shrink-0 w-full sm:w-auto">
+      <div className="flex flex-col gap-3 flex-shrink-0 w-fit">
         {/* View Toggle */}
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-full sm:w-auto">
+        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-fit">
           <button
             onClick={() => setSelectedView("overview")}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
               selectedView === "overview"
                 ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -535,7 +703,7 @@ const AnalyticsPage = () => {
           </button>
           <button
             onClick={() => setSelectedView("detailed")}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
               selectedView === "detailed"
                 ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -546,12 +714,12 @@ const AnalyticsPage = () => {
         </div>
 
         {/* Time Range Selector */}
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-full sm:w-auto">
+        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 shadow-sm w-fit">
           {["week", "month", "quarter", "year"].map(range => (
             <button
               key={range}
               onClick={() => handleTimeRangeChange(range)}
-              className={`flex-1 sm:flex-none px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 timeRange === range
                   ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"

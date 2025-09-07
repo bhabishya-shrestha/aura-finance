@@ -5,6 +5,47 @@ class AnalyticsService {
     this.cacheTimeout = 2 * 60 * 1000; // 2 minutes
     this.lastTransactionHash = null;
     this.lastCalculationTime = 0;
+
+    // Unified color palette for consistent category coloring across all charts
+    this.colorPalette = [
+      "#FF6B6B", // Red
+      "#4ECDC4", // Teal
+      "#45B7D1", // Blue
+      "#96CEB4", // Green
+      "#FFEAA7", // Yellow
+      "#DDA0DD", // Plum
+      "#98D8C8", // Mint
+      "#F7DC6F", // Light Yellow
+      "#BB8FCE", // Light Purple
+      "#85C1E9", // Light Blue
+      "#F8C471", // Orange
+      "#82E0AA", // Light Green
+    ];
+
+    // Category to color mapping for consistency
+    this.categoryColorMap = new Map();
+  }
+
+  // Get consistent color for a category across all charts
+  getCategoryColor(category) {
+    if (!this.categoryColorMap.has(category)) {
+      // Assign color based on category name hash for consistency
+      const hash = this.hashString(category);
+      const colorIndex = hash % this.colorPalette.length;
+      this.categoryColorMap.set(category, this.colorPalette[colorIndex]);
+    }
+    return this.categoryColorMap.get(category);
+  }
+
+  // Simple hash function for consistent color assignment
+  hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
   }
 
   // Generate a hash of transaction data for cache invalidation
@@ -218,12 +259,12 @@ class AnalyticsService {
           }
         });
 
-        // Convert to array and sort by amount
+        // Convert to array and sort by amount, using unified color system
         const result = Object.entries(categoryData)
           .map(([category, amount]) => ({
             category,
-            amount,
-            fill: "#667eea", // Default color, will be enhanced later
+            amount: parseFloat(amount.toFixed(2)), // Format to 2 decimal places
+            fill: this.getCategoryColor(category), // Use unified color system
           }))
           .sort((a, b) => b.amount - a.amount);
 
@@ -252,12 +293,20 @@ class AnalyticsService {
         const net = income - spending;
 
         return {
-          income,
-          spending,
-          net,
+          income: parseFloat(income.toFixed(2)), // Format to 2 decimal places
+          spending: parseFloat(spending.toFixed(2)), // Format to 2 decimal places
+          net: parseFloat(net.toFixed(2)), // Format to 2 decimal places
           data: [
-            { name: "Income", amount: income, fill: "#10b981" },
-            { name: "Spending", amount: spending, fill: "#ef4444" },
+            {
+              name: "Income",
+              amount: parseFloat(income.toFixed(2)),
+              fill: "#10b981",
+            },
+            {
+              name: "Spending",
+              amount: parseFloat(spending.toFixed(2)),
+              fill: "#ef4444",
+            },
           ],
         };
       },
@@ -354,7 +403,12 @@ class AnalyticsService {
           .sort(([monthKeyA], [monthKeyB]) =>
             monthKeyA.localeCompare(monthKeyB)
           )
-          .map(([, data]) => data);
+          .map(([, data]) => ({
+            ...data,
+            spending: parseFloat(data.spending.toFixed(2)), // Format to 2 decimal places
+            income: parseFloat(data.income.toFixed(2)), // Format to 2 decimal places
+            net: parseFloat(data.net.toFixed(2)), // Format to 2 decimal places
+          }));
 
         return sortedData;
       },
@@ -422,11 +476,155 @@ class AnalyticsService {
         const transactionCount = transactions.length;
 
         return {
-          income,
-          spending,
-          netSavings,
+          income: parseFloat(income.toFixed(2)), // Format to 2 decimal places
+          spending: parseFloat(spending.toFixed(2)), // Format to 2 decimal places
+          netSavings: parseFloat(netSavings.toFixed(2)), // Format to 2 decimal places
           transactionCount,
         };
+      },
+      transactions
+    );
+  }
+
+  // Calculate spending trends by category for each period (works with pre-filtered transactions)
+  calculateSpendingTrendsByCategory(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("spendingTrendsByCategory", timeRange);
+
+    return this.getCachedOrCalculate(
+      cacheKey,
+      () => {
+        // Use transactions as-is (they should already be filtered)
+        const trends = [];
+        const now = new Date();
+        let periods, periodType, startDate;
+
+        // Calculate time range parameters (matching original calculateSpendingTrends logic)
+        switch (timeRange) {
+          case "week":
+            periods = 7;
+            periodType = "day";
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case "month":
+            periods = 4; // 4 weeks
+            periodType = "week";
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case "quarter": {
+            periods = 3;
+            periodType = "month";
+            const currentQuarter = Math.floor(now.getMonth() / 3);
+            startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
+            break;
+          }
+          case "year":
+            periods = 12;
+            periodType = "month";
+            startDate = new Date(now.getFullYear(), 0, 1);
+            break;
+          default:
+            periods = 6;
+            periodType = "month";
+            startDate = new Date(now.getTime() - 6 * 30 * 24 * 60 * 60 * 1000);
+        }
+
+        // Use unified color system for consistent category coloring
+
+        // Generate periods with category breakdown (matching original logic)
+        for (let i = 0; i < periods; i++) {
+          let periodStart, periodEnd, periodLabel;
+
+          switch (periodType) {
+            case "day":
+              periodStart = new Date(
+                startDate.getTime() + i * 24 * 60 * 60 * 1000
+              );
+              periodEnd = new Date(
+                periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
+              );
+              periodLabel = periodStart.toLocaleDateString("en-US", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              });
+              break;
+            case "week":
+              periodStart = new Date(
+                startDate.getTime() + i * 7 * 24 * 60 * 60 * 1000
+              );
+              periodEnd = new Date(
+                periodStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1
+              );
+              periodLabel = `W${i + 1}`;
+              break;
+            case "month":
+              periodStart = new Date(
+                startDate.getFullYear(),
+                startDate.getMonth() + i,
+                1
+              );
+              periodEnd = new Date(
+                periodStart.getFullYear(),
+                periodStart.getMonth() + 1,
+                0
+              );
+              periodLabel = periodStart.toLocaleDateString("en-US", {
+                month: "short",
+                year: "2-digit",
+              });
+              break;
+            default:
+              periodStart = new Date(
+                startDate.getTime() + i * 30 * 24 * 60 * 60 * 1000
+              );
+              periodEnd = new Date(
+                periodStart.getTime() + 30 * 24 * 60 * 60 * 1000 - 1
+              );
+              periodLabel = `Period ${i + 1}`;
+          }
+
+          // Filter transactions for this period
+          const periodTransactions = transactions.filter(transaction => {
+            const transactionDate = new Date(transaction.date);
+            return (
+              transactionDate >= periodStart && transactionDate <= periodEnd
+            );
+          });
+
+          // Calculate spending by category for this period
+          const categoryData = {};
+          periodTransactions.forEach(transaction => {
+            if (transaction.amount < 0) {
+              const category = transaction.category || "Uncategorized";
+              if (!categoryData[category]) {
+                categoryData[category] = 0;
+              }
+              categoryData[category] += Math.abs(transaction.amount);
+            }
+          });
+
+          // Convert to array with colors using unified color system
+          const categoryBreakdown = Object.entries(categoryData)
+            .map(([category, amount]) => ({
+              category,
+              amount: parseFloat(amount.toFixed(2)),
+              fill: this.getCategoryColor(category), // Use unified color system
+            }))
+            .sort((a, b) => b.amount - a.amount);
+
+          const totalSpending = categoryBreakdown.reduce(
+            (sum, item) => sum + item.amount,
+            0
+          );
+
+          trends.push({
+            period: periodLabel,
+            totalSpending: parseFloat(totalSpending.toFixed(2)),
+            categories: categoryBreakdown,
+          });
+        }
+
+        return trends;
       },
       transactions
     );
@@ -493,6 +691,7 @@ class AnalyticsService {
                 periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
               );
               periodLabel = periodStart.toLocaleDateString("en-US", {
+                weekday: "short",
                 month: "short",
                 day: "numeric",
               });
@@ -504,7 +703,7 @@ class AnalyticsService {
               periodEnd = new Date(
                 periodStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1
               );
-              periodLabel = `Week ${i + 1}`;
+              periodLabel = `W${i + 1}`;
               break;
             case "month":
               periodStart = new Date(
@@ -579,9 +778,9 @@ class AnalyticsService {
 
           trends.push({
             period: periodLabel,
-            spending: periodSpending,
-            income: periodIncome,
-            net: periodIncome - periodSpending,
+            spending: parseFloat(periodSpending.toFixed(2)), // Format to 2 decimal places
+            income: parseFloat(periodIncome.toFixed(2)), // Format to 2 decimal places
+            net: parseFloat((periodIncome - periodSpending).toFixed(2)), // Format to 2 decimal places
           });
         }
 
@@ -681,10 +880,192 @@ class AnalyticsService {
         const daysDiff = Math.ceil((now - startDate) / (1000 * 60 * 60 * 24));
         const avgDailySpending = daysDiff > 0 ? totalSpending / daysDiff : 0;
 
-        return avgDailySpending;
+        return parseFloat(avgDailySpending.toFixed(2)); // Format to 2 decimal places
       },
       transactions
     );
+  }
+
+  // Calculate trend percentage change between current and previous period
+  calculateTrendPercentage(currentValue, previousValue) {
+    if (previousValue === 0) {
+      return currentValue > 0 ? 100 : 0; // If no previous data, show 100% if current > 0
+    }
+    return ((currentValue - previousValue) / Math.abs(previousValue)) * 100;
+  }
+
+  // Calculate net worth trend
+  calculateNetWorthTrend(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("netWorthTrend", timeRange);
+
+    return this.getCachedOrCalculate(
+      cacheKey,
+      () => {
+        const currentNetWorth = this.calculateNetWorth(transactions, []);
+
+        // Calculate previous period net worth
+        const previousPeriodTransactions = this.getPreviousPeriodTransactions(
+          transactions,
+          timeRange
+        );
+        const previousNetWorth = this.calculateNetWorth(
+          previousPeriodTransactions,
+          []
+        );
+
+        return this.calculateTrendPercentage(currentNetWorth, previousNetWorth);
+      },
+      transactions
+    );
+  }
+
+  // Calculate income trend
+  calculateIncomeTrend(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("incomeTrend", timeRange);
+
+    return this.getCachedOrCalculate(
+      cacheKey,
+      () => {
+        const filteredTransactions = this.filterTransactionsByTimeRange(
+          transactions,
+          timeRange
+        );
+        const currentIncome = filteredTransactions
+          .filter(t => t.amount > 0)
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        // Calculate previous period income
+        const previousPeriodTransactions = this.getPreviousPeriodTransactions(
+          transactions,
+          timeRange
+        );
+        const previousIncome = previousPeriodTransactions
+          .filter(t => t.amount > 0)
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        return this.calculateTrendPercentage(currentIncome, previousIncome);
+      },
+      transactions
+    );
+  }
+
+  // Calculate spending trend
+  calculateSpendingTrend(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("spendingTrend", timeRange);
+
+    return this.getCachedOrCalculate(
+      cacheKey,
+      () => {
+        const filteredTransactions = this.filterTransactionsByTimeRange(
+          transactions,
+          timeRange
+        );
+        const currentSpending = filteredTransactions
+          .filter(t => t.amount < 0)
+          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+        // Calculate previous period spending
+        const previousPeriodTransactions = this.getPreviousPeriodTransactions(
+          transactions,
+          timeRange
+        );
+        const previousSpending = previousPeriodTransactions
+          .filter(t => t.amount < 0)
+          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+        return this.calculateTrendPercentage(currentSpending, previousSpending);
+      },
+      transactions
+    );
+  }
+
+  // Calculate savings trend
+  calculateSavingsTrend(transactions, timeRange = "month") {
+    const cacheKey = this.getCacheKey("savingsTrend", timeRange);
+
+    return this.getCachedOrCalculate(
+      cacheKey,
+      () => {
+        const filteredTransactions = this.filterTransactionsByTimeRange(
+          transactions,
+          timeRange
+        );
+        const currentIncome = filteredTransactions
+          .filter(t => t.amount > 0)
+          .reduce((sum, t) => sum + t.amount, 0);
+        const currentSpending = filteredTransactions
+          .filter(t => t.amount < 0)
+          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        const currentSavings = currentIncome - currentSpending;
+
+        // Calculate previous period savings
+        const previousPeriodTransactions = this.getPreviousPeriodTransactions(
+          transactions,
+          timeRange
+        );
+        const previousIncome = previousPeriodTransactions
+          .filter(t => t.amount > 0)
+          .reduce((sum, t) => sum + t.amount, 0);
+        const previousSpending = previousPeriodTransactions
+          .filter(t => t.amount < 0)
+          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        const previousSavings = previousIncome - previousSpending;
+
+        return this.calculateTrendPercentage(currentSavings, previousSavings);
+      },
+      transactions
+    );
+  }
+
+  // Get transactions from the previous period for comparison
+  getPreviousPeriodTransactions(transactions, timeRange = "month") {
+    const now = new Date();
+    let startDate, endDate;
+
+    switch (timeRange) {
+      case "week": {
+        // Previous week
+        const lastWeek = new Date(now);
+        lastWeek.setDate(now.getDate() - 7);
+        const weekStart = new Date(lastWeek);
+        weekStart.setDate(lastWeek.getDate() - 7);
+        startDate = weekStart;
+        endDate = lastWeek;
+        break;
+      }
+      case "month": {
+        // Previous month
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        startDate = lastMonth;
+        endDate = monthEnd;
+        break;
+      }
+      case "quarter": {
+        // Previous quarter
+        const currentQuarter = Math.floor(now.getMonth() / 3);
+        const currentYear = now.getFullYear();
+        const prevQuarter = currentQuarter === 0 ? 3 : currentQuarter - 1;
+        const prevQuarterYear =
+          currentQuarter === 0 ? currentYear - 1 : currentYear;
+        startDate = new Date(prevQuarterYear, prevQuarter * 3, 1);
+        endDate = new Date(prevQuarterYear, (prevQuarter + 1) * 3, 0);
+        break;
+      }
+      case "year": {
+        // Previous year
+        startDate = new Date(now.getFullYear() - 1, 0, 1);
+        endDate = new Date(now.getFullYear() - 1, 11, 31);
+        break;
+      }
+      default:
+        return [];
+    }
+
+    return transactions.filter(transaction => {
+      const transactionDate = new Date(transaction.date);
+      return transactionDate >= startDate && transactionDate <= endDate;
+    });
   }
 
   // Calculate all analytics in a single batch for performance
@@ -720,7 +1101,7 @@ class AnalyticsService {
 
         const monthlySpending = this.calculateMonthlySpending(
           filteredTransactions,
-          "all" // Use "all" since transactions are already filtered
+          timeRange // Use the actual timeRange to generate correct period structure
         );
 
         const incomeVsSpending = this.calculateIncomeVsSpending(
@@ -730,7 +1111,12 @@ class AnalyticsService {
 
         const spendingTrends = this.calculateSpendingTrends(
           filteredTransactions,
-          "all" // Use "all" since transactions are already filtered
+          timeRange // Use the actual timeRange to generate correct period structure
+        );
+
+        const spendingTrendsByCategory = this.calculateSpendingTrendsByCategory(
+          filteredTransactions,
+          timeRange // Use the actual timeRange to generate correct period structure
         );
 
         const quickAnalytics = this.calculateQuickAnalytics(
@@ -743,13 +1129,33 @@ class AnalyticsService {
           "all" // Use "all" since transactions are already filtered
         );
 
+        // Calculate trend values for the selected time range
+        const netWorthTrend = this.calculateNetWorthTrend(
+          transactions,
+          timeRange
+        );
+        const incomeTrend = this.calculateIncomeTrend(transactions, timeRange);
+        const spendingTrend = this.calculateSpendingTrend(
+          transactions,
+          timeRange
+        );
+        const savingsTrend = this.calculateSavingsTrend(
+          transactions,
+          timeRange
+        );
+
         return {
           spendingByCategory,
           monthlySpending,
           incomeVsSpending,
           spendingTrends,
+          spendingTrendsByCategory,
           quickAnalytics,
           avgDailySpending,
+          netWorthTrend,
+          incomeTrend,
+          spendingTrend,
+          savingsTrend,
         };
       },
       transactions

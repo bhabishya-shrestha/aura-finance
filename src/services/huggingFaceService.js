@@ -1355,8 +1355,8 @@ Please extract ALL financial transactions found in the text above using the exac
       return "expense";
     }
 
-    // Default to expense for positive amounts, income for negative
-    return amount > 0 ? "expense" : "income";
+    // Default to income for positive amounts, expense for negative
+    return amount > 0 ? "income" : "expense";
   }
 
   /**

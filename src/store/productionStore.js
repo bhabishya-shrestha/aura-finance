@@ -938,9 +938,24 @@ const useProductionStore = create(
         const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
         const monthTransactions = transactions.filter(t => {
-          const transactionDate = new Date(t.date);
           const isExpense =
             t.type === "expense" || (t.type !== "income" && t.amount < 0);
+
+          // Parse date safely to avoid timezone issues
+          let transactionDate;
+          if (
+            typeof t.date === "string" &&
+            t.date.match(/^\d{4}-\d{2}-\d{2}$/)
+          ) {
+            // Handle ISO date strings like "2024-09-01" by parsing as local date
+            const [year, month, day] = t.date.split("-").map(Number);
+            transactionDate = new Date(year, month - 1, day); // month is 0-indexed
+          } else {
+            transactionDate = new Date(t.date);
+          }
+
+          if (isNaN(transactionDate.getTime())) return false;
+
           return (
             isExpense &&
             transactionDate >= monthStart &&
@@ -991,7 +1006,17 @@ const useProductionStore = create(
       }
 
       const filteredTransactions = transactions.filter(t => {
-        const transactionDate = new Date(t.date);
+        // Parse date safely to avoid timezone issues
+        let transactionDate;
+        if (typeof t.date === "string" && t.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          // Handle ISO date strings like "2024-09-01" by parsing as local date
+          const [year, month, day] = t.date.split("-").map(Number);
+          transactionDate = new Date(year, month - 1, day); // month is 0-indexed
+        } else {
+          transactionDate = new Date(t.date);
+        }
+
+        if (isNaN(transactionDate.getTime())) return false;
         return transactionDate >= startDate && transactionDate <= now;
       });
 
