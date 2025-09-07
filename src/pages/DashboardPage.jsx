@@ -354,7 +354,13 @@ const DashboardPage = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-blue-100">Total Net Worth</p>
-            <p className="text-3xl font-bold">${totalBalance.toFixed(2)}</p>
+            <p className="text-3xl font-bold">
+              $
+              {totalBalance.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </p>
           </div>
           <DollarSign className="w-12 h-12 text-blue-200" />
         </div>
@@ -364,14 +370,14 @@ const DashboardPage = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <QuickAnalyticsCard
           title="Monthly Income"
-          value={`$${monthlyIncome.toFixed(2)}`}
+          value={`$${monthlyIncome.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           change={incomeChangeText}
           icon={TrendingUp}
           trend={incomeTrend}
         />
         <QuickAnalyticsCard
           title="Monthly Expenses"
-          value={`$${monthlyExpenses.toFixed(2)}`}
+          value={`$${monthlyExpenses.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           change={expenseChangeText}
           icon={TrendingDown}
           trend={expenseTrend}
