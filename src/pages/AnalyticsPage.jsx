@@ -48,7 +48,10 @@ const CategoryTooltip = ({ active, payload }) => {
           {data.category}
         </p>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          ${data.amount.toFixed(2)}
+          ${data.amount.toLocaleString('en-US', { 
+            minimumFractionDigits: 2, 
+            maximumFractionDigits: 2 
+          })}
         </p>
       </div>
     );
@@ -484,10 +487,19 @@ const AnalyticsPage = () => {
     quickAnalytics,
   } = analyticsData;
 
+  // Format numbers with commas for better readability
+  const formatCurrency = (amount) => {
+    return `$${amount.toLocaleString('en-US', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    })}`;
+  };
+
+
   const getNetWorth = () => {
     // Use the store's getNetWorth method for consistency
     const netWorth = storeGetNetWorth();
-    return `$${netWorth.toFixed(2)}`;
+    return formatCurrency(netWorth);
   };
 
   // Dynamic chart title based on time range
@@ -562,7 +574,7 @@ const AnalyticsPage = () => {
         />
         <MetricCard
           title="Total Income"
-          value={`$${incomeVsSpending.income.toFixed(2)}`}
+          value={formatCurrency(incomeVsSpending.income)}
           subtitle={`${quickAnalytics.transactionCount} transactions`}
           icon={TrendingUp}
           trend={incomeTrend}
@@ -571,7 +583,7 @@ const AnalyticsPage = () => {
         />
         <MetricCard
           title="Total Spending"
-          value={`$${incomeVsSpending.spending.toFixed(2)}`}
+          value={formatCurrency(incomeVsSpending.spending)}
           subtitle="All expenses this period"
           icon={TrendingDown}
           trend={spendingTrend}
@@ -580,7 +592,7 @@ const AnalyticsPage = () => {
         />
         <MetricCard
           title="Net Savings"
-          value={`$${incomeVsSpending.net.toFixed(2)}`}
+          value={formatCurrency(incomeVsSpending.net)}
           subtitle="Income minus spending"
           icon={PiggyBank}
           trend={savingsTrend}
@@ -632,7 +644,7 @@ const AnalyticsPage = () => {
                     </span>
                   </div>
                   <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
-                    ${item.amount.toFixed(2)}
+                    {formatCurrency(item.amount)}
                   </div>
                 </div>
               ))}
@@ -655,7 +667,7 @@ const AnalyticsPage = () => {
         />
         <MetricCard
           title="Total Income"
-          value={`$${incomeVsSpending.income.toFixed(2)}`}
+          value={formatCurrency(incomeVsSpending.income)}
           subtitle={`${quickAnalytics.transactionCount} transactions`}
           icon={TrendingUp}
           trend={incomeTrend}
@@ -664,7 +676,7 @@ const AnalyticsPage = () => {
         />
         <MetricCard
           title="Total Spending"
-          value={`$${incomeVsSpending.spending.toFixed(2)}`}
+          value={formatCurrency(incomeVsSpending.spending)}
           subtitle="All expenses this period"
           icon={TrendingDown}
           trend={spendingTrend}
@@ -673,7 +685,7 @@ const AnalyticsPage = () => {
         />
         <MetricCard
           title="Net Savings"
-          value={`$${incomeVsSpending.net.toFixed(2)}`}
+          value={formatCurrency(incomeVsSpending.net)}
           subtitle="Income minus spending"
           icon={PiggyBank}
           trend={savingsTrend}
