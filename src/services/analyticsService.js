@@ -625,12 +625,11 @@ class AnalyticsService {
               periodEnd = new Date(
                 periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
               );
-              // Use UTC date formatting to match transactions tab display (avoids timezone shifts)
+              // Use local date formatting to match frontend display
               periodLabel = periodStart.toLocaleDateString("en-US", {
                 weekday: "short",
                 month: "short",
                 day: "numeric",
-                timeZone: "UTC",
               });
               break;
             case "week":
@@ -680,8 +679,23 @@ class AnalyticsService {
 
           // Filter transactions for this period
           const periodTransactions = transactions.filter(transaction => {
-            // Parse transaction date the same way the transactions tab does
-            const transactionDate = new Date(transaction.date);
+            // Parse transaction date with proper local timezone handling
+            let transactionDate;
+            if (typeof transaction.date === "string") {
+              // Handle date strings like "2025-09-01" as local dates
+              if (transaction.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const [year, month, day] = transaction.date
+                  .split("-")
+                  .map(Number);
+                transactionDate = new Date(year, month - 1, day); // month is 0-indexed
+              } else {
+                transactionDate = new Date(transaction.date);
+              }
+            } else if (transaction.date instanceof Date) {
+              transactionDate = transaction.date;
+            } else {
+              transactionDate = new Date(transaction.date);
+            }
 
             // For day periods, use simple date comparison to avoid duplicates
             if (periodType === "day") {
@@ -808,7 +822,6 @@ class AnalyticsService {
                 weekday: "short",
                 month: "short",
                 day: "numeric",
-                timeZone: "UTC",
               });
               break;
             case "week":
@@ -844,7 +857,6 @@ class AnalyticsService {
               periodLabel = periodStart.toLocaleDateString("en-US", {
                 month: "short",
                 year: "numeric",
-                timeZone: "UTC",
               });
               break;
           }
@@ -853,7 +865,13 @@ class AnalyticsService {
           const periodTransactions = transactions.filter(t => {
             let transactionDate;
             if (typeof t.date === "string") {
-              transactionDate = new Date(t.date);
+              // Handle date strings like "2025-09-01" as local dates
+              if (t.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const [year, month, day] = t.date.split("-").map(Number);
+                transactionDate = new Date(year, month - 1, day); // month is 0-indexed
+              } else {
+                transactionDate = new Date(t.date);
+              }
             } else if (t.date instanceof Date) {
               transactionDate = t.date;
             } else {
@@ -894,22 +912,22 @@ class AnalyticsService {
             }
 
             // Debug logging for first few transactions
-            // if (import.meta.env.DEV && idx < 3) {
-            //   // Log for first 3 transactions in each period
-            //   console.log("Period filtering debug:", {
-            //     periodLabel,
-            //     periodStart: periodStart.toISOString(),
-            //     periodEnd: periodEnd.toISOString(),
-            //     transactionDate: transactionDate.toISOString(),
-            //     isInPeriod,
-            //     transaction: {
-            //       id: t.id,
-            //       amount: t.amount,
-            //       date: t.date,
-            //       category: t.category,
-            //     },
-            //   });
-            // }
+            if (import.meta.env.DEV && i < 3) {
+              // Log for first 3 periods
+              console.log("Period filtering debug:", {
+                periodLabel,
+                periodStart: periodStart.toISOString(),
+                periodEnd: periodEnd.toISOString(),
+                transactionDate: transactionDate.toISOString(),
+                isInPeriod,
+                transaction: {
+                  id: t.id,
+                  amount: t.amount,
+                  date: t.date,
+                  category: t.category,
+                },
+              });
+            }
 
             return isInPeriod;
           });
