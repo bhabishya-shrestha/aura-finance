@@ -579,91 +579,39 @@ class AnalyticsService {
           return [];
         }
 
-        // Simple, reliable date parsing function
-        const parseDate = dateInput => {
-          if (typeof dateInput === "string") {
-            // Handle YYYY-MM-DD format as local date
-            if (dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
-              const [year, month, day] = dateInput.split("-").map(Number);
-              return new Date(year, month - 1, day);
-            }
-            return new Date(dateInput);
-          }
-          return new Date(dateInput);
-        };
-
-        // Get current date and calculate periods
+        // Use transactions as-is (they should already be filtered)
+        const trends = [];
         const now = new Date();
-        const today = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate()
-        );
+        let periods, periodType, startDate;
 
-        let periods = [];
-
+        // Calculate time range parameters using local timezone for consistency
         switch (timeRange) {
           case "week":
-            // Last 7 days
-            for (let i = 6; i >= 0; i--) {
-              const date = new Date(today);
-              date.setDate(date.getDate() - i);
-              periods.push({
-                date: new Date(date),
-                label: date.toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                }),
-              });
-            }
+            periods = 7;
+            periodType = "day";
+            // Use local timezone calculation to match local display
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             break;
-
           case "month":
-            // Last 4 weeks (7-day periods)
-            for (let i = 3; i >= 0; i--) {
-              const startDate = new Date(today);
-              startDate.setDate(startDate.getDate() - (i + 1) * 7);
-              const endDate = new Date(startDate);
-              endDate.setDate(endDate.getDate() + 6);
-
-              periods.push({
-                startDate: new Date(startDate),
-                endDate: new Date(endDate),
-                label: `${startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${endDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
-              });
-            }
+            periods = 4; // 4 weeks
+            periodType = "week";
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
             break;
-
-          case "quarter":
-            // Last 3 months
-            for (let i = 2; i >= 0; i--) {
-              const date = new Date(today);
-              date.setMonth(date.getMonth() - i);
-              periods.push({
-                date: new Date(date.getFullYear(), date.getMonth(), 1),
-                label: date.toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "2-digit",
-                }),
-              });
-            }
+          case "quarter": {
+            periods = 3;
+            periodType = "month";
+            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
             break;
-
+          }
           case "year":
-            // Last 12 months
-            for (let i = 11; i >= 0; i--) {
-              const date = new Date(today);
-              date.setMonth(date.getMonth() - i);
-              periods.push({
-                date: new Date(date.getFullYear(), date.getMonth(), 1),
-                label: date.toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "2-digit",
-                }),
-              });
-            }
+            periods = 12;
+            periodType = "month";
+            startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
             break;
+          default:
+            periods = 6;
+            periodType = "month";
+            startDate = new Date(now.getTime() - 6 * 30 * 24 * 60 * 60 * 1000);
         }
 
         // Use unified color system for consistent category coloring
@@ -673,7 +621,7 @@ class AnalyticsService {
           let periodStart, periodEnd, periodLabel;
 
           switch (periodType) {
-            case "day":
+            case "day": {
               // Calculate period boundaries using local timezone
               const dayStartTime =
                 startDate.getTime() + i * 24 * 60 * 60 * 1000;
@@ -694,7 +642,8 @@ class AnalyticsService {
                 day: "numeric",
               });
               break;
-            case "week":
+            }
+            case "week": {
               periodStart = new Date(
                 startDate.getTime() + i * 7 * 24 * 60 * 60 * 1000
               );
@@ -717,7 +666,8 @@ class AnalyticsService {
                 periodLabel = `W${i + 1}`;
               }
               break;
-            case "month":
+            }
+            case "month": {
               periodStart = new Date(
                 startDate.getTime() + i * 30 * 24 * 60 * 60 * 1000
               );
@@ -729,7 +679,8 @@ class AnalyticsService {
                 year: "2-digit",
               });
               break;
-            default:
+            }
+            default: {
               periodStart = new Date(
                 startDate.getTime() + i * 30 * 24 * 60 * 60 * 1000
               );
@@ -737,6 +688,7 @@ class AnalyticsService {
                 periodStart.getTime() + 30 * 24 * 60 * 60 * 1000 - 1
               );
               periodLabel = `Period ${i + 1}`;
+            }
           }
 
           // Filter transactions for this period
@@ -886,7 +838,7 @@ class AnalyticsService {
           let periodStart, periodEnd, periodLabel;
 
           switch (periodType) {
-            case "day":
+            case "day": {
               // Calculate period boundaries using local timezone
               const dayStartTime =
                 startDate.getTime() + i * 24 * 60 * 60 * 1000;
@@ -906,7 +858,8 @@ class AnalyticsService {
                 day: "numeric",
               });
               break;
-            case "week":
+            }
+            case "week": {
               periodStart = new Date(
                 startDate.getTime() + i * 7 * 24 * 60 * 60 * 1000
               );
@@ -929,7 +882,8 @@ class AnalyticsService {
                 periodLabel = `W${i + 1}`;
               }
               break;
-            case "month":
+            }
+            case "month": {
               periodStart = new Date(
                 startDate.getTime() + i * 30 * 24 * 60 * 60 * 1000
               );
@@ -941,6 +895,7 @@ class AnalyticsService {
                 year: "numeric",
               });
               break;
+            }
           }
 
           // Filter transactions for this period
