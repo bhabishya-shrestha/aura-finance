@@ -575,39 +575,95 @@ class AnalyticsService {
     return this.getCachedOrCalculate(
       cacheKey,
       () => {
-        // Use transactions as-is (they should already be filtered)
-        const trends = [];
-        const now = new Date();
-        let periods, periodType, startDate;
+        if (!transactions || transactions.length === 0) {
+          return [];
+        }
 
-        // Calculate time range parameters using local timezone for consistency
+        // Simple, reliable date parsing function
+        const parseDate = dateInput => {
+          if (typeof dateInput === "string") {
+            // Handle YYYY-MM-DD format as local date
+            if (dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              const [year, month, day] = dateInput.split("-").map(Number);
+              return new Date(year, month - 1, day);
+            }
+            return new Date(dateInput);
+          }
+          return new Date(dateInput);
+        };
+
+        // Get current date and calculate periods
+        const now = new Date();
+        const today = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        );
+
+        let periods = [];
+
         switch (timeRange) {
           case "week":
-            periods = 7;
-            periodType = "day";
-            // Use local timezone calculation to match local display
-            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            // Last 7 days
+            for (let i = 6; i >= 0; i--) {
+              const date = new Date(today);
+              date.setDate(date.getDate() - i);
+              periods.push({
+                date: new Date(date),
+                label: date.toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                }),
+              });
+            }
             break;
+
           case "month":
-            periods = 4; // 4 weeks
-            periodType = "week";
-            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            // Last 4 weeks (7-day periods)
+            for (let i = 3; i >= 0; i--) {
+              const startDate = new Date(today);
+              startDate.setDate(startDate.getDate() - (i + 1) * 7);
+              const endDate = new Date(startDate);
+              endDate.setDate(endDate.getDate() + 6);
+
+              periods.push({
+                startDate: new Date(startDate),
+                endDate: new Date(endDate),
+                label: `${startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${endDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+              });
+            }
             break;
-          case "quarter": {
-            periods = 3;
-            periodType = "month";
-            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+          case "quarter":
+            // Last 3 months
+            for (let i = 2; i >= 0; i--) {
+              const date = new Date(today);
+              date.setMonth(date.getMonth() - i);
+              periods.push({
+                date: new Date(date.getFullYear(), date.getMonth(), 1),
+                label: date.toLocaleDateString("en-US", {
+                  month: "short",
+                  year: "2-digit",
+                }),
+              });
+            }
             break;
-          }
+
           case "year":
-            periods = 12;
-            periodType = "month";
-            startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+            // Last 12 months
+            for (let i = 11; i >= 0; i--) {
+              const date = new Date(today);
+              date.setMonth(date.getMonth() - i);
+              periods.push({
+                date: new Date(date.getFullYear(), date.getMonth(), 1),
+                label: date.toLocaleDateString("en-US", {
+                  month: "short",
+                  year: "2-digit",
+                }),
+              });
+            }
             break;
-          default:
-            periods = 6;
-            periodType = "month";
-            startDate = new Date(now.getTime() - 6 * 30 * 24 * 60 * 60 * 1000);
         }
 
         // Use unified color system for consistent category coloring
