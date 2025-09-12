@@ -575,6 +575,10 @@ class AnalyticsService {
     return this.getCachedOrCalculate(
       cacheKey,
       () => {
+        if (!transactions || transactions.length === 0) {
+          return [];
+        }
+
         // Use transactions as-is (they should already be filtered)
         const trends = [];
         const now = new Date();
@@ -617,23 +621,29 @@ class AnalyticsService {
           let periodStart, periodEnd, periodLabel;
 
           switch (periodType) {
-            case "day":
-              // Calculate period boundaries in UTC to match the display
+            case "day": {
+              // Calculate period boundaries using local timezone
+              const dayStartTime =
+                startDate.getTime() + i * 24 * 60 * 60 * 1000;
+              const dayStartDate = new Date(dayStartTime);
+              // Create period start at midnight of the target day
               periodStart = new Date(
-                startDate.getTime() + i * 24 * 60 * 60 * 1000
+                dayStartDate.getFullYear(),
+                dayStartDate.getMonth(),
+                dayStartDate.getDate()
               );
               periodEnd = new Date(
                 periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
               );
-              // Use UTC date formatting to match transactions tab display (avoids timezone shifts)
+              // Use local date formatting to match frontend display
               periodLabel = periodStart.toLocaleDateString("en-US", {
                 weekday: "short",
                 month: "short",
                 day: "numeric",
-                timeZone: "UTC",
               });
               break;
-            case "week":
+            }
+            case "week": {
               periodStart = new Date(
                 startDate.getTime() + i * 7 * 24 * 60 * 60 * 1000
               );
@@ -656,7 +666,8 @@ class AnalyticsService {
                 periodLabel = `W${i + 1}`;
               }
               break;
-            case "month":
+            }
+            case "month": {
               periodStart = new Date(
                 startDate.getTime() + i * 30 * 24 * 60 * 60 * 1000
               );
@@ -668,7 +679,8 @@ class AnalyticsService {
                 year: "2-digit",
               });
               break;
-            default:
+            }
+            default: {
               periodStart = new Date(
                 startDate.getTime() + i * 30 * 24 * 60 * 60 * 1000
               );
@@ -676,12 +688,41 @@ class AnalyticsService {
                 periodStart.getTime() + 30 * 24 * 60 * 60 * 1000 - 1
               );
               periodLabel = `Period ${i + 1}`;
+            }
           }
 
           // Filter transactions for this period
           const periodTransactions = transactions.filter(transaction => {
-            // Parse transaction date the same way the transactions tab does
-            const transactionDate = new Date(transaction.date);
+            // Parse transaction date with proper local timezone handling
+            let transactionDate;
+            if (typeof transaction.date === "string") {
+              // Handle date strings like "2025-09-01" as local dates
+              if (transaction.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const [year, month, day] = transaction.date
+                  .split("-")
+                  .map(Number);
+                transactionDate = new Date(year, month - 1, day); // month is 0-indexed
+              } else {
+                transactionDate = new Date(transaction.date);
+              }
+            } else if (transaction.date instanceof Date) {
+              transactionDate = transaction.date;
+            } else {
+              transactionDate = new Date(transaction.date);
+            }
+
+            // Debug logging for date parsing
+            if (import.meta.env.DEV && transaction.amount < 0 && i < 2) {
+              console.log("🔍 Date parsing debug:", {
+                originalDate: transaction.date,
+                originalType: typeof transaction.date,
+                parsedDate: transactionDate.toISOString(),
+                localDate: transactionDate.toLocaleDateString(),
+                periodLabel,
+                periodStart: periodStart.toISOString(),
+                periodEnd: periodEnd.toISOString(),
+              });
+            }
 
             // For day periods, use simple date comparison to avoid duplicates
             if (periodType === "day") {
@@ -797,9 +838,16 @@ class AnalyticsService {
           let periodStart, periodEnd, periodLabel;
 
           switch (periodType) {
-            case "day":
+            case "day": {
+              // Calculate period boundaries using local timezone
+              const dayStartTime =
+                startDate.getTime() + i * 24 * 60 * 60 * 1000;
+              const dayStartDate = new Date(dayStartTime);
+              // Create period start at midnight of the target day
               periodStart = new Date(
-                startDate.getTime() + i * 24 * 60 * 60 * 1000
+                dayStartDate.getFullYear(),
+                dayStartDate.getMonth(),
+                dayStartDate.getDate()
               );
               periodEnd = new Date(
                 periodStart.getTime() + 24 * 60 * 60 * 1000 - 1
@@ -808,10 +856,10 @@ class AnalyticsService {
                 weekday: "short",
                 month: "short",
                 day: "numeric",
-                timeZone: "UTC",
               });
               break;
-            case "week":
+            }
+            case "week": {
               periodStart = new Date(
                 startDate.getTime() + i * 7 * 24 * 60 * 60 * 1000
               );
@@ -834,7 +882,8 @@ class AnalyticsService {
                 periodLabel = `W${i + 1}`;
               }
               break;
-            case "month":
+            }
+            case "month": {
               periodStart = new Date(
                 startDate.getTime() + i * 30 * 24 * 60 * 60 * 1000
               );
@@ -844,21 +893,40 @@ class AnalyticsService {
               periodLabel = periodStart.toLocaleDateString("en-US", {
                 month: "short",
                 year: "numeric",
-                timeZone: "UTC",
               });
               break;
+            }
           }
 
           // Filter transactions for this period
           const periodTransactions = transactions.filter(t => {
             let transactionDate;
             if (typeof t.date === "string") {
-              transactionDate = new Date(t.date);
+              // Handle date strings like "2025-09-01" as local dates
+              if (t.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const [year, month, day] = t.date.split("-").map(Number);
+                transactionDate = new Date(year, month - 1, day); // month is 0-indexed
+              } else {
+                transactionDate = new Date(t.date);
+              }
             } else if (t.date instanceof Date) {
               transactionDate = t.date;
             } else {
               // Attempt to parse other formats, e.g., numbers as timestamps
               transactionDate = new Date(t.date);
+            }
+
+            // Debug logging for date parsing
+            if (import.meta.env.DEV && t.amount < 0 && i < 2) {
+              console.log("🔍 SpendingTrends date parsing debug:", {
+                originalDate: t.date,
+                originalType: typeof t.date,
+                parsedDate: transactionDate.toISOString(),
+                localDate: transactionDate.toLocaleDateString(),
+                periodLabel,
+                periodStart: periodStart.toISOString(),
+                periodEnd: periodEnd.toISOString(),
+              });
             }
 
             if (isNaN(transactionDate.getTime())) {
@@ -894,8 +962,8 @@ class AnalyticsService {
             }
 
             // Debug logging for first few transactions
-            // if (import.meta.env.DEV && idx < 3) {
-            //   // Log for first 3 transactions in each period
+            // if (import.meta.env.DEV && i < 3) {
+            //   // Log for first 3 periods
             //   console.log("Period filtering debug:", {
             //     periodLabel,
             //     periodStart: periodStart.toISOString(),

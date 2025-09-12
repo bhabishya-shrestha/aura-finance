@@ -45,6 +45,14 @@ const ACKNOWLEDGED_VULNERABILITIES = {
     plannedFix: "v1.2.0",
     description: "vite/vite-node/vitest vulnerabilities in development server",
   },
+  1107326: {
+    package: "vite",
+    severity: "low",
+    impact: "development-only",
+    status: "acknowledged",
+    plannedFix: "v1.3.0",
+    description: "Vite middleware may serve files starting with the same name with the public directory",
+  },
 };
 
 function runCommand(command) {
